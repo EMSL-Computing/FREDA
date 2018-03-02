@@ -216,7 +216,7 @@ shinyServer(function(session, input, output) {
       ) # End error handling #
       
       # If no C13
-      if (input$c13_column == 'Select a column') {
+      if (input$isotope_yn == 'Select a option' | input$isotope_yn == 'No') {
         
         # Create peakICR object
         as.peakIcrData(e_data = Edata(), f_data = fdata(),
@@ -229,10 +229,10 @@ shinyServer(function(session, input, output) {
         
       } else { # If there's C13 # 
         
-        # Error handling: C13 only contains 0s or 1s
+        # Error handling: entered isotopic notation must exist in the isotope information column
         validate(
-          need(all(Emeta()[,input$c13_column] %in% c(0, 1)),
-               'C13 column not 0/1 only. Please choose another column.')
+          need(any(Emeta()[,input$iso_info_column] %in% input$iso_symbol),
+               'The entered isotopic notation does not match the entries in the chosen isotope information column. Please revise.')
         ) # End error handling
         
         as.peakIcrData(e_data = Edata(), f_data = fdata(),
@@ -242,7 +242,8 @@ shinyServer(function(session, input, output) {
                        c_cname = input$c_column, h_cname = input$h_column, 
                        n_cname = input$n_column, o_cname = input$o_column, 
                        s_cname = input$s_column, p_cname = input$p_column, 
-                       c13_cname = input$c13_column)
+                       isotopic_cname = input$iso_info_column,
+                       isotopic_notation = as.character(input$iso_symbol))
         
       } # End C13 / no C13 if statement
       
@@ -331,13 +332,13 @@ shinyServer(function(session, input, output) {
       # Create data frame of all elemental columns to sum across
       elem_columns <- data.frame(Emeta()[,elem_cnames])
       
-      # If c13 is chosen (and binary), filter out ones where c13 = 1
-      if ((input$c13_column != 'Select a column') && (all(Emeta()[,input$c13_column] %in% c(0, 1)))) {
+      # If isotopic information is included and matching entered notation, filter out where isotopes = denoted symbol
+      if ((!input$iso_info_column %in% c('Select an option', 'No') ) && (any(Emeta()[,input$iso_info_column] %in% input$iso_symbol))) {
         
-        c13 <- Emeta()[,input$c13_column]
-        elem_columns <- elem_columns[-(which(c13 == 1)),]
+        iso <- Emeta()[,input$iso_info_column]
+        elem_columns <- elem_columns[-(which(as.character(iso) == as.character(input$iso_symbol))),]
         
-      } # End if C13 is chosen (and binary) #
+      } # End if isotopic information is chosen and correctly denoted#
       
       # Count all remaining rows with nonzero sums
       num_rows_formula <- length(which(rowSums(elem_columns) > 0))
