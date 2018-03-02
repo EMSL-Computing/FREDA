@@ -1,0 +1,332 @@
+#
+# This is the user-interface definition of a Shiny web application. You can
+# run the application by clicking 'Run App' above.
+#
+# Find out more about building applications with Shiny here:
+# 
+#    http://shiny.rstudio.com/
+#
+
+library(shiny)
+library(plotly)
+library(DT)
+library(markdown)
+
+# Define UI for application that draws a histogram
+shinyUI(navbarPage(title = (windowTitle = "FREDA"),
+                   theme = "yeti.css",
+                   ############# Welcome Panel #########################
+                   tabPanel("Welcome",
+                            includeMarkdown("./README/Welcome to FREDA.md")),
+                   ################## Upload Panel #######################################
+                   tabPanel("Upload",
+                            sidebarLayout(
+                              ## Sidebar panel on Upload tab ##
+                              sidebarPanel(
+                                # Set width of sidebar panel
+                                width = 5,
+                                
+                                # Load e_data file
+                                fileInput("file_edata", "Upload CSV e_data",
+                                          multiple = TRUE,
+                                          accept = c("text/csv",
+                                                     "text/comma-separated-values,text/plain",
+                                                     ".csv")),
+                                
+                                ## Get unique identifier column from e_data ##
+                                uiOutput('edata_id'),
+                                
+                                # Load e_meta file
+                                fileInput("file_emeta", "Upload CSV e_meta",
+                                          multiple = TRUE,
+                                          accept = c("text/csv",
+                                                     "text/comma-separated-values,text/plain",
+                                                     ".csv")), 
+                                
+                                # Horizontal rule #
+                                tags$hr(),
+                                
+                                # Get which instrument generated the data #
+                                selectInput('instrument', 
+                                            label = 'What instrument generated this data?',
+                                            choices = list(# 'Select an option' = 0,
+                                              '12T', '21T'), 
+                                            selected = 'Select an option'
+                                ), 
+                                
+                                # Create an option for Isotopic Analysis
+                                selectInput('isotope_yn',
+                                            label = 'Do you have information for isotopes?',
+                                            choices = list('Select an Option' = 0,
+                                                           'No' = 1,
+                                                           'Yes' = 2),
+                                            selected = 'Select an Option'
+                                            ),
+                                # Condition on presence of isotope information
+                                conditionalPanel(
+                                  condition = "input.isotope_yn == 2",
+                                  uiOutput('iso_info_column'),
+                                  uiOutput('iso_symbol')
+                                ),
+                                # # Condition on absence of isotope information
+                                # conditionalPanel(
+                                #   condition = "input.isotope_yn == 2",
+                                #   uiOutput('c13_column')
+                                # ),
+                                # Get whether formulas or elemental columns are included #
+                                selectInput('select', 
+                                            label = 'Does this file have formulas 
+                                                          or elemental columns?',
+                                            choices = list('Select an option' = 0, 
+                                                           'Formulas' = 1, 
+                                                           'Elemental Columns' = 2),
+                                            selected = 'Select an option' 
+                                ), 
+                                
+                                # (Conditional on the above selectInput) Formula: 
+                                ##  which column contains the formula? #
+                                conditionalPanel(
+                                  condition = "input.select == 1", 
+                                  uiOutput('f_column')
+                                ), 
+                                
+                                # (Conditional on the above selectInput) Elemental columns: 
+                                ##  which columns contain the elements?
+                                conditionalPanel(
+                                  condition = "input.select == 2", 
+                                  uiOutput("c_column"), 
+                                  uiOutput("h_column"), 
+                                  uiOutput("n_column"), 
+                                  uiOutput("o_column"), 
+                                  uiOutput("s_column"), 
+                                  uiOutput("p_column")
+                                ), 
+                                
+                                # HOrizontal rule
+                                tags$hr(),
+                                
+                                # Action button: pressing this creates the peakICR object
+                                actionButton('upload_click', 'Process Data')
+                                
+                              ), # End sidebar panel
+                              
+                              mainPanel(
+                                
+                                # Set default width of panel
+                                width = 7,
+                                
+                                # Show 'Success' message if peakICR created successfully
+                                uiOutput('success_upload'),
+                                
+                                # Summary panel
+                                wellPanel(
+                                  
+                                  # Number of peaks, samples, and peaks with formulas assigned
+                                  textOutput('num_peaks'), 
+                                  textOutput('num_samples'), 
+                                  textOutput('num_peaks_formula')
+                                ),
+                                
+                                # Horizontal ruler
+                                tags$hr(), 
+                                
+                                # Show preview of e_data
+                                htmlOutput('edata_text'),
+                                #dataTableOutput("head_edata"), 
+                                DTOutput("head_edata", width = "90%"),
+                                
+                                # Horizontal rule
+                                tags$hr(),
+                                
+                                # Show preview of e_meta
+                                htmlOutput('emeta_text'),
+                                #dataTableOutput('head_emeta'),
+                                DTOutput("head_emeta", width = "90%")
+                                
+                              ) # End main panel
+                              
+                            )), # End Upload tab
+                   
+                   ################## Filter Panel ##############################################
+                   tabPanel("Filter", 
+                            
+                            sidebarLayout(
+                              sidebarPanel(
+                                
+                                # Set default width for panel
+                                width = 5,
+                                
+                                # Checkbox: Mass filter yes/no
+                                checkboxInput('massfilter', HTML('<h5><b>Mass Filter</b></h5>')),
+                                
+                                # Numeric: Min/max mass filter
+                                numericInput('min_mass', 'Minimum Mass value', 
+                                             min = 0, value = 200),
+                                numericInput('max_mass', "Maximum Mass value", 
+                                             min = 0, value = 900),
+                                
+                                # Checkbox: Mass filter yes/no
+                                checkboxInput('molfilter', HTML('<h5><b>Molecule Filter</b></h5>')),
+                                
+                                # Drop-down list: Min/max mass filter
+                                uiOutput('minobs'), 
+                                actionButton('filter_click', "Filter Data")
+                                
+                              ), # End sidebar panel on Filter tab
+                              
+                              mainPanel(
+                                
+                                # Set default width for panel
+                                width = 7,
+                                
+                                # Success message if peakIcr2 filtered successfully
+                                htmlOutput('filterTest'), 
+                                
+                                # Summary panel: display summary of filters
+                                wellPanel(
+                                  tableOutput('summary_filter')
+                                ),
+                                
+                                # Plot: Show number of peaks before/after filters applied
+                                plotOutput('barplot_filter')
+                                
+                              ) # End main panel on Filter tab
+                              
+                            )), # End Filter tab
+                   
+                   ################## Preprocess Panel ###############################################
+                   tabPanel("Preprocess",
+                            
+                            sidebarLayout(
+                              
+                              # Sidebar panel
+                              sidebarPanel(
+                                # 
+                                # # Test: Display message at top of sidebar
+                                # 'By default, O:C, H:C, Kendrick Mass, 
+                                #               and Kendrick defect will be calculated.',
+                                # 
+                                # # Horizontal rule
+                                # tags$hr(),
+                                
+                                # Checkbox: which tests should also be applied
+                                checkboxGroupInput('tests', 'Calculate:',
+                                                   c('O:C and H:C' = 'calc_vankrev',
+                                                     'Kendrick Mass and Defect' = 'calc_kendrick',
+                                                     'NOSC' = 'calc_nosc', 
+                                                     'Gibbs Free Energy' = 'calc_gibbs', 
+                                                     'Aromaticity and Modified Aromaticity' = 'calc_aroma',  
+                                                     'DBE and DBE - O' = 'calc_dbe'), 
+                                                   selected = ''), 
+                                # Action button: add test columns with reasults to peakIcr2
+                                actionButton('preprocess_click', 'Process Data')
+                                
+                              ), # End sidebar panel
+                              
+                              mainPanel(
+                                
+                                # Set default main panel width 
+                                width = 7,
+                                
+                                # Summary panel for preprocess tab
+                                wellPanel(
+                                  tableOutput('summary_preprocess')
+                                ), 
+                                
+                                # Drop down list: which histogram should be displayed?
+                                uiOutput('which_hist'),
+                                
+                                # Plot: histogram
+                                plotlyOutput('preprocess_hist')
+                                
+                              ) # End main panel on Preprocess tab #
+                              
+                            )), # End Preprocess tab #
+                   
+                   ################## Visualize Panel ###############################################
+                   tabPanel("Visualize", 
+                            
+                            sidebarLayout(
+                              
+                              # Sidebar Panel
+                              sidebarPanel(
+                                
+                                # Drop down list: Van Krevelen or Kendrick plot?
+                                selectInput('chooseplots', 'I want to plot a', 
+                                            choices = c('Van Krevelen Plot' = 1, 
+                                                        'Kendrick Plot' = 2)
+                                ), 
+                                
+                                # Drop down list: single samples or multiple?
+                                selectInput('choose_single', 'Using a(n)',
+                                            choices = c('Single sample' = 1, 'Overlay of multiple samples' = 2)), 
+                                
+                                # (Conditional on choose_single) If Multiple: show options for grouping
+                                conditionalPanel(
+                                  condition = 'input.choose_single == 2',
+                                  {
+                                    fluidRow(
+                                      
+                                      # Column with width 6: which samples are in Group 1?
+                                      column(6, 
+                                             uiOutput('whichGroups1')
+                                      ),
+                                      
+                                      # Column with width 6: which samples are in Group 2?
+                                      column(6, 
+                                             uiOutput('whichGroups2')
+                                      ))
+                                    
+                                  }) # End conditional output #
+                                
+                              ), # End sidebar panel on Visualize tab #
+                              
+                              mainPanel(
+                                
+                                # Set default width to 7
+                                width = 7,
+                                
+                                # (Conditional on chooseplots) If Van Krevelen:
+                                conditionalPanel(
+                                  condition = "input.chooseplots == 1", 
+                                  
+                                  # Plot a Van Krevelen plot
+                                  plotlyOutput('vankrev'), 
+                                  
+                                  # Drop down list: Use boundary?
+                                  selectInput('placeholder_1', 'Use boundary:', 
+                                              choices = c('None' = 0, 'A' = 1, 'B' = 2, 'C' = 3))
+                                  
+                                ), # End conditional Van Krevelen outputs
+                                
+                                # (conditional on chooseplots) If Kendrick:
+                                conditionalPanel(
+                                  condition = "input.chooseplots == 2", 
+                                  
+                                  # Plot: Kendrick plot
+                                  plotlyOutput('kendrick')
+                                  
+                                ), # End conditional Kendrick outputs
+                                
+                                # Drop down list: What should be colored by?
+                                selectInput('placeholder_1', 'Color by:', 
+                                            choices = c('Placeholder 1' = 1, 'Placeholder 2' = 2))
+                                
+                              ) # End main panel on Visualize tab #
+                              
+                            )), # End Visualize tab #
+                   
+                   ################## Download Panel ##############################################
+                   tabPanel('Download'), 
+                   
+                   ################## Glossary Panel ##############################################
+                   tabPanel('Glossary',
+                            #mainPanel(
+                              #includeHTML("./README/Glossary.html")
+                              includeMarkdown("./README/Glossary.md")
+                           # )
+                           
+                   )
+)
+)
+
