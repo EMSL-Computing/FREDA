@@ -715,18 +715,50 @@ shinyServer(function(session, input, output) {
   })
   
   #### Main Panel ####
-  # Display Kendrick or Van Krevelen plots
-  
+observeEvent(input$plot_submit, {
+  validate(need(input$choose_single != 0, message = "Please select plotting criteria"))
+    if (input$choose_single == 1) {
+      division_data <- divideBySample(peakIcr2)
+      key_name <- paste(attributes(peakIcr2)$cnames$fdata_cname, "=", input$whichSample, sep = "")
+    }
   # Stubs: Kendrick and Van Krevelen plots
   output$kendrick <- renderPlotly({
-    if (is.null(attr(peakIcr2, "cnames")$mf_cname)) {
-      peakIcr2 <<- assign_mf(peakIcr2)
+    # if (is.null(attr(peakIcr2, "cnames")$mf_cname)) {
+    #   peakIcr2 <<- assign_mf(peakIcr2)
+    # }
+    if (input$choose_single == 1) {
+      validate(need(!is.null(input$whichSample), message = "Please choose a sample below"))
+      return(kendrickPlot(division_data[[key_name]]$value))
     }
-    kendrickPlot(peakIcr2)
   })
-  output$vankrev <- renderPlot({
-    vanKrevelenPlotly(peakIcr2)
+  
+  output$vankrev <- renderPlotly({
+    if (input$choose_single == 1) {
+      validate(need(!is.null(input$whichSample), message = "Please choose a sample below"))
+      return(vanKrevelenPlot(division_data[[key_name]]$value))
+    }
+    
   })
+})
+
+  # # Stubs: Kendrick and Van Krevelen plots
+  # output$kendrick <- renderPlotly({
+  #   # if (is.null(attr(peakIcr2, "cnames")$mf_cname)) {
+  #   #   peakIcr2 <<- assign_mf(peakIcr2)
+  #   # }
+  #   if (input$choose_single == 1) {
+  #     validate(need(!is.null(input$whichSample), message = "Please choose a sample below"))
+  #     return(kendrickPlot(division_data()[[input$whichSample]]$value))
+  #   }
+  # })
+  # 
+  # output$vankrev <- renderPlotly({
+  #   if (input$choose_single == 1) {
+  #     validate(need(!is.null(input$whichSample), message = "Please choose a sample below"))
+  #     return(vanKrevelenPlot(division_data()[[input$whichSample]]$value))
+  #   }
+  #   
+  # })
   
   ####### Download Tab #######
   

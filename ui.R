@@ -251,23 +251,17 @@ shinyUI(navbarPage(title = (windowTitle = "FREDA"),
                               # Sidebar Panel
                               sidebarPanel(
                                 
-                                # Drop down list: single samples or multiple?
-                                selectInput('choose_single', 'I want to plot using:',
-                                            choices = c('Make a selection' = 0, 'A single sample' = 1, 'Multiple samples by group' = 2, 'A comparison of groups' = 3),
-                                            selected = 0), 
-                                
                                 # Drop down list: Van Krevelen or Kendrick plot?
                                 selectInput('chooseplots', 'I want to plot a', 
                                             choices = c('Van Krevelen Plot' = 1, 
                                                         'Kendrick Plot' = 2)
                                 ), 
                                 
-                                # (Conditional on choose_single) If single: choose sample
-                                conditionalPanel(
-                                  condition = 'input.choose_single == 1',
-                                  {
-                                    uiOutput('whichSample')
-                                  }), # End conditional output, single sample #
+                                # Drop down list: single samples or multiple?
+                                selectInput('choose_single', 'I want to plot using:',
+                                            choices = c('Make a selection' = 0, 'A single sample' = 1, 'Multiple samples by group' = 2, 'A comparison of groups' = 3),
+                                            selected = 0), 
+
                                     
                                 # (Conditional on choose_single) If Multiple: show options for grouping
                                 conditionalPanel(
@@ -285,8 +279,15 @@ shinyUI(navbarPage(title = (windowTitle = "FREDA"),
                                              uiOutput('whichGroups2')
                                       ))
                                     
-                                  }) # End conditional output multiple samples#
+                                  }), # End conditional output multiple samples#
                                 
+                                # (Conditional on choose_single) If single: choose sample
+                                conditionalPanel(
+                                  condition = 'input.choose_single == 1',
+                                  {
+                                    uiOutput('whichSample')
+                                  }), # End conditional output, single sample #
+                                actionButton("plot_submit", label = "Sumbit")
                               ), # End sidebar panel on Visualize tab #
                               
                               mainPanel(
@@ -315,7 +316,8 @@ shinyUI(navbarPage(title = (windowTitle = "FREDA"),
                                   plotlyOutput('kendrick')
                                   
                                 ), # End conditional Kendrick outputs
-                                
+
+
                                 # Drop down list: What should be colored by?
                                 selectInput('placeholder_1', 'Color by:', 
                                             choices = c('Placeholder 1' = 1, 'Placeholder 2' = 2))
