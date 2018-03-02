@@ -58,13 +58,13 @@ shinyUI(navbarPage(title = (windowTitle = "FREDA"),
                                 selectInput('isotope_yn',
                                             label = 'Do you have information for isotopes?',
                                             choices = list('Select an Option' = 0,
-                                                           'No' = 1,
-                                                           'Yes' = 2),
+                                                           'Yes' = 1,
+                                                           'No' = 2),
                                             selected = 'Select an Option'
                                             ),
                                 # Condition on presence of isotope information
                                 conditionalPanel(
-                                  condition = "input.isotope_yn == 2",
+                                  condition = "input.isotope_yn == 1",
                                   uiOutput('iso_info_column'),
                                   uiOutput('iso_symbol')
                                 ),
@@ -217,7 +217,7 @@ shinyUI(navbarPage(title = (windowTitle = "FREDA"),
                                                      'Gibbs Free Energy' = 'calc_gibbs', 
                                                      'Aromaticity and Modified Aromaticity' = 'calc_aroma',  
                                                      'DBE and DBE - O' = 'calc_dbe'), 
-                                                   selected = ''), 
+                                                   selected = c('calc_vankrev', 'calc_kendrick')), 
                                 # Action button: add test columns with reasults to peakIcr2
                                 actionButton('preprocess_click', 'Process Data')
                                 
@@ -251,22 +251,30 @@ shinyUI(navbarPage(title = (windowTitle = "FREDA"),
                               # Sidebar Panel
                               sidebarPanel(
                                 
+                                # Drop down list: single samples or multiple?
+                                selectInput('choose_single', 'I want to plot using:',
+                                            choices = c('Make a selection' = 0, 'A single sample' = 1, 'Multiple samples by group' = 2, 'A comparison of groups' = 3),
+                                            selected = 0), 
+                                
                                 # Drop down list: Van Krevelen or Kendrick plot?
                                 selectInput('chooseplots', 'I want to plot a', 
                                             choices = c('Van Krevelen Plot' = 1, 
                                                         'Kendrick Plot' = 2)
                                 ), 
                                 
-                                # Drop down list: single samples or multiple?
-                                selectInput('choose_single', 'Using a(n)',
-                                            choices = c('Single sample' = 1, 'Overlay of multiple samples' = 2)), 
-                                
+                                # (Conditional on choose_single) If single: choose sample
+                                conditionalPanel(
+                                  condition = 'input.choose_single == 1',
+                                  {
+                                    uiOutput('whichSample')
+                                  }), # End conditional output, single sample #
+                                    
                                 # (Conditional on choose_single) If Multiple: show options for grouping
                                 conditionalPanel(
                                   condition = 'input.choose_single == 2',
                                   {
                                     fluidRow(
-                                      
+                                      ######### MAKE GROUPS MUTUALLY EXCLUSIVE ##########
                                       # Column with width 6: which samples are in Group 1?
                                       column(6, 
                                              uiOutput('whichGroups1')
@@ -277,7 +285,7 @@ shinyUI(navbarPage(title = (windowTitle = "FREDA"),
                                              uiOutput('whichGroups2')
                                       ))
                                     
-                                  }) # End conditional output #
+                                  }) # End conditional output multiple samples#
                                 
                               ), # End sidebar panel on Visualize tab #
                               

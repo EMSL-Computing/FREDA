@@ -153,7 +153,6 @@ shinyServer(function(session, input, output) {
   
   # Object: Create peakICR when Upload Button clicked
   peakICR <- eventReactive(input$upload_click, {
-    
     # Error handling: unique identifier chosen
     validate(
       need(input$edata_id_col != 'Select one', 
@@ -182,14 +181,14 @@ shinyServer(function(session, input, output) {
       ) # End error handling #
       
       # Calculate peakIcrData with formula column
-      as.peakIcrData(e_data = Edata(), f_data = fdata(),
+      return(as.peakIcrData(e_data = Edata(), f_data = fdata(),
                      e_meta = Emeta(), edata_cname = input$edata_id_col, 
                      fdata_cname = 'SampleId', mass_cname = input$edata_id_col, 
-                     instrument_type = input$instrument, mf_cname = input$f_column)
+                     instrument_type = input$instrument, mf_cname = input$f_column))
     } 
     
     # If elemental columns chosen
-    else if (input$select == 2){
+    if (input$select == 2){
       
       ## Error handling: all drop down columns nonempty and of class 'numeric'
       validate(
@@ -214,20 +213,19 @@ shinyServer(function(session, input, output) {
         'One or more elemental columns are non-numeric.')
         
       ) # End error handling #
-      
       # If no C13
-      if (input$isotope_yn == 'Select a option' | input$isotope_yn == 'No') {
-        
+      if (input$isotope_yn %in% c(0,2)) {
         # Create peakICR object
-        as.peakIcrData(e_data = Edata(), f_data = fdata(),
+        return(as.peakIcrData(e_data = Edata(), f_data = fdata(),
                        e_meta = Emeta(), edata_cname = input$edata_id_col, 
                        fdata_cname = 'SampleId', mass_cname = input$edata_id_col,
                        instrument_type = input$instrument,
                        c_cname = input$c_column, h_cname = input$h_column, 
                        n_cname = input$n_column, o_cname = input$o_column, 
-                       s_cname = input$s_column, p_cname = input$p_column)
+                       s_cname = input$s_column, p_cname = input$p_column))
         
-      } else { # If there's C13 # 
+      }
+        if (input$isotope_yn == 1) { # If there's C13 # 
         
         # Error handling: entered isotopic notation must exist in the isotope information column
         validate(
@@ -235,7 +233,7 @@ shinyServer(function(session, input, output) {
                'The entered isotopic notation does not match the entries in the chosen isotope information column. Please revise.')
         ) # End error handling
         
-        as.peakIcrData(e_data = Edata(), f_data = fdata(),
+        return(as.peakIcrData(e_data = Edata(), f_data = fdata(),
                        e_meta = Emeta(), edata_cname = input$edata_id_col, 
                        fdata_cname = 'SampleId', mass_cname = input$edata_id_col, 
                        instrument_type = input$instrument,
@@ -243,7 +241,7 @@ shinyServer(function(session, input, output) {
                        n_cname = input$n_column, o_cname = input$o_column, 
                        s_cname = input$s_column, p_cname = input$p_column, 
                        isotopic_cname = input$iso_info_column,
-                       isotopic_notation = as.character(input$iso_symbol))
+                       isotopic_notation = as.character(input$iso_symbol)))
         
       } # End C13 / no C13 if statement
       
@@ -331,9 +329,8 @@ shinyServer(function(session, input, output) {
       
       # Create data frame of all elemental columns to sum across
       elem_columns <- data.frame(Emeta()[,elem_cnames])
-      
       # If isotopic information is included and matching entered notation, filter out where isotopes = denoted symbol
-      if ((!input$iso_info_column %in% c('Select an option', 'No') ) && (any(Emeta()[,input$iso_info_column] %in% input$iso_symbol))) {
+      if ((!input$isotope_yn %in% c("0","2") ) && (any(Emeta()[,input$iso_info_column] %in% input$iso_symbol))) {
         
         iso <- Emeta()[,input$iso_info_column]
         elem_columns <- elem_columns[-(which(as.character(iso) == as.character(input$iso_symbol))),]
@@ -418,7 +415,7 @@ shinyServer(function(session, input, output) {
   # Event: Create filtered nonreactive peakIcr2 when action button clicked
   # Depends on action button 'filter_click'
   observeEvent(input$filter_click, {
-    
+
     # Create nonreactive peakICR object
     peakIcr2 <<- peakICR()
     
@@ -638,7 +635,7 @@ shinyServer(function(session, input, output) {
   
   # Options for renderTable
   rownames = TRUE, 
-  digits = 2
+  digits = 2 # This maybe needs to change?
   
   ) # End summary_preprocess
   
@@ -684,6 +681,16 @@ shinyServer(function(session, input, output) {
   
   ####### Visualize Tab #######
   #### Sidebar Panel ####
+  
+  # (Conditional) Single sample option:
+  # Which sample should be plotted? 
+  # Depends on: sample_names 
+  output$whichSample <- renderUI({
+    
+    selectInput('whichSample', 'Sample', 
+                choices = sample_names())
+    
+  })
   
   # (Conditional) Multiple samples option:
   # Which samples should be in group 1? 
