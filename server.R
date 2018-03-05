@@ -92,46 +92,65 @@ shinyServer(function(session, input, output) {
   
   ### C H N O S P C13 ###
   # Drop-down lists: Select which column represents C / H / N / O / etc
+  # First try to locate the column name with a grepl
   # Note: All require emeta_cnames()
   output$c_column <- renderUI({
     
     selectInput("c_column", "Choose column representing C",
-                choices  = c('Select a column', emeta_cnames()))
+                choices  = c('Select a column', emeta_cnames()),
+                selected = ifelse(grepl("^c$", tolower(emeta_cnames())),
+                                  yes = emeta_cnames()[grepl("^c$", tolower(emeta_cnames()))][1],
+                                  no = 'Select a column'))
     
   })
   
   output$h_column <- renderUI({
     
     selectInput("h_column", "Choose column for H",
-                choices  = c('Select a column', emeta_cnames()))
+                choices  = c('Select a column', emeta_cnames()),
+                selected = ifelse(grepl("^h$", tolower(emeta_cnames())),
+                                  yes = emeta_cnames()[grepl("^h$", tolower(emeta_cnames()))][1],
+                                  no = 'Select a column'))
     
   })
   
   output$n_column <- renderUI({
     
     selectInput("n_column", "Choose column for N",
-                choices  = c('Select a column', emeta_cnames()))
+                choices  = c('Select a column', emeta_cnames()),
+                selected = ifelse(grepl("^n$", tolower(emeta_cnames())),
+                                  yes = emeta_cnames()[grepl("^n$", tolower(emeta_cnames()))][1],
+                                  no = 'Select a column'))
     
   })
   
   output$o_column <- renderUI({
     
     selectInput("o_column", "Choose column for O",
-                choices  = c('Select a column', emeta_cnames()))
+                choices  = c('Select a column', emeta_cnames()),
+                selected = ifelse(grepl("^o$", tolower(emeta_cnames())),
+                                  yes = emeta_cnames()[grepl("^o$", tolower(emeta_cnames()))][1],
+                                  no = 'Select a column'))
     
   }) 
   
   output$s_column <- renderUI({
     
     selectInput("s_column", "Choose column for S",
-                choices  = c('Select a column', emeta_cnames()))
+                choices  = c('Select a column', emeta_cnames()),
+                selected = ifelse(grepl("^s$", tolower(emeta_cnames())),
+                                  yes = emeta_cnames()[grepl("^s$", tolower(emeta_cnames()))][1],
+                                  no = 'Select a column'))
     
   })
   
   output$p_column <- renderUI({
     
     selectInput("p_column", "Choose column for P",
-                choices  = c('Select a column', emeta_cnames()))
+                choices  = c('Select a column', emeta_cnames()),
+                selected = ifelse(grepl("^p$", tolower(emeta_cnames())),
+                                  yes = emeta_cnames()[grepl("^p$", tolower(emeta_cnames()))][1],
+                                  no = 'Select a column'))
     
   })
   
