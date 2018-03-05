@@ -733,6 +733,21 @@ shinyServer(function(session, input, output) {
     
   })
   
+  output$vk_colors <- renderUI({
+    # Error handling: test_names required
+    req(test_names())
+    
+    # Create named list with potential histogram options
+    hist_choices <- unlist(test_names()[,1])
+    names(hist_choices) <- test_names()[,2]
+    
+    selectInput('vk_colors', 'Color by:', 
+                choices = c('Van Krevelen Boundary Set 1' = 'bs1',
+                            'Van Krevelen Boundary Set 2' = 'bs2', 
+                            hist_choices),
+                selected = 'bs1')
+  })
+
   #### Main Panel ####
 observeEvent(input$plot_submit, {
   validate(need(input$choose_single != 0, message = "Please select plotting criteria"))
@@ -740,11 +755,13 @@ observeEvent(input$plot_submit, {
       division_data <- divideBySample(peakIcr2)
       key_name <- paste(attributes(peakIcr2)$cnames$fdata_cname, "=", input$whichSample, sep = "")
     }
+    # if (input$choose_single == 2) {
+    #   division_data <- group_designation(peakIcr2, 
+    #                                      main_effects = c())
+    # }
   # Stubs: Kendrick and Van Krevelen plots
   output$kendrick <- renderPlotly({
-    # if (is.null(attr(peakIcr2, "cnames")$mf_cname)) {
-    #   peakIcr2 <<- assign_mf(peakIcr2)
-    # }
+    # if the selection plots a single sample
     if (input$choose_single == 1) {
       validate(need(!is.null(input$whichSample), message = "Please choose a sample below"))
       return(kendrickPlot(division_data[[key_name]]$value))
@@ -752,9 +769,27 @@ observeEvent(input$plot_submit, {
   })
   
   output$vankrev <- renderPlotly({
+    
     if (input$choose_single == 1) {
+      # needs a sample 
       validate(need(!is.null(input$whichSample), message = "Please choose a sample below"))
-      return(vanKrevelenPlot(division_data[[key_name]]$value))
+      
+      # boundary lines or not?
+      if (input$vkbounds == 0) {
+        # if no boundary lines, leave the option to color by boundary
+        if (input$vk_colors %in% c('bs1', 'bs2')) {
+          return(vanKrevelenPlot(division_data[[key_name]]$value, showVKBounds = FALSE, vkBoundarySet = input$vk_colors))
+        } else {
+          # if no boundary lines and color selection doesn't belong to a boundary, color by test
+          return(vanKrevelenPlot(division_data[[key_name]]$value, showVKBounds = FALSE, colorCName = input$vk_colors))
+        }
+      } else {# if boundary lines, allow a color by boundary class or color by test
+        if (input$vk_colors %in% c('bs1', 'bs2')) {
+          return(vanKrevelenPlot(division_data[[key_name]]$value, vkBoundarySet = input$vk_colors))
+        } else {
+        return(vanKrevelenPlot(division_data[[key_name]]$value, vkBoundarySet = input$vkbounds, colorCName = input$vk_colors))
+        }
+      }
     }
     
   })

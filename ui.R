@@ -303,9 +303,11 @@ shinyUI(navbarPage(title = (windowTitle = "FREDA"),
                                   plotlyOutput('vankrev'), 
                                   
                                   # Drop down list: Use boundary?
-                                  selectInput('placeholder_1', 'Use boundary:', 
-                                              choices = c('None' = 0, 'A' = 1, 'B' = 2, 'C' = 3))
-                                  
+                                  selectInput('vkbounds', 'Use Van Krevelen boundary set:', 
+                                              choices = c('BS1' = 'bs1', 'BS2' = 'bs2', 'None' = 0),
+                                              selected = 'bs1'),
+                                  uiOutput('vk_colors')
+
                                 ), # End conditional Van Krevelen outputs
                                 
                                 # (conditional on chooseplots) If Kendrick:
@@ -315,12 +317,8 @@ shinyUI(navbarPage(title = (windowTitle = "FREDA"),
                                   # Plot: Kendrick plot
                                   plotlyOutput('kendrick')
                                   
-                                ), # End conditional Kendrick outputs
+                                ) # End conditional Kendrick outputs
 
-
-                                # Drop down list: What should be colored by?
-                                selectInput('placeholder_1', 'Color by:', 
-                                            choices = c('Placeholder 1' = 1, 'Placeholder 2' = 2))
                                 
                               ) # End main panel on Visualize tab #
                               
