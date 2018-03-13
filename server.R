@@ -725,13 +725,13 @@ shinyServer(function(session, input, output) {
   # (Conditional) Multiple samples option:
   # Which samples should be in Group 2? 
   # Depends on: sample_names 
-  output$whichGroups2 <- renderUI({
-    
-    selectInput('whichGroups2', 'Group 2', 
-                choices = sample_names(), 
-                multiple = TRUE)
-    
-  })
+  # output$whichGroups2 <- renderUI({
+  #   
+  #   selectInput('whichGroups2', 'Group 2', 
+  #               choices = sample_names(), 
+  #               multiple = TRUE)
+  #   
+  # })
   
   output$vk_colors <- renderUI({
     # Error handling: test_names required
@@ -755,6 +755,9 @@ observeEvent(input$plot_submit, {
       division_data <- subset(peakIcr2, input$whichSample)
       #key_name <- paste(attributes(peakIcr2)$cnames$fdata_cname, "=", input$whichSample, sep = "")
     }
+  if (input$choose_single == 2) {
+    division_data <- subset(peakIcr2, input$whichGroups1)
+  }
     # if (input$choose_single == 2) {
     #   division_data <- group_designation(peakIcr2, 
     #                                      main_effects = c())
@@ -762,17 +765,17 @@ observeEvent(input$plot_submit, {
   # Stubs: Kendrick and Van Krevelen plots
   output$kendrick <- renderPlotly({
     # if the selection plots a single sample
-    if (input$choose_single == 1) {
-      validate(need(!is.null(input$whichSample), message = "Please choose a sample below"))
+   # if (input$choose_single == 1) {
+      validate(need(!is.null(input$whichSample) | !is.null(input$whichGroups1), message = "Please choose a sample below"))
       return(kendrickPlot(division_data))
-    }
+    #}
   })
   
   output$vankrev <- renderPlotly({
     
-    if (input$choose_single == 1) {
+   # if (input$choose_single == 1) {
       # needs a sample 
-      validate(need(!is.null(input$whichSample), message = "Please choose a sample below"))
+      validate(need(!is.null(input$whichSample) | !is.null(input$whichGroups1), message = "Please choose a sample below"))
       
       # boundary lines or not?
       if (input$vkbounds == 0) {
@@ -790,7 +793,7 @@ observeEvent(input$plot_submit, {
         return(vanKrevelenPlot(division_data, vkBoundarySet = input$vkbounds, colorCName = input$vk_colors))
         }
       }
-    }
+   # }
     
   })
 })

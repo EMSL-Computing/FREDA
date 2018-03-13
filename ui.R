@@ -270,14 +270,15 @@ shinyUI(navbarPage(title = (windowTitle = "FREDA"),
                                     fluidRow(
                                       ######### MAKE GROUPS MUTUALLY EXCLUSIVE ##########
                                       # Column with width 6: which samples are in Group 1?
-                                      column(6, 
+                                      column(12, 
                                              uiOutput('whichGroups1')
-                                      ),
+                                      )#,
                                       
                                       # Column with width 6: which samples are in Group 2?
-                                      column(6, 
-                                             uiOutput('whichGroups2')
-                                      ))
+                                      # column(6, 
+                                      #        uiOutput('whichGroups2')
+                                      # )
+                                      )
                                     
                                   }), # End conditional output multiple samples#
                                 
