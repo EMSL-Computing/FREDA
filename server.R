@@ -210,7 +210,7 @@ shinyServer(function(session, input, output) {
                               e_meta = Emeta(), edata_cname = input$edata_id_col, 
                               fdata_cname = 'SampleId', mass_cname = input$edata_id_col, 
                               instrument_type = input$instrument,
-                              mfname_cname = input$f_column,
+                              mf_cname = input$f_column,
                               isotopic_cname = input$iso_info_column,
                               isotopic_notation = as.character(input$iso_symbol)))
         
@@ -221,7 +221,7 @@ shinyServer(function(session, input, output) {
       return(as.peakIcrData(e_data = Edata(), f_data = fdata(),
                      e_meta = Emeta(), edata_cname = input$edata_id_col, 
                      fdata_cname = 'SampleId', mass_cname = input$edata_id_col, 
-                     instrument_type = input$instrument, mfname_cname = input$f_column))
+                     instrument_type = input$instrument, mf_cname = input$f_column))
       } 
     }
     
