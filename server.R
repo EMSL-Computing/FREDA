@@ -310,13 +310,17 @@ shinyServer(function(session, input, output) {
   
   # Summary: Display number of peaks and samples
   output$num_peaks <- renderText({
-    
-    c('Number of peaks: ', nrow(Edata()))
+    validate(
+      need(!is.null(peakICR()), message = "")
+    )
+    c('Number of peaks: ', nrow(peakICR()$e_data))
     
   }) # End num_peaks
   
   output$num_samples <- renderText({
-    
+    validate(
+      need(!is.null(peakICR()), message = "")
+    )
     c('Number of samples: ', (length(edata_cnames()) - 1))
     
   }) # End num_samples # 
@@ -383,8 +387,12 @@ shinyServer(function(session, input, output) {
       
     } # End elemental columns option
     
+    validate(
+      need(!is.null(peakICR()), message = "")
+    )
     # Display number of peaks/rows with formula assigned
     c('Number of peaks with formulas: ', num_rows_formula)
+
     
   }) # End num_peaks_formula in summary panel
   
