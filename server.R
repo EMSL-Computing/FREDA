@@ -198,13 +198,32 @@ shinyServer(function(session, input, output) {
         'Formula column is not a character vector. Please select another.')
         
       ) # End error handling #
+      if (input$isotope_yn == 1) { # If there's C13 # 
+        
+        # Error handling: entered isotopic notation must exist in the isotope information column
+        validate(
+          need(any(Emeta()[,input$iso_info_column] %in% input$iso_symbol),
+               'The entered isotopic notation does not match the entries in the chosen isotope information column. Please revise.')
+        ) # End error handling
+        
+        return(as.peakIcrData(e_data = Edata(), f_data = fdata(),
+                              e_meta = Emeta(), edata_cname = input$edata_id_col, 
+                              fdata_cname = 'SampleId', mass_cname = input$edata_id_col, 
+                              instrument_type = input$instrument,
+                              mfname_cname = input$f_column,
+                              isotopic_cname = input$iso_info_column,
+                              isotopic_notation = as.character(input$iso_symbol)))
+        
+      } # End C13 / no C13 if statement
       
+      if (input$isotope_yn %in% c(0,2)) {
       # Calculate peakIcrData with formula column
       return(as.peakIcrData(e_data = Edata(), f_data = fdata(),
                      e_meta = Emeta(), edata_cname = input$edata_id_col, 
                      fdata_cname = 'SampleId', mass_cname = input$edata_id_col, 
-                     instrument_type = input$instrument, mf_cname = input$f_column))
-    } 
+                     instrument_type = input$instrument, mfname_cname = input$f_column))
+      } 
+    }
     
     # If elemental columns chosen
     if (input$select == 2){
@@ -277,8 +296,11 @@ shinyServer(function(session, input, output) {
     # Error handling: peakICR() must exist
     req(peakICR())
     
+    # Create nonreactive peakICR object
+    peakIcr2 <<- peakICR()
+    
     # Create fake dependency on peakICR()
-    test1 <- peakICR()$e_data
+    test1 <- peakICR()$e_data #why is this here?
     
     # If no errors, show Success message
     HTML('<h4 style= "color:#1A5276">Your data has been successfully uploaded. 
@@ -435,8 +457,8 @@ shinyServer(function(session, input, output) {
   # Depends on action button 'filter_click'
   observeEvent(input$filter_click, {
 
-    # Create nonreactive peakICR object
-    peakIcr2 <<- peakICR()
+    # # Create nonreactive peakICR object
+    # peakIcr2 <<- peakICR()
     
     # If mass filtering is checked
     if (input$massfilter){
@@ -822,4 +844,10 @@ observeEvent(input$plot_submit, {
   ####### Glossary Tab #######
   
   ####### Download Tab #######
+  
+  # at the end of the session, remove the peakIcr2 global object
+  if ("peakIcr2" %in% ls()) {
+    on.exit(rm(list = list(peakIcr2)))
+  }
+  
 })
