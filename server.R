@@ -308,6 +308,18 @@ shinyServer(function(session, input, output) {
     
   }) # End success #
   
+  observeEvent(peakICR(),
+               # # Error handling: peakICR() must exist
+               # req(peakICR())
+               showModal(
+                 modalDialog(
+    title = "Upload message",
+    HTML('<h4 style= "color:#1A5276">Your data has been successfully uploaded. 
+               You may proceed to the subsequent tabs for analysis.</h4>')
+  )
+               )
+  )
+  
   # Summary: Display number of peaks and samples
   output$num_peaks <- renderText({
     validate(
@@ -514,6 +526,11 @@ shinyServer(function(session, input, output) {
         
       ) # End error handling
     }
+    showModal(
+      modalDialog(title = "Filter Success",
+                  HTML('<h4 style= "color:#1A5276">Your data has been filtered using mass and/or minimum observations. 
+         You may proceed to the next tabs for subsequnt analysis.</h4>'))
+    )
     HTML('<h4 style= "color:#1A5276">Your data has been filtered using mass and/or minimum observations. 
          You may proceed to the next tabs for subsequnt analysis.</h4>')
     
@@ -637,13 +654,10 @@ shinyServer(function(session, input, output) {
   ## Action button: Apply calculation functions When action button is clicked
   # Depends on: peakIcr2, input$tests
   observeEvent(input$preprocess_click, {
-    
-    # If elemental columns are available
-    if (input$select == 2) {
+
       validate(need(input$tests, message = "Please choose at least one test to calculate"))
       # Apply all relevant functions
       peakIcr2 <<- compound_calcs(peakIcr2, calc_fns = c(input$tests))
-    }
   }) # End action button event
   
   # Object: Create dataframe of possible calculations to show in summary/histogram
