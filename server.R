@@ -604,7 +604,7 @@ shinyServer(function(session, input, output) {
     rowNum = which(summaryFilterDataFrame()$data_state == 'Unfiltered')
     
     # Create a dataframe out of Before and After results from summaryFilterDataFrame
-    data.frame('Before' = unlist(summaryFilterDataFrame()[rowNum, c('sum_peaks', 'assigned', 
+    summary_table <- data.frame('Before' = unlist(summaryFilterDataFrame()[rowNum, c('sum_peaks', 'assigned', 
                                                                'min_mass', 'max_mass')]),
                'After' = afterResults,
                row.names = c('Number of peaks',
@@ -612,12 +612,19 @@ shinyServer(function(session, input, output) {
                              'Minimum mass observed', 
                              'Maximum Mass observed'))
     
+    # Format the last two rows of this table to have decimal places and the first two rows to have a comma
+    # this requires converting the table to a string, keep two copies in case the string changes
+    display_table <- summary_table
+    
+    display_table[1:2, 1] <- formatC(round(summary_table[1:2,1]), big.mark = ",", format = "d")
+    display_table[1:2, 2] <- formatC(round(summary_table[1:2,2]), big.mark = ",", format = "d")
+    display_table[3:4, 1] <- formatC(round(summary_table[3:4, 1], digits = 4), format = "f", big.mark = ",")
+    display_table[3:4, 2] <- formatC(round(summary_table[3:4, 2], digits = 4), format = "f", big.mark = ",")
+    return(display_table)
   }, # End code portion of summary_filter
   
   # Options: include rownames, no decimal places
-  rownames = TRUE, 
-  digits = 0
-  
+  rownames = TRUE
   ) # End summary_filter
   
   # Plot bar chart
