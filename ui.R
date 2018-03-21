@@ -61,7 +61,7 @@ shinyUI(navbarPage(title = (windowTitle = "FREDA"),
                                                            'Yes' = 1,
                                                            'No' = 2),
                                             selected = 'Select an Option'
-                                            ),
+                                ),
                                 # Condition on presence of isotope information
                                 conditionalPanel(
                                   condition = "input.isotope_yn == 1",
@@ -254,88 +254,124 @@ shinyUI(navbarPage(title = (windowTitle = "FREDA"),
                                 # Drop down list: Van Krevelen or Kendrick plot?
                                 selectInput('chooseplots', 'I want to plot a', 
                                             choices = c('Van Krevelen Plot' = 1, 
-                                                        'Kendrick Plot' = 2)
+                                                        'Kendrick Plot' = 2,
+                                                        'Select an Option' = 0),
+                                            selected = 0
                                 ), 
+                                # UI options will change depending on plot type. Stub
+                                # that out here with conditional panels
+                                #------------------ Van Krev Conditionals -------------------#
+                                # conditionalPanel(
+                                #   condition = 'input.chooseplots == 1',
+                                #   
+                                #   # Drop down list: single samples or multiple?
+                                #   selectInput('choose_single', 'I want to plot using:',
+                                #               choices = c('Make a selection' = 0, 'A single sample' = 1, 'Multiple samples by group' = 2, 'A comparison of groups' = 3),
+                                #               selected = 0), 
+                                #   
+                                #   # (Conditional on choose_single) If Multiple: show options for grouping
+                                #   conditionalPanel(
+                                #     condition = 'input.choose_single == 2',
+                                #     
+                                #       fluidRow(
+                                #         ######### MAKE GROUPS MUTUALLY EXCLUSIVE ##########
+                                #         # Column with width 6: which samples are in Group 1?
+                                #         column(12, 
+                                #                uiOutput('whichGroups1')
+                                #         )#,
+                                #         
+                                #         # Column with width 6: which samples are in Group 2?
+                                #         # column(6, 
+                                #         #        uiOutput('whichGroups2')
+                                #         # )
+                                #       )
+                                #       
+                                #     ), # End conditional output multiple samples#
+                                #   
+                                #   # (Conditional on choose_single) If single: choose sample
+                                #   conditionalPanel(
+                                #     condition = 'input.choose_single == 1',
+                                #     
+                                #       uiOutput('whichSample')
+                                #     ), # End conditional output, single sample #
+                                #   actionButton("plot_submit", label = "Sumbit")
+                                # ),
+                                # 
+                                # 
+                                # 
+                                # 
+                                # # #------------------ Kendrick Conditionals -------------------#
+                                # conditionalPanel(
+                                #   condition = 'input.chooseplots == 2',
+                                # 
+                                #   # Drop down list: single samples or multiple?
+                                #   selectInput('choose_single2', 'I want to plot using:',
+                                #               choices = c('Make a selection' = 0, 'A single sample' = 1, 'Multiple samples by group' = 2, 'A comparison of groups' = 3),
+                                #               selected = 0),
+                                # 
+                                #   # (Conditional on choose_single) If Multiple: show options for grouping
+                                #   conditionalPanel(
+                                #     condition = 'input.choose_single2 == 2',
+                                # 
+                                #     fluidRow(
+                                #       ######### MAKE GROUPS MUTUALLY EXCLUSIVE ##########
+                                #       # Column with width 6: which samples are in Group 1?
+                                #       column(12,
+                                #              uiOutput('whichGroups1')
+                                #       )#,
+                                # 
+                                #       # Column with width 6: which samples are in Group 2?
+                                #       # column(6,
+                                #       #        uiOutput('whichGroups2')
+                                #       # )
+                                #     )
+                                # 
+                                #   ), # End conditional output multiple samples#
+                                # 
+                                #   # (Conditional on choose_single) If single: choose sample
+                                #   conditionalPanel(
+                                #     condition = 'input.choose_single2 == 1',
+                                # 
+                                #     uiOutput('whichSample')
+                                #   ), # End conditional output, single sample #
+                                #   actionButton("plot_submit2", label = "Sumbit")
+                                # )
+                                uiOutput("plotUI")
+                                ),# End sidebar conditionals on Visualize tab #
                                 
-                                # Drop down list: single samples or multiple?
-                                selectInput('choose_single', 'I want to plot using:',
-                                            choices = c('Make a selection' = 0, 'A single sample' = 1, 'Multiple samples by group' = 2, 'A comparison of groups' = 3),
-                                            selected = 0), 
-
-                                    
-                                # (Conditional on choose_single) If Multiple: show options for grouping
-                                conditionalPanel(
-                                  condition = 'input.choose_single == 2',
-                                  {
-                                    fluidRow(
-                                      ######### MAKE GROUPS MUTUALLY EXCLUSIVE ##########
-                                      # Column with width 6: which samples are in Group 1?
-                                      column(12, 
-                                             uiOutput('whichGroups1')
-                                      )#,
-                                      
-                                      # Column with width 6: which samples are in Group 2?
-                                      # column(6, 
-                                      #        uiOutput('whichGroups2')
-                                      # )
-                                      )
-                                    
-                                  }), # End conditional output multiple samples#
-                                
-                                # (Conditional on choose_single) If single: choose sample
-                                conditionalPanel(
-                                  condition = 'input.choose_single == 1',
-                                  {
-                                    uiOutput('whichSample')
-                                  }), # End conditional output, single sample #
-                                actionButton("plot_submit", label = "Sumbit")
-                              ), # End sidebar panel on Visualize tab #
-                              
-                              mainPanel(
-                                
-                                # Set default width to 7
-                                width = 7,
-                                
-                                # (Conditional on chooseplots) If Van Krevelen:
-                                conditionalPanel(
-                                  condition = "input.chooseplots == 1", 
-                                  
-                                  # Plot a Van Krevelen plot
-                                  plotlyOutput('vankrev'), 
-                                  
-                                  # Drop down list: Use boundary?
-                                  selectInput('vkbounds', 'Use Van Krevelen boundary set:', 
-                                              choices = c('BS1' = 'bs1', 'BS2' = 'bs2', 'None' = 0),
-                                              selected = 'bs1'),
-                                  uiOutput('vk_colors')
-
-                                ), # End conditional Van Krevelen outputs
-                                
-                                # (conditional on chooseplots) If Kendrick:
-                                conditionalPanel(
-                                  condition = "input.chooseplots == 2", 
-                                  
-                                  # Plot: Kendrick plot
-                                  plotlyOutput('kendrick')
-                                  
-                                ) # End conditional Kendrick outputs
-
-                                
-                              ) # End main panel on Visualize tab #
-                              
-                            )), # End Visualize tab #
-                   
-                   ################## Download Panel ##############################################
-                   tabPanel('Download'), 
-                   
-                   ################## Glossary Panel ##############################################
-                   tabPanel('Glossary',
-                            #mainPanel(
-                              #includeHTML("./README/Glossary.html")
-                              includeMarkdown("./README/Glossary.md")
-                           # )
-                           
-                   )
+                                mainPanel(
+                                  plotlyOutput('FxnPlot'),
+                                  conditionalPanel(
+                                    condition = 'input.chooseplots == 1',
+                                    # Set default width to 7
+                                    width = 7,
+                                    # Drop down list: Use boundary?
+                                    selectInput('vkbounds', 'Use Van Krevelen boundary set:',
+                                                choices = c('BS1' = 'bs1', 'BS2' = 'bs2', 'None' = 0),
+                                                selected = 'bs1'),
+                                    uiOutput('vk_colors')
+                                  ),
+                                  conditionalPanel(
+                                    condition = 'input.chooseplots == 2',
+                                    width = 7#,
+                                    # Plot: Kendrick plot
+                                   # plotlyOutput('FxnPlot')
+                                  )
+                                )# End main panel on Visualize tab #
+                            
+                   )), # End Visualize tab #
+        
+        ################## Download Panel ##############################################
+        tabPanel('Download'), 
+        
+        ################## Glossary Panel ##############################################
+        tabPanel('Glossary',
+                 #mainPanel(
+                 #includeHTML("./README/Glossary.html")
+                 includeMarkdown("./README/Glossary.md")
+                 # )
+                 
+        )
 )
 )
 

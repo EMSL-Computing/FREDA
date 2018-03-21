@@ -620,6 +620,7 @@ shinyServer(function(session, input, output) {
     display_table[1:2, 2] <- formatC(round(summary_table[1:2,2]), big.mark = ",", format = "d")
     display_table[3:4, 1] <- formatC(round(summary_table[3:4, 1], digits = 4), format = "f", big.mark = ",")
     display_table[3:4, 2] <- formatC(round(summary_table[3:4, 2], digits = 4), format = "f", big.mark = ",")
+    
     return(display_table)
   }, # End code portion of summary_filter
   
@@ -751,40 +752,92 @@ shinyServer(function(session, input, output) {
   
   ####### Visualize Tab #######
   #### Sidebar Panel ####
-  
-  # (Conditional) Single sample option:
-  # Which sample should be plotted? 
-  # Depends on: sample_names 
-  output$whichSample <- renderUI({
-    
-    selectInput('whichSample', 'Sample', 
-                choices = sample_names())
-    
+  # choose ui to render depending on which plot is chosen from input$chooseplot
+  output$plotUI <- renderUI({
+    if (input$chooseplots == 0) {
+      return(NULL)
+    }
+    if (input$chooseplots == 1) {
+      return(tagList(
+        # Drop down list: single samples or multiple?
+        selectInput('choose_single', 'I want to plot using:',
+                    choices = c('Make a selection' = 0, 'A single sample' = 1, 'Multiple samples by group' = 2, 'A comparison of groups' = 3),
+                    selected = 0), 
+        
+        # (Conditional on choose_single) If Multiple: show options for grouping
+        conditionalPanel(
+          condition = 'input.choose_single == 2',
+
+          fluidRow(
+            ######### MAKE GROUPS MUTUALLY EXCLUSIVE ##########
+            # Column with width 6: which samples are in Group 1?
+            column(12,
+                   selectInput('whichGroups1', 'Group 1',
+                               choices = sample_names(),
+                               multiple = TRUE)
+            )#,
+
+            # Column with width 6: which samples are in Group 2?
+            # column(6,
+            #        uiOutput('whichGroups2')
+            # )
+          )
+
+        ), # End conditional output multiple samples#
+
+        # (Conditional on choose_single) If single: choose sample
+        conditionalPanel(
+          condition = 'input.choose_single == 1',
+
+          selectInput('whichSample', 'Sample',
+                      choices = sample_names())
+        ), # End conditional output, single sample #
+        actionButton("plot_submit", label = "Sumbit")
+      ))
+    }
+    if (input$chooseplots == 2) {
+      return(tagList(
+        # Drop down list: single samples or multiple?
+        selectInput('choose_single', 'I want to plot using:',
+                    choices = c('Make a selection' = 0, 'A single sample' = 1, 'Multiple samples by group' = 2, 'A comparison of groups' = 3),
+                    selected = 0), 
+        
+        # (Conditional on choose_single) If Multiple: show options for grouping
+        conditionalPanel(
+          condition = 'input.choose_single == 2',
+          
+          fluidRow(
+            ######### MAKE GROUPS MUTUALLY EXCLUSIVE ##########
+            # Column with width 6: which samples are in Group 1?
+            column(12,
+                   selectInput('whichGroups1', 'Group 1',
+                               choices = sample_names(),
+                               multiple = TRUE)
+            )#,
+            
+            # Column with width 6: which samples are in Group 2?
+            # column(6,
+            #        uiOutput('whichGroups2')
+            # )
+          )
+          
+        ), # End conditional output multiple samples#
+        
+        # (Conditional on choose_single) If single: choose sample
+        conditionalPanel(
+          condition = 'input.choose_single == 1',
+          
+          selectInput('whichSample', 'Sample',
+                      choices = sample_names())
+        ), # End conditional output, single sample #
+        actionButton("plot_submit", label = "Sumbit")
+      ))
+    }
+
   })
-  
-  # (Conditional) Multiple samples option:
-  # Which samples should be in group 1? 
-  # Depends on: sample_names 
-  output$whichGroups1 <- renderUI({
-    
-    selectInput('whichGroups1', 'Group 1', 
-                choices = sample_names(), 
-                multiple = TRUE)
-    
-  })
-  
-  # (Conditional) Multiple samples option:
-  # Which samples should be in Group 2? 
-  # Depends on: sample_names 
-  # output$whichGroups2 <- renderUI({
-  #   
-  #   selectInput('whichGroups2', 'Group 2', 
-  #               choices = sample_names(), 
-  #               multiple = TRUE)
-  #   
-  # })
   
   output$vk_colors <- renderUI({
+    # (Conditional on vkbounds):
     # Error handling: test_names required
     req(test_names())
     
@@ -792,15 +845,29 @@ shinyServer(function(session, input, output) {
     hist_choices <- unlist(test_names()[,1])
     names(hist_choices) <- test_names()[,2]
     
-    selectInput('vk_colors', 'Color by:', 
-                choices = c('Van Krevelen Boundary Set 1' = 'bs1',
-                            'Van Krevelen Boundary Set 2' = 'bs2', 
-                            hist_choices),
-                selected = 'bs1')
+    if(input$vkbounds == 0) {#no boundaries
+    return(selectInput('vk_colors', 'Color by:', 
+                           choices = c('Van Krevelen Boundary Set 1' = 'bs1',
+                                       'Van Krevelen Boundary Set 2' = 'bs2', 
+                                       hist_choices),
+                           selected = 'bs1'))  
+    } else if (input$vkbounds == 'bs1'){ #only allow bs1 boundary colors
+      return(selectInput('vk_colors', 'Color by:', 
+                         choices = c('Van Krevelen Boundary Set 1' = 'bs1',
+                                     hist_choices),
+                         selected = 'bs1'))
+      
+    } else if (input$vkbounds == 'bs2') { #only allow bs2 boundary colors
+      selectInput('vk_colors', 'Color by:', 
+                  choices = c('Van Krevelen Boundary Set 2' = 'bs2', 
+                              hist_choices),
+                  selected = 'bs2')
+    }
   })
 
   #### Main Panel ####
 observeEvent(input$plot_submit, {
+  # Make sure a plot stype selection has been chosen
   validate(need(input$choose_single != 0, message = "Please select plotting criteria"))
     if (input$choose_single == 1) {
       division_data <- subset(peakIcr2, input$whichSample)
@@ -809,27 +876,21 @@ observeEvent(input$plot_submit, {
   if (input$choose_single == 2) {
     division_data <- subset(peakIcr2, input$whichGroups1)
   }
-    # if (input$choose_single == 2) {
-    #   division_data <- group_designation(peakIcr2, 
-    #                                      main_effects = c())
-    # }
-  # Stubs: Kendrick and Van Krevelen plots
-  output$kendrick <- renderPlotly({
-    # if the selection plots a single sample
-   # if (input$choose_single == 1) {
-      validate(need(!is.null(input$whichSample) | !is.null(input$whichGroups1), message = "Please choose a sample below"))
+
+  #-------Kendrick Plot-----------# 
+  if (input$chooseplots == 2) {
+    output$FxnPlot <- renderPlotly({
+      validate(need(!is.null(input$whichSample) | !is.null(input$whichGroups1),
+                    message = "Please choose a sample below"))
       return(kendrickPlot(division_data))
-    #}
-  })
-  
-  output$vankrev <- renderPlotly({
-    
-   # if (input$choose_single == 1) {
-      # needs a sample 
-      validate(need(!is.null(input$whichSample) | !is.null(input$whichGroups1), message = "Please choose a sample below"))
-      
-      # boundary lines or not?
-      if (input$vkbounds == 0) {
+    })
+  #--------Van Krevelen Plot----------#
+  } else if (input$chooseplots == 1) {
+    output$FxnPlot <- renderPlotly({
+      validate(need(!is.null(input$whichSample) | !is.null(input$whichGroups1),
+                    message = "Please choose a sample below"))
+      #-----boundary line logic------#
+      if (input$vkbounds == 0) { #no bounds
         # if no boundary lines, leave the option to color by boundary
         if (input$vk_colors %in% c('bs1', 'bs2')) {
           return(vanKrevelenPlot(division_data, showVKBounds = FALSE, vkBoundarySet = input$vk_colors))
@@ -837,16 +898,48 @@ observeEvent(input$plot_submit, {
           # if no boundary lines and color selection doesn't belong to a boundary, color by test
           return(vanKrevelenPlot(division_data, showVKBounds = FALSE, colorCName = input$vk_colors))
         }
-      } else {# if boundary lines, allow a color by boundary class or color by test
+      } else {
+        # if boundary lines, allow a color by boundary class 
         if (input$vk_colors %in% c('bs1', 'bs2')) {
-          return(vanKrevelenPlot(division_data, vkBoundarySet = input$vk_colors))
+          return(vanKrevelenPlot(division_data, vkBoundarySet = input$vkbounds, showVKBounds = TRUE))
         } else {
-        return(vanKrevelenPlot(division_data, vkBoundarySet = input$vkbounds, colorCName = input$vk_colors))
+          # if boundary lines and color isn't a boundary class
+          return(vanKrevelenPlot(division_data, vkBoundarySet = input$vkbounds, showVKBounds = TRUE, colorCName = input$vk_colors))
+          
         }
       }
-   # }
-    
-  })
+    })
+  }
+  # output$kendrick <- renderPlotly({
+  #   # if the selection plots a single sample
+  #  # if (input$choose_single == 1) {
+  #     validate(need(!is.null(input$whichSample) | !is.null(input$whichGroups1), message = "Please choose a sample below"))
+  #     return(kendrickPlot(division_data))
+  #   #}
+  # })
+  
+  # output$vankrev <- renderPlotly({
+  #   
+  #  # if (input$choose_single == 1) {
+  #     # needs a sample 
+  #     validate(need(!is.null(input$whichSample) | !is.null(input$whichGroups1), message = "Please choose a sample below"))
+  #     
+  #     # boundary lines or not?
+  #     if (input$vkbounds == 0) {
+  #       # if no boundary lines, leave the option to color by boundary
+  #       if (input$vk_colors %in% c('bs1', 'bs2')) {
+  #         return(vanKrevelenPlot(division_data, showVKBounds = FALSE, vkBoundarySet = input$vk_colors))
+  #       } else {
+  #         # if no boundary lines and color selection doesn't belong to a boundary, color by test
+  #         return(vanKrevelenPlot(division_data, showVKBounds = FALSE, colorCName = input$vk_colors))
+  #       }
+  #     } else {# if boundary lines, allow a color by boundary class or color by test
+  # 
+  #         return(vanKrevelenPlot(division_data, vkBoundarySet = input$vkbounds, showVKBounds = TRUE, colorCName = input$vk_colors))
+  #     }
+  #  # }
+  #   
+  # })
 })
 
   # # Stubs: Kendrick and Van Krevelen plots
