@@ -342,7 +342,7 @@ shinyUI(navbarPage(title = (windowTitle = "FREDA"),
                                 mainPanel(
                                   plotlyOutput('FxnPlot'),
                                   conditionalPanel(
-                                    condition = 'input.chooseplots == 1',
+                                    condition = 'input.chooseplots == 1 || input.chooseplots == 2',
                                     # Set default width to 7
                                     width = 7,
                                     # Drop down list: Use boundary?
@@ -350,13 +350,13 @@ shinyUI(navbarPage(title = (windowTitle = "FREDA"),
                                                 choices = c('BS1' = 'bs1', 'BS2' = 'bs2', 'None' = 0),
                                                 selected = 'bs1'),
                                     uiOutput('vk_colors')
-                                  ),
-                                  conditionalPanel(
-                                    condition = 'input.chooseplots == 2',
-                                    width = 7#,
-                                    # Plot: Kendrick plot
-                                   # plotlyOutput('FxnPlot')
-                                  )
+                                  )#,
+                                  # conditionalPanel(
+                                  #   condition = 'input.chooseplots == 2',
+                                  #   width = 7#,
+                                  #   # Plot: Kendrick plot
+                                  #  # plotlyOutput('FxnPlot')
+                                  # )
                                 )# End main panel on Visualize tab #
                             
                    )), # End Visualize tab #

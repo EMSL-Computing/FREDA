@@ -217,11 +217,11 @@ shinyServer(function(session, input, output) {
       } # End C13 / no C13 if statement
       
       if (input$isotope_yn %in% c(0,2)) {
-      # Calculate peakIcrData with formula column
-      return(as.peakIcrData(e_data = Edata(), f_data = fdata(),
-                     e_meta = Emeta(), edata_cname = input$edata_id_col, 
-                     fdata_cname = 'SampleId', mass_cname = input$edata_id_col, 
-                     instrument_type = input$instrument, mf_cname = input$f_column))
+        # Calculate peakIcrData with formula column
+        return(as.peakIcrData(e_data = Edata(), f_data = fdata(),
+                              e_meta = Emeta(), edata_cname = input$edata_id_col, 
+                              fdata_cname = 'SampleId', mass_cname = input$edata_id_col, 
+                              instrument_type = input$instrument, mf_cname = input$f_column))
       } 
     }
     
@@ -239,7 +239,7 @@ shinyServer(function(session, input, output) {
         }, 
         'Missing column information. Please double-check drop-down options.')
       )
-        validate(
+      validate(
         need({
           all(is.numeric(Emeta()[,input$c_column])) &
             all(is.numeric(Emeta()[,input$h_column])) &
@@ -255,15 +255,15 @@ shinyServer(function(session, input, output) {
       if (input$isotope_yn %in% c(0,2)) {
         # Create peakICR object
         return(as.peakIcrData(e_data = Edata(), f_data = fdata(),
-                       e_meta = Emeta(), edata_cname = input$edata_id_col, 
-                       fdata_cname = 'SampleId', mass_cname = input$edata_id_col,
-                       instrument_type = input$instrument,
-                       c_cname = input$c_column, h_cname = input$h_column, 
-                       n_cname = input$n_column, o_cname = input$o_column, 
-                       s_cname = input$s_column, p_cname = input$p_column))
+                              e_meta = Emeta(), edata_cname = input$edata_id_col, 
+                              fdata_cname = 'SampleId', mass_cname = input$edata_id_col,
+                              instrument_type = input$instrument,
+                              c_cname = input$c_column, h_cname = input$h_column, 
+                              n_cname = input$n_column, o_cname = input$o_column, 
+                              s_cname = input$s_column, p_cname = input$p_column))
         
       }
-        if (input$isotope_yn == 1) { # If there's C13 # 
+      if (input$isotope_yn == 1) { # If there's C13 # 
         
         # Error handling: entered isotopic notation must exist in the isotope information column
         validate(
@@ -272,14 +272,14 @@ shinyServer(function(session, input, output) {
         ) # End error handling
         
         return(as.peakIcrData(e_data = Edata(), f_data = fdata(),
-                       e_meta = Emeta(), edata_cname = input$edata_id_col, 
-                       fdata_cname = 'SampleId', mass_cname = input$edata_id_col, 
-                       instrument_type = input$instrument,
-                       c_cname = input$c_column, h_cname = input$h_column, 
-                       n_cname = input$n_column, o_cname = input$o_column, 
-                       s_cname = input$s_column, p_cname = input$p_column, 
-                       isotopic_cname = input$iso_info_column,
-                       isotopic_notation = as.character(input$iso_symbol)))
+                              e_meta = Emeta(), edata_cname = input$edata_id_col, 
+                              fdata_cname = 'SampleId', mass_cname = input$edata_id_col, 
+                              instrument_type = input$instrument,
+                              c_cname = input$c_column, h_cname = input$h_column, 
+                              n_cname = input$n_column, o_cname = input$o_column, 
+                              s_cname = input$s_column, p_cname = input$p_column, 
+                              isotopic_cname = input$iso_info_column,
+                              isotopic_notation = as.character(input$iso_symbol)))
         
       } # End C13 / no C13 if statement
       
@@ -313,10 +313,10 @@ shinyServer(function(session, input, output) {
                # req(peakICR())
                showModal(
                  modalDialog(
-    title = "Upload message",
-    HTML('<h4 style= "color:#1A5276">Your data has been successfully uploaded. 
+                   title = "Upload message",
+                   HTML('<h4 style= "color:#1A5276">Your data has been successfully uploaded. 
                You may proceed to the subsequent tabs for analysis.</h4>')
-  )
+                 )
                )
   )
   
@@ -404,7 +404,7 @@ shinyServer(function(session, input, output) {
     )
     # Display number of peaks/rows with formula assigned
     c('Number of peaks with formulas: ', num_rows_formula)
-
+    
     
   }) # End num_peaks_formula in summary panel
   
@@ -427,12 +427,12 @@ shinyServer(function(session, input, output) {
   #     head(Edata())
   #   
   # }, # End code portion of head_edata
-# 
-#   
-#   # Options for renderDataTable
-#   options = list(dom = 't', searching = FALSE)
-#   
-#   ) # End head_edata
+  # 
+  #   
+  #   # Options for renderDataTable
+  #   options = list(dom = 't', searching = FALSE)
+  #   
+  #   ) # End head_edata
   output$head_edata <- DT::renderDT(Edata(),
                                     options = list(scrollX = TRUE))
   # Display explanation for e_meta
@@ -476,7 +476,7 @@ shinyServer(function(session, input, output) {
   # Event: Create filtered nonreactive peakIcr2 when action button clicked
   # Depends on action button 'filter_click'
   observeEvent(input$filter_click, {
-
+    
     # # Create nonreactive peakICR object
     # peakIcr2 <<- peakICR()
     
@@ -587,7 +587,7 @@ shinyServer(function(session, input, output) {
       
       # Get relevant columns out of summaryFilterDataFrame
       afterResults <- unlist(summaryFilterDataFrame()[rowNum, c('sum_peaks', 'assigned', 
-                                                           'min_mass', 'max_mass')])
+                                                                'min_mass', 'max_mass')])
     }
     # If molecule filter checked
     if (input$molfilter) {
@@ -597,7 +597,7 @@ shinyServer(function(session, input, output) {
       
       # Get relevant columns out of summaryFilterDataFrame
       afterResults <- unlist(summaryFilterDataFrame()[rowNum, c('sum_peaks', 'assigned', 
-                                                           'min_mass', 'max_mass')])
+                                                                'min_mass', 'max_mass')])
     }
     
     # Find which row in summaryFilterDataFrame represents the Unfiltered information
@@ -605,12 +605,12 @@ shinyServer(function(session, input, output) {
     
     # Create a dataframe out of Before and After results from summaryFilterDataFrame
     summary_table <- data.frame('Before' = unlist(summaryFilterDataFrame()[rowNum, c('sum_peaks', 'assigned', 
-                                                               'min_mass', 'max_mass')]),
-               'After' = afterResults,
-               row.names = c('Number of peaks',
-                             'Number of peaks assigned a formula', 
-                             'Minimum mass observed', 
-                             'Maximum Mass observed'))
+                                                                                     'min_mass', 'max_mass')]),
+                                'After' = afterResults,
+                                row.names = c('Number of peaks',
+                                              'Number of peaks assigned a formula', 
+                                              'Minimum mass observed', 
+                                              'Maximum Mass observed'))
     
     # Format the last two rows of this table to have decimal places and the first two rows to have a comma
     # this requires converting the table to a string, keep two copies in case the string changes
@@ -631,7 +631,7 @@ shinyServer(function(session, input, output) {
   # Plot bar chart
   # Depends on: summaryFilterDataFrame
   output$barplot_filter <- renderPlot({
-
+    
     # Melt dataframe into 2 objects
     ggdata_barplot <- melt(summaryFilterDataFrame()[,c('data_state', 'assigned', 'unassigned')])
     ggdata_text <- summaryFilterDataFrame()[, c('data_state', 'sum_peaks', 'dispText')]
@@ -662,10 +662,10 @@ shinyServer(function(session, input, output) {
   ## Action button: Apply calculation functions When action button is clicked
   # Depends on: peakIcr2, input$tests
   observeEvent(input$preprocess_click, {
-
-      validate(need(input$tests, message = "Please choose at least one test to calculate"))
-      # Apply all relevant functions
-      peakIcr2 <<- compound_calcs(peakIcr2, calc_fns = c(input$tests))
+    
+    validate(need(input$tests, message = "Please choose at least one test to calculate"))
+    # Apply all relevant functions
+    peakIcr2 <<- compound_calcs(peakIcr2, calc_fns = c(input$tests))
   }) # End action button event
   
   # Object: Create dataframe of possible calculations to show in summary/histogram
@@ -767,7 +767,7 @@ shinyServer(function(session, input, output) {
         # (Conditional on choose_single) If Multiple: show options for grouping
         conditionalPanel(
           condition = 'input.choose_single == 2',
-
+          
           fluidRow(
             ######### MAKE GROUPS MUTUALLY EXCLUSIVE ##########
             # Column with width 6: which samples are in Group 1?
@@ -776,19 +776,19 @@ shinyServer(function(session, input, output) {
                                choices = sample_names(),
                                multiple = TRUE)
             )#,
-
+            
             # Column with width 6: which samples are in Group 2?
             # column(6,
             #        uiOutput('whichGroups2')
             # )
           )
-
+          
         ), # End conditional output multiple samples#
-
+        
         # (Conditional on choose_single) If single: choose sample
         conditionalPanel(
           condition = 'input.choose_single == 1',
-
+          
           selectInput('whichSample', 'Sample',
                       choices = sample_names())
         ), # End conditional output, single sample #
@@ -833,7 +833,7 @@ shinyServer(function(session, input, output) {
         actionButton("plot_submit", label = "Sumbit")
       ))
     }
-
+    
   })
   
   output$vk_colors <- renderUI({
@@ -846,11 +846,11 @@ shinyServer(function(session, input, output) {
     names(hist_choices) <- test_names()[,2]
     
     if(input$vkbounds == 0) {#no boundaries
-    return(selectInput('vk_colors', 'Color by:', 
-                           choices = c('Van Krevelen Boundary Set 1' = 'bs1',
-                                       'Van Krevelen Boundary Set 2' = 'bs2', 
-                                       hist_choices),
-                           selected = 'bs1'))  
+      return(selectInput('vk_colors', 'Color by:', 
+                         choices = c('Van Krevelen Boundary Set 1' = 'bs1',
+                                     'Van Krevelen Boundary Set 2' = 'bs2', 
+                                     hist_choices),
+                         selected = 'bs1'))  
     } else if (input$vkbounds == 'bs1'){ #only allow bs1 boundary colors
       return(selectInput('vk_colors', 'Color by:', 
                          choices = c('Van Krevelen Boundary Set 1' = 'bs1',
@@ -864,84 +864,49 @@ shinyServer(function(session, input, output) {
                   selected = 'bs2')
     }
   })
-
+  
   #### Main Panel ####
-observeEvent(input$plot_submit, {
-  # Make sure a plot stype selection has been chosen
-  validate(need(input$choose_single != 0, message = "Please select plotting criteria"))
+  observeEvent(input$plot_submit, {
+    # Make sure a plot stype selection has been chosen
+    validate(need(input$choose_single != 0, message = "Please select plotting criteria"))
     if (input$choose_single == 1) {
       division_data <- subset(peakIcr2, input$whichSample)
       #key_name <- paste(attributes(peakIcr2)$cnames$fdata_cname, "=", input$whichSample, sep = "")
     }
-  if (input$choose_single == 2) {
-    division_data <- subset(peakIcr2, input$whichGroups1)
-  }
-
-  #-------Kendrick Plot-----------# 
-  if (input$chooseplots == 2) {
-    output$FxnPlot <- renderPlotly({
-      validate(need(!is.null(input$whichSample) | !is.null(input$whichGroups1),
-                    message = "Please choose a sample below"))
-      return(kendrickPlot(division_data))
-    })
-  #--------Van Krevelen Plot----------#
-  } else if (input$chooseplots == 1) {
-    output$FxnPlot <- renderPlotly({
-      validate(need(!is.null(input$whichSample) | !is.null(input$whichGroups1),
-                    message = "Please choose a sample below"))
-      #-----boundary line logic------#
-      if (input$vkbounds == 0) { #no bounds
-        # if no boundary lines, leave the option to color by boundary
-        if (input$vk_colors %in% c('bs1', 'bs2')) {
-          return(vanKrevelenPlot(division_data, showVKBounds = FALSE, vkBoundarySet = input$vk_colors))
+    if (input$choose_single == 2) {
+      division_data <- subset(peakIcr2, input$whichGroups1)
+    }
+    
+    #-------Kendrick Plot-----------# 
+    if (input$chooseplots %in% c(1,2)) {
+      if (input$chooseplots == 1) plotFxn <- kendrickPlot
+      if (input$chooseplots == 2) plotFxn <- vanKrevelenPlot
+      output$FxnPlot <- renderPlotly({
+        validate(need(!is.null(input$whichSample) | !is.null(input$whichGroups1),
+                      message = "Please choose a sample below"))
+        #-----boundary line logic------#
+        if (input$vkbounds == 0) { #no bounds
+          # if no boundary lines, leave the option to color by boundary
+          if (input$vk_colors %in% c('bs1', 'bs2')) {
+            return(plotFxn(division_data, showVKBounds = FALSE, vkBoundarySet = input$vk_colors))
+          } else {
+            # if no boundary lines and color selection doesn't belong to a boundary, color by test
+            return(plotFxn(division_data, showVKBounds = FALSE, colorCName = input$vk_colors))
+          }
         } else {
-          # if no boundary lines and color selection doesn't belong to a boundary, color by test
-          return(vanKrevelenPlot(division_data, showVKBounds = FALSE, colorCName = input$vk_colors))
+          # if boundary lines, allow a color by boundary class 
+          if (input$vk_colors %in% c('bs1', 'bs2')) {
+            return(plotFxn(division_data, vkBoundarySet = input$vkbounds, showVKBounds = TRUE))
+          } else {
+            # if boundary lines and color isn't a boundary class
+            return(plotFxn(division_data, vkBoundarySet = input$vkbounds, showVKBounds = TRUE, colorCName = input$vk_colors))
+            
+          }
         }
-      } else {
-        # if boundary lines, allow a color by boundary class 
-        if (input$vk_colors %in% c('bs1', 'bs2')) {
-          return(vanKrevelenPlot(division_data, vkBoundarySet = input$vkbounds, showVKBounds = TRUE))
-        } else {
-          # if boundary lines and color isn't a boundary class
-          return(vanKrevelenPlot(division_data, vkBoundarySet = input$vkbounds, showVKBounds = TRUE, colorCName = input$vk_colors))
-          
-        }
-      }
-    })
-  }
-  # output$kendrick <- renderPlotly({
-  #   # if the selection plots a single sample
-  #  # if (input$choose_single == 1) {
-  #     validate(need(!is.null(input$whichSample) | !is.null(input$whichGroups1), message = "Please choose a sample below"))
-  #     return(kendrickPlot(division_data))
-  #   #}
-  # })
+      })
+    }
+  })
   
-  # output$vankrev <- renderPlotly({
-  #   
-  #  # if (input$choose_single == 1) {
-  #     # needs a sample 
-  #     validate(need(!is.null(input$whichSample) | !is.null(input$whichGroups1), message = "Please choose a sample below"))
-  #     
-  #     # boundary lines or not?
-  #     if (input$vkbounds == 0) {
-  #       # if no boundary lines, leave the option to color by boundary
-  #       if (input$vk_colors %in% c('bs1', 'bs2')) {
-  #         return(vanKrevelenPlot(division_data, showVKBounds = FALSE, vkBoundarySet = input$vk_colors))
-  #       } else {
-  #         # if no boundary lines and color selection doesn't belong to a boundary, color by test
-  #         return(vanKrevelenPlot(division_data, showVKBounds = FALSE, colorCName = input$vk_colors))
-  #       }
-  #     } else {# if boundary lines, allow a color by boundary class or color by test
-  # 
-  #         return(vanKrevelenPlot(division_data, vkBoundarySet = input$vkbounds, showVKBounds = TRUE, colorCName = input$vk_colors))
-  #     }
-  #  # }
-  #   
-  # })
-})
-
   # # Stubs: Kendrick and Van Krevelen plots
   # output$kendrick <- renderPlotly({
   #   # if (is.null(attr(peakIcr2, "cnames")$mf_cname)) {
@@ -968,6 +933,7 @@ observeEvent(input$plot_submit, {
   ####### Download Tab #######
   
   # at the end of the session, remove the peakIcr2 global object
+  # TODO: this doesn't yet behave the way I expect it to
   if ("peakIcr2" %in% ls()) {
     on.exit(rm(list = list(peakIcr2)))
   }
