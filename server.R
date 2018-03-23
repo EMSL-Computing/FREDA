@@ -303,8 +303,7 @@ shinyServer(function(session, input, output) {
     test1 <- peakICR()$e_data #why is this here?
     
     # If no errors, show Success message
-    HTML('<h4 style= "color:#1A5276">Your data has been successfully uploaded. 
-               You may proceed to the subsequent tabs for analysis.</h4>')
+    HTML('<h4 style= "color:#1A5276">You may proceed to data filtering</h4>')
     
   }) # End success #
   
@@ -531,8 +530,7 @@ shinyServer(function(session, input, output) {
                   HTML('<h4 style= "color:#1A5276">Your data has been filtered using mass and/or minimum observations. 
          You may proceed to the next tabs for subsequnt analysis.</h4>'))
     )
-    HTML('<h4 style= "color:#1A5276">Your data has been filtered using mass and/or minimum observations. 
-         You may proceed to the next tabs for subsequnt analysis.</h4>')
+    HTML('<h4 style= "color:#1A5276">You may now proceed to preprocessing and visualization</h4>')
     
   }) # End successMessage
   
@@ -869,11 +867,14 @@ shinyServer(function(session, input, output) {
   observeEvent(input$plot_submit, {
     # Make sure a plot stype selection has been chosen
     validate(need(input$choose_single != 0, message = "Please select plotting criteria"))
+    
     if (input$choose_single == 1) {
+      # Make sure at least one test has been calculated
       division_data <- subset(peakIcr2, input$whichSample)
       #key_name <- paste(attributes(peakIcr2)$cnames$fdata_cname, "=", input$whichSample, sep = "")
     }
     if (input$choose_single == 2) {
+      # Make sure at least one test has been calculated
       division_data <- subset(peakIcr2, input$whichGroups1)
     }
     
