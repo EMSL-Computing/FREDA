@@ -341,19 +341,23 @@ shinyUI(navbarPage(title = (windowTitle = "FREDA"),
                                 
                                 mainPanel(
                                   plotlyOutput('FxnPlot'),
+                                  width = 7,
                                   conditionalPanel(
-                                    condition = 'input.chooseplots == 1 || input.chooseplots == 2',
+                                    condition = 'input.chooseplots == 1',
                                     # Set default width to 7
-                                    width = 7,
+                                    
                                     # Drop down list: Use boundary?
                                     selectInput('vkbounds', 'Use Van Krevelen boundary set:',
                                                 choices = c('BS1' = 'bs1', 'BS2' = 'bs2', 'None' = 0),
-                                                selected = 'bs1'),
-                                    uiOutput('vk_colors')
-                                  )#,
+                                                selected = 'bs1')
+                                    
+                                  ),
+                                  uiOutput('vk_colors')
+                                  #,
                                   # conditionalPanel(
                                   #   condition = 'input.chooseplots == 2',
-                                  #   width = 7#,
+                                  #   width = 7,
+                                  #   uiOutput('vk_colors')
                                   #   # Plot: Kendrick plot
                                   #  # plotlyOutput('FxnPlot')
                                   # )

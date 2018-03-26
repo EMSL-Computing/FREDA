@@ -879,9 +879,20 @@ shinyServer(function(session, input, output) {
     }
     
     #-------Kendrick Plot-----------# 
-    if (input$chooseplots %in% c(1,2)) {
-      if (input$chooseplots == 1) plotFxn <- kendrickPlot
-      if (input$chooseplots == 2) plotFxn <- vanKrevelenPlot
+    if (input$chooseplots == 2) {
+      output$FxnPlot <- renderPlotly({
+        validate(need(!is.null(input$whichSample) | !is.null(input$whichGroups1),
+                      message = "Please choose a sample below"))
+          if (input$vk_colors %in% c('bs1', 'bs2')) {
+            return(kendrickPlot(division_data, vkBoundarySet = input$vk_colors))
+          } else {
+            # if color selection doesn't belong to a boundary, color by test
+            return(kendrickPlot(division_data, colorCName = input$vk_colors))
+          }
+      })
+    }
+    #-------VanKrevelen Plot--------#
+    if (input$chooseplots == 1) {
       output$FxnPlot <- renderPlotly({
         validate(need(!is.null(input$whichSample) | !is.null(input$whichGroups1),
                       message = "Please choose a sample below"))
@@ -889,43 +900,24 @@ shinyServer(function(session, input, output) {
         if (input$vkbounds == 0) { #no bounds
           # if no boundary lines, leave the option to color by boundary
           if (input$vk_colors %in% c('bs1', 'bs2')) {
-            return(plotFxn(division_data, showVKBounds = FALSE, vkBoundarySet = input$vk_colors))
+            return(vanKrevelenPlot(division_data, showVKBounds = FALSE, vkBoundarySet = input$vk_colors))
           } else {
             # if no boundary lines and color selection doesn't belong to a boundary, color by test
-            return(plotFxn(division_data, showVKBounds = FALSE, colorCName = input$vk_colors))
+            return(vanKrevelenPlot(division_data, showVKBounds = FALSE, colorCName = input$vk_colors))
           }
         } else {
           # if boundary lines, allow a color by boundary class 
           if (input$vk_colors %in% c('bs1', 'bs2')) {
-            return(plotFxn(division_data, vkBoundarySet = input$vkbounds, showVKBounds = TRUE))
+            return(vanKrevelenPlot(division_data, vkBoundarySet = input$vkbounds, showVKBounds = TRUE))
           } else {
             # if boundary lines and color isn't a boundary class
-            return(plotFxn(division_data, vkBoundarySet = input$vkbounds, showVKBounds = TRUE, colorCName = input$vk_colors))
+            return(vanKrevelenPlot(division_data, vkBoundarySet = input$vkbounds, showVKBounds = TRUE, colorCName = input$vk_colors))
             
           }
         }
       })
     }
   })
-  
-  # # Stubs: Kendrick and Van Krevelen plots
-  # output$kendrick <- renderPlotly({
-  #   # if (is.null(attr(peakIcr2, "cnames")$mf_cname)) {
-  #   #   peakIcr2 <<- assign_mf(peakIcr2)
-  #   # }
-  #   if (input$choose_single == 1) {
-  #     validate(need(!is.null(input$whichSample), message = "Please choose a sample below"))
-  #     return(kendrickPlot(division_data()[[input$whichSample]]$value))
-  #   }
-  # })
-  # 
-  # output$vankrev <- renderPlotly({
-  #   if (input$choose_single == 1) {
-  #     validate(need(!is.null(input$whichSample), message = "Please choose a sample below"))
-  #     return(vanKrevelenPlot(division_data()[[input$whichSample]]$value))
-  #   }
-  #   
-  # })
   
   ####### Download Tab #######
   
