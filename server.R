@@ -6,6 +6,7 @@ library(fticRanalysis)
 library(ggplot2)
 library(reshape2)
 
+#peakIcr2 <- NULL #when finished developing, uncomment this to clear the workspace on exit
 
 shinyServer(function(session, input, output) {
   
@@ -966,10 +967,5 @@ observeEvent(input$plot_submit, {
   ####### Glossary Tab #######
   
   ####### Download Tab #######
-  
-  # at the end of the session, remove the peakIcr2 global object
-  if ("peakIcr2" %in% ls()) {
-    on.exit(rm(list = list(peakIcr2)))
-  }
-  
+
 })
