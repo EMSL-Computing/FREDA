@@ -2,13 +2,13 @@
 
 <a name="a"></a>
 **A**
-<hr></hr>
+
 **Aromaticity:** Term from organic chemistry used to describe a "cyclic, planar molecule with a ring of resonance bonds that exhibits more stability than other geometric or connective arrangements with the same set of atoms". 
 
+<hr></hr>
 <a name="B"></a>
 **B**
-<hr></hr>  
-
+ 
 **Boundary Set 1:** Definition coming soon!
 
 **Boundary Set 2:** Definition coming soon!
@@ -17,26 +17,27 @@
 
 **BS2:** See Boundary Set 2
 
+<hr></hr> 
 <a name="C"></a>
 **C**   
-<hr></hr>
 
 **C:** Carbon
 
+<hr></hr>
 <a name="D"></a>
 **D**  
-<hr></hr>
 
 **DBE:** Double Bond Equivalent
 
 **DBE-O:** Definition coming soon!
 
+<hr></hr>
 <a name="E"></a> 
 **E**  
+
 <hr></hr>
 <a name="F"></a> 
 **F**    
-<hr></hr>
  
 **FREDA:** FTICR R Exploratory Data Analysis (FREDA) is a tool for exploratory data analysis of FTICR data using R
 
@@ -47,29 +48,33 @@
 **Frodo:**   
 ![Frodo](http://middle-earthencyclopedia.weebly.com/uploads/3/8/2/9/3829140/1560779.png?318)
 
-
+<hr></hr>
 <a name="G"></a>
 **G**   
-<hr></hr>
 
 **Gibbs Free Energy:** Thermodynamic quantify equal to the enthalpy minus the product of the entropy and the absolute temperature
 
+<hr></hr>
 <a name="H"></a> 
 **H**    
-<hr></hr>
 
 **H:** Hydrogen
 
 **H:C ratio:** Hydrogen to carbon ratio
+
+<hr></hr>
 <a name="I"></a>
-**I**    
+**I**   
+
+
 <hr></hr>
 <a name="J"></a>
 **J**    
+
+
 <hr></hr>
 <a name="K"></a>   
 **K**   
-<hr></hr>
 
 **Kendrick Defect:** Definition coming soon!
 
@@ -77,76 +82,94 @@
 
 **Kendrick Plot:** Plot of Kendrick Mass versus Kendrick Defect
 
+<hr></hr>
 <a name="L"></a>
 **L**  
+
+
 <hr></hr>
 <a name="M"></a>
 **M**  
-<hr></hr>
 
 **Mass Spectrometry:** Analytic technique that measures masses within a sample using ionization
 
 **Modified Aromaticity:** Definition coming soon!
 
+<hr></hr>
 <a name="N"></a>
 **N**   
-<hr></hr>
 
 **N:** Nitrogen
 
 **NOSC:** Nominal oxidation state of carbon
 
+<hr></hr>
 <a name="O"></a>
 **O**   
-<hr></hr>
 
 **O:** Oxygen
+
 **O:C ratio:** Oxygen to carbon ratio
 
+<hr></hr>
 <a name="P"></a>
 **P**  
-<hr></hr>
 
 **P:** Phoshporus
 
+<hr></hr>
 <a name="Q"></a> 
-**Q**   
+**Q** 
+
+
 <hr></hr>
 <a name="R"></a>
 **R**   
-<hr></hr>
 
+
+<hr></hr>
 <a name="S"></a>
 **S**   
-<hr></hr>
 
 **S:** Sulfur
 
+<hr></hr>
 <a name="T"></a>
 **T**   
-<hr></hr>
+
 **Tesla:** Standard unit of magnetic flux density
 
+<hr></hr>
 <a name="U"></a>
 **U**   
+
+
 <hr></hr>
 <a name="V"></a>
 **V**  
-<hr></hr>
 
 **Van Krevelen Plot:** Plot of O:C versus H:C; also see O:C and H:C
 
+<hr></hr>
 <a name="W"></a>
 **W**    
+
+
 <hr></hr>
 <a name="X"></a>
 **X**    
+
+
 <hr></hr>
 <a name="Y"></a>
 **Y**   
+
+
 <hr></hr>
 <a name="z"></a> 
 **Z**  
+
+
 <hr></hr>  
 
 
