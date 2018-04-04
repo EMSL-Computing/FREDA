@@ -16,8 +16,8 @@ shinyServer(function(session, input, output) {
   
   ######## Welcome Tab #############
   #------ Download Example Data ---------#
-  example_edata <- read.csv('./example_e_data.csv')
-  example_emeta <- read.csv('./example_e_meta.csv')
+  #example_edata <- read.csv('./example_e_data.csv')
+  #example_emeta <- read.csv('./example_e_meta.csv')
   #### in case we want a preview rendered #####
   # output$example_data_table <- DT::renderDataTable({
   #   example_edata
