@@ -9,11 +9,40 @@ library(reshape2)
 #peakIcr2 <- NULL #when finished developing, uncomment this to clear the workspace on exit
 
 shinyServer(function(session, input, output) {
-  
+  Sys.setenv(R_ZIPCMD="/usr/bin/zip")
   # Source files for 'summaryFilt' and 'summaryPreprocess'
   source('summaryFilter.R') 
   source('summaryPreprocess.R')
   
+  ######## Welcome Tab #############
+  #------ Download Example Data ---------#
+  example_edata <- read.csv('./example_e_data.csv')
+  example_emeta <- read.csv('./example_e_meta.csv')
+  #### in case we want a preview rendered #####
+  # output$example_data_table <- DT::renderDataTable({
+  #   example_edata
+  # })
+  # 
+  # output$example_meta_table <- DT::renderDataTable({
+  #   example_emeta
+  # })
+  #############
+  output$downloadData <- downloadHandler(
+    filename = "FREDA_Example_Data.zip",
+    # This function should write data to a file given to it by
+    # the argument 'file'.
+    content = function(fname) {
+      tmpdir <- tempdir()
+      setwd(tempdir())
+      print(tempdir())
+      fs <- c("example_e_data.csv", "example_e_meta.csv")
+      write.csv(example_edata, row.names = FALSE, file = "example_e_data.csv")
+      write.csv(example_emeta, row.names = FALSE, file = "example_e_meta.csv")      
+      print(fs)
+      zip(zipfile=fname, files=fs)
+    },
+    contentType = "application/zip"
+  )
   ######## Upload Tab ##############
   
   #### Sidebar Panel (Upload Tab) ####
