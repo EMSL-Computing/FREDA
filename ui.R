@@ -16,8 +16,15 @@ library(markdown)
 shinyUI(navbarPage(title = (windowTitle = "FREDA"),
                    theme = "yeti.css",
                    ############# Welcome Panel #########################
-                   tabPanel("Welcome",
-                            includeMarkdown("./Welcome to FREDA.md")
+                            navbarMenu("Welcome",
+                              tabPanel(title = "Introduction",
+                                       includeMarkdown("./Welcome to FREDA.md")),
+                              tabPanel(title = "Data Requirements",
+                                       HTML('<h4> Data Requirements </h4>')),
+                              tabPanel(title = "Resources",
+                                       HTML('<h4> Resources </h4>')),
+                              tabPanel(title = "Contact",
+                                       HTML('<h4> Contact </h4>'))
                             ),
                    ################## Upload Panel #######################################
                    tabPanel("Upload",
@@ -77,7 +84,7 @@ shinyUI(navbarPage(title = (windowTitle = "FREDA"),
                                 # Get whether formulas or elemental columns are included #
                                 selectInput('select', 
                                             label = 'Does this file have formulas 
-                                                          or elemental columns?',
+                                            or elemental columns?',
                                             choices = list('Select an option' = 0, 
                                                            'Formulas' = 1, 
                                                            'Elemental Columns' = 2),
@@ -109,43 +116,43 @@ shinyUI(navbarPage(title = (windowTitle = "FREDA"),
                                 # Action button: pressing this creates the peakICR object
                                 actionButton('upload_click', 'Process Data')
                                 
-                              ), # End sidebar panel
+                            ), # End sidebar panel
+                            
+                            mainPanel(
                               
-                              mainPanel(
-                                
-                                # Set default width of panel
-                                width = 7,
-                                
-                                # Show 'Success' message if peakICR created successfully
-                                uiOutput('success_upload'),
-                                
-                                # Summary panel
-                                wellPanel(
-                                  
-                                  # Number of peaks, samples, and peaks with formulas assigned
-                                  textOutput('num_peaks'), 
-                                  textOutput('num_samples'), 
-                                  textOutput('num_peaks_formula')
-                                ),
-                                
-                                # Horizontal ruler
-                                tags$hr(), 
-                                
-                                # Show preview of e_data
-                                htmlOutput('edata_text'),
-                                #dataTableOutput("head_edata"), 
-                                DTOutput("head_edata", width = "90%"),
-                                
-                                # Horizontal rule
-                                tags$hr(),
-                                
-                                # Show preview of e_meta
-                                htmlOutput('emeta_text'),
-                                #dataTableOutput('head_emeta'),
-                                DTOutput("head_emeta", width = "90%")
-                                
-                              ) # End main panel
+                              # Set default width of panel
+                              width = 7,
                               
+                              # Show 'Success' message if peakICR created successfully
+                              uiOutput('success_upload'),
+                              
+                              # Summary panel
+                              wellPanel(
+                                
+                                # Number of peaks, samples, and peaks with formulas assigned
+                                textOutput('num_peaks'), 
+                                textOutput('num_samples'), 
+                                textOutput('num_peaks_formula')
+                              ),
+                              
+                              # Horizontal ruler
+                              tags$hr(), 
+                              
+                              # Show preview of e_data
+                              htmlOutput('edata_text'),
+                              #dataTableOutput("head_edata"), 
+                              DTOutput("head_edata", width = "90%"),
+                              
+                              # Horizontal rule
+                              tags$hr(),
+                              
+                              # Show preview of e_meta
+                              htmlOutput('emeta_text'),
+                              #dataTableOutput('head_emeta'),
+                              DTOutput("head_emeta", width = "90%")
+                              
+                            ) # End main panel
+                            
                             )), # End Upload tab
                    
                    ################## Filter Panel ##############################################
@@ -338,45 +345,45 @@ shinyUI(navbarPage(title = (windowTitle = "FREDA"),
                                 #   actionButton("plot_submit2", label = "Sumbit")
                                 # )
                                 uiOutput("plotUI")
-                                ),# End sidebar conditionals on Visualize tab #
-                                
-                                mainPanel(
-                                  plotlyOutput('FxnPlot'),
-                                  width = 7,
-                                  conditionalPanel(
-                                    condition = 'input.chooseplots == 1',
-                                    # Set default width to 7
-                                    
-                                    # Drop down list: Use boundary?
-                                    selectInput('vkbounds', 'Use Van Krevelen boundary set:',
-                                                choices = c('BS1' = 'bs1', 'BS2' = 'bs2', 'None' = 0),
-                                                selected = 'bs1')
-                                    
-                                  ),
-                                  uiOutput('vk_colors')
-                                  #,
-                                  # conditionalPanel(
-                                  #   condition = 'input.chooseplots == 2',
-                                  #   width = 7,
-                                  #   uiOutput('vk_colors')
-                                  #   # Plot: Kendrick plot
-                                  #  # plotlyOutput('FxnPlot')
-                                  # )
-                                )# End main panel on Visualize tab #
+                              ),# End sidebar conditionals on Visualize tab #
+                              
+                              mainPanel(
+                                plotlyOutput('FxnPlot'),
+                                width = 7,
+                                conditionalPanel(
+                                  condition = 'input.chooseplots == 1',
+                                  # Set default width to 7
+                                  
+                                  # Drop down list: Use boundary?
+                                  selectInput('vkbounds', 'Use Van Krevelen boundary set:',
+                                              choices = c('BS1' = 'bs1', 'BS2' = 'bs2', 'None' = 0),
+                                              selected = 'bs1')
+                                  
+                                ),
+                                uiOutput('vk_colors')
+                                #,
+                                # conditionalPanel(
+                                #   condition = 'input.chooseplots == 2',
+                                #   width = 7,
+                                #   uiOutput('vk_colors')
+                                #   # Plot: Kendrick plot
+                                #  # plotlyOutput('FxnPlot')
+                                # )
+                              )# End main panel on Visualize tab #
+                              
+                            )), # End Visualize tab #
+                   
+                   ################## Download Panel ##############################################
+                   tabPanel('Download'), 
+                   
+                   ################## Glossary Panel ##############################################
+                   tabPanel('Glossary',
+                            #mainPanel(
+                            #includeHTML("./README/Glossary.html")
+                            includeMarkdown("./README/Glossary.md")
+                            # )
                             
-                   )), # End Visualize tab #
-        
-        ################## Download Panel ##############################################
-        tabPanel('Download'), 
-        
-        ################## Glossary Panel ##############################################
-        tabPanel('Glossary',
-                 #mainPanel(
-                 #includeHTML("./README/Glossary.html")
-                 includeMarkdown("./README/Glossary.md")
-                 # )
-                 
-        )
-)
+                   )
+                   )
 )
 
