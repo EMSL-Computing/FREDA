@@ -711,7 +711,7 @@ shinyServer(function(session, input, output) {
     actual_cnames <- colnames(peakIcr2$e_meta)
     
     # Find all columns with names that match names for calculated columns
-    v_index <- which(possible_calc_cnames[,1] %in% actual_cnames)
+    v_index <- which(possible_calc_cnames[,1] %in% actual_cnames & possible_calc_cnames[,3] == "continuous")
     
     # Save calculation column names from above and their display names 
     possible_calc_cnames[v_index,]

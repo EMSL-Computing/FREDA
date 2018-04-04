@@ -1,10 +1,10 @@
-OtoC_ratio,O to C Ratio
-HtoC_ratio,H to C Ratio
-kmass,Kendrick Mass
-kdefect,Kendrick Defect
-NOSC,NOSC
-AI,Aromaticity
-AI_Mod,Modified Aromaticity
-DBE,DBE
-DBE_O,DBE - O
-GFE,Gibbs Free Energy
+OtoC_ratio,O to C Ratio,continuous
+HtoC_ratio,H to C Ratio,continuous
+kmass,Kendrick Mass,continuous
+kdefect,Kendrick Defect,continuous
+NOSC,NOSC,continuous
+AI,Aromaticity,continuous
+AI_Mod,Modified Aromaticity,continuous
+DBE,DBE,continuous
+DBE_O,DBE - O,continuous
+GFE,Gibbs Free Energy,continuous
