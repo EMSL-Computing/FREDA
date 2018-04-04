@@ -17,7 +17,8 @@ shinyUI(navbarPage(title = (windowTitle = "FREDA"),
                    theme = "yeti.css",
                    ############# Welcome Panel #########################
                    tabPanel("Welcome",
-                            includeMarkdown("./README/Welcome to FREDA.md")),
+                            includeMarkdown("./Welcome to FREDA.md")
+                            ),
                    ################## Upload Panel #######################################
                    tabPanel("Upload",
                             sidebarLayout(

@@ -869,16 +869,16 @@ shinyServer(function(session, input, output) {
     # Make sure a plot stype selection has been chosen
     validate(need(input$choose_single != 0, message = "Please select plotting criteria"))
     
-    if (input$choose_single == 1) {
+    if (input$choose_single == 1) { #single sample
       # Make sure at least one test has been calculated
       division_data <- subset(peakIcr2, input$whichSample)
       #key_name <- paste(attributes(peakIcr2)$cnames$fdata_cname, "=", input$whichSample, sep = "")
     }
-    if (input$choose_single == 2) {
+    else if (input$choose_single == 2) {# single group
       # Make sure at least one test has been calculated
       division_data <- subset(peakIcr2, input$whichGroups1)
     }
-    
+
     #-------Kendrick Plot-----------# 
     if (input$chooseplots == 2) {
       output$FxnPlot <- renderPlotly({
