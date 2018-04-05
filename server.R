@@ -954,7 +954,7 @@ shinyServer(function(session, input, output) {
   
   ####### Download Tab #######
   output$download_processed_data <- downloadHandler(
-    filename = "FREDA_processed_data.zip",
+    filename = paste("FREDA_Output_",proc.time(),".zip", sep = ""),
     content = function(fname){
       tmpdir <- tempdir()
       setwd(tempdir())
