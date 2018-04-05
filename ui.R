@@ -381,7 +381,13 @@ shinyUI(navbarPage(title = (windowTitle = "FREDA"),
                             checkboxGroupInput("download_selection", label = "Select Processed Data to Download",
                                           choices = c('e_data as one .csv and e_meta as another .csv' = "separate",
                                           'merged e_data and e_meta as a single .csv' = "merged")),
-                            downloadButton('download_processed_data', 'Download Selected Data')
+                            hr(),
+                            checkboxInput("report_selection", label = "Report (Coming Soon)"),
+                            hr(),
+                            checkboxInput("figure_selection", label = "High Resolution Figures (Coming Soon)"),
+                            hr(),
+                            downloadButton('download_processed_data', 'Download Selection')
+                            
                             ), 
                    
                    ################## Glossary Panel ##############################################
