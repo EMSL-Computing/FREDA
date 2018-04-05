@@ -185,9 +185,8 @@ shinyServer(function(session, input, output) {
   })
   
   output$iso_info_column <- renderUI({
-    
     selectInput("iso_info_column", "Which column contains isotope information?",
-                choices  = c('Select a column', emeta_cnames()))
+                choices  = c('Select a column' = 0, emeta_cnames()))
     
   })
   
@@ -207,7 +206,9 @@ shinyServer(function(session, input, output) {
       need(input$edata_id_col != 'Select one', 
            'Please select a unique identifier column'), 
       need(input$select != 0, 
-           'Please select either Formula or Elemental columns')
+           'Please select either Formula or Elemental columns'),
+      need(input$isotope_yn != 0,
+           'Please select yes or no on information for isotopes')
       
     ) # End error handling #
     
@@ -232,6 +233,7 @@ shinyServer(function(session, input, output) {
         
         # Error handling: entered isotopic notation must exist in the isotope information column
         validate(
+          need(input$iso_info_column != 0, message = "Please choose a column of isotopic information"),
           need(any(Emeta()[,input$iso_info_column] %in% input$iso_symbol),
                'The entered isotopic notation does not match the entries in the chosen isotope information column. Please revise.')
         ) # End error handling
@@ -246,7 +248,7 @@ shinyServer(function(session, input, output) {
         
       } # End C13 / no C13 if statement
       
-      if (input$isotope_yn %in% c(0,2)) {
+      if (input$isotope_yn == 2) { #no C13
         # Calculate peakIcrData with formula column
         return(as.peakIcrData(e_data = Edata(), f_data = fdata(),
                               e_meta = Emeta(), edata_cname = input$edata_id_col, 
@@ -282,7 +284,7 @@ shinyServer(function(session, input, output) {
         
       ) # End error handling #
       # If no C13
-      if (input$isotope_yn %in% c(0,2)) {
+      if (input$isotope_yn == 2) {
         # Create peakICR object
         return(as.peakIcrData(e_data = Edata(), f_data = fdata(),
                               e_meta = Emeta(), edata_cname = input$edata_id_col, 
@@ -297,6 +299,7 @@ shinyServer(function(session, input, output) {
         
         # Error handling: entered isotopic notation must exist in the isotope information column
         validate(
+          need(input$iso_info_column != 0, message = "Please choose a column of isotopic information"),
           need(any(Emeta()[,input$iso_info_column] %in% input$iso_symbol),
                'The entered isotopic notation does not match the entries in the chosen isotope information column. Please revise.')
         ) # End error handling
@@ -950,6 +953,32 @@ shinyServer(function(session, input, output) {
   })
   
   ####### Download Tab #######
+  output$download_processed_data <- downloadHandler(
+    filename = "FREDA_processed_data.zip",
+    content = function(fname){
+      tmpdir <- tempdir()
+      setwd(tempdir())
+      print(tempdir())
+      fs <- vector()
+      
+      if ("separate" %in% input$download_selection){
+        fs <- c(fs, "FREDA_processed_e_data.csv", "FREDA_processed_e_meta.csv")
+        write.csv(peakIcr2$e_data, file = "FREDA_processed_e_data.csv", row.names = FALSE)
+        write.csv(peakIcr2$e_meta, file = "FREDA_processed_e_meta.csv", row.names = FALSE)
+      }
+      if ("merged" %in% input$download_selection){
+        fs <- c(fs, "FREDA_processed_merged_data.csv")
+        merged_data <- merge(peakIcr2$e_data, peakIcr2$e_meta)
+        write.csv(merged_data, file = "FREDA_processed_merged_data.csv", row.names = FALSE)
+      }
+      print(fs)
+      
+      zip(zipfile=fname, files=fs)
+      if(file.exists(paste0(fname,".zip"))){file.rename(paste0(fname,".zip"),fname)}
+    },
+    contentType = "application/zip"
+  )
+  
   
   ####### Glossary Tab #######
   

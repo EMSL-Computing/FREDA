@@ -377,7 +377,12 @@ shinyUI(navbarPage(title = (windowTitle = "FREDA"),
                             )), # End Visualize tab #
                    
                    ################## Download Panel ##############################################
-                   tabPanel('Download'), 
+                   tabPanel('Download',
+                            checkboxGroupInput("download_selection", label = "Select Processed Data to Download",
+                                          choices = c('e_data as one .csv and e_meta as another .csv' = "separate",
+                                          'merged e_data and e_meta as a single .csv' = "merged")),
+                            downloadButton('download_processed_data', 'Download Selected Data')
+                            ), 
                    
                    ################## Glossary Panel ##############################################
                    tabPanel('Glossary',
