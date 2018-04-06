@@ -351,6 +351,7 @@ shinyUI(navbarPage(title = (windowTitle = "FREDA"),
                               ),# End sidebar conditionals on Visualize tab #
                               
                               mainPanel(
+                                #tags$div(plotlyOutput('FxnPlot'), class = "square"),
                                 plotlyOutput('FxnPlot'),
                                 width = 7,
                                 conditionalPanel(
