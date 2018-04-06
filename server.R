@@ -16,8 +16,8 @@ shinyServer(function(session, input, output) {
   
   ######## Welcome Tab #############
   #------ Download Example Data ---------#
-  #example_edata <- read.csv('./example_e_data.csv')
-  #example_emeta <- read.csv('./example_e_meta.csv')
+  example_edata <- read.csv('Data/example12T_edata.csv')
+  example_emeta <- read.csv('Data/example12T_emeta.csv')
   #### in case we want a preview rendered #####
   # output$example_data_table <- DT::renderDataTable({
   #   example_edata
@@ -35,9 +35,9 @@ shinyServer(function(session, input, output) {
       tmpdir <- tempdir()
       setwd(tempdir())
       print(tempdir())
-      fs <- c("example_e_data.csv", "example_e_meta.csv")
-      write.csv(example_edata, row.names = FALSE, file = "example_e_data.csv")
-      write.csv(example_emeta, row.names = FALSE, file = "example_e_meta.csv")      
+      fs <- c("example12T_edata.csv", "example12T_emeta.csv")
+      write.csv(example_edata, row.names = FALSE, file = "example12T_edata.csv")
+      write.csv(example_emeta, row.names = FALSE, file = "example12T_emeta.csv")      
       print(fs)
       zip(zipfile=fname, files=fs)
     },
