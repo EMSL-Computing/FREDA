@@ -785,9 +785,10 @@ shinyServer(function(session, input, output) {
   #### Sidebar Panel ####
   # choose ui to render depending on which plot is chosen from input$chooseplot
   output$plotUI <- renderUI({
-    if (input$chooseplots == 0) {
-      return(NULL)
-    }
+    validate(
+      need(input$chooseplots != 0, message = "Please select plotting criteria")
+    )
+    #------ Van Krevelen Sidebar Options ---------#
     if (input$chooseplots == 1) {
       return(tagList(
         # Drop down list: single samples or multiple?
@@ -826,6 +827,7 @@ shinyServer(function(session, input, output) {
         actionButton("plot_submit", label = "Sumbit")
       ))
     }
+    #------ Kendrick Sidebar Options ---------#
     if (input$chooseplots == 2) {
       return(tagList(
         # Drop down list: single samples or multiple?
@@ -864,7 +866,7 @@ shinyServer(function(session, input, output) {
         actionButton("plot_submit", label = "Sumbit")
       ))
     }
-    
+    #------ Density Sidebar Options ---------#
     if (input$chooseplots == 3) {
       return(tagList(
         # Drop down list: single samples or multiple?
@@ -905,114 +907,172 @@ shinyServer(function(session, input, output) {
     }
     
   })
-  
+  output$vkbounds <- renderUI({
+    validate(
+      need(input$choose_single != 0, message = "Please select sample(s)"),
+      need(input$chooseplots != 0, message = "")
+    )
+    if (input$choose_single == 2 | input$chooseplots %in% c(2,3)) {
+      return(0)
+    } else {
+      return(selectInput('vkbounds', 'Use Van Krevelen boundary set:',
+                         choices = c('BS1' = 'bs1', 'BS2' = 'bs2', 'None' = 0),
+                         selected = 'bs1'))
+    }
+  })
   output$vk_colors <- renderUI({
     # (Conditional on vkbounds):
     # Error handling: test_names required
     req(test_names())
-    input$chooseplots
+    validate(
+      need(input$chooseplots != 0 & input$choose_single !=0, message = "Please select plotting criteria")
+    )
     # Create named list with potential histogram options
     hist_choices <- unlist(test_names()[,1])
     names(hist_choices) <- test_names()[,2]
-    if(input$vkbounds == 0) {#no boundaries
+    if (input$chooseplots == 1) {
+      if (input$vkbounds == 0) {#no boundaries
+        return(selectInput('vk_colors', 'Color by:', 
+                           choices = c('Van Krevelen Boundary Set 1' = 'bs1',
+                                       'Van Krevelen Boundary Set 2' = 'bs2', 
+                                       hist_choices),
+                           selected = 'bs1'))  
+      } else if (input$vkbounds == 'bs1'){ #only allow bs1 boundary colors
+        return(selectInput('vk_colors', 'Color by:', 
+                           choices = c('Van Krevelen Boundary Set 1' = 'bs1',
+                                       hist_choices),
+                           selected = 'bs1'))
+        
+      } else if (input$vkbounds == 'bs2') { #only allow bs2 boundary colors
+        selectInput('vk_colors', 'Color by:', 
+                    choices = c('Van Krevelen Boundary Set 2' = 'bs2', 
+                                hist_choices),
+                    selected = 'bs2')
+      } 
+    }
+    #----- group summary color choices -------#
+    if (input$choose_single == 2) {
+      hist_choices <- getGroupSummaryFunctionNames()
+      return(selectInput('vk_colors', 'Color by:', 
+                         choices = c(hist_choices),
+                         selected = hist_choices[1]))
+    }
+    #------- density plot color choices --------#
+    if (input$chooseplots == 3) {
+      return(selectInput('vk_colors', 'Color by:', 
+                         choices = c(hist_choices),
+                         selected = hist_choices[1]))
+    }
+    # Kendrick Colors
+    if (input$chooseplots == 2) {
       return(selectInput('vk_colors', 'Color by:', 
                          choices = c('Van Krevelen Boundary Set 1' = 'bs1',
                                      'Van Krevelen Boundary Set 2' = 'bs2', 
                                      hist_choices),
                          selected = 'bs1'))  
-    } 
-    if (input$chooseplots == 3) {
-      return(selectInput('vk_colors', 'Color by:', 
-                  choices = c(hist_choices),
-                  selected = hist_choices[1]))
-    }
-    
-    if (input$vkbounds == 'bs1'){ #only allow bs1 boundary colors
-      return(selectInput('vk_colors', 'Color by:', 
-                         choices = c('Van Krevelen Boundary Set 1' = 'bs1',
-                                     hist_choices),
-                         selected = 'bs1'))
-      
-    } 
-    if (input$vkbounds == 'bs2') { #only allow bs2 boundary colors
-      selectInput('vk_colors', 'Color by:', 
-                  choices = c('Van Krevelen Boundary Set 2' = 'bs2', 
-                              hist_choices),
-                  selected = 'bs2')
-    } 
-    if (input$chooseplots == 3) {
-      selectInput('vk_colors', 'Color by:', 
-                  choices = c(hist_choices),
-                  selected = hist_choices[1])
     }
   })
   
   #### Main Panel ####
+  v <- reactiveValues(clearPlot = TRUE)
+  observeEvent(c(input$chooseplots, input$choose_single), {
+    v$clearPlot <- TRUE
+  }, priority = 10)
   observeEvent(input$plot_submit, {
-    # Make sure a plot stype selection has been chosen
-    validate(need(input$choose_single != 0, message = "Please select plotting criteria"))
-    
-    if (input$choose_single == 1) { #single sample
-      # Make sure at least one test has been calculated
-      division_data <- subset(peakIcr2, input$whichSample)
-      #key_name <- paste(attributes(peakIcr2)$cnames$fdata_cname, "=", input$whichSample, sep = "")
-    }
-    else if (input$choose_single == 2) {# single group
-      # Make sure at least one test has been calculated
-      division_data <- subset(peakIcr2, input$whichGroups1)
-    }
-
-    #-------Kendrick Plot-----------# 
-    if (input$chooseplots == 2) {
-      output$FxnPlot <- renderPlotly({
-        validate(need(!is.null(input$whichSample) | !is.null(input$whichGroups1),
-                      message = "Please choose a sample below"))
-          if (input$vk_colors %in% c('bs1', 'bs2')) {
-            return(kendrickPlot(division_data, vkBoundarySet = input$vk_colors))
-          } else {
-            # if color selection doesn't belong to a boundary, color by test
-            return(kendrickPlot(division_data, colorCName = input$vk_colors))
-          }
-      })
-    }
-    #-------VanKrevelen Plot--------#
-    if (input$chooseplots == 1) {
-      output$FxnPlot <- renderPlotly({
-        validate(need(!is.null(input$whichSample) | !is.null(input$whichGroups1),
-                      message = "Please choose a sample below"))
-        #-----boundary line logic------#
-        if (input$vkbounds == 0) { #no bounds
-          # if no boundary lines, leave the option to color by boundary
-          if (input$vk_colors %in% c('bs1', 'bs2')) {
-            return(vanKrevelenPlot(division_data, showVKBounds = FALSE, vkBoundarySet = input$vk_colors))
-          } else {
-            # if no boundary lines and color selection doesn't belong to a boundary, color by test
-            return(vanKrevelenPlot(division_data, showVKBounds = FALSE, colorCName = input$vk_colors))
-          }
-        } else {
-          # if boundary lines, allow a color by boundary class 
-          if (input$vk_colors %in% c('bs1', 'bs2')) {
-            return(vanKrevelenPlot(division_data, vkBoundarySet = input$vkbounds, showVKBounds = TRUE))
-          } else {
-            # if boundary lines and color isn't a boundary class
-            return(vanKrevelenPlot(division_data, vkBoundarySet = input$vkbounds, showVKBounds = TRUE, colorCName = input$vk_colors))
-            
-          }
+    v$clearPlot <- FALSE
+  }, priority = 10)
+  
+  output$FxnPlot <- renderPlotly({
+    if (v$clearPlot){
+      return(NULL)
+    } else {
+      # Make sure a plot stype selection has been chosen
+      validate(need(input$choose_single != 0, message = "Please select plotting criteria"))
+      if (input$choose_single == 1) { #single sample
+        # Make sure at least one test has been calculated
+        division_data <- subset(peakIcr2, input$whichSample)
+        #key_name <- paste(attributes(peakIcr2)$cnames$fdata_cname, "=", input$whichSample, sep = "")
+      }
+      #---------- Group Plots ------------#
+      else if (input$choose_single == 2) {# single group
+        # Make sure at least one test has been calculated
+        validate(need(!is.null(input$whichGroups1), message = "Please select samples for grouping"))
+        division_data <- subset(peakIcr2, input$whichGroups1)
+        summarized_data <- summarizeGroups(division_data, summary_functions = input$vk_colors)
+        #-------Kendrick Plot-----------# 
+        if (input$chooseplots == 2) {
+          return({
+            groupKendrickPlot(summarized_data, colorCName = input$vk_colors)
+          })
         }
-      })
+      }
+      #----------- Single sample plots ------------#
+      #-------Kendrick Plot-----------# 
+      if (input$chooseplots == 2) {
+        if (input$choose_single == 2) {
+          return({
+            groupKendrickPlot(summarized_data, colorCName = input$vk_colors)
+          })
+        } else if (input$choose_single == 1) {
+          return({
+            validate(need(!is.null(input$whichSample) | !is.null(input$whichGroups1),
+                          message = "Please choose a sample below"))
+            if (input$vk_colors %in% c('bs1', 'bs2')) {
+              return(kendrickPlot(division_data, vkBoundarySet = input$vk_colors))
+            } else {
+              # if color selection doesn't belong to a boundary, color by test
+              return(kendrickPlot(division_data, colorCName = input$vk_colors))
+            }
+          })
+        }
+      }
+      #-------VanKrevelen Plot--------#
+      if (input$chooseplots == 1) {
+        if (input$choose_single == 2) {
+          return({
+            groupKendrickPlot(summarized_data, colorCName = input$vk_colors)
+          })
+        } else if (input$choose_single == 1) {
+          return({
+            validate(need(!is.null(input$whichSample) | !is.null(input$whichGroups1),
+                          message = "Please choose a sample below"))
+            #-----boundary line logic------#
+            if (input$vkbounds == 0) { #no bounds
+              # if no boundary lines, leave the option to color by boundary
+              if (input$vk_colors %in% c('bs1', 'bs2')) {
+                return(vanKrevelenPlot(division_data, showVKBounds = FALSE, vkBoundarySet = input$vk_colors))
+              } else {
+                # if no boundary lines and color selection doesn't belong to a boundary, color by test
+                return(vanKrevelenPlot(division_data, showVKBounds = FALSE, colorCName = input$vk_colors))
+              }
+            } else {
+              # if boundary lines, allow a color by boundary class 
+              if (input$vk_colors %in% c('bs1', 'bs2')) {
+                return(vanKrevelenPlot(division_data, vkBoundarySet = input$vkbounds, showVKBounds = TRUE))
+              } else {
+                # if boundary lines and color isn't a boundary class
+                return(vanKrevelenPlot(division_data, vkBoundarySet = input$vkbounds, showVKBounds = TRUE, colorCName = input$vk_colors))
+                
+              }
+            }
+          })
+        }
+      }
+      
+      #--------- Density Plot --------#
+      if (input$chooseplots == 3) {
+        return({
+          input$vk_colors
+          validate(
+            need(!is.null(input$whichSample) | !is.null(input$whichGroups1),
+                 message = "Please choose a sample below"),
+            need(!is.na(input$vk_colors), message = "Please select a variable to color by")
+          )
+          densityPlot(division_data, variable = input$vk_colors)
+        })
+      }
     }
     
-    #--------- Density Plot --------#
-    if (input$chooseplots == 3) {
-      output$FxnPlot <- renderPlotly({
-        validate(
-          need(!is.null(input$whichSample) | !is.null(input$whichGroups1),
-                      message = "Please choose a sample below"),
-          need(!is.na(input$vk_colors), message = "Please select a variable to color by")
-                 )
-        densityPlot(division_data, variable = input$vk_colors)
-      })
-    }
   })
   
   ####### Download Tab #######
@@ -1046,5 +1106,5 @@ shinyServer(function(session, input, output) {
   ####### Glossary Tab #######
   
   ####### Download Tab #######
-
+  
 })

@@ -16,19 +16,19 @@ library(markdown)
 shinyUI(navbarPage(title = (windowTitle = "FREDA"),
                    theme = "yeti.css",
                    ############# Welcome Panel #########################
-                            navbarMenu("Welcome",
+                   navbarMenu("Welcome",
                               tabPanel(title = "Introduction",
                                        includeMarkdown("./Welcome to FREDA.md")),
                               tabPanel(title = "Data Requirements",
-                                      includeMarkdown("./DataRequirements.md"),
-                                     # DT::dataTableOutput("example_meta_table"), # in case we want a preview of the data
-                                     # DT::dataTableOutput("example_data_table"),
-                                      downloadButton('downloadData', 'Download')),
+                                       includeMarkdown("./DataRequirements.md"),
+                                       # DT::dataTableOutput("example_meta_table"), # in case we want a preview of the data
+                                       # DT::dataTableOutput("example_data_table"),
+                                       downloadButton('downloadData', 'Download')),
                               tabPanel(title = "Resources",
                                        HTML('<h4> Resources </h4>')),
                               tabPanel(title = "Contact",
                                        HTML('<h4> Contact </h4>'))
-                            ),
+                   ),
                    ################## Upload Panel #######################################
                    tabPanel("Upload",
                             sidebarLayout(
@@ -119,43 +119,43 @@ shinyUI(navbarPage(title = (windowTitle = "FREDA"),
                                 # Action button: pressing this creates the peakICR object
                                 actionButton('upload_click', 'Process Data')
                                 
-                            ), # End sidebar panel
-                            
-                            mainPanel(
+                              ), # End sidebar panel
                               
-                              # Set default width of panel
-                              width = 7,
-                              
-                              # Show 'Success' message if peakICR created successfully
-                              uiOutput('success_upload'),
-                              
-                              # Summary panel
-                              wellPanel(
+                              mainPanel(
                                 
-                                # Number of peaks, samples, and peaks with formulas assigned
-                                textOutput('num_peaks'), 
-                                textOutput('num_samples'), 
-                                textOutput('num_peaks_formula')
-                              ),
+                                # Set default width of panel
+                                width = 7,
+                                
+                                # Show 'Success' message if peakICR created successfully
+                                uiOutput('success_upload'),
+                                
+                                # Summary panel
+                                wellPanel(
+                                  
+                                  # Number of peaks, samples, and peaks with formulas assigned
+                                  textOutput('num_peaks'), 
+                                  textOutput('num_samples'), 
+                                  textOutput('num_peaks_formula')
+                                ),
+                                
+                                # Horizontal ruler
+                                tags$hr(), 
+                                
+                                # Show preview of e_data
+                                htmlOutput('edata_text'),
+                                #dataTableOutput("head_edata"), 
+                                DTOutput("head_edata", width = "90%"),
+                                
+                                # Horizontal rule
+                                tags$hr(),
+                                
+                                # Show preview of e_meta
+                                htmlOutput('emeta_text'),
+                                #dataTableOutput('head_emeta'),
+                                DTOutput("head_emeta", width = "90%")
+                                
+                              ) # End main panel
                               
-                              # Horizontal ruler
-                              tags$hr(), 
-                              
-                              # Show preview of e_data
-                              htmlOutput('edata_text'),
-                              #dataTableOutput("head_edata"), 
-                              DTOutput("head_edata", width = "90%"),
-                              
-                              # Horizontal rule
-                              tags$hr(),
-                              
-                              # Show preview of e_meta
-                              htmlOutput('emeta_text'),
-                              #dataTableOutput('head_emeta'),
-                              DTOutput("head_emeta", width = "90%")
-                              
-                            ) # End main panel
-                            
                             )), # End Upload tab
                    
                    ################## Filter Panel ##############################################
@@ -283,9 +283,10 @@ shinyUI(navbarPage(title = (windowTitle = "FREDA"),
                                   # Set default width to 7
                                   
                                   # Drop down list: Use boundary?
-                                  selectInput('vkbounds', 'Use Van Krevelen boundary set:',
-                                              choices = c('BS1' = 'bs1', 'BS2' = 'bs2', 'None' = 0),
-                                              selected = 'bs1')
+                                  # selectInput('vkbounds', 'Use Van Krevelen boundary set:',
+                                  #             choices = c('BS1' = 'bs1', 'BS2' = 'bs2', 'None' = 0),
+                                  #             selected = 'bs1')
+                                  uiOutput("vkbounds")
                                   
                                 ),
                                 uiOutput('vk_colors')
@@ -304,8 +305,8 @@ shinyUI(navbarPage(title = (windowTitle = "FREDA"),
                    ################## Download Panel ##############################################
                    tabPanel('Download',
                             checkboxGroupInput("download_selection", label = "Select Processed Data to Download",
-                                          choices = c('e_data as one .csv and e_meta as another .csv' = "separate",
-                                          'merged e_data and e_meta as a single .csv' = "merged")),
+                                               choices = c('e_data as one .csv and e_meta as another .csv' = "separate",
+                                                           'merged e_data and e_meta as a single .csv' = "merged")),
                             hr(),
                             checkboxInput("report_selection", label = "Report (Coming Soon)"),
                             hr(),
@@ -313,7 +314,7 @@ shinyUI(navbarPage(title = (windowTitle = "FREDA"),
                             hr(),
                             downloadButton('download_processed_data', 'Download Selection')
                             
-                            ), 
+                   ), 
                    
                    ################## Glossary Panel ##############################################
                    tabPanel('Glossary',
@@ -323,6 +324,6 @@ shinyUI(navbarPage(title = (windowTitle = "FREDA"),
                             # )
                             
                    )
-                   )
+)
 )
 
