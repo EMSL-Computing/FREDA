@@ -863,7 +863,7 @@ shinyServer(function(session, input, output) {
           selectInput('whichSample', 'Sample',
                       choices = sample_names())
         ), # End conditional output, single sample #
-        actionButton("plot_submit", label = "Sumbit")
+        actionButton("plot_submit", label = "Submit")
       ))
     }
     #------ Density Sidebar Options ---------#
@@ -902,7 +902,7 @@ shinyServer(function(session, input, output) {
           selectInput('whichSample', 'Sample',
                       choices = sample_names())
         ), # End conditional output, single sample #
-        actionButton("plot_submit", label = "Sumbit")
+        actionButton("plot_submit", label = "Submit")
       ))
     }
     
