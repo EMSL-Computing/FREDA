@@ -16,19 +16,19 @@ library(markdown)
 shinyUI(navbarPage(title = (windowTitle = "FREDA"),
                    theme = "yeti.css",
                    ############# Welcome Panel #########################
-                            navbarMenu("Welcome",
+                   navbarMenu("Welcome",
                               tabPanel(title = "Introduction",
                                        includeMarkdown("./Welcome to FREDA.md")),
                               tabPanel(title = "Data Requirements",
-                                      includeMarkdown("./DataRequirements.md"),
-                                     # DT::dataTableOutput("example_meta_table"), # in case we want a preview of the data
-                                     # DT::dataTableOutput("example_data_table"),
-                                      downloadButton('downloadData', 'Download')),
+                                       includeMarkdown("./DataRequirements.md"),
+                                       # DT::dataTableOutput("example_meta_table"), # in case we want a preview of the data
+                                       # DT::dataTableOutput("example_data_table"),
+                                       downloadButton('downloadData', 'Download')),
                               tabPanel(title = "Resources",
                                        HTML('<h4> Resources </h4>')),
                               tabPanel(title = "Contact",
                                        HTML('<h4> Contact </h4>'))
-                            ),
+                   ),
                    ################## Upload Panel #######################################
                    tabPanel("Upload",
                             sidebarLayout(
@@ -119,43 +119,43 @@ shinyUI(navbarPage(title = (windowTitle = "FREDA"),
                                 # Action button: pressing this creates the peakICR object
                                 actionButton('upload_click', 'Process Data')
                                 
-                            ), # End sidebar panel
-                            
-                            mainPanel(
+                              ), # End sidebar panel
                               
-                              # Set default width of panel
-                              width = 7,
-                              
-                              # Show 'Success' message if peakICR created successfully
-                              uiOutput('success_upload'),
-                              
-                              # Summary panel
-                              wellPanel(
+                              mainPanel(
                                 
-                                # Number of peaks, samples, and peaks with formulas assigned
-                                textOutput('num_peaks'), 
-                                textOutput('num_samples'), 
-                                textOutput('num_peaks_formula')
-                              ),
+                                # Set default width of panel
+                                width = 7,
+                                
+                                # Show 'Success' message if peakICR created successfully
+                                uiOutput('success_upload'),
+                                
+                                # Summary panel
+                                wellPanel(
+                                  
+                                  # Number of peaks, samples, and peaks with formulas assigned
+                                  textOutput('num_peaks'), 
+                                  textOutput('num_samples'), 
+                                  textOutput('num_peaks_formula')
+                                ),
+                                
+                                # Horizontal ruler
+                                tags$hr(), 
+                                
+                                # Show preview of e_data
+                                htmlOutput('edata_text'),
+                                #dataTableOutput("head_edata"), 
+                                DTOutput("head_edata", width = "90%"),
+                                
+                                # Horizontal rule
+                                tags$hr(),
+                                
+                                # Show preview of e_meta
+                                htmlOutput('emeta_text'),
+                                #dataTableOutput('head_emeta'),
+                                DTOutput("head_emeta", width = "90%")
+                                
+                              ) # End main panel
                               
-                              # Horizontal ruler
-                              tags$hr(), 
-                              
-                              # Show preview of e_data
-                              htmlOutput('edata_text'),
-                              #dataTableOutput("head_edata"), 
-                              DTOutput("head_edata", width = "90%"),
-                              
-                              # Horizontal rule
-                              tags$hr(),
-                              
-                              # Show preview of e_meta
-                              htmlOutput('emeta_text'),
-                              #dataTableOutput('head_emeta'),
-                              DTOutput("head_emeta", width = "90%")
-                              
-                            ) # End main panel
-                            
                             )), # End Upload tab
                    
                    ################## Filter Panel ##############################################
@@ -266,91 +266,16 @@ shinyUI(navbarPage(title = (windowTitle = "FREDA"),
                                 selectInput('chooseplots', 'I want to plot a', 
                                             choices = c('Van Krevelen Plot' = 1, 
                                                         'Kendrick Plot' = 2,
+                                                        'Density Plot' = 3,
                                                         'Select an Option' = 0),
                                             selected = 0
                                 ), 
-                                # UI options will change depending on plot type. Stub
-                                # that out here with conditional panels
-                                #------------------ Van Krev Conditionals -------------------#
-                                # conditionalPanel(
-                                #   condition = 'input.chooseplots == 1',
-                                #   
-                                #   # Drop down list: single samples or multiple?
-                                #   selectInput('choose_single', 'I want to plot using:',
-                                #               choices = c('Make a selection' = 0, 'A single sample' = 1, 'Multiple samples by group' = 2, 'A comparison of groups' = 3),
-                                #               selected = 0), 
-                                #   
-                                #   # (Conditional on choose_single) If Multiple: show options for grouping
-                                #   conditionalPanel(
-                                #     condition = 'input.choose_single == 2',
-                                #     
-                                #       fluidRow(
-                                #         ######### MAKE GROUPS MUTUALLY EXCLUSIVE ##########
-                                #         # Column with width 6: which samples are in Group 1?
-                                #         column(12, 
-                                #                uiOutput('whichGroups1')
-                                #         )#,
-                                #         
-                                #         # Column with width 6: which samples are in Group 2?
-                                #         # column(6, 
-                                #         #        uiOutput('whichGroups2')
-                                #         # )
-                                #       )
-                                #       
-                                #     ), # End conditional output multiple samples#
-                                #   
-                                #   # (Conditional on choose_single) If single: choose sample
-                                #   conditionalPanel(
-                                #     condition = 'input.choose_single == 1',
-                                #     
-                                #       uiOutput('whichSample')
-                                #     ), # End conditional output, single sample #
-                                #   actionButton("plot_submit", label = "Sumbit")
-                                # ),
-                                # 
-                                # 
-                                # 
-                                # 
-                                # # #------------------ Kendrick Conditionals -------------------#
-                                # conditionalPanel(
-                                #   condition = 'input.chooseplots == 2',
-                                # 
-                                #   # Drop down list: single samples or multiple?
-                                #   selectInput('choose_single2', 'I want to plot using:',
-                                #               choices = c('Make a selection' = 0, 'A single sample' = 1, 'Multiple samples by group' = 2, 'A comparison of groups' = 3),
-                                #               selected = 0),
-                                # 
-                                #   # (Conditional on choose_single) If Multiple: show options for grouping
-                                #   conditionalPanel(
-                                #     condition = 'input.choose_single2 == 2',
-                                # 
-                                #     fluidRow(
-                                #       ######### MAKE GROUPS MUTUALLY EXCLUSIVE ##########
-                                #       # Column with width 6: which samples are in Group 1?
-                                #       column(12,
-                                #              uiOutput('whichGroups1')
-                                #       )#,
-                                # 
-                                #       # Column with width 6: which samples are in Group 2?
-                                #       # column(6,
-                                #       #        uiOutput('whichGroups2')
-                                #       # )
-                                #     )
-                                # 
-                                #   ), # End conditional output multiple samples#
-                                # 
-                                #   # (Conditional on choose_single) If single: choose sample
-                                #   conditionalPanel(
-                                #     condition = 'input.choose_single2 == 1',
-                                # 
-                                #     uiOutput('whichSample')
-                                #   ), # End conditional output, single sample #
-                                #   actionButton("plot_submit2", label = "Sumbit")
-                                # )
+                                # UI options will change depending on plot type.
                                 uiOutput("plotUI")
                               ),# End sidebar conditionals on Visualize tab #
                               
                               mainPanel(
+                                #tags$div(plotlyOutput('FxnPlot'), class = "square"),
                                 plotlyOutput('FxnPlot'),
                                 width = 7,
                                 conditionalPanel(
@@ -358,9 +283,10 @@ shinyUI(navbarPage(title = (windowTitle = "FREDA"),
                                   # Set default width to 7
                                   
                                   # Drop down list: Use boundary?
-                                  selectInput('vkbounds', 'Use Van Krevelen boundary set:',
-                                              choices = c('BS1' = 'bs1', 'BS2' = 'bs2', 'None' = 0),
-                                              selected = 'bs1')
+                                  # selectInput('vkbounds', 'Use Van Krevelen boundary set:',
+                                  #             choices = c('BS1' = 'bs1', 'BS2' = 'bs2', 'None' = 0),
+                                  #             selected = 'bs1')
+                                  uiOutput("vkbounds")
                                   
                                 ),
                                 uiOutput('vk_colors')
@@ -379,8 +305,8 @@ shinyUI(navbarPage(title = (windowTitle = "FREDA"),
                    ################## Download Panel ##############################################
                    tabPanel('Download',
                             checkboxGroupInput("download_selection", label = "Select Processed Data to Download",
-                                          choices = c('e_data as one .csv and e_meta as another .csv' = "separate",
-                                          'merged e_data and e_meta as a single .csv' = "merged")),
+                                               choices = c('e_data as one .csv and e_meta as another .csv' = "separate",
+                                                           'merged e_data and e_meta as a single .csv' = "merged")),
                             hr(),
                             checkboxInput("report_selection", label = "Report (Coming Soon)"),
                             hr(),
@@ -388,7 +314,7 @@ shinyUI(navbarPage(title = (windowTitle = "FREDA"),
                             hr(),
                             downloadButton('download_processed_data', 'Download Selection')
                             
-                            ), 
+                   ), 
                    
                    ################## Glossary Panel ##############################################
                    tabPanel('Glossary',
@@ -398,6 +324,6 @@ shinyUI(navbarPage(title = (windowTitle = "FREDA"),
                             # )
                             
                    )
-                   )
+)
 )
 

@@ -7068,3 +7068,11 @@ input[type="checkbox"] {
 .modal .close {
   color: #222222;
 }
+.square {
+    background: #000;
+    width: 50vw;
+    height: 50vw;
+}
+.square h1 {
+    color: #fff;
+}
