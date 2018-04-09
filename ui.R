@@ -266,87 +266,11 @@ shinyUI(navbarPage(title = (windowTitle = "FREDA"),
                                 selectInput('chooseplots', 'I want to plot a', 
                                             choices = c('Van Krevelen Plot' = 1, 
                                                         'Kendrick Plot' = 2,
+                                                        'Density Plot' = 3,
                                                         'Select an Option' = 0),
                                             selected = 0
                                 ), 
-                                # UI options will change depending on plot type. Stub
-                                # that out here with conditional panels
-                                #------------------ Van Krev Conditionals -------------------#
-                                # conditionalPanel(
-                                #   condition = 'input.chooseplots == 1',
-                                #   
-                                #   # Drop down list: single samples or multiple?
-                                #   selectInput('choose_single', 'I want to plot using:',
-                                #               choices = c('Make a selection' = 0, 'A single sample' = 1, 'Multiple samples by group' = 2, 'A comparison of groups' = 3),
-                                #               selected = 0), 
-                                #   
-                                #   # (Conditional on choose_single) If Multiple: show options for grouping
-                                #   conditionalPanel(
-                                #     condition = 'input.choose_single == 2',
-                                #     
-                                #       fluidRow(
-                                #         ######### MAKE GROUPS MUTUALLY EXCLUSIVE ##########
-                                #         # Column with width 6: which samples are in Group 1?
-                                #         column(12, 
-                                #                uiOutput('whichGroups1')
-                                #         )#,
-                                #         
-                                #         # Column with width 6: which samples are in Group 2?
-                                #         # column(6, 
-                                #         #        uiOutput('whichGroups2')
-                                #         # )
-                                #       )
-                                #       
-                                #     ), # End conditional output multiple samples#
-                                #   
-                                #   # (Conditional on choose_single) If single: choose sample
-                                #   conditionalPanel(
-                                #     condition = 'input.choose_single == 1',
-                                #     
-                                #       uiOutput('whichSample')
-                                #     ), # End conditional output, single sample #
-                                #   actionButton("plot_submit", label = "Sumbit")
-                                # ),
-                                # 
-                                # 
-                                # 
-                                # 
-                                # # #------------------ Kendrick Conditionals -------------------#
-                                # conditionalPanel(
-                                #   condition = 'input.chooseplots == 2',
-                                # 
-                                #   # Drop down list: single samples or multiple?
-                                #   selectInput('choose_single2', 'I want to plot using:',
-                                #               choices = c('Make a selection' = 0, 'A single sample' = 1, 'Multiple samples by group' = 2, 'A comparison of groups' = 3),
-                                #               selected = 0),
-                                # 
-                                #   # (Conditional on choose_single) If Multiple: show options for grouping
-                                #   conditionalPanel(
-                                #     condition = 'input.choose_single2 == 2',
-                                # 
-                                #     fluidRow(
-                                #       ######### MAKE GROUPS MUTUALLY EXCLUSIVE ##########
-                                #       # Column with width 6: which samples are in Group 1?
-                                #       column(12,
-                                #              uiOutput('whichGroups1')
-                                #       )#,
-                                # 
-                                #       # Column with width 6: which samples are in Group 2?
-                                #       # column(6,
-                                #       #        uiOutput('whichGroups2')
-                                #       # )
-                                #     )
-                                # 
-                                #   ), # End conditional output multiple samples#
-                                # 
-                                #   # (Conditional on choose_single) If single: choose sample
-                                #   conditionalPanel(
-                                #     condition = 'input.choose_single2 == 1',
-                                # 
-                                #     uiOutput('whichSample')
-                                #   ), # End conditional output, single sample #
-                                #   actionButton("plot_submit2", label = "Sumbit")
-                                # )
+                                # UI options will change depending on plot type.
                                 uiOutput("plotUI")
                               ),# End sidebar conditionals on Visualize tab #
                               

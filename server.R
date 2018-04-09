@@ -865,34 +865,85 @@ shinyServer(function(session, input, output) {
       ))
     }
     
+    if (input$chooseplots == 3) {
+      return(tagList(
+        # Drop down list: single samples or multiple?
+        selectInput('choose_single', 'I want to plot using:',
+                    choices = c('Make a selection' = 0, 'A single sample' = 1, 'Multiple samples by group' = 2, 'A comparison of groups' = 3),
+                    selected = 0), 
+        
+        # (Conditional on choose_single) If Multiple: show options for grouping
+        conditionalPanel(
+          condition = 'input.choose_single == 2',
+          
+          fluidRow(
+            ######### MAKE GROUPS MUTUALLY EXCLUSIVE ##########
+            # Column with width 6: which samples are in Group 1?
+            column(12,
+                   selectInput('whichGroups1', 'Group 1',
+                               choices = sample_names(),
+                               multiple = TRUE)
+            )#,
+            
+            # Column with width 6: which samples are in Group 2?
+            # column(6,
+            #        uiOutput('whichGroups2')
+            # )
+          )
+          
+        ), # End conditional output multiple samples#
+        
+        # (Conditional on choose_single) If single: choose sample
+        conditionalPanel(
+          condition = 'input.choose_single == 1',
+          
+          selectInput('whichSample', 'Sample',
+                      choices = sample_names())
+        ), # End conditional output, single sample #
+        actionButton("plot_submit", label = "Sumbit")
+      ))
+    }
+    
   })
   
   output$vk_colors <- renderUI({
     # (Conditional on vkbounds):
     # Error handling: test_names required
     req(test_names())
-    
+    input$chooseplots
     # Create named list with potential histogram options
     hist_choices <- unlist(test_names()[,1])
     names(hist_choices) <- test_names()[,2]
-    
     if(input$vkbounds == 0) {#no boundaries
       return(selectInput('vk_colors', 'Color by:', 
                          choices = c('Van Krevelen Boundary Set 1' = 'bs1',
                                      'Van Krevelen Boundary Set 2' = 'bs2', 
                                      hist_choices),
                          selected = 'bs1'))  
-    } else if (input$vkbounds == 'bs1'){ #only allow bs1 boundary colors
+    } 
+    if (input$chooseplots == 3) {
+      return(selectInput('vk_colors', 'Color by:', 
+                  choices = c(hist_choices),
+                  selected = hist_choices[1]))
+    }
+    
+    if (input$vkbounds == 'bs1'){ #only allow bs1 boundary colors
       return(selectInput('vk_colors', 'Color by:', 
                          choices = c('Van Krevelen Boundary Set 1' = 'bs1',
                                      hist_choices),
                          selected = 'bs1'))
       
-    } else if (input$vkbounds == 'bs2') { #only allow bs2 boundary colors
+    } 
+    if (input$vkbounds == 'bs2') { #only allow bs2 boundary colors
       selectInput('vk_colors', 'Color by:', 
                   choices = c('Van Krevelen Boundary Set 2' = 'bs2', 
                               hist_choices),
                   selected = 'bs2')
+    } 
+    if (input$chooseplots == 3) {
+      selectInput('vk_colors', 'Color by:', 
+                  choices = c(hist_choices),
+                  selected = hist_choices[1])
     }
   })
   
@@ -948,6 +999,18 @@ shinyServer(function(session, input, output) {
             
           }
         }
+      })
+    }
+    
+    #--------- Density Plot --------#
+    if (input$chooseplots == 3) {
+      output$FxnPlot <- renderPlotly({
+        validate(
+          need(!is.null(input$whichSample) | !is.null(input$whichGroups1),
+                      message = "Please choose a sample below"),
+          need(!is.na(input$vk_colors), message = "Please select a variable to color by")
+                 )
+        densityPlot(division_data, variable = input$vk_colors)
       })
     }
   })
