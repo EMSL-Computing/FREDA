@@ -990,7 +990,7 @@ shinyServer(function(session, input, output) {
   
   #### Main Panel ####
   v <- reactiveValues(clearPlot = TRUE)
-  observeEvent(c(input$chooseplots, input$choose_single), {
+  observeEvent(c(input$chooseplots, input$choose_single, input$whichGroups1, input$whichSample), {
     v$clearPlot <- TRUE
   }, priority = 10)
   observeEvent(input$plot_submit, {
