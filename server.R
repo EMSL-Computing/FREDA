@@ -824,7 +824,7 @@ shinyServer(function(session, input, output) {
           selectInput('whichSample', 'Sample',
                       choices = sample_names())
         ), # End conditional output, single sample #
-        actionButton("plot_submit", label = "Sumbit")
+        actionButton("plot_submit", label = "Submit")
       ))
     }
     #------ Kendrick Sidebar Options ---------#
@@ -912,13 +912,9 @@ shinyServer(function(session, input, output) {
       need(input$choose_single != 0, message = "Please select sample(s)"),
       need(input$chooseplots != 0, message = "")
     )
-    if (input$choose_single == 2 | input$chooseplots %in% c(2,3)) {
-      return(0)
-    } else {
       return(selectInput('vkbounds', 'Use Van Krevelen boundary set:',
                          choices = c('BS1' = 'bs1', 'BS2' = 'bs2', 'None' = 0),
                          selected = 'bs1'))
-    }
   })
   output$vk_colors <- renderUI({
     # (Conditional on vkbounds):
@@ -930,26 +926,7 @@ shinyServer(function(session, input, output) {
     # Create named list with potential histogram options
     hist_choices <- unlist(test_names()[,1])
     names(hist_choices) <- test_names()[,2]
-    if (input$chooseplots == 1) {
-      if (input$vkbounds == 0) {#no boundaries
-        return(selectInput('vk_colors', 'Color by:', 
-                           choices = c('Van Krevelen Boundary Set 1' = 'bs1',
-                                       'Van Krevelen Boundary Set 2' = 'bs2', 
-                                       hist_choices),
-                           selected = 'bs1'))  
-      } else if (input$vkbounds == 'bs1'){ #only allow bs1 boundary colors
-        return(selectInput('vk_colors', 'Color by:', 
-                           choices = c('Van Krevelen Boundary Set 1' = 'bs1',
-                                       hist_choices),
-                           selected = 'bs1'))
-        
-      } else if (input$vkbounds == 'bs2') { #only allow bs2 boundary colors
-        selectInput('vk_colors', 'Color by:', 
-                    choices = c('Van Krevelen Boundary Set 2' = 'bs2', 
-                                hist_choices),
-                    selected = 'bs2')
-      } 
-    }
+    
     #----- group summary color choices -------#
     if (input$choose_single == 2) {
       hist_choices <- getGroupSummaryFunctionNames()
@@ -970,6 +947,44 @@ shinyServer(function(session, input, output) {
                                      'Van Krevelen Boundary Set 2' = 'bs2', 
                                      hist_choices),
                          selected = 'bs1'))  
+    }
+    if (input$chooseplots == 1) {
+      if (input$vkbounds == 0) {#no boundaries
+        if (input$choose_single == 2) {
+          hist_choices <- getGroupSummaryFunctionNames()
+          return(selectInput('vk_colors', 'Color by:', 
+                             choices = c(hist_choices),
+                             selected = hist_choices[1]))
+        } else {
+          return(selectInput('vk_colors', 'Color by:', 
+                             choices = c('Van Krevelen Boundary Set 1' = 'bs1',
+                                         'Van Krevelen Boundary Set 2' = 'bs2', 
+                                         hist_choices),
+                             selected = 'bs1'))  
+        }
+      } else if (input$vkbounds == 'bs1') { #only allow bs1 boundary colors
+        if (input$choose_single == 2) {
+          return(selectInput('vk_colors', 'Color by:', 
+                             choices = c(hist_choices),
+                             selected = hist_choices[1]))
+        } else {
+          return(selectInput('vk_colors', 'Color by:', 
+                             choices = c('Van Krevelen Boundary Set 1' = 'bs1',
+                                         hist_choices),
+                             selected = 'bs1'))
+        }
+      } else if (input$vkbounds == 'bs2') { #only allow bs2 boundary colors
+        if (input$choose_single == 2) {
+          return(selectInput('vk_colors', 'Color by:', 
+                             choices = c(hist_choices),
+                             selected = hist_choices[1]))
+        } else {
+        selectInput('vk_colors', 'Color by:', 
+                    choices = c('Van Krevelen Boundary Set 2' = 'bs2', 
+                                hist_choices),
+                    selected = 'bs2')
+        }
+      } 
     }
   })
   
@@ -1029,9 +1044,16 @@ shinyServer(function(session, input, output) {
       #-------VanKrevelen Plot--------#
       if (input$chooseplots == 1) {
         if (input$choose_single == 2) {
-          return({
-            groupKendrickPlot(summarized_data, colorCName = input$vk_colors)
-          })
+          if (input$vkbounds == 0) {
+            return({
+              groupVanKrevelenPlot(summarized_data, colorCName = input$vk_colors)
+            })
+          } else {
+            return({
+              groupVanKrevelenPlot(summarized_data, colorCName = input$vk_colors, vkBoundarySet = input$vkbounds)
+            })
+          }
+
         } else if (input$choose_single == 1) {
           return({
             validate(need(!is.null(input$whichSample) | !is.null(input$whichGroups1),
