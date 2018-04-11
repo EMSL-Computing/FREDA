@@ -475,20 +475,101 @@ shinyServer(function(session, input, output) {
     
   })# End emeta_text
   
-  # Display preview for emeta
-  # output$head_emeta <- renderDataTable({
-  #   
-  #   if (dim(Emeta())[2] > 6)
-  #     head(Emeta())[,1:6]
-  #   else
-  #     head(Emeta())
-  # }, # End code portion of head_emeta
-  # 
-  # # Options
-  # options = list(dom = 't', searching = FALSE)
-  # 
-  # ) # End head_emeta
-  # 
+  ####### Preprocess Tab #######
+  
+  #### Action Button reactions ####
+  
+  ## Action button: Apply calculation functions When action button is clicked
+  # Depends on: peakIcr2, input$tests
+  observeEvent(input$preprocess_click, {
+    
+    validate(need(input$tests, message = "Please choose at least one test to calculate"))
+    # Apply all relevant functions
+    peakIcr2 <<- compound_calcs(peakIcr2, calc_fns = c(input$tests))
+  }) # End action button event
+  
+  # Object: Create dataframe of possible calculations to show in summary/histogram
+  # Note: dependent on preprocess click and the user-specified calculations
+  test_names <- eventReactive(input$preprocess_click, {
+    
+    # Error handling: peakIcr2 must have a non-NULL Kendrick Mass column name
+    req(!is.null(attr(peakIcr2, 'cnames')$kmass_cname))
+    
+    # Get csv file of all possible calculation column names
+    possible_calc_cnames <- read.csv("processedCols.csv", 
+                                     header = FALSE, stringsAsFactors = FALSE)
+    
+    # Get column names from peakIcr2's e_meta
+    actual_cnames <- colnames(peakIcr2$e_meta)
+    
+    # Find all columns with names that match names for calculated columns
+    v_index <- which(possible_calc_cnames[,1] %in% actual_cnames & possible_calc_cnames[,3] == "continuous")
+    
+    # Save calculation column names from above and their display names 
+    possible_calc_cnames[v_index,]
+    
+  }) # End test_names
+  
+  #### Main Panel ####
+  
+  # Summary Panel: Display output of summaryPreprocess
+  # Depends on: test_names
+  output$summary_preprocess <- renderTable({
+    
+    # Error handling
+    req(test_names())
+    
+    # Call summaryPreprocess
+    summaryPreprocess(peakIcr2, test_names())
+    
+  }, # End code for summary_preprocess
+  
+  # Options for renderTable
+  rownames = TRUE, 
+  digits = 2 # This maybe needs to change?
+  
+  ) # End summary_preprocess
+  
+  # Drop down list: potential histogram options
+  # Depends on: test_names
+  output$which_hist <- renderUI({
+    
+    # Error handling: test_names required
+    req(test_names())
+    
+    # Create named list with potential histogram options
+    hist_choices <- unlist(test_names()[,1])
+    names(hist_choices) <- test_names()[,2]
+    
+    # Drop down list 
+    selectInput('which_hist', 'I would like to see the histogram across all values of...',
+                choices = hist_choices)
+    
+  }) # End which_hist
+  
+  # Plot the histogram chosen above
+  # Depends on: which_hist (above) and test_names
+  output$preprocess_hist <- renderPlotly({
+    
+    # Error handling: Require which_hist and test_names (for display)
+    req(input$which_hist)
+    req(test_names())
+    
+    # Save column name for later display
+    columnName <- input$which_hist
+    
+    # Get 'display name' from test_names
+    displayName <- test_names()[which(test_names()[,1] == columnName), 2]
+    
+    # Plot histogram using plotly
+    plot_ly(x = peakIcr2$e_meta[,columnName], type = 'histogram') %>%
+      layout( title = paste('Histogram of ', displayName),
+              scene = list(
+                xaxis = list(title = displayName),
+                yaxis = list(title = 'Frequency')))
+    
+  }) # End process_hist
+  
   ############## Filter tab ###############
   
   #### Sidebar Panel (Filter Tab) ####
@@ -561,7 +642,7 @@ shinyServer(function(session, input, output) {
     showModal(
       modalDialog(title = "Filter Success",
                   HTML('<h4 style= "color:#1A5276">Your data has been filtered using mass and/or minimum observations. 
-         You may proceed to the next tabs for subsequnt analysis.</h4>'))
+                       You may proceed to the next tabs for subsequnt analysis.</h4>'))
     )
     HTML('<h4 style= "color:#1A5276">You may now proceed to preprocessing and visualization</h4>')
     
@@ -684,102 +765,6 @@ shinyServer(function(session, input, output) {
       labs(x = 'Data State', y = 'Number of peaks') 
     
   }) # End barplot_filter #
-  
-  
-  ####### Preprocess Tab #######
-  
-  #### Action Button reactions ####
-  
-  ## Action button: Apply calculation functions When action button is clicked
-  # Depends on: peakIcr2, input$tests
-  observeEvent(input$preprocess_click, {
-    
-    validate(need(input$tests, message = "Please choose at least one test to calculate"))
-    # Apply all relevant functions
-    peakIcr2 <<- compound_calcs(peakIcr2, calc_fns = c(input$tests))
-  }) # End action button event
-  
-  # Object: Create dataframe of possible calculations to show in summary/histogram
-  # Note: dependent on preprocess click and the user-specified calculations
-  test_names <- eventReactive(input$preprocess_click, {
-    
-    # Error handling: peakIcr2 must have a non-NULL Kendrick Mass column name
-    req(!is.null(attr(peakIcr2, 'cnames')$kmass_cname))
-    
-    # Get csv file of all possible calculation column names
-    possible_calc_cnames <- read.csv("processedCols.csv", 
-                                     header = FALSE, stringsAsFactors = FALSE)
-    
-    # Get column names from peakIcr2's e_meta
-    actual_cnames <- colnames(peakIcr2$e_meta)
-    
-    # Find all columns with names that match names for calculated columns
-    v_index <- which(possible_calc_cnames[,1] %in% actual_cnames & possible_calc_cnames[,3] == "continuous")
-    
-    # Save calculation column names from above and their display names 
-    possible_calc_cnames[v_index,]
-    
-  }) # End test_names
-  
-  #### Main Panel ####
-  
-  # Summary Panel: Display output of summaryPreprocess
-  # Depends on: test_names
-  output$summary_preprocess <- renderTable({
-    
-    # Error handling
-    req(test_names())
-    
-    # Call summaryPreprocess
-    summaryPreprocess(peakIcr2, test_names())
-    
-  }, # End code for summary_preprocess
-  
-  # Options for renderTable
-  rownames = TRUE, 
-  digits = 2 # This maybe needs to change?
-  
-  ) # End summary_preprocess
-  
-  # Drop down list: potential histogram options
-  # Depends on: test_names
-  output$which_hist <- renderUI({
-    
-    # Error handling: test_names required
-    req(test_names())
-    
-    # Create named list with potential histogram options
-    hist_choices <- unlist(test_names()[,1])
-    names(hist_choices) <- test_names()[,2]
-    
-    # Drop down list 
-    selectInput('which_hist', 'I would like to see the histogram across all values of...',
-                choices = hist_choices)
-    
-  }) # End which_hist
-  
-  # Plot the histogram chosen above
-  # Depends on: which_hist (above) and test_names
-  output$preprocess_hist <- renderPlotly({
-    
-    # Error handling: Require which_hist and test_names (for display)
-    req(input$which_hist)
-    req(test_names())
-    
-    # Save column name for later display
-    columnName <- input$which_hist
-    
-    # Get 'display name' from test_names
-    displayName <- test_names()[which(test_names()[,1] == columnName), 2]
-    
-    # Plot histogram using plotly
-    plot_ly(x = peakIcr2$e_meta[,columnName], type = 'histogram') %>%
-      layout( title = paste('Histogram of ', displayName),
-              scene = list(
-                xaxis = list(title = displayName),
-                yaxis = list(title = 'Frequency')))
-    
-  }) # End process_hist
   
   ####### Visualize Tab #######
   #### Sidebar Panel ####
@@ -912,9 +897,9 @@ shinyServer(function(session, input, output) {
       need(input$choose_single != 0, message = "Please select sample(s)"),
       need(input$chooseplots != 0, message = "")
     )
-      return(selectInput('vkbounds', 'Use Van Krevelen boundary set:',
-                         choices = c('BS1' = 'bs1', 'BS2' = 'bs2', 'None' = 0),
-                         selected = 'bs1'))
+    return(selectInput('vkbounds', 'Use Van Krevelen boundary set:',
+                       choices = c('BS1' = 'bs1', 'BS2' = 'bs2', 'None' = 0),
+                       selected = 'bs1'))
   })
   output$vk_colors <- renderUI({
     # (Conditional on vkbounds):
@@ -979,10 +964,10 @@ shinyServer(function(session, input, output) {
                              choices = c(hist_choices),
                              selected = hist_choices[1]))
         } else {
-        selectInput('vk_colors', 'Color by:', 
-                    choices = c('Van Krevelen Boundary Set 2' = 'bs2', 
-                                hist_choices),
-                    selected = 'bs2')
+          selectInput('vk_colors', 'Color by:', 
+                      choices = c('Van Krevelen Boundary Set 2' = 'bs2', 
+                                  hist_choices),
+                      selected = 'bs2')
         }
       } 
     }
@@ -1053,7 +1038,7 @@ shinyServer(function(session, input, output) {
               groupVanKrevelenPlot(summarized_data, colorCName = input$vk_colors, vkBoundarySet = input$vkbounds)
             })
           }
-
+          
         } else if (input$choose_single == 1) {
           return({
             validate(need(!is.null(input$whichSample) | !is.null(input$whichGroups1),

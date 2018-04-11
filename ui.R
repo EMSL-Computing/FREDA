@@ -157,54 +157,6 @@ shinyUI(navbarPage(title = (windowTitle = "FREDA"),
                               ) # End main panel
                               
                             )), # End Upload tab
-                   
-                   ################## Filter Panel ##############################################
-                   tabPanel("Filter", 
-                            
-                            sidebarLayout(
-                              sidebarPanel(
-                                
-                                # Set default width for panel
-                                width = 5,
-                                
-                                # Checkbox: Mass filter yes/no
-                                checkboxInput('massfilter', HTML('<h5><b>Mass Filter</b></h5>')),
-                                
-                                # Numeric: Min/max mass filter
-                                numericInput('min_mass', 'Minimum Mass value', 
-                                             min = 0, value = 200),
-                                numericInput('max_mass', "Maximum Mass value", 
-                                             min = 0, value = 900),
-                                
-                                # Checkbox: Mass filter yes/no
-                                checkboxInput('molfilter', HTML('<h5><b>Molecule Filter</b></h5>')),
-                                
-                                # Drop-down list: Min/max mass filter
-                                uiOutput('minobs'), 
-                                actionButton('filter_click', "Filter Data")
-                                
-                              ), # End sidebar panel on Filter tab
-                              
-                              mainPanel(
-                                
-                                # Set default width for panel
-                                width = 7,
-                                
-                                # Success message if peakIcr2 filtered successfully
-                                htmlOutput('filterTest'), 
-                                
-                                # Summary panel: display summary of filters
-                                wellPanel(
-                                  tableOutput('summary_filter')
-                                ),
-                                
-                                # Plot: Show number of peaks before/after filters applied
-                                plotOutput('barplot_filter')
-                                
-                              ) # End main panel on Filter tab
-                              
-                            )), # End Filter tab
-                   
                    ################## Preprocess Panel ###############################################
                    tabPanel("Preprocess",
                             
@@ -253,6 +205,54 @@ shinyUI(navbarPage(title = (windowTitle = "FREDA"),
                               ) # End main panel on Preprocess tab #
                               
                             )), # End Preprocess tab #
+                   
+                   
+                   ################## Filter Panel ##############################################
+                   tabPanel("Filter", 
+                            
+                            sidebarLayout(
+                              sidebarPanel(
+                                
+                                # Set default width for panel
+                                width = 5,
+                                
+                                # Checkbox: Mass filter yes/no
+                                checkboxInput('massfilter', HTML('<h5><b>Mass Filter</b></h5>')),
+                                
+                                # Numeric: Min/max mass filter
+                                numericInput('min_mass', 'Minimum Mass value', 
+                                             min = 0, value = 200),
+                                numericInput('max_mass', "Maximum Mass value", 
+                                             min = 0, value = 900),
+                                
+                                # Checkbox: Mass filter yes/no
+                                checkboxInput('molfilter', HTML('<h5><b>Molecule Filter</b></h5>')),
+                                
+                                # Drop-down list: Min/max mass filter
+                                uiOutput('minobs'), 
+                                actionButton('filter_click', "Filter Data")
+                                
+                              ), # End sidebar panel on Filter tab
+                              
+                              mainPanel(
+                                
+                                # Set default width for panel
+                                width = 7,
+                                
+                                # Success message if peakIcr2 filtered successfully
+                                htmlOutput('filterTest'), 
+                                
+                                # Summary panel: display summary of filters
+                                wellPanel(
+                                  tableOutput('summary_filter')
+                                ),
+                                
+                                # Plot: Show number of peaks before/after filters applied
+                                plotOutput('barplot_filter')
+                                
+                              ) # End main panel on Filter tab
+                              
+                            )), # End Filter tab
                    
                    ################## Visualize Panel ###############################################
                    tabPanel("Visualize", 
