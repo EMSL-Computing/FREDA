@@ -569,8 +569,26 @@ shinyServer(function(session, input, output) {
                 yaxis = list(title = 'Frequency')))
     
   }) # End process_hist
+
+  ############## Filter tab ##############
+  # ----- Filter Reset Setup -----# 
+  # Keep a
+  # reactive copy of the pre-filtered data in case of a filter reset event
+  uploaded_data <- reactive({
+    req(peakICR())
+    req(input$tests)
+    return(compound_calcs(peakICR(), calc_fns = c(input$tests)))
+  })
   
-  ############## Filter tab ###############
+  # Allow a button click to undo filtering
+  f <- reactiveValues(clearFilters = FALSE)
+  observeEvent(input$reset_filters, {
+    f$clearFilters <- TRUE
+  }, priority = 10)
+  
+  observeEvent(input$filter_click, {
+    f$clearFilters <- FALSE
+  }, priority = 10)
   
   #### Sidebar Panel (Filter Tab) ####
   
@@ -589,10 +607,7 @@ shinyServer(function(session, input, output) {
   # Event: Create filtered nonreactive peakIcr2 when action button clicked
   # Depends on action button 'filter_click'
   observeEvent(input$filter_click, {
-    
-    # # Create nonreactive peakICR object
-    # peakIcr2 <<- peakICR()
-    
+
     # If mass filtering is checked
     if (input$massfilter){
       
@@ -659,7 +674,6 @@ shinyServer(function(session, input, output) {
   # Object: Get data frame from summaryFilt
   # Depends on: peakIcr2, checkboxes for filters, and inputs for filters
   summaryFilterDataFrame <- reactive({
-    
     # TODO: Improve this logic so I don't have to hard code min_mass and max_mass defaults
     min_mass <- 200
     max_mass <- 900
@@ -743,7 +757,6 @@ shinyServer(function(session, input, output) {
   # Plot bar chart
   # Depends on: summaryFilterDataFrame
   output$barplot_filter <- renderPlot({
-    
     # Melt dataframe into 2 objects
     ggdata_barplot <- melt(summaryFilterDataFrame()[,c('data_state', 'assigned', 'unassigned')])
     ggdata_text <- summaryFilterDataFrame()[, c('data_state', 'sum_peaks', 'dispText')]
@@ -765,7 +778,18 @@ shinyServer(function(session, input, output) {
       labs(x = 'Data State', y = 'Number of peaks') 
     
   }) # End barplot_filter #
-  
+
+  #-------- Reset Activity -------#
+  # Allow a 'reset' that restores the uploaded object and unchecks the filter
+  # boxes
+  observeEvent(input$reset_filters, {
+    if (f$clearFilters) {
+      updateCheckboxInput(session = session, inputId = "massfilter", value = FALSE)
+      updateCheckboxInput(session = session, inputId = "molfilter", value = FALSE)
+    }
+    peakIcr2 <<- uploaded_data()
+  })
+ 
   ####### Visualize Tab #######
   #### Sidebar Panel ####
   # choose ui to render depending on which plot is chosen from input$chooseplot

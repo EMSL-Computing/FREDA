@@ -217,7 +217,7 @@ shinyUI(navbarPage(title = (windowTitle = "FREDA"),
                                 width = 5,
                                 
                                 # Checkbox: Mass filter yes/no
-                                checkboxInput('massfilter', HTML('<h5><b>Mass Filter</b></h5>')),
+                                checkboxInput('massfilter', HTML('<h5><b>Mass Filter</b></h5>'), value = FALSE),
                                 
                                 # Numeric: Min/max mass filter
                                 numericInput('min_mass', 'Minimum Mass value', 
@@ -226,11 +226,18 @@ shinyUI(navbarPage(title = (windowTitle = "FREDA"),
                                              min = 0, value = 900),
                                 
                                 # Checkbox: Mass filter yes/no
-                                checkboxInput('molfilter', HTML('<h5><b>Molecule Filter</b></h5>')),
+                                checkboxInput('molfilter', HTML('<h5><b>Molecule Filter</b></h5>'), value = FALSE),
                                 
                                 # Drop-down list: Min/max mass filter
                                 uiOutput('minobs'), 
-                                actionButton('filter_click', "Filter Data")
+                                fluidRow(
+                                  column(
+                                    width = 6, actionButton('filter_click', "Filter Data", icon = icon("cog"), lib = "glyphicon")
+                                  ),
+                                  column(
+                                    width = 6, actionButton('reset_filters', "Reset Filters", icon = icon("trash"), lib = "glyphicon")
+                                  )
+                                )
                                 
                               ), # End sidebar panel on Filter tab
                               
