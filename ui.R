@@ -117,7 +117,7 @@ shinyUI(navbarPage(title = (windowTitle = "FREDA"),
                                 tags$hr(),
                                 
                                 # Action button: pressing this creates the peakICR object
-                                actionButton('upload_click', 'Process Data')
+                                actionButton('upload_click', 'Process Data', icon = icon("cog"), lib = "glyphicon")
                                 
                               ), # End sidebar panel
                               
@@ -182,7 +182,7 @@ shinyUI(navbarPage(title = (windowTitle = "FREDA"),
                                                      'DBE and DBE - O' = 'calc_dbe'), 
                                                    selected = c('calc_vankrev', 'calc_kendrick')), 
                                 # Action button: add test columns with reasults to peakIcr2
-                                actionButton('preprocess_click', 'Process Data')
+                                actionButton('preprocess_click', 'Process Data', icon = icon("cog"), lib = "glyphicon")
                                 
                               ), # End sidebar panel
                               
@@ -296,7 +296,7 @@ shinyUI(navbarPage(title = (windowTitle = "FREDA"),
                                   uiOutput("vkbounds")
                                   
                                 ),
-                                uiOutput('vk_colors')
+                                uiOutput('vk_colors'),
                                 #,
                                 # conditionalPanel(
                                 #   condition = 'input.chooseplots == 2',
@@ -305,6 +305,7 @@ shinyUI(navbarPage(title = (windowTitle = "FREDA"),
                                 #   # Plot: Kendrick plot
                                 #  # plotlyOutput('FxnPlot')
                                 # )
+                                actionButton("add_plot", "I want to download a hi-res version of this plot on the Download tab", icon = icon("download"))
                               )# End main panel on Visualize tab #
                               
                             )), # End Visualize tab #
