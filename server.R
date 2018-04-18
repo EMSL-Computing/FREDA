@@ -798,7 +798,7 @@ shinyServer(function(session, input, output) {
       need(input$chooseplots != 0, message = "Please select plotting criteria")
     )
     #------ Van Krevelen Sidebar Options ---------#
-    if (input$chooseplots == 1) {
+    if (input$chooseplots == 'Van Krevelen Plot') {
       return(tagList(
         # Drop down list: single samples or multiple?
         selectInput('choose_single', 'I want to plot using:',
@@ -957,7 +957,7 @@ shinyServer(function(session, input, output) {
                                      hist_choices),
                          selected = 'bs1'))  
     }
-    if (input$chooseplots == 1) {
+    if (input$chooseplots == 'Van Krevelen Plot') {
       if (input$vkbounds == 0) {#no boundaries
         if (input$choose_single == 2) {
           hist_choices <- getGroupSummaryFunctionNames()
@@ -1051,7 +1051,7 @@ shinyServer(function(session, input, output) {
         }
       }
       #-------VanKrevelen Plot--------#
-      if (input$chooseplots == 1) {
+      if (input$chooseplots == 'Van Krevelen Plot') {
         if (input$choose_single == 2) {
           if (input$vkbounds == 0) {
             return({
@@ -1104,8 +1104,42 @@ shinyServer(function(session, input, output) {
       }
     }
     
-  })
+
+    
+  }) 
+  #-------- create a table that stores plotting information -------#
+  # the table needs to grow with each click of the download button
+  parmTable <- reactiveValues()
+  parmTable$parms <- data.frame(PlotType = NA, SampleType = NA, G1 = NA, G2 = NA, BoundarySet = NA,
+                                ColorBy = NA, ContinuousVariable = NA, UniqueCommon = NA,
+                                UniqueCommonParameters = NA,FileName = NA, ChartTitle = NA, XaxisTitle = NA,
+                                YaxisTitle = NA, LegendTitle = NA)
   
+  observeEvent(input$add_plot, {
+    # need to be able to convert from label values, back to labels
+    conversion_table <- matrix(nrow = 14, ncol = 3)
+    rownames(conversion_table) <- names(parmTable$parms)
+    conversion_table["PlotType", ] <- c('Van Krevelen Plot','Kendrick Plot','Density Plot')
+    browser()
+    if (input$add_plot == 1) {
+      parmTable$parms$PlotType[input$add_plot] <- input$chooseplots
+    } else {
+      newLine <- data.frame(PlotType = input$chooseplots, SampleType = NA, G1 = NA, G2 = NA, BoundarySet = NA,
+                            ColorBy = NA, ContinuousVariable = NA, UniqueCommon = NA,
+                            UniqueCommonParameters = NA,FileName = NA, ChartTitle = NA, XaxisTitle = NA,
+                            YaxisTitle = NA, LegendTitle = NA)
+      parmTable$parms <- rbind(parmTable$parms, newLine)
+    }
+   
+  }, priority = 7)
+
+  
+  # observeEvent(input$add_plot, {
+  #   browser()
+  #   parmTable()[input$add_plot, "PlotType"] <- input$chooseplots
+  # })
+  output$parmsTable <- renderDataTable(parmTable$parms)
+  # End Visualize tab
   ####### Download Tab #######
   output$download_processed_data <- downloadHandler(
     filename = paste("FREDA_Output_",proc.time(),".zip", sep = ""),

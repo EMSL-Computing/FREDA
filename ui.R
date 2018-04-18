@@ -271,7 +271,7 @@ shinyUI(navbarPage(title = (windowTitle = "FREDA"),
                                 
                                 # Drop down list: Van Krevelen or Kendrick plot?
                                 selectInput('chooseplots', 'I want to plot a', 
-                                            choices = c('Van Krevelen Plot' = 1, 
+                                            choices = c('Van Krevelen Plot', 
                                                         'Kendrick Plot' = 2,
                                                         'Density Plot' = 3,
                                                         'Select an Option' = 0),
@@ -305,8 +305,9 @@ shinyUI(navbarPage(title = (windowTitle = "FREDA"),
                                 #   # Plot: Kendrick plot
                                 #  # plotlyOutput('FxnPlot')
                                 # )
-                                actionButton("add_plot", "I want to download a hi-res version of this plot on the Download tab", icon = icon("download"))
-                              )# End main panel on Visualize tab #
+                                actionButton(inputId = "add_plot", label = "I want to download a hi-res version of this plot on the Download tab", icon = icon("download")),
+                              dataTableOutput("parmsTable")
+                                )# End main panel on Visualize tab #
                               
                             )), # End Visualize tab #
                    
