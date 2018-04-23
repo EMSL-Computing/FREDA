@@ -272,8 +272,8 @@ shinyUI(navbarPage(title = (windowTitle = "FREDA"),
                                 # Drop down list: Van Krevelen or Kendrick plot?
                                 selectInput('chooseplots', 'I want to plot a', 
                                             choices = c('Van Krevelen Plot', 
-                                                        'Kendrick Plot' = 2,
-                                                        'Density Plot' = 3,
+                                                        'Kendrick Plot',
+                                                        'Density Plot',
                                                         'Select an Option' = 0),
                                             selected = 0
                                 ), 
@@ -286,7 +286,7 @@ shinyUI(navbarPage(title = (windowTitle = "FREDA"),
                                 plotlyOutput('FxnPlot'),
                                 width = 7,
                                 conditionalPanel(
-                                  condition = 'input.chooseplots == 1',
+                                  condition = "input.chooseplots == 'Van Krevelen Plot'",
                                   # Set default width to 7
                                   
                                   # Drop down list: Use boundary?

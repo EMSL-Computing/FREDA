@@ -797,6 +797,7 @@ shinyServer(function(session, input, output) {
     validate(
       need(input$chooseplots != 0, message = "Please select plotting criteria")
     )
+    browser()
     #------ Van Krevelen Sidebar Options ---------#
     if (input$chooseplots == 'Van Krevelen Plot') {
       return(tagList(
@@ -837,7 +838,7 @@ shinyServer(function(session, input, output) {
       ))
     }
     #------ Kendrick Sidebar Options ---------#
-    if (input$chooseplots == 2) {
+    if (input$chooseplots == 'Kendrick Plot') {
       return(tagList(
         # Drop down list: single samples or multiple?
         selectInput('choose_single', 'I want to plot using:',
@@ -876,7 +877,7 @@ shinyServer(function(session, input, output) {
       ))
     }
     #------ Density Sidebar Options ---------#
-    if (input$chooseplots == 3) {
+    if (input$chooseplots == 'Density Plot') {
       return(tagList(
         # Drop down list: single samples or multiple?
         selectInput('choose_single', 'I want to plot using:',
@@ -944,13 +945,13 @@ shinyServer(function(session, input, output) {
                          selected = hist_choices[1]))
     }
     #------- density plot color choices --------#
-    if (input$chooseplots == 3) {
+    if (input$chooseplots == 'Density Plot') {
       return(selectInput('vk_colors', 'Color by:', 
                          choices = c(hist_choices),
                          selected = hist_choices[1]))
     }
     # Kendrick Colors
-    if (input$chooseplots == 2) {
+    if (input$chooseplots == 'Kendrick Plot') {
       return(selectInput('vk_colors', 'Color by:', 
                          choices = c('Van Krevelen Boundary Set 1' = 'bs1',
                                      'Van Krevelen Boundary Set 2' = 'bs2', 
@@ -1024,7 +1025,7 @@ shinyServer(function(session, input, output) {
         division_data <- subset(peakIcr2, input$whichGroups1)
         summarized_data <- summarizeGroups(division_data, summary_functions = input$vk_colors)
         #-------Kendrick Plot-----------# 
-        if (input$chooseplots == 2) {
+        if (input$chooseplots == 'Kendrick Plot') {
           return({
             groupKendrickPlot(summarized_data, colorCName = input$vk_colors)
           })
@@ -1032,7 +1033,7 @@ shinyServer(function(session, input, output) {
       }
       #----------- Single sample plots ------------#
       #-------Kendrick Plot-----------# 
-      if (input$chooseplots == 2) {
+      if (input$chooseplots == 'Kendrick Plot') {
         if (input$choose_single == 2) {
           return({
             groupKendrickPlot(summarized_data, colorCName = input$vk_colors)
@@ -1091,7 +1092,7 @@ shinyServer(function(session, input, output) {
       }
       
       #--------- Density Plot --------#
-      if (input$chooseplots == 3) {
+      if (input$chooseplots == 'Density Plot') {
         return({
           input$vk_colors
           validate(
@@ -1117,10 +1118,6 @@ shinyServer(function(session, input, output) {
   
   observeEvent(input$add_plot, {
     # need to be able to convert from label values, back to labels
-    conversion_table <- matrix(nrow = 14, ncol = 3)
-    rownames(conversion_table) <- names(parmTable$parms)
-    conversion_table["PlotType", ] <- c('Van Krevelen Plot','Kendrick Plot','Density Plot')
-    browser()
     if (input$add_plot == 1) {
       parmTable$parms$PlotType[input$add_plot] <- input$chooseplots
     } else {
