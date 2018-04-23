@@ -797,7 +797,6 @@ shinyServer(function(session, input, output) {
     validate(
       need(input$chooseplots != 0, message = "Please select plotting criteria")
     )
-    browser()
     #------ Van Krevelen Sidebar Options ---------#
     if (input$chooseplots == 'Van Krevelen Plot') {
       return(tagList(
@@ -1111,23 +1110,50 @@ shinyServer(function(session, input, output) {
   #-------- create a table that stores plotting information -------#
   # the table needs to grow with each click of the download button
   parmTable <- reactiveValues()
+  # need to initialize the table and fill in values
   parmTable$parms <- data.frame(PlotType = NA, SampleType = NA, G1 = NA, G2 = NA, BoundarySet = NA,
                                 ColorBy = NA, ContinuousVariable = NA, UniqueCommon = NA,
                                 UniqueCommonParameters = NA,FileName = NA, ChartTitle = NA, XaxisTitle = NA,
                                 YaxisTitle = NA, LegendTitle = NA)
   
   observeEvent(input$add_plot, {
-    # need to be able to convert from label values, back to labels
+    # initialize a new line
+    newLine <- data.frame(PlotType = input$chooseplots, SampleType = NA, G1 = NA, G2 = NA, BoundarySet = NA,
+                          ColorBy = NA, ContinuousVariable = NA, UniqueCommon = NA,
+                          UniqueCommonParameters = NA,FileName = NA, ChartTitle = NA, XaxisTitle = NA,
+                          YaxisTitle = NA, LegendTitle = NA)
+    # fill values to a position depending on input$add_plot
+    # which type of plot
+    newLine$PlotType <- input$chooseplots
+    # Single or Multiple Samples
+    newLine$SampleType <- ifelse(input$choose_single == 1, yes = "Single Sample", no = "Multiple Samples")
+    # Sample(s) in The first group (depends on input$choose_single to decide if this is a single or multiple sample list)
+    newLine$G1 <- ifelse(input$choose_single == 1, yes = input$whichSample, no = input$whichGroups1)
+    # Sample(s) in the second group. Automatically NA if input$choose_single is single sample or single group
+    newLine$G2 <- ifelse(input$choose_single %in% c(1,2), yes = "NA", no = "not yet available")
+    # if (input$add_plot == 1) { #first add_plot click
+    #   # start with a table full of NA's
+    #   parmTable$parms <- data.frame(PlotType = input$chooseplots, SampleType = NA, G1 = NA, G2 = NA, BoundarySet = NA,
+    #                         ColorBy = NA, ContinuousVariable = NA, UniqueCommon = NA,
+    #                         UniqueCommonParameters = NA,FileName = NA, ChartTitle = NA, XaxisTitle = NA,
+    #                         YaxisTitle = NA, LegendTitle = NA)
+    # } else {
+    #   # now add in applicable information
+    #   newLine <- data.frame(PlotType = input$chooseplots, SampleType = NA, G1 = NA, G2 = NA, BoundarySet = NA,
+    #                         ColorBy = NA, ContinuousVariable = NA, UniqueCommon = NA,
+    #                         UniqueCommonParameters = NA,FileName = NA, ChartTitle = NA, XaxisTitle = NA,
+    #                         YaxisTitle = NA, LegendTitle = NA)
     if (input$add_plot == 1) {
-      parmTable$parms$PlotType[input$add_plot] <- input$chooseplots
+      # replace the existing line on the first click
+      parmTable$parms[input$add_plot, ] <- newLine
     } else {
-      newLine <- data.frame(PlotType = input$chooseplots, SampleType = NA, G1 = NA, G2 = NA, BoundarySet = NA,
-                            ColorBy = NA, ContinuousVariable = NA, UniqueCommon = NA,
-                            UniqueCommonParameters = NA,FileName = NA, ChartTitle = NA, XaxisTitle = NA,
-                            YaxisTitle = NA, LegendTitle = NA)
+      # concat every new line after
       parmTable$parms <- rbind(parmTable$parms, newLine)
     }
-   
+      
+      
+    #}
+    
   }, priority = 7)
 
   
