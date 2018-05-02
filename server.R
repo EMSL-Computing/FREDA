@@ -1128,9 +1128,13 @@ shinyServer(function(session, input, output) {
     # Single or Multiple Samples
     newLine$SampleType <- ifelse(input$choose_single == 1, yes = "Single Sample", no = "Multiple Samples")
     # Sample(s) in The first group (depends on input$choose_single to decide if this is a single or multiple sample list)
-    newLine$G1 <- ifelse(input$choose_single == 1, yes = input$whichSample, no = input$whichGroups1)
+    newLine$G1 <- ifelse(input$choose_single == 1, yes = input$whichSample, no = paste(input$whichGroups1, collapse = ","))
     # Sample(s) in the second group. Automatically NA if input$choose_single is single sample or single group
     newLine$G2 <- ifelse(input$choose_single %in% c(1,2), yes = "NA", no = "not yet available")
+    # Boundary set borders to use (NA for non-Van Krevelen plots)
+    newLine$BoundarySet <- ifelse(input$chooseplots == "Van Krevelen Plot", yes = input$vkbounds, no = "see color by")
+    # Color By
+    newLine$ColorBy <- input$vk_colors
     # if (input$add_plot == 1) { #first add_plot click
     #   # start with a table full of NA's
     #   parmTable$parms <- data.frame(PlotType = input$chooseplots, SampleType = NA, G1 = NA, G2 = NA, BoundarySet = NA,
@@ -1161,7 +1165,8 @@ shinyServer(function(session, input, output) {
   #   browser()
   #   parmTable()[input$add_plot, "PlotType"] <- input$chooseplots
   # })
-  output$parmsTable <- renderDataTable(parmTable$parms)
+  output$parmsTable <- renderDataTable(parmTable$parms,
+                                       options = list(scrollX = TRUE))
   # End Visualize tab
   ####### Download Tab #######
   output$download_processed_data <- downloadHandler(

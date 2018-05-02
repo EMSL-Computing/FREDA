@@ -283,7 +283,7 @@ shinyUI(navbarPage(title = (windowTitle = "FREDA"),
                               
                               mainPanel(
                                 #tags$div(plotlyOutput('FxnPlot'), class = "square"),
-                                plotlyOutput('FxnPlot'),
+                                plotlyOutput('FxnPlot', width = '700px', height = '600px'),
                                 width = 7,
                                 conditionalPanel(
                                   condition = "input.chooseplots == 'Van Krevelen Plot'",
