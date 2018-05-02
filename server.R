@@ -1135,18 +1135,7 @@ shinyServer(function(session, input, output) {
     newLine$BoundarySet <- ifelse(input$chooseplots == "Van Krevelen Plot", yes = input$vkbounds, no = "see color by")
     # Color By
     newLine$ColorBy <- input$vk_colors
-    # if (input$add_plot == 1) { #first add_plot click
-    #   # start with a table full of NA's
-    #   parmTable$parms <- data.frame(PlotType = input$chooseplots, SampleType = NA, G1 = NA, G2 = NA, BoundarySet = NA,
-    #                         ColorBy = NA, ContinuousVariable = NA, UniqueCommon = NA,
-    #                         UniqueCommonParameters = NA,FileName = NA, ChartTitle = NA, XaxisTitle = NA,
-    #                         YaxisTitle = NA, LegendTitle = NA)
-    # } else {
-    #   # now add in applicable information
-    #   newLine <- data.frame(PlotType = input$chooseplots, SampleType = NA, G1 = NA, G2 = NA, BoundarySet = NA,
-    #                         ColorBy = NA, ContinuousVariable = NA, UniqueCommon = NA,
-    #                         UniqueCommonParameters = NA,FileName = NA, ChartTitle = NA, XaxisTitle = NA,
-    #                         YaxisTitle = NA, LegendTitle = NA)
+
     if (input$add_plot == 1) {
       # replace the existing line on the first click
       parmTable$parms[input$add_plot, ] <- newLine
@@ -1160,11 +1149,7 @@ shinyServer(function(session, input, output) {
     
   }, priority = 7)
 
-  
-  # observeEvent(input$add_plot, {
-  #   browser()
-  #   parmTable()[input$add_plot, "PlotType"] <- input$chooseplots
-  # })
+
   output$parmsTable <- renderDataTable(parmTable$parms,
                                        options = list(scrollX = TRUE))
   # End Visualize tab
