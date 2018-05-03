@@ -1132,7 +1132,7 @@ shinyServer(function(session, input, output) {
     # Sample(s) in the second group. Automatically NA if input$choose_single is single sample or single group
     newLine$G2 <- ifelse(input$choose_single %in% c(1,2), yes = "NA", no = "not yet available")
     # Boundary set borders to use (NA for non-Van Krevelen plots)
-    newLine$BoundarySet <- ifelse(input$chooseplots == "Van Krevelen Plot", yes = input$vkbounds, no = "see color by")
+    newLine$BoundarySet <- ifelse(input$chooseplots == "Van Krevelen Plot", yes = input$vkbounds, no = "NA")
     # Color By
     newLine$ColorBy <- input$vk_colors
 
@@ -1152,6 +1152,18 @@ shinyServer(function(session, input, output) {
 
   output$parmsTable <- renderDataTable(parmTable$parms,
                                        options = list(scrollX = TRUE))
+  output$parmsTable2 <- renderDataTable(parmTable$parms,
+                                       options = list(scrollX = TRUE),
+                                       server = TRUE)
+  
+  # print the selected indices
+  output$x4 = renderPrint({
+    s = input$parmsTable2_rows_selected
+    if (length(s)) {
+      cat('These rows were selected:\n\n')
+      cat(s, sep = ', ')
+    }
+  })
   # End Visualize tab
   ####### Download Tab #######
   output$download_processed_data <- downloadHandler(

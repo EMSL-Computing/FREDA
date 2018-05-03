@@ -297,16 +297,13 @@ shinyUI(navbarPage(title = (windowTitle = "FREDA"),
                                   
                                 ),
                                 uiOutput('vk_colors'),
-                                #,
-                                # conditionalPanel(
-                                #   condition = 'input.chooseplots == 2',
-                                #   width = 7,
-                                #   uiOutput('vk_colors')
-                                #   # Plot: Kendrick plot
-                                #  # plotlyOutput('FxnPlot')
-                                # )
+                                br(),
+                                hr(),
+ 
                                 actionButton(inputId = "add_plot", label = "I want to download a hi-res version of this plot on the Download tab", icon = icon("download")),
-                              dataTableOutput("parmsTable")
+                              br(),
+                              br(),
+                                dataTableOutput("parmsTable")
                                 )# End main panel on Visualize tab #
                               
                             )), # End Visualize tab #
@@ -320,6 +317,8 @@ shinyUI(navbarPage(title = (windowTitle = "FREDA"),
                             checkboxInput("report_selection", label = "Report (Coming Soon)"),
                             hr(),
                             checkboxInput("figure_selection", label = "High Resolution Figures (Coming Soon)"),
+                            dataTableOutput("parmsTable2"),
+                            verbatimTextOutput('x4'),
                             hr(),
                             downloadButton('download_processed_data', 'Download Selection')
                             
