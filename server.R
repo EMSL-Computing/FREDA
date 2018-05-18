@@ -5,6 +5,9 @@ library(shiny)
 library(fticRanalysis)
 library(ggplot2)
 library(reshape2)
+library(webshot)
+library(htmlwidgets)
+library(raster)
 
 #peakIcr2 <- NULL #when finished developing, uncomment this to clear the workspace on exit
 
@@ -13,6 +16,7 @@ shinyServer(function(session, input, output) {
   # Source files for 'summaryFilt' and 'summaryPreprocess'
   source('summaryFilter.R') 
   source('summaryPreprocess.R')
+  source("renderDownloadPlots.R")
   
   ######## Welcome Tab #############
   #------ Download Example Data ---------#
@@ -1152,7 +1156,7 @@ shinyServer(function(session, input, output) {
 
   output$parmsTable <- renderDataTable(parmTable$parms,
                                        options = list(scrollX = TRUE))
-  output$parmsTable2 <- renderDataTable(parmTable$parms,
+  output$parmsTable2 <- DT::renderDataTable(parmTable$parms,
                                        options = list(scrollX = TRUE),
                                        server = TRUE)
   
@@ -1191,8 +1195,54 @@ shinyServer(function(session, input, output) {
     },
     contentType = "application/zip"
   )
+  # output$download_plots <- downloadHandler(
+  #   filename =  "test.pdf",
+  #   # content is a function with argument file. content writes the plot to the device
+  #   content = function(file) {
+  #     pdf(file) # open the pdf device
+  #     renderDownloadPlots(parmTable = parmsTable2$parms[1,], peakIcr2)
+  #     dev.off()  # turn the device off
+  #     
+  #   } 
+  # )
+  # 
+  # output$download_plots <- downloadHandler("test.pdf", function(theFile) {
+  #   # solution from https://community.plot.ly/t/save-custom-ggplotly-plot-to-pdf-in-shiny/5096
+  #   # figure out why this works
+  #   makePdf <- function(filename){
+  #     pdf(file = filename)
+  #     export(renderDownloadPlots(parmTable = parmTable$parms[1,], peakIcr2), file = "test.png")
+  #     r <- brick(file.path(getwd(), "test.png"))
+  #     plotRGB(r)
+  #     dev.off()
+  #   }
+  #   
+  #   makePdf(theFile)
+  # })
   
-  
+
+  output$download_plots <- downloadHandler(
+    filename = 'pdfs.zip',
+    content = function(fname) {
+      fs <- c()
+      tmpdir <- tempdir()
+      setwd(tempdir())
+      print(tempdir())
+      for (i in c(1,2)) {
+        path <- paste("plot",i, ".pdf", sep="")
+        fs <- c(fs, path)
+        pdf(file = path)
+        export(renderDownloadPlots(parmTable = parmTable$parms[i,], peakIcr2), file = paste("plot",i,".png", sep = ""), zoom = 2)
+        r <- brick(file.path(getwd(), paste("plot",i,".png", sep = "")))
+        plotRGB(r, maxpixels=600000)
+        dev.off()
+      }
+      print(fs)
+      zip(zipfile=fname, files=fs)
+      if(file.exists(paste0(fname,".zip"))){file.rename(paste0(fname,".zip"),fname)}
+    },
+    contentType = "application/zip"
+  )
   ####### Glossary Tab #######
   
   ####### Download Tab #######
