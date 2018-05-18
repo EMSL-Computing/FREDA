@@ -1222,24 +1222,25 @@ shinyServer(function(session, input, output) {
   
 
   output$download_plots <- downloadHandler(
-    filename = 'pdfs.zip',
-    content = function(fname) {
+    filename = 'pdfs.zip', #this creates a directory to store the pdfs...not sure why it's not zipping
+    content = function(fname) { #write a function to create the content populating said directory
       fs <- c()
-      tmpdir <- tempdir()
+      tmpdir <- tempdir() # render the images in a temporary environment
       setwd(tempdir())
       print(tempdir())
       for (i in c(1,2)) {
-        path <- paste("plot",i, ".pdf", sep="")
-        fs <- c(fs, path)
-        pdf(file = path)
-        export(renderDownloadPlots(parmTable = parmTable$parms[i,], peakIcr2), file = paste("plot",i,".png", sep = ""), zoom = 2)
-        r <- brick(file.path(getwd(), paste("plot",i,".png", sep = "")))
-        plotRGB(r, maxpixels=600000)
-        dev.off()
+        path <- paste("plot",i, ".pdf", sep="") #create a plot name
+        fs <- c(fs, path) # append the new plot to the old plots
+        pdf(file = path) #open a pdf to write to
+        export(renderDownloadPlots(parmTable = parmTable$parms[i,], peakIcr2),
+               file = paste("plot",i,".png", sep = ""), zoom = 2) # use webshot to export a screenshot to the opened pdf
+        r <- brick(file.path(getwd(), paste("plot",i,".png", sep = ""))) #create a raster of the screenshot
+        plotRGB(r, maxpixels=600000) #plot the raster with RGB
+        dev.off() #close pdf
       }
-      print(fs)
-      zip(zipfile=fname, files=fs)
-      if(file.exists(paste0(fname,".zip"))){file.rename(paste0(fname,".zip"),fname)}
+      print(fs) #print all the pdfs to file
+      zip(zipfile=fname, files=fs) #zip  it up
+      if(file.exists(paste0(fname,".zip"))){file.rename(paste0(fname,".zip"),fname)} #bug workaround see https://groups.google.com/forum/?utm_medium=email&utm_source=footer#!msg/shiny-discuss/D5F2nqrIhiM/ZshRutFpiVQJ
     },
     contentType = "application/zip"
   )
