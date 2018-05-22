@@ -8,6 +8,7 @@ library(reshape2)
 library(webshot)
 library(htmlwidgets)
 library(raster)
+library(magick)
 f <- list(
   family = "Courier New, monospace",
   size = 18,
@@ -1258,15 +1259,15 @@ shinyServer(function(session, input, output) {
       for (i in c(1,2)) {
         path <- paste("plot",i, ".pdf", sep="") #create a plot name
         fs <- c(fs, path) # append the new plot to the old plots
-        pdf(file = path) #open a pdf to write to
         export(renderDownloadPlots(parmTable = parmTable$parms[i,], peakIcr2),
                file = paste("plot",i,".png", sep = ""), zoom = 2) # use webshot to export a screenshot to the opened pdf
         r <- brick(file.path(getwd(), paste("plot",i,".png", sep = ""))) #create a raster of the screenshot
-        plotRGB(r, maxpixels=600000) #plot the raster with RGB
-        dev.off() #close pdf
+        img <- magick::image_read(attr(r,"file")@name) #turn the raster into an image of selected format
+        image_write(img, path=path, format="pdf") #write the image
+
       }
       print(fs) #print all the pdfs to file
-      zip(zipfile=fname, files=fs) #zip  it up
+      zip(zipfile=fname, files=fs) #zip  it up (this isn't working for some reason!)
       if(file.exists(paste0(fname,".zip"))){file.rename(paste0(fname,".zip"),fname)} #bug workaround see https://groups.google.com/forum/?utm_medium=email&utm_source=footer#!msg/shiny-discuss/D5F2nqrIhiM/ZshRutFpiVQJ
     },
     contentType = "application/zip"
