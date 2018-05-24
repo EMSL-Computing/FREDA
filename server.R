@@ -1256,7 +1256,7 @@ shinyServer(function(session, input, output) {
       tmpdir <- tempdir() # render the images in a temporary environment
       setwd(tempdir())
       print(tempdir())
-      for (i in c(1,2)) {
+      for (i in input$parmsTable2_rows_selected) {
         path <- paste("plot",i, ".pdf", sep="") #create a plot name
         fs <- c(fs, path) # append the new plot to the old plots
         export(renderDownloadPlots(parmTable = parmTable$parms[i,], peakIcr2),
