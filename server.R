@@ -190,7 +190,6 @@ shinyServer(function(session, input, output) {
                 selected = ifelse(grepl("^p$", tolower(emeta_cnames())),
                                   yes = emeta_cnames()[grepl("^p$", tolower(emeta_cnames()))][1],
                                   no = 'Select a column'))
-    
   })
   
   output$iso_info_column <- renderUI({
@@ -203,6 +202,7 @@ shinyServer(function(session, input, output) {
     textInput("iso_symbol", label = "Enter a symbol denoting isotopic notation:",
               value = "1")
   })
+  
   ### END of CHNOSP DROP DOWN LISTS ###
   
   
@@ -455,7 +455,7 @@ shinyServer(function(session, input, output) {
     # Error handling: Edata() must exist
     req(Edata())
     
-    HTML('<h4>Displaying uploaded e_data</h4>')
+    HTML('<h4>Displaying uploaded Data File</h4>')
     
   }) # End edata_text
   
@@ -480,7 +480,7 @@ shinyServer(function(session, input, output) {
   output$emeta_text <- renderUI({
     
     req(Emeta())
-    HTML('<h4>Displaying uploaded e_meta</h4>')
+    HTML('<h4>Displaying uploaded Molecular Identification File</h4>')
     
   })# End emeta_text
   
@@ -1087,6 +1087,9 @@ shinyServer(function(session, input, output) {
               }
             }
         }
+        
+        p <- p %>% layout(xaxis = list(scaleanchor = "y", constraintoward = "left"))
+        
       }
       
       #--------- Density Plot --------#
