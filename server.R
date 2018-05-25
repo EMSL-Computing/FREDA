@@ -1059,7 +1059,7 @@ shinyServer(function(session, input, output) {
       if (input$chooseplots == 'Van Krevelen Plot') {
         if (input$choose_single == 2) {
           if (input$vkbounds == 0) {
-              p <- groupVanKrevelenPlot(summarized_data, colorCName = input$vk_colors)
+              p <- groupVanKrevelenPlot(summarized_data, colorCName = input$vk_colors, showVKBounds = FALSE)
           } else {
               p <- groupVanKrevelenPlot(summarized_data, colorCName = input$vk_colors, vkBoundarySet = input$vkbounds)
           }
