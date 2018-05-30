@@ -72,7 +72,9 @@ FTICR R Exploratory Data Analysis (FREDA) is an interactive tool for exploratory
 
 **Frida:** 
 
-Not to be confused with FREDA. Frida Kahlo, Mexican painter famous for portraits, self-portraits, and paintings of artifacts and nature from Mexico $^7$ ![Frida] (Frida.jpg)
+Not to be confused with FREDA. Frida Kahlo, Mexican painter famous for portraits, self-portraits, and paintings of artifacts and nature from Mexico $^7$ 
+
+![Frida] (Frida.jpg)
 
 **FTICR:** 
 
