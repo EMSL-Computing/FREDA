@@ -173,14 +173,8 @@ shinyUI(navbarPage(title = (windowTitle = "FREDA"),
                                 # tags$hr(),
                                 
                                 # Checkbox: which tests should also be applied
-                                checkboxGroupInput('tests', 'Calculate:',
-                                                   c('O:C and H:C' = 'calc_vankrev',
-                                                     'Kendrick Mass and Defect' = 'calc_kendrick',
-                                                     'NOSC' = 'calc_nosc', 
-                                                     'Gibbs Free Energy' = 'calc_gibbs', 
-                                                     'Aromaticity and Modified Aromaticity' = 'calc_aroma',  
-                                                     'DBE and DBE - O' = 'calc_dbe'), 
-                                                   selected = c('calc_vankrev', 'calc_kendrick')), 
+                                uiOutput("which_calcs"),
+                            
                                 # Action button: add test columns with reasults to peakIcr2
                                 actionButton('preprocess_click', 'Process Data', icon = icon("cog"), lib = "glyphicon")
                                 

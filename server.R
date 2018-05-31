@@ -27,6 +27,8 @@ shinyServer(function(session, input, output) {
   #------ Download Example Data ---------#
   example_edata <- read.csv('Data/example12T_edata.csv')
   example_emeta <- read.csv('Data/example12T_emeta.csv')
+  calc_opts <- read.csv('calculation_options.csv', stringsAsFactors = FALSE)
+  calc_vars <- read.csv('calculation_variables.csv', stringsAsFactors = FALSE)
   #### in case we want a preview rendered #####
   # output$example_data_table <- DT::renderDataTable({
   #   example_edata
@@ -486,21 +488,34 @@ shinyServer(function(session, input, output) {
   
   ####### Preprocess Tab #######
   
+  #### Populate List from CSV File ####
+  
+  output$which_calcs <- renderUI({
+    choices <- calc_opts$Function
+    names(choices) <- calc_opts$DisplayName
+    
+    checkboxGroupInput("tests", "What Values should be Calculated?", choices, selected = c("calc_vankrev", "calc_kendrick"))
+  })
+  
   #### Action Button reactions ####
   
   ## Action button: Apply calculation functions When action button is clicked
   # Depends on: peakIcr2, input$tests
   observeEvent(input$preprocess_click, {
-    
     validate(need(input$tests, message = "Please choose at least one test to calculate"))
     # Apply all relevant functions
-    peakIcr2 <<- compound_calcs(peakIcr2, calc_fns = c(input$tests))
+    
+    for(el in input$tests){
+      # set f to the function that is named in the ith element of compound_calcs # 
+      f <- get(el, envir=asNamespace("fticRanalysis"), mode="function")
+      peakIcr2 <<- f(peakIcr2)
+    }
+  
   }) # End action button event
   
   # Object: Create dataframe of possible calculations to show in summary/histogram
   # Note: dependent on preprocess click and the user-specified calculations
   test_names <- eventReactive(input$preprocess_click, {
-    
     # Error handling: peakIcr2 must have a non-NULL Kendrick Mass column name
     req(!is.null(attr(peakIcr2, 'cnames')$kmass_cname))
     
@@ -588,12 +603,21 @@ shinyServer(function(session, input, output) {
   uploaded_data <- reactive({
     req(peakICR())
     req(input$tests)
-    return(compound_calcs(peakICR(), calc_fns = c(input$tests)))
+  
+    temp <- peakICR()
+    
+    for(el in input$tests){
+      # set f to the function that is named in the ith element of compound_calcs # 
+      f <- get(el, envir=asNamespace("fticRanalysis"), mode="function")
+      temp <- f(temp)
+    }
+    
+    return(temp)
   })
   
   # Allow a button click to undo filtering
   f <- reactiveValues(clearFilters = FALSE)
-  observeEvent(input$reset_filters, {
+  observeEvent(input$clear_filters_yes, {
     f$clearFilters <- TRUE
   }, priority = 10)
   
@@ -619,6 +643,11 @@ shinyServer(function(session, input, output) {
   # Depends on action button 'filter_click'
   observeEvent(input$filter_click, {
     
+    # if the data is already filtered start over from the uploaded data
+    if(any(c("moleculeFilt", "massFilt") %in% names(attributes(peakIcr2)$filters))){
+      peakIcr2 <<- uploaded_data()
+    }
+    
     # If mass filtering is checked
     if (input$massfilter){
       
@@ -634,7 +663,7 @@ shinyServer(function(session, input, output) {
     
     # If molecule filtering is checked
     if (input$molfilter){
-      
+  
       # Create and apply molecule filter to nonreactive peakICR object
       filterMols <- molecule_filter(peakIcr2)
       peakIcr2 <<- applyFilt(filterMols, peakIcr2, min_num = as.integer(input$minobs))
@@ -793,12 +822,37 @@ shinyServer(function(session, input, output) {
   #-------- Reset Activity -------#
   # Allow a 'reset' that restores the uploaded object and unchecks the filter
   # boxes
-  observeEvent(input$reset_filters, {
+
+  observeEvent(input$reset_filters,{
+    showModal(modalDialog(
+      fluidPage(
+        fluidRow(
+          column(10, align = "center", offset = 1,
+                 tags$p("Caution:  If you reset filters all plots made using filtered data will be lost.", style = "color:red;font:bold", align = "center"),
+                 actionButton("clear_filters_yes", "Yes, clear filters without saving plots.", width = '100%'),
+                 br(),
+                 br(),
+                 br(),
+                 actionButton("clear_filters_no", "No, take me back.", width = '100%')
+                ))),
+      footer = NULL
+      )
+    )
+  })
+  
+  # exit the modal dialog
+  observeEvent(input$clear_filters_no,{
+    removeModal()
+  })
+  
+  # reset data and exit modal dialog
+  observeEvent(input$clear_filters_yes, {
     if (f$clearFilters) {
       updateCheckboxInput(session = session, inputId = "massfilter", value = FALSE)
       updateCheckboxInput(session = session, inputId = "molfilter", value = FALSE)
     }
     peakIcr2 <<- uploaded_data()
+    removeModal()
   })
   
   ####### Visualize Tab #######
