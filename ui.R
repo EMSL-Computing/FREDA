@@ -38,7 +38,7 @@ shinyUI(navbarPage(title = (windowTitle = "FREDA"),
                                 width = 5,
                                 
                                 # Load e_data file
-                                fileInput("file_edata", "Upload CSV e_data",
+                                fileInput("file_edata", "Upload CSV Data File",
                                           multiple = TRUE,
                                           accept = c("text/csv",
                                                      "text/comma-separated-values,text/plain",
@@ -48,7 +48,7 @@ shinyUI(navbarPage(title = (windowTitle = "FREDA"),
                                 uiOutput('edata_id'),
                                 
                                 # Load e_meta file
-                                fileInput("file_emeta", "Upload CSV e_meta",
+                                fileInput("file_emeta", "Upload CSV Molecular Identification File",
                                           multiple = TRUE,
                                           accept = c("text/csv",
                                                      "text/comma-separated-values,text/plain",
@@ -61,7 +61,7 @@ shinyUI(navbarPage(title = (windowTitle = "FREDA"),
                                 selectInput('instrument', 
                                             label = 'What instrument generated this data?',
                                             choices = list(# 'Select an option' = 0,
-                                              '12T', '21T'), 
+                                              '12T or 15T' = '12T', '21T'), 
                                             selected = 'Select an option'
                                 ), 
                                 
@@ -117,7 +117,7 @@ shinyUI(navbarPage(title = (windowTitle = "FREDA"),
                                 tags$hr(),
                                 
                                 # Action button: pressing this creates the peakICR object
-                                actionButton('upload_click', 'Process Data')
+                                actionButton('upload_click', 'Process Data', icon = icon("cog"), lib = "glyphicon")
                                 
                               ), # End sidebar panel
                               
@@ -182,7 +182,7 @@ shinyUI(navbarPage(title = (windowTitle = "FREDA"),
                                                      'DBE and DBE - O' = 'calc_dbe'), 
                                                    selected = c('calc_vankrev', 'calc_kendrick')), 
                                 # Action button: add test columns with reasults to peakIcr2
-                                actionButton('preprocess_click', 'Process Data')
+                                actionButton('preprocess_click', 'Process Data', icon = icon("cog"), lib = "glyphicon")
                                 
                               ), # End sidebar panel
                               
@@ -271,9 +271,9 @@ shinyUI(navbarPage(title = (windowTitle = "FREDA"),
                                 
                                 # Drop down list: Van Krevelen or Kendrick plot?
                                 selectInput('chooseplots', 'I want to plot a', 
-                                            choices = c('Van Krevelen Plot' = 1, 
-                                                        'Kendrick Plot' = 2,
-                                                        'Density Plot' = 3,
+                                            choices = c('Van Krevelen Plot', 
+                                                        'Kendrick Plot',
+                                                        'Density Plot',
                                                         'Select an Option' = 0),
                                             selected = 0
                                 ), 
@@ -283,10 +283,10 @@ shinyUI(navbarPage(title = (windowTitle = "FREDA"),
                               
                               mainPanel(
                                 #tags$div(plotlyOutput('FxnPlot'), class = "square"),
-                                plotlyOutput('FxnPlot'),
+                                plotlyOutput('FxnPlot', width = '700px', height = '600px'),
                                 width = 7,
                                 conditionalPanel(
-                                  condition = 'input.chooseplots == 1',
+                                  condition = "input.chooseplots == 'Van Krevelen Plot'",
                                   # Set default width to 7
                                   
                                   # Drop down list: Use boundary?
@@ -296,28 +296,33 @@ shinyUI(navbarPage(title = (windowTitle = "FREDA"),
                                   uiOutput("vkbounds")
                                   
                                 ),
-                                uiOutput('vk_colors')
-                                #,
-                                # conditionalPanel(
-                                #   condition = 'input.chooseplots == 2',
-                                #   width = 7,
-                                #   uiOutput('vk_colors')
-                                #   # Plot: Kendrick plot
-                                #  # plotlyOutput('FxnPlot')
-                                # )
-                              )# End main panel on Visualize tab #
+                                uiOutput('vk_colors'),
+                                br(),
+                                hr(),
+                                uiOutput("title_input"),
+                                uiOutput("x_axis_input"),
+                                uiOutput("y_axis_input"),
+                                uiOutput("legend_title_input"),
+                                actionButton(inputId = "add_plot", label = "I want to download a hi-res version of this plot on the Download tab", icon = icon("download")),
+                              br(),
+                              br(),
+                                dataTableOutput("parmsTable")
+                                )# End main panel on Visualize tab #
                               
                             )), # End Visualize tab #
                    
                    ################## Download Panel ##############################################
                    tabPanel('Download',
                             checkboxGroupInput("download_selection", label = "Select Processed Data to Download",
-                                               choices = c('e_data as one .csv and e_meta as another .csv' = "separate",
-                                                           'merged e_data and e_meta as a single .csv' = "merged")),
+                                               choices = c('Data File as one .csv and Molecular Identification File as another .csv' = "separate",
+                                                           'merged Data File and Molecular Identification File as a single .csv' = "merged")),
                             hr(),
                             checkboxInput("report_selection", label = "Report (Coming Soon)"),
                             hr(),
                             checkboxInput("figure_selection", label = "High Resolution Figures (Coming Soon)"),
+                            dataTableOutput("parmsTable2"),
+                            downloadButton(outputId = "download_plots", label = "Download the plot"),
+                            verbatimTextOutput('x4'),
                             hr(),
                             downloadButton('download_processed_data', 'Download Selection')
                             

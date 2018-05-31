@@ -5,7 +5,15 @@ library(shiny)
 library(fticRanalysis)
 library(ggplot2)
 library(reshape2)
-
+library(webshot)
+library(htmlwidgets)
+library(raster)
+library(magick)
+f <- list(
+  family = "Courier New, monospace",
+  size = 18,
+  color = "#7f7f7f"
+)
 #peakIcr2 <- NULL #when finished developing, uncomment this to clear the workspace on exit
 
 shinyServer(function(session, input, output) {
@@ -13,6 +21,7 @@ shinyServer(function(session, input, output) {
   # Source files for 'summaryFilt' and 'summaryPreprocess'
   source('summaryFilter.R') 
   source('summaryPreprocess.R')
+  source("renderDownloadPlots.R")
   
   ######## Welcome Tab #############
   #------ Download Example Data ---------#
@@ -181,7 +190,6 @@ shinyServer(function(session, input, output) {
                 selected = ifelse(grepl("^p$", tolower(emeta_cnames())),
                                   yes = emeta_cnames()[grepl("^p$", tolower(emeta_cnames()))][1],
                                   no = 'Select a column'))
-    
   })
   
   output$iso_info_column <- renderUI({
@@ -194,6 +202,7 @@ shinyServer(function(session, input, output) {
     textInput("iso_symbol", label = "Enter a symbol denoting isotopic notation:",
               value = "1")
   })
+  
   ### END of CHNOSP DROP DOWN LISTS ###
   
   
@@ -446,7 +455,7 @@ shinyServer(function(session, input, output) {
     # Error handling: Edata() must exist
     req(Edata())
     
-    HTML('<h4>Displaying uploaded e_data</h4>')
+    HTML('<h4>Displaying uploaded Data File</h4>')
     
   }) # End edata_text
   
@@ -471,7 +480,7 @@ shinyServer(function(session, input, output) {
   output$emeta_text <- renderUI({
     
     req(Emeta())
-    HTML('<h4>Displaying uploaded e_meta</h4>')
+    HTML('<h4>Displaying uploaded Molecular Identification File</h4>')
     
   })# End emeta_text
   
@@ -562,14 +571,16 @@ shinyServer(function(session, input, output) {
     displayName <- test_names()[which(test_names()[,1] == columnName), 2]
     
     # Plot histogram using plotly
-    plot_ly(x = peakIcr2$e_meta[,columnName], type = 'histogram') %>%
+    p <- plot_ly(x = peakIcr2$e_meta[,columnName], type = 'histogram') %>%
       layout( title = paste('Histogram of ', displayName),
               scene = list(
                 xaxis = list(title = displayName),
                 yaxis = list(title = 'Frequency')))
+    p$elementId <- NULL
+    return(p)
     
   }) # End process_hist
-
+  
   ############## Filter tab ##############
   # ----- Filter Reset Setup -----# 
   # Keep a
@@ -607,7 +618,7 @@ shinyServer(function(session, input, output) {
   # Event: Create filtered nonreactive peakIcr2 when action button clicked
   # Depends on action button 'filter_click'
   observeEvent(input$filter_click, {
-
+    
     # If mass filtering is checked
     if (input$massfilter){
       
@@ -778,7 +789,7 @@ shinyServer(function(session, input, output) {
       labs(x = 'Data State', y = 'Number of peaks') 
     
   }) # End barplot_filter #
-
+  
   #-------- Reset Activity -------#
   # Allow a 'reset' that restores the uploaded object and unchecks the filter
   # boxes
@@ -789,7 +800,7 @@ shinyServer(function(session, input, output) {
     }
     peakIcr2 <<- uploaded_data()
   })
- 
+  
   ####### Visualize Tab #######
   #### Sidebar Panel ####
   # choose ui to render depending on which plot is chosen from input$chooseplot
@@ -798,7 +809,7 @@ shinyServer(function(session, input, output) {
       need(input$chooseplots != 0, message = "Please select plotting criteria")
     )
     #------ Van Krevelen Sidebar Options ---------#
-    if (input$chooseplots == 1) {
+    if (input$chooseplots == 'Van Krevelen Plot') {
       return(tagList(
         # Drop down list: single samples or multiple?
         selectInput('choose_single', 'I want to plot using:',
@@ -837,7 +848,7 @@ shinyServer(function(session, input, output) {
       ))
     }
     #------ Kendrick Sidebar Options ---------#
-    if (input$chooseplots == 2) {
+    if (input$chooseplots == 'Kendrick Plot') {
       return(tagList(
         # Drop down list: single samples or multiple?
         selectInput('choose_single', 'I want to plot using:',
@@ -876,7 +887,7 @@ shinyServer(function(session, input, output) {
       ))
     }
     #------ Density Sidebar Options ---------#
-    if (input$chooseplots == 3) {
+    if (input$chooseplots == 'Density Plot') {
       return(tagList(
         # Drop down list: single samples or multiple?
         selectInput('choose_single', 'I want to plot using:',
@@ -944,20 +955,20 @@ shinyServer(function(session, input, output) {
                          selected = hist_choices[1]))
     }
     #------- density plot color choices --------#
-    if (input$chooseplots == 3) {
+    if (input$chooseplots == 'Density Plot') {
       return(selectInput('vk_colors', 'Color by:', 
                          choices = c(hist_choices),
                          selected = hist_choices[1]))
     }
     # Kendrick Colors
-    if (input$chooseplots == 2) {
+    if (input$chooseplots == 'Kendrick Plot') {
       return(selectInput('vk_colors', 'Color by:', 
                          choices = c('Van Krevelen Boundary Set 1' = 'bs1',
                                      'Van Krevelen Boundary Set 2' = 'bs2', 
                                      hist_choices),
                          selected = 'bs1'))  
     }
-    if (input$chooseplots == 1) {
+    if (input$chooseplots == 'Van Krevelen Plot') {
       if (input$vkbounds == 0) {#no boundaries
         if (input$choose_single == 2) {
           hist_choices <- getGroupSummaryFunctionNames()
@@ -1024,89 +1035,172 @@ shinyServer(function(session, input, output) {
         division_data <- subset(peakIcr2, input$whichGroups1)
         summarized_data <- summarizeGroups(division_data, summary_functions = input$vk_colors)
         #-------Kendrick Plot-----------# 
-        if (input$chooseplots == 2) {
-          return({
-            groupKendrickPlot(summarized_data, colorCName = input$vk_colors)
-          })
+        if (input$chooseplots == 'Kendrick Plot') {
+            p <- groupKendrickPlot(summarized_data, colorCName = input$vk_colors)
         }
       }
       #----------- Single sample plots ------------#
       #-------Kendrick Plot-----------# 
-      if (input$chooseplots == 2) {
+      if (input$chooseplots == 'Kendrick Plot') {
         if (input$choose_single == 2) {
-          return({
-            groupKendrickPlot(summarized_data, colorCName = input$vk_colors)
-          })
+            p <- groupKendrickPlot(summarized_data, colorCName = input$vk_colors)
         } else if (input$choose_single == 1) {
-          return({
             validate(need(!is.null(input$whichSample) | !is.null(input$whichGroups1),
                           message = "Please choose a sample below"))
             if (input$vk_colors %in% c('bs1', 'bs2')) {
-              return(kendrickPlot(division_data, vkBoundarySet = input$vk_colors))
+              p <- kendrickPlot(division_data, vkBoundarySet = input$vk_colors)
             } else {
               # if color selection doesn't belong to a boundary, color by test
-              return(kendrickPlot(division_data, colorCName = input$vk_colors))
+              p <- kendrickPlot(division_data, colorCName = input$vk_colors)
             }
-          })
         }
       }
       #-------VanKrevelen Plot--------#
-      if (input$chooseplots == 1) {
+      if (input$chooseplots == 'Van Krevelen Plot') {
         if (input$choose_single == 2) {
           if (input$vkbounds == 0) {
-            return({
-              groupVanKrevelenPlot(summarized_data, colorCName = input$vk_colors)
-            })
+              p <- groupVanKrevelenPlot(summarized_data, colorCName = input$vk_colors, showVKBounds = FALSE)
           } else {
-            return({
-              groupVanKrevelenPlot(summarized_data, colorCName = input$vk_colors, vkBoundarySet = input$vkbounds)
-            })
+              p <- groupVanKrevelenPlot(summarized_data, colorCName = input$vk_colors, vkBoundarySet = input$vkbounds)
           }
           
         } else if (input$choose_single == 1) {
-          return({
             validate(need(!is.null(input$whichSample) | !is.null(input$whichGroups1),
                           message = "Please choose a sample below"))
             #-----boundary line logic------#
             if (input$vkbounds == 0) { #no bounds
               # if no boundary lines, leave the option to color by boundary
               if (input$vk_colors %in% c('bs1', 'bs2')) {
-                return(vanKrevelenPlot(division_data, showVKBounds = FALSE, vkBoundarySet = input$vk_colors))
+                p <- vanKrevelenPlot(division_data, showVKBounds = FALSE, vkBoundarySet = input$vk_colors)
               } else {
                 # if no boundary lines and color selection doesn't belong to a boundary, color by test
-                return(vanKrevelenPlot(division_data, showVKBounds = FALSE, colorCName = input$vk_colors))
+                p <- vanKrevelenPlot(division_data, showVKBounds = FALSE, colorCName = input$vk_colors)
               }
             } else {
               # if boundary lines, allow a color by boundary class 
               if (input$vk_colors %in% c('bs1', 'bs2')) {
-                return(vanKrevelenPlot(division_data, vkBoundarySet = input$vkbounds, showVKBounds = TRUE))
+                p <- vanKrevelenPlot(division_data, vkBoundarySet = input$vkbounds, showVKBounds = TRUE)
               } else {
                 # if boundary lines and color isn't a boundary class
-                return(vanKrevelenPlot(division_data, vkBoundarySet = input$vkbounds, showVKBounds = TRUE, colorCName = input$vk_colors))
+                p <- vanKrevelenPlot(division_data, vkBoundarySet = input$vkbounds, showVKBounds = TRUE, colorCName = input$vk_colors)
                 
               }
             }
-          })
         }
+        
+        p <- p %>% layout(xaxis = list(scaleanchor = "y", constraintoward = "left"))
+        
       }
       
       #--------- Density Plot --------#
-      if (input$chooseplots == 3) {
-        return({
+      if (input$chooseplots == 'Density Plot') {
+        #return({
           input$vk_colors
           validate(
             need(!is.null(input$whichSample) | !is.null(input$whichGroups1),
                  message = "Please choose a sample below"),
             need(!is.na(input$vk_colors), message = "Please select a variable to color by")
           )
-          densityPlot(division_data, variable = input$vk_colors)
-        })
+          p <- densityPlot(division_data, variable = input$vk_colors)
+        #})
       }
     }
     
+    x <- list(
+      titlefont = f
+    )
+    y <- list(
+      titlefont = f
+    )
+    p$elementId <- NULL
+    layout(p, xaxis = x, yaxis = y)
+    return(p)
+  }) 
+
+  #------ plot axes and titles options ------#
+  output$title_input <- renderUI({
+    textInput(inputId = "title_input", label = "Plot Title", value = input$chooseplots)
   })
   
+  output$x_axis_input <- renderUI({
+    textInput(inputId = "x_axis_input", label = "X Axis Label", value = NA)
+  })
+  
+  output$y_axis_input <- renderUI({
+    textInput(inputId = "y_axis_input", label = "Y Axis Label", value = NA)
+  })
+  
+  output$legend_title_input <- renderUI({
+    textInput(inputId = "legend_title_input", label = "Legend Label", value = NA)
+  })
+  
+  #-------- create a table that stores plotting information -------#
+  # the table needs to grow with each click of the download button
+  parmTable <- reactiveValues()
+  # need to initialize the table and fill in values
+  parmTable$parms <- data.frame(PlotType = NA, SampleType = NA, G1 = NA, G2 = NA, BoundarySet = NA,
+                                ColorBy = NA, ContinuousVariable = NA, UniqueCommon = NA,
+                                UniqueCommonParameters = NA,FileName = NA, ChartTitle = NA, XaxisTitle = NA,
+                                YaxisTitle = NA, LegendTitle = NA)
+  
+  observeEvent(input$add_plot, {
+    # initialize a new line
+    newLine <- data.frame(PlotType = input$chooseplots, SampleType = NA, G1 = NA, G2 = NA, BoundarySet = NA,
+                          ColorBy = NA, ContinuousVariable = NA, UniqueCommon = NA,
+                          UniqueCommonParameters = NA,FileName = NA, ChartTitle = NA, XaxisTitle = NA,
+                          YaxisTitle = NA, LegendTitle = NA)
+    # fill values to a position depending on input$add_plot
+    # which type of plot
+    newLine$PlotType <- input$chooseplots
+    # Single or Multiple Samples
+    newLine$SampleType <- ifelse(input$choose_single == 1, yes = "Single Sample", no = "Multiple Samples")
+    # Sample(s) in The first group (depends on input$choose_single to decide if this is a single or multiple sample list)
+    newLine$G1 <- ifelse(input$choose_single == 1, yes = input$whichSample, no = paste(input$whichGroups1, collapse = ","))
+    # Sample(s) in the second group. Automatically NA if input$choose_single is single sample or single group
+    newLine$G2 <- ifelse(input$choose_single %in% c(1,2), yes = "NA", no = "not yet available")
+    # Boundary set borders to use (NA for non-Van Krevelen plots)
+    newLine$BoundarySet <- ifelse(input$chooseplots == "Van Krevelen Plot", yes = input$vkbounds, no = "NA")
+    # Color By
+    newLine$ColorBy <- input$vk_colors
+    newLine$ChartTitle <- input$title_input
+    newLine$XaxisTitle <- ifelse(is.na(input$x_axis_input), yes = "default", no = input$x_axis_input)
+    newLine$YaxisTitle <- ifelse(is.na(input$y_axis_input), yes = "default", no = input$y_axis_input)
+    newLine$LegendTitle <- ifelse(is.na(input$legend_title_input), yes = "default", no = input$legend_title_input)
+    
+    if (input$add_plot == 1) {
+      # replace the existing line on the first click
+      parmTable$parms[input$add_plot, ] <- newLine
+    } else {
+      # concat every new line after
+      parmTable$parms <- rbind(parmTable$parms, newLine)
+    }
+    
+    
+    #}
+    
+  }, priority = 7)
+  
+  
+  output$parmsTable <- renderDataTable(parmTable$parms,
+                                       options = list(scrollX = TRUE))
+  
+  # End Visualize tab
   ####### Download Tab #######
+  # copy the table from the visualize tab so as not to confuse javascript
+  output$parmsTable2 <- DT::renderDataTable(parmTable$parms,
+                                            options = list(scrollX = TRUE),
+                                            server = TRUE)
+  
+  # print the selected indices
+  output$x4 = renderPrint({
+    s = input$parmsTable2_rows_selected
+    if (length(s)) {
+      cat('These rows were selected:\n\n')
+      cat(s, sep = ', ')
+    }
+  })
+  
+  #---- processed data download --------#
   output$download_processed_data <- downloadHandler(
     filename = paste("FREDA_Output_",proc.time(),".zip", sep = ""),
     content = function(fname){
@@ -1132,10 +1226,57 @@ shinyServer(function(session, input, output) {
     },
     contentType = "application/zip"
   )
+  # output$download_plots <- downloadHandler(
+  #   filename =  "test.pdf",
+  #   # content is a function with argument file. content writes the plot to the device
+  #   content = function(file) {
+  #     pdf(file) # open the pdf device
+  #     renderDownloadPlots(parmTable = parmsTable2$parms[1,], peakIcr2)
+  #     dev.off()  # turn the device off
+  #     
+  #   } 
+  # )
+  # 
+  # output$download_plots <- downloadHandler("test.pdf", function(theFile) {
+  #   # solution from https://community.plot.ly/t/save-custom-ggplotly-plot-to-pdf-in-shiny/5096
+  #   # figure out why this works
+  #   makePdf <- function(filename){
+  #     pdf(file = filename)
+  #     export(renderDownloadPlots(parmTable = parmTable$parms[1,], peakIcr2), file = "test.png")
+  #     r <- brick(file.path(getwd(), "test.png"))
+  #     plotRGB(r)
+  #     dev.off()
+  #   }
+  #   
+  #   makePdf(theFile)
+  # })
   
-  
+  #----------- plot download ---------#
+  output$download_plots <- downloadHandler(
+    filename = 'pdfs.zip', #this creates a directory to store the pdfs...not sure why it's not zipping
+    content = function(fname) { #write a function to create the content populating said directory
+      fs <- c()
+      tmpdir <- tempdir() # render the images in a temporary environment
+      setwd(tempdir())
+      print(tempdir())
+      for (i in input$parmsTable2_rows_selected) {
+        path <- paste("plot",i, ".pdf", sep="") #create a plot name
+        fs <- c(fs, path) # append the new plot to the old plots
+        export(renderDownloadPlots(parmTable = parmTable$parms[i,], peakIcr2),
+               file = paste("plot",i,".png", sep = ""), zoom = 2) # use webshot to export a screenshot to the opened pdf
+        r <- brick(file.path(getwd(), paste("plot",i,".png", sep = ""))) #create a raster of the screenshot
+        img <- magick::image_read(attr(r,"file")@name) #turn the raster into an image of selected format
+        image_write(img, path=path, format="pdf") #write the image
+
+      }
+      print(fs) #print all the pdfs to file
+      zip(zipfile=fname, files=fs) #zip  it up (this isn't working for some reason!)
+      if(file.exists(paste0(fname,".zip"))){file.rename(paste0(fname,".zip"),fname)} #bug workaround see https://groups.google.com/forum/?utm_medium=email&utm_source=footer#!msg/shiny-discuss/D5F2nqrIhiM/ZshRutFpiVQJ
+    },
+    contentType = "application/zip"
+  )
   ####### Glossary Tab #######
   
-  ####### Download Tab #######
+  
   
 })
