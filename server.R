@@ -7,8 +7,10 @@ library(ggplot2)
 library(reshape2)
 library(webshot)
 library(htmlwidgets)
+library(dplyr)
 library(raster)
 library(magick)
+library(purrr)
 f <- list(
   family = "Courier New, monospace",
   size = 18,
@@ -22,6 +24,8 @@ shinyServer(function(session, input, output) {
   source('summaryFilter.R') 
   source('summaryPreprocess.R')
   source("renderDownloadPlots.R")
+  
+  revals <- reactiveValues(ntables = 0)
   
   ######## Welcome Tab #############
   #------ Download Example Data ---------#
@@ -503,87 +507,135 @@ shinyServer(function(session, input, output) {
   # Depends on: peakIcr2, input$tests
   observeEvent(input$preprocess_click, {
     validate(need(input$tests, message = "Please choose at least one test to calculate"))
-    # Apply all relevant functions
     
+    ## Include functionality to possibly reset 
+    
+    #peakIcr2$e_meta <<- peakIcr2$e_meta %>% select(-one_of(calc_vars$ColumnName))   
+    
+    # Apply all relevant functions
     for(el in input$tests){
       # set f to the function that is named in the ith element of compound_calcs # 
       f <- get(el, envir=asNamespace("fticRanalysis"), mode="function")
       peakIcr2 <<- f(peakIcr2)
     }
   
-  }) # End action button event
+  }, priority = 1) # End action button event
   
-  # Object: Create dataframe of possible calculations to show in summary/histogram
+  # Creates two reactive variables for continuous and categorical variables
   # Note: dependent on preprocess click and the user-specified calculations
-  test_names <- eventReactive(input$preprocess_click, {
+  observeEvent(input$preprocess_click, {
     # Error handling: peakIcr2 must have a non-NULL Kendrick Mass column name
     req(!is.null(attr(peakIcr2, 'cnames')$kmass_cname))
     
     # Get csv file of all possible calculation column names
-    possible_calc_cnames <- read.csv("processedCols.csv", 
-                                     header = FALSE, stringsAsFactors = FALSE)
+    possible_calc_cnames <- read.csv("calculation_variables.csv", header = TRUE, stringsAsFactors = FALSE)
     
     # Get column names from peakIcr2's e_meta
     actual_cnames <- colnames(peakIcr2$e_meta)
     
     # Find all columns with names that match names for calculated columns
-    v_index <- which(possible_calc_cnames[,1] %in% actual_cnames & possible_calc_cnames[,3] == "continuous")
+    v_index <- which(possible_calc_cnames[,1] %in% actual_cnames)
     
     # Save calculation column names from above and their display names 
-    possible_calc_cnames[v_index,]
+    intersect <- possible_calc_cnames[v_index,]
     
-  }) # End test_names
+    # get numeric columns
+    numeric_cols <- peakIcr2$e_meta %>% 
+      dplyr::select(which(sapply(.[intersect[,1]], is.numeric))) %>% 
+      names()
+    
+    # get categorical columns
+    categorical_cols <- peakIcr2$e_meta %>% 
+      dplyr::select(which(!sapply(.[intersect[,1]], is.numeric))) %>%
+      names() 
+    
+    #set reactive variables for observers
+    revals$numeric_cols <- intersect %>% filter(ColumnName %in% numeric_cols)
+    revals$categorical_cols <- intersect %>% filter(ColumnName %in% categorical_cols)
+
+  }) 
   
   #### Main Panel ####
   
-  # Summary Panel: Display output of summaryPreprocess
-  # Depends on: test_names
-  output$summary_preprocess <- renderTable({
-    
-    # Error handling
-    req(test_names())
-    
-    # Call summaryPreprocess
-    summaryPreprocess(peakIcr2, test_names())
-    
-  }, # End code for summary_preprocess
+  # Summary Panel: Display table summaries of numeric and categorical columns in e_meta
   
-  # Options for renderTable
-  rownames = TRUE, 
-  digits = 2 # This maybe needs to change?
+  # For numeric columns:
+  observe({
+    req(revals$numeric_cols, nrow(revals$numeric_cols) > 0)
+    
+    # Create Table Output
+    output$numeric_summary <- renderTable({
+      summaryPreprocess(peakIcr2, revals$numeric_cols)
+    },
+      rownames = TRUE, 
+      digits = 2 # This maybe needs to change?
+    ) 
+    
+    # Summary Header
+    output$numeric_header <- renderUI(tags$p("Summary Statistics for Numeric Variables"))
+    
+  })
   
-  ) # End summary_preprocess
+  # For Categorical Columns
+  
+  # This observer assigns renderTable calls to various output ID's and passes them to the renderUI call immediately below
+  observe({
+    req(nrow(revals$categorical_cols) > 0) 
+    
+    # List of tables which will be passed to renderTable()
+    table_list <- summaryPreprocess(peakIcr2, revals$categorical_cols, categorical = TRUE)
+    
+    # Reactive variable which lets lapply know how many output ID's to generate depending on number of categorical variables selected
+    revals$ntables <- length(table_list)
+    
+    # Call renderTable on each table and assign it to an output ID
+    lapply(1:length(table_list), function(i){
+      output[[paste0('Table_',i)]] <- renderTable({table_list[[i]]}, rownames = TRUE)
+    })
+    
+    # Summary Header
+    output$cat_header <- renderUI({tags$p("Mode and Counts for Categorical Variables")})
+  })
+  
+  # The renderUI call that takes input from the above observer
+  output$categorical_summary <- renderUI({
+    tagList(lapply(1:revals$ntables, function(i){
+      tableOutput(paste0('Table_',i))
+      })
+    )
+  })
+
+  ## END TABLE SUMMARY SECTION ##
   
   # Drop down list: potential histogram options
-  # Depends on: test_names
   output$which_hist <- renderUI({
     
-    # Error handling: test_names required
-    req(test_names())
+    # Error handling: input csv of calculations variables required
+    req(calc_vars)
     
     # Create named list with potential histogram options
-    hist_choices <- unlist(test_names()[,1])
-    names(hist_choices) <- test_names()[,2]
+    hist_choices <- calc_vars$ColumnName
+    names(hist_choices) <- calc_vars$DisplayName
     
     # Drop down list 
-    selectInput('which_hist', 'I would like to see the histogram across all values of...',
+    selectInput('which_hist', 'I would like to see a histogram/bar-chart across all values of...',
                 choices = hist_choices)
     
   }) # End which_hist
   
   # Plot the histogram chosen above
-  # Depends on: which_hist (above) and test_names
+  # Depends on: which_hist
   output$preprocess_hist <- renderPlotly({
     
-    # Error handling: Require which_hist and test_names (for display)
-    req(input$which_hist)
-    req(test_names())
+    # Error handling: Require some columns to be selected
+    req(nrow(revals$numeric_cols) > 0 | nrow(revals$categorical_cols) > 0)
     
     # Save column name for later display
     columnName <- input$which_hist
     
-    # Get 'display name' from test_names
-    displayName <- test_names()[which(test_names()[,1] == columnName), 2]
+    # set display name
+    displayName <- calc_vars %>% filter(DisplayName == columnName) %>%
+      dplyr::select(DisplayName)
     
     # Plot histogram using plotly
     p <- plot_ly(x = peakIcr2$e_meta[,columnName], type = 'histogram') %>%
@@ -601,8 +653,7 @@ shinyServer(function(session, input, output) {
   # Keep a
   # reactive copy of the pre-filtered data in case of a filter reset event
   uploaded_data <- reactive({
-    req(peakICR())
-    req(input$tests)
+    req(peakICR(), input$tests)
   
     temp <- peakICR()
     
@@ -821,10 +872,14 @@ shinyServer(function(session, input, output) {
   
   #-------- Reset Activity -------#
   # Allow a 'reset' that restores the uploaded object and unchecks the filter
-  # boxes
-
+  # boxes.  Will display a popup that warns the user of plot erasure and gives 
+  # the option to reset or to go back without clearing filters.
+  
   observeEvent(input$reset_filters,{
     showModal(modalDialog(
+      
+      ##### There is probably a better way to code the display behavior of this dialog -DC
+      
       fluidPage(
         fluidRow(
           column(10, align = "center", offset = 1,
@@ -840,12 +895,12 @@ shinyServer(function(session, input, output) {
     )
   })
   
-  # exit the modal dialog
+  # if they click no, just exit the modal dialog
   observeEvent(input$clear_filters_no,{
     removeModal()
   })
   
-  # reset data and exit modal dialog
+  # if they click yes, reset data and exit modal dialog
   observeEvent(input$clear_filters_yes, {
     if (f$clearFilters) {
       updateCheckboxInput(session = session, inputId = "massfilter", value = FALSE)
@@ -992,14 +1047,14 @@ shinyServer(function(session, input, output) {
   })
   output$vk_colors <- renderUI({
     # (Conditional on vkbounds):
-    # Error handling: test_names required
-    req(test_names())
+    # Error handling: input csv required
+    req(calc_vars)
     validate(
       need(input$chooseplots != 0 & input$choose_single !=0, message = "Please select plotting criteria")
     )
     # Create named list with potential histogram options
-    hist_choices <- unlist(test_names()[,1])
-    names(hist_choices) <- test_names()[,2]
+    hist_choices <- calc_vars$ColumnName
+    names(hist_choices) <- calc_vars$DisplayName
     
     #----- group summary color choices -------#
     if (input$choose_single == 2) {

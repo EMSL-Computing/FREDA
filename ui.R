@@ -183,13 +183,16 @@ shinyUI(navbarPage(title = (windowTitle = "FREDA"),
                               mainPanel(
                                 
                                 # Set default main panel width 
-                                width = 7,
+                                width = 8,
                                 
-                                # Summary panel for preprocess tab
+                                # Include numeric and categorical summaries in a well panel
                                 wellPanel(
-                                  tableOutput('summary_preprocess')
-                                ), 
-                                
+                                        uiOutput("numeric_header"),
+                                        tableOutput('numeric_summary'),
+                                        uiOutput("cat_header"),
+                                        uiOutput('categorical_summary')
+                                ),
+                                 
                                 # Drop down list: which histogram should be displayed?
                                 uiOutput('which_hist'),
                                 
