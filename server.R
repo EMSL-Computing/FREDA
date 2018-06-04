@@ -1223,31 +1223,7 @@ shinyServer(function(session, input, output) {
     },
     contentType = "application/zip"
   )
-  # output$download_plots <- downloadHandler(
-  #   filename =  "test.pdf",
-  #   # content is a function with argument file. content writes the plot to the device
-  #   content = function(file) {
-  #     pdf(file) # open the pdf device
-  #     renderDownloadPlots(parmTable = parmsTable2$parms[1,], peakIcr2)
-  #     dev.off()  # turn the device off
-  #     
-  #   } 
-  # )
-  # 
-  # output$download_plots <- downloadHandler("test.pdf", function(theFile) {
-  #   # solution from https://community.plot.ly/t/save-custom-ggplotly-plot-to-pdf-in-shiny/5096
-  #   # figure out why this works
-  #   makePdf <- function(filename){
-  #     pdf(file = filename)
-  #     export(renderDownloadPlots(parmTable = parmTable$parms[1,], peakIcr2), file = "test.png")
-  #     r <- brick(file.path(getwd(), "test.png"))
-  #     plotRGB(r)
-  #     dev.off()
-  #   }
-  #   
-  #   makePdf(theFile)
-  # })
-  
+ 
   #----------- plot download ---------#
   output$download_plots <- downloadHandler(
     filename = 'pdfs.zip', #this creates a directory to store the pdfs...not sure why it's not zipping
@@ -1261,7 +1237,7 @@ shinyServer(function(session, input, output) {
         fs <- c(fs, path) # append the new plot to the old plots
         export(renderDownloadPlots(parmTable = parmTable$parms[i,], peakIcr2),
                file = paste("plot",i,".png", sep = ""), zoom = 2) # use webshot to export a screenshot to the opened pdf
-        r <- brick(file.path(getwd(), paste("plot",i,".png", sep = ""))) #create a raster of the screenshot
+        r <- brick(file.path(getwd(), paste("plot",i,".png", sep = ""))) # create a raster of the screenshot
         img <- magick::image_read(attr(r,"file")@name) #turn the raster into an image of selected format
         image_write(img, path=path, format="pdf") #write the image
 
