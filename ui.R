@@ -332,7 +332,7 @@ shinyUI(navbarPage(title = (windowTitle = "FREDA"),
                    tabPanel('Glossary',
                             #mainPanel(
                             #includeHTML("./README/Glossary.html")
-                            includeMarkdown("./README/Glossary.md")
+                            withMathJax(includeMarkdown("./README/Glossary.md"))
                             # )
                             
                    )
