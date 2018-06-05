@@ -38,7 +38,7 @@ shinyUI(navbarPage(title = (windowTitle = "FREDA"),
                                 width = 5,
                                 
                                 # Load e_data file
-                                fileInput("file_edata", "Upload CSV e_data",
+                                fileInput("file_edata", "Upload CSV Data File",
                                           multiple = TRUE,
                                           accept = c("text/csv",
                                                      "text/comma-separated-values,text/plain",
@@ -48,7 +48,7 @@ shinyUI(navbarPage(title = (windowTitle = "FREDA"),
                                 uiOutput('edata_id'),
                                 
                                 # Load e_meta file
-                                fileInput("file_emeta", "Upload CSV e_meta",
+                                fileInput("file_emeta", "Upload CSV Molecular Identification File",
                                           multiple = TRUE,
                                           accept = c("text/csv",
                                                      "text/comma-separated-values,text/plain",
@@ -61,7 +61,7 @@ shinyUI(navbarPage(title = (windowTitle = "FREDA"),
                                 selectInput('instrument', 
                                             label = 'What instrument generated this data?',
                                             choices = list(# 'Select an option' = 0,
-                                              '12T', '21T'), 
+                                              '12T or 15T' = '12T', '21T'), 
                                             selected = 'Select an option'
                                 ), 
                                 
@@ -173,14 +173,8 @@ shinyUI(navbarPage(title = (windowTitle = "FREDA"),
                                 # tags$hr(),
                                 
                                 # Checkbox: which tests should also be applied
-                                checkboxGroupInput('tests', 'Calculate:',
-                                                   c('O:C and H:C' = 'calc_vankrev',
-                                                     'Kendrick Mass and Defect' = 'calc_kendrick',
-                                                     'NOSC' = 'calc_nosc', 
-                                                     'Gibbs Free Energy' = 'calc_gibbs', 
-                                                     'Aromaticity and Modified Aromaticity' = 'calc_aroma',  
-                                                     'DBE and DBE - O' = 'calc_dbe'), 
-                                                   selected = c('calc_vankrev', 'calc_kendrick')), 
+                                uiOutput("which_calcs"),
+                            
                                 # Action button: add test columns with reasults to peakIcr2
                                 actionButton('preprocess_click', 'Process Data', icon = icon("cog"), lib = "glyphicon")
                                 
@@ -189,13 +183,16 @@ shinyUI(navbarPage(title = (windowTitle = "FREDA"),
                               mainPanel(
                                 
                                 # Set default main panel width 
-                                width = 7,
+                                width = 8,
                                 
-                                # Summary panel for preprocess tab
+                                # Include numeric and categorical summaries in a well panel
                                 wellPanel(
-                                  tableOutput('summary_preprocess')
-                                ), 
-                                
+                                        uiOutput("numeric_header"),
+                                        tableOutput('numeric_summary'),
+                                        uiOutput("cat_header"),
+                                        uiOutput('categorical_summary')
+                                ),
+                                 
                                 # Drop down list: which histogram should be displayed?
                                 uiOutput('which_hist'),
                                 
@@ -314,8 +311,8 @@ shinyUI(navbarPage(title = (windowTitle = "FREDA"),
                    ################## Download Panel ##############################################
                    tabPanel('Download',
                             checkboxGroupInput("download_selection", label = "Select Processed Data to Download",
-                                               choices = c('e_data as one .csv and e_meta as another .csv' = "separate",
-                                                           'merged e_data and e_meta as a single .csv' = "merged")),
+                                               choices = c('Data File as one .csv and Molecular Identification File as another .csv' = "separate",
+                                                           'merged Data File and Molecular Identification File as a single .csv' = "merged")),
                             hr(),
                             checkboxInput("report_selection", label = "Report (Coming Soon)"),
                             hr(),

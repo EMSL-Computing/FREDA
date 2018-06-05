@@ -1,0 +1,8 @@
+DisplayName,Function
+O:C & H:C,calc_vankrev
+Kendrick Mass and Defect,calc_kendrick
+NOSC,calc_nosc
+Gibbs Free Energy,calc_gibbs
+Aromaticity & Modified Aromaticity,calc_aroma
+DBE & DBE - O,calc_dbe
+Elemental Composition,assign_elemental_composition

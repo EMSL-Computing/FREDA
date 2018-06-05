@@ -1,0 +1,12 @@
+ColumnName,DisplayName
+OtoC_ratio,O:C Ratio
+HtoC_ratio,H:C Ratio
+kmass,Kendrick Mass
+kdefect,Kendrick Defect
+NOSC,NOSC
+GFE,Gibbs Free Energy
+AI,Aromaticity
+AI_Mod,Modified Aromaticity
+DBE,DBE
+DBE_O,DBE - O
+ElComposition,Elemental Composition
