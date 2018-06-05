@@ -12,7 +12,7 @@
 
 **Aromaticity:**
 
-$\frac{1 + C - O - S - 0.5*(N + P + H)}{C - O - S - N - P}$ When the numerator or denomenator is $\leq 0$, aromaticity is 0. When aromaticity $> 0.5$ a compound is considered not aromatic, $0.5 \leq$ aromaticity $< 0.67$ a compound is aromatic, and when aromaticity $\geq 0.67$ a compound is a condensed aromatic. [Koch \& Dittmar, 2006](https://onlinelibrary.wiley.com/doi/abs/10.1002/rcm.2386)$^1$ [Erratum](https://onlinelibrary.wiley.com/doi/full/10.1002/rcm.7433)$^2$ 
+$\frac{1 + C - O - S - 0.5*(N + P + H)}{C - O - S - N - P}$ When the numerator or denominator is $\leq 0$, aromaticity is 0. When aromaticity $> 0.5$ a compound is considered not aromatic, $0.5 \leq$ aromaticity $< 0.67$ a compound is aromatic, and when aromaticity $\geq 0.67$ a compound is a condensed aromatic. [Koch \& Dittmar, 2006](https://onlinelibrary.wiley.com/doi/abs/10.1002/rcm.2386)$^1$ [Erratum](https://onlinelibrary.wiley.com/doi/full/10.1002/rcm.7433)$^2$ 
 
 <hr></hr>
 <a name="B"></a>
@@ -146,7 +146,7 @@ Analytic technique that measures masses within a sample using ionization
 
 **Modified Aromaticity:** 
 
-$\frac{1 + C - 0.5O - S - 0.5*(N + P + H)}{C - 0.5*O - S - N - P}$. When the numerator or denomenator is $\leq 0$, modified aromaticity is 0. When modified aromaticity $> 0.5$ a compound is considered not aromatic, $0.5 \leq$ modified aromaticity $< 0.67$ a compound is aromatic, and when modified aromaticity $\geq 0.67$ a compound is a condensed aromatic. [Koch \& Dittmar, 2006](https://onlinelibrary.wiley.com/doi/abs/10.1002/rcm.2386)$^1$ [Erratum](https://onlinelibrary.wiley.com/doi/full/10.1002/rcm.7433)$^2$ 
+$\frac{1 + C - 0.5O - S - 0.5*(N + P + H)}{C - 0.5*O - S - N - P}$. When the numerator or denominator is $\leq 0$, modified aromaticity is 0. When modified aromaticity $> 0.5$ a compound is considered not aromatic, $0.5 \leq$ modified aromaticity $< 0.67$ a compound is aromatic, and when modified aromaticity $\geq 0.67$ a compound is a condensed aromatic. [Koch \& Dittmar, 2006](https://onlinelibrary.wiley.com/doi/abs/10.1002/rcm.2386)$^1$ [Erratum](https://onlinelibrary.wiley.com/doi/full/10.1002/rcm.7433)$^2$ 
 
 <hr></hr>
 <a name="N"></a>
@@ -179,7 +179,7 @@ Oxygen to Carbon ratio
 
 **P:** 
 
-chemcial element Phoshporus
+chemical element Phosphorus
 
 <hr></hr>
 <a name="Q"></a> 
@@ -245,7 +245,7 @@ Plot of H:C (y-axis) vs O:C (x-axis); also see O:C and H:C
 
 $^1$ Koch, B. P., & Dittmar, T. (2006). From mass to structure: an aromaticity index for high‐resolution mass data of natural organic matter. Rapid communications in mass spectrometry, 20(5), 926-932. 
 
-$^2$ Errata: Koch, B. P., & Dittmar, T. (2016). From mass to structure: an aromaticity index for high-resolution mass data of natural organic matter. Rapid communications in mass spectrometery, 30(1), 250. DOI: 10.1002/rcm.7433
+$^2$ Errata: Koch, B. P., & Dittmar, T. (2016). From mass to structure: an aromaticity index for high-resolution mass data of natural organic matter. Rapid communications in mass spectrometry, 30(1), 250. DOI: 10.1002/rcm.7433
 
 $^3$ Kim, S., Kramer, R. W., & Hatcher, P. G. (2003). Graphical method for analysis of ultrahigh-resolution broadband mass spectra of natural organic matter, the van Krevelen diagram. Analytical Chemistry, 75(20), 5336-5344.
 
