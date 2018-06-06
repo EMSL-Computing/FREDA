@@ -184,15 +184,25 @@ shinyUI(navbarPage(title = (windowTitle = "FREDA"),
                                 
                                 # Set default main panel width 
                                 width = 8,
-                                
+
                                 # Include numeric and categorical summaries in a well panel
+                                
                                 wellPanel(
-                                        uiOutput("numeric_header"),
-                                        tableOutput('numeric_summary'),
-                                        uiOutput("cat_header"),
-                                        uiOutput('categorical_summary')
+                                  tags$div(class = "row",
+                                           tags$div(class = "col-sm-5",
+                                                    uiOutput("numeric_header"),
+                                                    dataTableOutput('numeric_summary')
+                                           ),
+                                           tags$div(class = "col-sm-7",
+                                                    uiOutput("cat_header"),
+                                                    uiOutput('categorical_summary')
+                                                    
+                                          )
+
+                                  )
                                 ),
-                                 
+                                
+                                
                                 # Drop down list: which histogram should be displayed?
                                 uiOutput('which_hist'),
                                 
@@ -329,7 +339,7 @@ shinyUI(navbarPage(title = (windowTitle = "FREDA"),
                    tabPanel('Glossary',
                             #mainPanel(
                             #includeHTML("./README/Glossary.html")
-                            includeMarkdown("./README/Glossary.md")
+                            withMathJax(includeMarkdown("./README/Glossary.md"))
                             # )
                             
                    )

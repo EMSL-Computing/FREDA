@@ -1,5 +1,5 @@
 DisplayName,Function
-O:C & H:C,calc_vankrev
+"O:C, H:C, N:C, P:C, & N:P",calc_element_ratios
 Kendrick Mass and Defect,calc_kendrick
 NOSC,calc_nosc
 Gibbs Free Energy,calc_gibbs

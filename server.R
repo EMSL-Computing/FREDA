@@ -498,7 +498,7 @@ shinyServer(function(session, input, output) {
     choices <- calc_opts$Function
     names(choices) <- calc_opts$DisplayName
     
-    checkboxGroupInput("tests", "What Values should be Calculated?", choices, selected = c("calc_vankrev", "calc_kendrick"))
+    checkboxGroupInput("tests", "What Values should be Calculated?", choices, selected = c("calc_element_ratios", "calc_kendrick"))
   })
   
   #### Action Button reactions ####
@@ -561,15 +561,17 @@ shinyServer(function(session, input, output) {
   
   # For numeric columns:
   observe({
-    req(revals$numeric_cols, nrow(revals$numeric_cols) > 0)
+
+    req(nrow(revals$numeric_cols) > 0)
     
     # Create Table Output
-    output$numeric_summary <- renderTable({
-      summaryPreprocess(peakIcr2, revals$numeric_cols)
-    },
-      rownames = TRUE, 
-      digits = 2 # This maybe needs to change?
-    ) 
+    output$numeric_summary <- DT::renderDataTable({
+      columns <- summaryPreprocess(peakIcr2, revals$numeric_cols) %>% colnames()
+      
+      summaryPreprocess(peakIcr2, revals$numeric_cols) %>%
+        datatable(options = list(dom = "t")) %>% 
+        formatRound(columns, digits = 2)
+    }) 
     
     # Summary Header
     output$numeric_header <- renderUI(tags$p("Summary Statistics for Numeric Variables"))
@@ -590,17 +592,17 @@ shinyServer(function(session, input, output) {
     
     # Call renderTable on each table and assign it to an output ID
     lapply(1:length(table_list), function(i){
-      output[[paste0('Table_',i)]] <- renderTable({table_list[[i]]}, rownames = TRUE)
+      output[[paste0('Table_',i)]] <- DT::renderDataTable({table_list[[i]]}, options = list(scrollX = TRUE, dom = "t"))
     })
     
     # Summary Header
-    output$cat_header <- renderUI({tags$p("Mode and Counts for Categorical Variables")})
+    output$cat_header <- renderUI(tags$p("Mode and Counts for Categorical Variables"))
   })
   
   # The renderUI call that takes input from the above observer
   output$categorical_summary <- renderUI({
     tagList(lapply(1:revals$ntables, function(i){
-      tableOutput(paste0('Table_',i))
+      DT::dataTableOutput(paste0('Table_',i))
       })
     )
   })
@@ -618,9 +620,13 @@ shinyServer(function(session, input, output) {
     names(hist_choices) <- calc_vars$DisplayName
     
     # Drop down list 
-    selectInput('which_hist', 'I would like to see a histogram/bar-chart across all values of...',
-                choices = hist_choices)
-    
+    tagList(
+      br(),
+      br(),
+      tags$p('I would like to see a histogram/bar-chart across all values of:'),
+      selectInput('which_hist', NULL,
+                  choices = hist_choices)
+    )
   }) # End which_hist
   
   # Plot the histogram chosen above
@@ -634,12 +640,12 @@ shinyServer(function(session, input, output) {
     columnName <- input$which_hist
     
     # set display name
-    displayName <- calc_vars %>% filter(DisplayName == columnName) %>%
-      dplyr::select(DisplayName)
+    displayName <- calc_vars %>% filter(ColumnName == columnName) %>%
+      pluck("DisplayName")
     
     # Plot histogram using plotly
     p <- plot_ly(x = peakIcr2$e_meta[,columnName], type = 'histogram') %>%
-      layout( title = paste('Histogram of ', displayName),
+      layout( title = paste('Observed distribution of', displayName),
               scene = list(
                 xaxis = list(title = displayName),
                 yaxis = list(title = 'Frequency')))
@@ -1197,8 +1203,9 @@ shinyServer(function(session, input, output) {
             }
         }
         
-        p <- p %>% layout(xaxis = list(scaleanchor = "y", constraintoward = "left"))
+        # p <- p %>% layout(xaxis = list(scaleanchor = "y", constraintoward = "left")) # SQUARE SCALING
         
+        p
       }
       
       #--------- Density Plot --------#
