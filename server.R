@@ -519,7 +519,7 @@ shinyServer(function(session, input, output) {
       peakIcr2 <<- f(peakIcr2)
     }
   
-  }, priority = 1) # End action button event
+  }, priority = 10) # End action button event
   
   # Creates two reactive variables for continuous and categorical variables
   # Note: dependent on preprocess click and the user-specified calculations
@@ -569,7 +569,7 @@ shinyServer(function(session, input, output) {
       columns <- summaryPreprocess(peakIcr2, revals$numeric_cols) %>% colnames()
       
       summaryPreprocess(peakIcr2, revals$numeric_cols) %>%
-        datatable(options = list(dom = "t")) %>% 
+        datatable(options = list(dom = "t", pageLength = nrow(.))) %>% 
         formatRound(columns, digits = 2)
     }) 
     
@@ -613,12 +613,11 @@ shinyServer(function(session, input, output) {
   output$which_hist <- renderUI({
     
     # Error handling: input csv of calculations variables required
-    req(calc_vars)
-    
+    req(calc_vars, revals$numeric_cols)
+
     # Create named list with potential histogram options
-    hist_choices <- calc_vars$ColumnName
-    names(hist_choices) <- calc_vars$DisplayName
-    
+    hist_choices <- intersect(calc_vars$ColumnName, peakIcr2$e_meta %>% colnames())
+    names(hist_choices) <- calc_vars %>% filter(ColumnName %in% hist_choices) %>% pluck("DisplayName")
     # Drop down list 
     tagList(
       br(),
@@ -628,13 +627,13 @@ shinyServer(function(session, input, output) {
                   choices = hist_choices)
     )
   }) # End which_hist
-  
+    
   # Plot the histogram chosen above
   # Depends on: which_hist
   output$preprocess_hist <- renderPlotly({
     
     # Error handling: Require some columns to be selected
-    req(nrow(revals$numeric_cols) > 0 | nrow(revals$categorical_cols) > 0)
+    req(input$which_hist)
     
     # Save column name for later display
     columnName <- input$which_hist
