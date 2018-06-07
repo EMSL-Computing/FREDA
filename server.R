@@ -957,8 +957,7 @@ shinyServer(function(session, input, output) {
           
           selectInput('whichSample', 'Sample',
                       choices = sample_names())
-        ), # End conditional output, single sample #
-        actionButton("plot_submit", label = "Submit")
+        ) # End conditional output, single sample #
       ))
     }
     #------ Kendrick Sidebar Options ---------#
@@ -996,8 +995,7 @@ shinyServer(function(session, input, output) {
           
           selectInput('whichSample', 'Sample',
                       choices = sample_names())
-        ), # End conditional output, single sample #
-        actionButton("plot_submit", label = "Submit")
+        ) # End conditional output, single sample #
       ))
     }
     #------ Density Sidebar Options ---------#
@@ -1035,8 +1033,7 @@ shinyServer(function(session, input, output) {
           
           selectInput('whichSample', 'Sample',
                       choices = sample_names())
-        ), # End conditional output, single sample #
-        actionButton("plot_submit", label = "Submit")
+        )# End conditional output, single sample #
       ))
     }
     
@@ -1058,8 +1055,8 @@ shinyServer(function(session, input, output) {
       need(input$chooseplots != 0 & input$choose_single !=0, message = "Please select plotting criteria")
     )
     # Create named list with potential histogram options
-    hist_choices <- calc_vars$ColumnName
-    names(hist_choices) <- calc_vars$DisplayName
+    hist_choices <- intersect(calc_vars$ColumnName, peakIcr2$e_meta %>% colnames())
+    names(hist_choices) <- calc_vars %>% filter(ColumnName %in% hist_choices) %>% pluck("DisplayName")
     
     #----- group summary color choices -------#
     if (input$choose_single == 2) {
@@ -1150,7 +1147,9 @@ shinyServer(function(session, input, output) {
         summarized_data <- summarizeGroups(division_data, summary_functions = input$vk_colors)
         #-------Kendrick Plot-----------# 
         if (input$chooseplots == 'Kendrick Plot') {
-            p <- groupKendrickPlot(summarized_data, colorCName = input$vk_colors)
+            p <- groupKendrickPlot(summarized_data, colorCName = input$vk_colors,
+                                   xlabel = input$x_axis_input, ylabel = input$y_axis_input,
+                                   title = input$title_input, legendTitle = input$legend_title_input)
         }
       }
       #----------- Single sample plots ------------#
@@ -1162,10 +1161,14 @@ shinyServer(function(session, input, output) {
             validate(need(!is.null(input$whichSample) | !is.null(input$whichGroups1),
                           message = "Please choose a sample below"))
             if (input$vk_colors %in% c('bs1', 'bs2')) {
-              p <- kendrickPlot(division_data, vkBoundarySet = input$vk_colors)
+              p <- kendrickPlot(division_data, vkBoundarySet = input$vk_colors,
+                                xlabel = input$x_axis_input, ylabel = input$y_axis_input,
+                                title = input$title_input,legendTitle = input$legend_title_input)
             } else {
               # if color selection doesn't belong to a boundary, color by test
-              p <- kendrickPlot(division_data, colorCName = input$vk_colors)
+              p <- kendrickPlot(division_data, colorCName = input$vk_colors,
+                                xlabel = input$x_axis_input, ylabel = input$y_axis_input,
+                                title = input$title_input,legendTitle = input$legend_title_input)
             }
         }
       }
@@ -1173,9 +1176,13 @@ shinyServer(function(session, input, output) {
       if (input$chooseplots == 'Van Krevelen Plot') {
         if (input$choose_single == 2) {
           if (input$vkbounds == 0) {
-              p <- groupVanKrevelenPlot(summarized_data, colorCName = input$vk_colors, showVKBounds = FALSE)
+              p <- groupVanKrevelenPlot(summarized_data, colorCName = input$vk_colors, showVKBounds = FALSE,
+                                        xlabel = input$x_axis_input, ylabel = input$y_axis_input,
+                                        title = input$title_input,legendTitle = input$legend_title_input)
           } else {
-              p <- groupVanKrevelenPlot(summarized_data, colorCName = input$vk_colors, vkBoundarySet = input$vkbounds)
+              p <- groupVanKrevelenPlot(summarized_data, colorCName = input$vk_colors, vkBoundarySet = input$vkbounds,
+                                        xlabel = input$x_axis_input, ylabel = input$y_axis_input,
+                                        title = input$title_input,legendTitle = input$legend_title_input)
           }
           
         } else if (input$choose_single == 1) {
@@ -1185,18 +1192,26 @@ shinyServer(function(session, input, output) {
             if (input$vkbounds == 0) { #no bounds
               # if no boundary lines, leave the option to color by boundary
               if (input$vk_colors %in% c('bs1', 'bs2')) {
-                p <- vanKrevelenPlot(division_data, showVKBounds = FALSE, vkBoundarySet = input$vk_colors)
+                p <- vanKrevelenPlot(division_data, showVKBounds = FALSE, vkBoundarySet = input$vk_colors,
+                                     xlabel = input$x_axis_input, ylabel = input$y_axis_input,
+                                     title = input$title_input,legendTitle = input$legend_title_input)
               } else {
                 # if no boundary lines and color selection doesn't belong to a boundary, color by test
-                p <- vanKrevelenPlot(division_data, showVKBounds = FALSE, colorCName = input$vk_colors)
+                p <- vanKrevelenPlot(division_data, showVKBounds = FALSE, colorCName = input$vk_colors,
+                                     xlabel = input$x_axis_input, ylabel = input$y_axis_input,
+                                     title = input$title_input,legendTitle = input$legend_title_input)
               }
             } else {
               # if boundary lines, allow a color by boundary class 
               if (input$vk_colors %in% c('bs1', 'bs2')) {
-                p <- vanKrevelenPlot(division_data, vkBoundarySet = input$vkbounds, showVKBounds = TRUE)
+                p <- vanKrevelenPlot(division_data, vkBoundarySet = input$vkbounds, showVKBounds = TRUE,
+                                     xlabel = input$x_axis_input, ylabel = input$y_axis_input,
+                                     title = input$title_input,legendTitle = input$legend_title_input)
               } else {
                 # if boundary lines and color isn't a boundary class
-                p <- vanKrevelenPlot(division_data, vkBoundarySet = input$vkbounds, showVKBounds = TRUE, colorCName = input$vk_colors)
+                p <- vanKrevelenPlot(division_data, vkBoundarySet = input$vkbounds, showVKBounds = TRUE, colorCName = input$vk_colors,
+                                     xlabel = input$x_axis_input, ylabel = input$y_axis_input,
+                                     title = input$title_input,legendTitle = input$legend_title_input)
                 
               }
             }
@@ -1216,7 +1231,9 @@ shinyServer(function(session, input, output) {
                  message = "Please choose a sample below"),
             need(!is.na(input$vk_colors), message = "Please select a variable to color by")
           )
-          p <- densityPlot(division_data, variable = input$vk_colors)
+          p <- densityPlot(division_data, variable = input$vk_colors,
+                           xlabel = input$x_axis_input, ylabel = input$y_axis_input,
+                           title = input$title_input)
         #})
       }
     }
@@ -1235,12 +1252,17 @@ shinyServer(function(session, input, output) {
   #------ plot axes and titles options ------#
   # use the 'formals' argument to figure out default chart labels
   plot_defaults <- reactive({
-    if (input$chooseplots == 'Van Krevelen Plot'){
+    validate((
+      need(input$chooseplots != 0, message = "")
+    ))
+    if (input$chooseplots == 'Van Krevelen Plot') {
       defs <- formals(vanKrevelenPlot)
     } else if (input$chooseplots == 'Kendrick Plot') {
       defs <- formals(kendrickPlot)
-    } else if (input$chooseplots == 'Density Plot'){
+    } else if (input$chooseplots == 'Density Plot') {
       defs <- formals(densityPlot)
+      defs$ylabel = "Density"
+      defs$xlabel = input$vk_colors
     }
     return(defs)
   })
@@ -1266,7 +1288,11 @@ shinyServer(function(session, input, output) {
   })
   
   output$legend_title_input <- renderUI({
-    textInput(inputId = "legend_title_input", label = "Legend Label", value = NA)
+    if (input$chooseplots == 'Density Plot') {
+      return(NULL)
+    } else{
+      textInput(inputId = "legend_title_input", label = "Legend Label", value = plot_defaults()$legendTitle)
+    }
   })
   
   #-------- create a table that stores plotting information -------#
