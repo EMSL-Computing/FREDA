@@ -289,7 +289,8 @@ shinyUI(navbarPage(title = (windowTitle = "FREDA"),
                                 uiOutput("title_input"),
                                 uiOutput("x_axis_input"),
                                 uiOutput("y_axis_input"),
-                                uiOutput("legend_title_input")
+                                uiOutput("legend_title_input"),
+                                actionButton("plot_submit", label = "Submit")
                               ),# End sidebar conditionals on Visualize tab #
                               
                               mainPanel(
