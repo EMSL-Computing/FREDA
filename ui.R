@@ -7,8 +7,8 @@
 #    http://shiny.rstudio.com/
 #
 
-library(shiny)
 library(plotly)
+library(shiny)
 library(DT)
 library(markdown)
 
