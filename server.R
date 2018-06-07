@@ -1227,16 +1227,36 @@ shinyServer(function(session, input, output) {
   }) 
 
   #------ plot axes and titles options ------#
+  # use the 'formals' argument to figure out default chart labels
+  plot_defaults <- reactive({
+    if (input$chooseplots == 'Van Krevelen Plot'){
+      defs <- formals(vanKrevelenPlot)
+    } else if (input$chooseplots == 'Kendrick Plot') {
+      defs <- formals(kendrickPlot)
+    } else if (input$chooseplots == 'Density Plot'){
+      defs <- formals(densityPlot)
+    }
+    return(defs)
+  })
   output$title_input <- renderUI({
-    textInput(inputId = "title_input", label = "Plot Title", value = input$chooseplots)
+    validate(
+      need(input$chooseplots != 0, message = "")
+    )
+    textInput(inputId = "title_input", label = "Plot Title", value = plot_defaults()$title)
   })
   
   output$x_axis_input <- renderUI({
-    textInput(inputId = "x_axis_input", label = "X Axis Label", value = NA)
+    validate(
+      need(input$chooseplots != 0, message = "")
+    )
+    textInput(inputId = "x_axis_input", label = "X Axis Label", value = plot_defaults()$xlabel)
   })
   
   output$y_axis_input <- renderUI({
-    textInput(inputId = "y_axis_input", label = "Y Axis Label", value = NA)
+    validate(
+      need(input$chooseplots != 0, message = "")
+    )
+    textInput(inputId = "y_axis_input", label = "Y Axis Label", value = plot_defaults()$ylabel)
   })
   
   output$legend_title_input <- renderUI({
@@ -1337,6 +1357,7 @@ shinyServer(function(session, input, output) {
   )
  
   #----------- plot download ---------#
+
   output$download_plots <- downloadHandler(
     filename = 'pdfs.zip', #this creates a directory to store the pdfs...not sure why it's not zipping
     content = function(fname) { #write a function to create the content populating said directory

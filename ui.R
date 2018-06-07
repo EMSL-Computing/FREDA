@@ -275,7 +275,11 @@ shinyUI(navbarPage(title = (windowTitle = "FREDA"),
                                             selected = 0
                                 ), 
                                 # UI options will change depending on plot type.
-                                uiOutput("plotUI")
+                                uiOutput("plotUI"),
+                                uiOutput("title_input"),
+                                uiOutput("x_axis_input"),
+                                uiOutput("y_axis_input"),
+                                uiOutput("legend_title_input")
                               ),# End sidebar conditionals on Visualize tab #
                               
                               mainPanel(
@@ -296,10 +300,6 @@ shinyUI(navbarPage(title = (windowTitle = "FREDA"),
                                 uiOutput('vk_colors'),
                                 br(),
                                 hr(),
-                                uiOutput("title_input"),
-                                uiOutput("x_axis_input"),
-                                uiOutput("y_axis_input"),
-                                uiOutput("legend_title_input"),
                                 actionButton(inputId = "add_plot", label = "I want to download a hi-res version of this plot on the Download tab", icon = icon("download")),
                               br(),
                               br(),
