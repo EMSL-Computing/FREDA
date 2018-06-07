@@ -8,7 +8,6 @@
 #
 
 
-=======
 library(markdown)
 library(shiny)
 library(plotly)
