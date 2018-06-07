@@ -1055,8 +1055,8 @@ shinyServer(function(session, input, output) {
       need(input$chooseplots != 0 & input$choose_single !=0, message = "Please select plotting criteria")
     )
     # Create named list with potential histogram options
-    hist_choices <- calc_vars$ColumnName
-    names(hist_choices) <- calc_vars$DisplayName
+    hist_choices <- intersect(calc_vars$ColumnName, peakIcr2$e_meta %>% colnames())
+    names(hist_choices) <- calc_vars %>% filter(ColumnName %in% hist_choices) %>% pluck("DisplayName")
     
     #----- group summary color choices -------#
     if (input$choose_single == 2) {
