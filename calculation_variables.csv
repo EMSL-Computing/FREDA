@@ -1,6 +1,9 @@
 ColumnName,DisplayName
 OtoC_ratio,O:C Ratio
 HtoC_ratio,H:C Ratio
+NtoC_ratio,N:C Ratio
+PtoC_ratio,P:C Ratio
+NtoP_ratio,N:P Ratio
 kmass,Kendrick Mass
 kdefect,Kendrick Defect
 NOSC,NOSC
