@@ -613,7 +613,7 @@ shinyServer(function(session, input, output) {
   output$which_hist <- renderUI({
     
     # Error handling: input csv of calculations variables required
-    req(calc_vars, revals$numeric_cols)
+    req(calc_vars, revals$numeric_cols, revals$categorical_cols)
 
     # Create named list with potential histogram options
     hist_choices <- intersect(calc_vars$ColumnName, peakIcr2$e_meta %>% colnames())
