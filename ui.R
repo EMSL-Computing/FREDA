@@ -7,10 +7,13 @@
 #    http://shiny.rstudio.com/
 #
 
-library(shiny)
+
+
+
 library(plotly)
+library(shiny)
 library(DT)
-library(markdown)
+
 
 # Define UI for application that draws a histogram
 shinyUI(navbarPage(title = (windowTitle = "FREDA"),
@@ -173,14 +176,8 @@ shinyUI(navbarPage(title = (windowTitle = "FREDA"),
                                 # tags$hr(),
                                 
                                 # Checkbox: which tests should also be applied
-                                checkboxGroupInput('tests', 'Calculate:',
-                                                   c('O:C and H:C' = 'calc_vankrev',
-                                                     'Kendrick Mass and Defect' = 'calc_kendrick',
-                                                     'NOSC' = 'calc_nosc', 
-                                                     'Gibbs Free Energy' = 'calc_gibbs', 
-                                                     'Aromaticity and Modified Aromaticity' = 'calc_aroma',  
-                                                     'DBE and DBE - O' = 'calc_dbe'), 
-                                                   selected = c('calc_vankrev', 'calc_kendrick')), 
+                                uiOutput("which_calcs"),
+                            
                                 # Action button: add test columns with reasults to peakIcr2
                                 actionButton('preprocess_click', 'Process Data', icon = icon("cog"), lib = "glyphicon")
                                 
@@ -189,12 +186,25 @@ shinyUI(navbarPage(title = (windowTitle = "FREDA"),
                               mainPanel(
                                 
                                 # Set default main panel width 
-                                width = 7,
+                                width = 8,
+
+                                # Include numeric and categorical summaries in a well panel
                                 
-                                # Summary panel for preprocess tab
                                 wellPanel(
-                                  tableOutput('summary_preprocess')
-                                ), 
+                                  tags$div(class = "row",
+                                           tags$div(class = "col-sm-5",
+                                                    uiOutput("numeric_header"),
+                                                    dataTableOutput('numeric_summary')
+                                           ),
+                                           tags$div(class = "col-sm-7",
+                                                    uiOutput("cat_header"),
+                                                    uiOutput('categorical_summary')
+                                                    
+                                          )
+
+                                  )
+                                ),
+                                
                                 
                                 # Drop down list: which histogram should be displayed?
                                 uiOutput('which_hist'),
@@ -278,7 +288,12 @@ shinyUI(navbarPage(title = (windowTitle = "FREDA"),
                                             selected = 0
                                 ), 
                                 # UI options will change depending on plot type.
-                                uiOutput("plotUI")
+                                uiOutput("plotUI"),
+                                uiOutput("title_input"),
+                                uiOutput("x_axis_input"),
+                                uiOutput("y_axis_input"),
+                                uiOutput("legend_title_input"),
+                                actionButton("plot_submit", label = "Submit")
                               ),# End sidebar conditionals on Visualize tab #
                               
                               mainPanel(
@@ -299,10 +314,6 @@ shinyUI(navbarPage(title = (windowTitle = "FREDA"),
                                 uiOutput('vk_colors'),
                                 br(),
                                 hr(),
-                                uiOutput("title_input"),
-                                uiOutput("x_axis_input"),
-                                uiOutput("y_axis_input"),
-                                uiOutput("legend_title_input"),
                                 actionButton(inputId = "add_plot", label = "I want to download a hi-res version of this plot on the Download tab", icon = icon("download")),
                               br(),
                               br(),
