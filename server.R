@@ -11,6 +11,7 @@ library(dplyr)
 library(raster)
 library(magick)
 library(purrr)
+
 f <- list(
   family = "Courier New, monospace",
   size = 18,
@@ -21,6 +22,7 @@ f <- list(
 shinyServer(function(session, input, output) {
   Sys.setenv(R_ZIPCMD="/usr/bin/zip")
   # Source files for 'summaryFilt' and 'summaryPreprocess'
+  source('tooltip_checkbox.R')
   source('summaryFilter.R') 
   source('summaryPreprocess.R')
   source("renderDownloadPlots.R")
@@ -492,13 +494,26 @@ shinyServer(function(session, input, output) {
   
   ####### Preprocess Tab #######
   
+  
+  
   #### Populate List from CSV File ####
   
   output$which_calcs <- renderUI({
     choices <- calc_opts$Function
     names(choices) <- calc_opts$DisplayName
     
-    checkboxGroupInput("tests", "What Values should be Calculated?", choices, selected = c("calc_element_ratios", "calc_kendrick"))
+    title0 <-  paste0("Cox Gibbs Free Energy. Calculated as:",
+                   "60.3 - 28.5*NOSC ",
+                   tags$a(href = "https://www.sciencedirect.com/science/article/pii/S0016703711000378", "[LaRowe & Van Cappellen, 2011]"))
+    
+    tooltip_checkbox("tests", "What Values Should be Calculated?", choices, selected = c("calc_element_ratios", "calc_kendrick"),
+                     extensions = lapply(1:length(choices), function(i){  
+                       tipify(icon("question-sign", lib = "glyphicon"), title = title0, placement = "top", trigger = 'hover')
+                       # tipify(bsButton(paste0("Option", as.character(i)), "", icon = icon("question-sign", lib = "glyphicon"), size = "extra-small"),
+                       #        title = "", placement = "top", trigger = 'click')
+                     }))
+    
+    #checkboxGroupInput("tests", "What Values should be Calculated?", choices, selected = c("calc_element_ratios", "calc_kendrick"))
   })
   
   #### Action Button reactions ####
@@ -518,14 +533,14 @@ shinyServer(function(session, input, output) {
       f <- get(el, envir=asNamespace("fticRanalysis"), mode="function")
       peakIcr2 <<- f(peakIcr2)
     }
-  
+    
   }, priority = 10) # End action button event
   
   # Creates two reactive variables for continuous and categorical variables
   # Note: dependent on preprocess click and the user-specified calculations
   observeEvent(input$preprocess_click, {
     # Error handling: peakIcr2 must have a non-NULL Kendrick Mass column name
-    req(!is.null(attr(peakIcr2, 'cnames')$kmass_cname))
+    #req(!is.null(attr(peakIcr2, 'cnames')$kmass_cname))
     
     # Get csv file of all possible calculation column names
     possible_calc_cnames <- read.csv("calculation_variables.csv", header = TRUE, stringsAsFactors = FALSE)
@@ -552,7 +567,9 @@ shinyServer(function(session, input, output) {
     #set reactive variables for observers
     revals$numeric_cols <- intersect %>% filter(ColumnName %in% numeric_cols)
     revals$categorical_cols <- intersect %>% filter(ColumnName %in% categorical_cols)
-
+    
+    
+  
   }) 
   
   #### Main Panel ####
