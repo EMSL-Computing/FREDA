@@ -331,10 +331,9 @@ shinyUI(navbarPage(title = (windowTitle = "FREDA"),
                             hr(),
                             checkboxInput("figure_selection", label = "High Resolution Figures (Coming Soon)"),
                             dataTableOutput("parmsTable2"),
-                            downloadButton(outputId = "download_plots", label = "Download the plot"),
                             verbatimTextOutput('x4'),
                             hr(),
-                            downloadButton('download_processed_data', 'Download Selection')
+                            downloadButton('download_processed_data', 'Download Selected Items')
                             
                    ), 
                    

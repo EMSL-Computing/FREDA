@@ -11,6 +11,7 @@ library(dplyr)
 library(raster)
 library(magick)
 library(purrr)
+library(shinyBS)
 
 f <- list(
   family = "Courier New, monospace",
@@ -1077,14 +1078,18 @@ shinyServer(function(session, input, output) {
     meta_hist_choices <- colnames(peakIcr2$e_meta)[!(colnames(peakIcr2$e_meta) %in% hist_choices)]
     names(meta_hist_choices) <- meta_hist_choices
     # combine prettified names and not prettified names
-    hist_choices <- c(hist_choices, meta_hist_choices)
+    hist_choices <- c(meta_hist_choices, hist_choices)
+    # don't allow columns of all unique values (e.g. MolForm)
+    all_unique <- unlist(lapply(peakIcr2$e_meta, function(x) length(unique(x)) > 20 & !is.numeric(x)))
+    hist_choices <- hist_choices[!all_unique]
   })
   output$vk_colors <- renderUI({
+    req(input$chooseplots)
     # (Conditional on vkbounds):
     # Error handling: input csv required
     req(calc_vars)
     validate(
-      need(input$chooseplots != 0 & input$choose_single !=0, message = "Please select plotting criteria")
+      need(input$chooseplots != 0 & input$choose_single != 0, message = "Please select plotting criteria")
     )
     # Create named list with potential histogram options
     # hist_choices <- intersect(calc_vars$ColumnName, peakIcr2$e_meta %>% colnames())
@@ -1178,6 +1183,7 @@ shinyServer(function(session, input, output) {
       #---------- Group Plots ------------#
       else if (input$choose_single == 2) {# single group
         # Make sure at least one test has been calculated
+       # browser()
         validate(need(!is.null(input$whichGroups1), message = "Please select samples for grouping"))
         division_data <- subset(peakIcr2, input$whichGroups1)
         summarized_data <- summarizeGroups(division_data, summary_functions = input$vk_colors)
@@ -1294,10 +1300,10 @@ shinyServer(function(session, input, output) {
     if (input$chooseplots == 'Van Krevelen Plot') {
       defs <- formals(vanKrevelenPlot)
       validate(need(!is.null(input$vk_colors), message = "select a color"))
-      defs$legendTitle = names(display_name_choices())[display_name_choices() == input$vk_colors]
+      #defs$legendTitle = names(display_name_choices())[display_name_choices() == input$vk_colors]
     } else if (input$chooseplots == 'Kendrick Plot') {
       defs <- formals(kendrickPlot)
-      defs$legendTitle = input$vk_colors
+      #defs$legendTitle = input$vk_colors
     } else if (input$chooseplots == 'Density Plot') {
       defs <- formals(densityPlot)
       defs$ylabel = "Density"
@@ -1311,14 +1317,12 @@ shinyServer(function(session, input, output) {
     )
     textInput(inputId = "title_input", label = "Plot Title", value = plot_defaults()$title)
   })
-  
   output$x_axis_input <- renderUI({
     validate(
       need(input$chooseplots != 0, message = "")
     )
     textInput(inputId = "x_axis_input", label = "X Axis Label", value = plot_defaults()$xlabel)
   })
-  
   output$y_axis_input <- renderUI({
     validate(
       need(input$chooseplots != 0, message = "")
@@ -1326,13 +1330,13 @@ shinyServer(function(session, input, output) {
     textInput(inputId = "y_axis_input", label = "Y Axis Label", value = plot_defaults()$ylabel)
   })
   
-  output$legend_title_input <- renderUI({
-    if (input$chooseplots == 'Density Plot') {
-      return(NULL)
-    } else{
-      textInput(inputId = "legend_title_input", label = "Legend Label", value = plot_defaults()$legendTitle)
-    }
-  })
+  # output$legend_title_input <- renderUI({
+  #   if (input$chooseplots == 'Density Plot') {
+  #     return(NULL)
+  #   } else{
+  #     textInput(inputId = "legend_title_input", label = "Legend Label", value = plot_defaults()$legendTitle)
+  #   }
+  # })
   
   #-------- create a table that stores plotting information -------#
   # the table needs to grow with each click of the download button
@@ -1341,14 +1345,14 @@ shinyServer(function(session, input, output) {
   parmTable$parms <- data.frame(PlotType = NA, SampleType = NA, G1 = NA, G2 = NA, BoundarySet = NA,
                                 ColorBy = NA, ContinuousVariable = NA, UniqueCommon = NA,
                                 UniqueCommonParameters = NA,FileName = NA, ChartTitle = NA, XaxisTitle = NA,
-                                YaxisTitle = NA, LegendTitle = NA)
+                                YaxisTitle = NA)#, LegendTitle = NA)
   
   observeEvent(input$add_plot, {
     # initialize a new line
     newLine <- data.frame(PlotType = input$chooseplots, SampleType = NA, G1 = NA, G2 = NA, BoundarySet = NA,
                           ColorBy = NA, ContinuousVariable = NA, UniqueCommon = NA,
                           UniqueCommonParameters = NA,FileName = NA, ChartTitle = NA, XaxisTitle = NA,
-                          YaxisTitle = NA, LegendTitle = NA)
+                          YaxisTitle = NA)#, LegendTitle = NA)
     # fill values to a position depending on input$add_plot
     # which type of plot
     newLine$PlotType <- input$chooseplots
@@ -1365,7 +1369,9 @@ shinyServer(function(session, input, output) {
     newLine$ChartTitle <- input$title_input
     newLine$XaxisTitle <- ifelse(is.na(input$x_axis_input), yes = "default", no = input$x_axis_input)
     newLine$YaxisTitle <- ifelse(is.na(input$y_axis_input), yes = "default", no = input$y_axis_input)
-    newLine$LegendTitle <- ifelse(is.na(input$legend_title_input), yes = "default", no = input$legend_title_input)
+    newLine$FileName <- paste("Plot", input$add_plot, ".pdf", sep = "")
+    # Nope, plotly doesn't title legends on categorical vars
+    # so don't allow this option anymorenewLine$LegendTitle <- ifelse(input$chooseplots == 'Density Plot', yes = "default", no = input$legend_title_input)
     
     if (input$add_plot == 1) {
       # replace the existing line on the first click
@@ -1419,6 +1425,21 @@ shinyServer(function(session, input, output) {
         merged_data <- merge(peakIcr2$e_data, peakIcr2$e_meta)
         write.csv(merged_data, file = "FREDA_processed_merged_data.csv", row.names = FALSE)
       }
+      
+      if (length(input$parmsTable2_rows_selected) > 0) {
+        for (i in input$parmsTable2_rows_selected) {
+          path <- parmTable$parms$FileName[i] #create a plot name
+          fs <- c(fs, path) # append the new plot to the old plots
+          export(renderDownloadPlots(parmTable = parmTable$parms[i,], peakIcr2),
+                 file = paste("plot",i,".png", sep = ""), zoom = 2) # use webshot to export a screenshot to the opened pdf
+          r <- brick(file.path(getwd(), paste("plot",i,".png", sep = ""))) # create a raster of the screenshot
+          img <- magick::image_read(attr(r,"file")@name) #turn the raster into an image of selected format
+          image_write(img, path = path, format = "pdf") #write the image
+        }
+        fs <- c(fs, "Plot_key.csv")
+        outtable <- parmTable$parms[input$parmsTable2_rows_selected, ]
+        write.csv( outtable, row.names = FALSE, file = "Plot_key.csv")
+      }
       print(fs)
       
       zip(zipfile=fname, files=fs)
@@ -1428,30 +1449,21 @@ shinyServer(function(session, input, output) {
   )
  
   #----------- plot download ---------#
-
-  output$download_plots <- downloadHandler(
-    filename = 'pdfs.zip', #this creates a directory to store the pdfs...not sure why it's not zipping
-    content = function(fname) { #write a function to create the content populating said directory
-      fs <- c()
-      tmpdir <- tempdir() # render the images in a temporary environment
-      setwd(tempdir())
-      print(tempdir())
-      for (i in input$parmsTable2_rows_selected) {
-        path <- paste("plot",i, ".pdf", sep="") #create a plot name
-        fs <- c(fs, path) # append the new plot to the old plots
-        export(renderDownloadPlots(parmTable = parmTable$parms[i,], peakIcr2),
-               file = paste("plot",i,".png", sep = ""), zoom = 2) # use webshot to export a screenshot to the opened pdf
-        r <- brick(file.path(getwd(), paste("plot",i,".png", sep = ""))) # create a raster of the screenshot
-        img <- magick::image_read(attr(r,"file")@name) #turn the raster into an image of selected format
-        image_write(img, path=path, format="pdf") #write the image
-
-      }
-      print(fs) #print all the pdfs to file
-      zip(zipfile=fname, files=fs) #zip  it up (this isn't working for some reason!)
-      if(file.exists(paste0(fname,".zip"))){file.rename(paste0(fname,".zip"),fname)} #bug workaround see https://groups.google.com/forum/?utm_medium=email&utm_source=footer#!msg/shiny-discuss/D5F2nqrIhiM/ZshRutFpiVQJ
-    },
-    contentType = "application/zip"
-  )
+# 
+#   output$download_plots <- downloadHandler(
+#     filename = 'pdfs.zip', #this creates a directory to store the pdfs...not sure why it's not zipping
+#     content = function(fname) { #write a function to create the content populating said directory
+#       fs <- c()
+#       tmpdir <- tempdir() # render the images in a temporary environment
+#       setwd(tempdir())
+#       print(tempdir())
+# 
+#       print(fs) #print all the pdfs to file
+#       zip(zipfile=fname, files=fs) #zip  it up (this isn't working for some reason!)
+#       if(file.exists(paste0(fname,".zip"))){file.rename(paste0(fname,".zip"),fname)} #bug workaround see https://groups.google.com/forum/?utm_medium=email&utm_source=footer#!msg/shiny-discuss/D5F2nqrIhiM/ZshRutFpiVQJ
+#     },
+#     contentType = "application/zip"
+#   )
   ####### Glossary Tab #######
   
   
