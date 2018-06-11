@@ -1047,6 +1047,21 @@ shinyServer(function(session, input, output) {
                        choices = c('BS1' = 'bs1', 'BS2' = 'bs2', 'None' = 0),
                        selected = 'bs1'))
   })
+  
+  display_name_choices <- reactive({
+    req(calc_vars)
+    validate(
+      need(input$chooseplots != 0 & input$choose_single !=0, message = "Please select plotting criteria")
+    )
+    # Create named list with potential histogram options
+    hist_choices <- intersect(calc_vars$ColumnName, peakIcr2$e_meta %>% colnames())
+    names(hist_choices) <- calc_vars %>% filter(ColumnName %in% hist_choices) %>% pluck("DisplayName")
+    # append the prettified calculation options with any other column in emeta
+    meta_hist_choices <- colnames(peakIcr2$e_meta)[!(colnames(peakIcr2$e_meta) %in% hist_choices)]
+    names(meta_hist_choices) <- meta_hist_choices
+    # combine prettified names and not prettified names
+    hist_choices <- c(hist_choices, meta_hist_choices)
+  })
   output$vk_colors <- renderUI({
     # (Conditional on vkbounds):
     # Error handling: input csv required
@@ -1055,9 +1070,13 @@ shinyServer(function(session, input, output) {
       need(input$chooseplots != 0 & input$choose_single !=0, message = "Please select plotting criteria")
     )
     # Create named list with potential histogram options
-    hist_choices <- intersect(calc_vars$ColumnName, peakIcr2$e_meta %>% colnames())
-    names(hist_choices) <- calc_vars %>% filter(ColumnName %in% hist_choices) %>% pluck("DisplayName")
-    
+    # hist_choices <- intersect(calc_vars$ColumnName, peakIcr2$e_meta %>% colnames())
+    # names(hist_choices) <- calc_vars %>% filter(ColumnName %in% hist_choices) %>% pluck("DisplayName")
+    # # append the prettified calculation options with any other column in emeta
+    # meta_hist_choices <- colnames(peakIcr2$e_meta)[!(colnames(peakIcr2$e_meta) %in% hist_choices)]
+    # names(meta_hist_choices) <- meta_hist_choices
+    # # combine prettified names and not prettified names
+    hist_choices <- display_name_choices()#c(hist_choices, meta_hist_choices)
     #----- group summary color choices -------#
     if (input$choose_single == 2) {
       hist_choices <- getGroupSummaryFunctionNames()
@@ -1257,8 +1276,11 @@ shinyServer(function(session, input, output) {
     ))
     if (input$chooseplots == 'Van Krevelen Plot') {
       defs <- formals(vanKrevelenPlot)
+      validate(need(!is.null(input$vk_colors), message = "select a color"))
+      defs$legendTitle = names(display_name_choices())[display_name_choices() == input$vk_colors]
     } else if (input$chooseplots == 'Kendrick Plot') {
       defs <- formals(kendrickPlot)
+      defs$legendTitle = input$vk_colors
     } else if (input$chooseplots == 'Density Plot') {
       defs <- formals(densityPlot)
       defs$ylabel = "Density"
