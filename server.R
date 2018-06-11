@@ -689,6 +689,25 @@ shinyServer(function(session, input, output) {
     return(temp)
   })
   
+  display_name_choices <- reactive({
+    req(calc_vars)
+    # validate(
+    #   need(input$chooseplots != 0 & input$choose_single !=0, message = "Please select plotting criteria")
+    # )
+    # Create named list with potential histogram options
+    hist_choices <- intersect(calc_vars$ColumnName, peakIcr2$e_meta %>% colnames())
+    names(hist_choices) <- calc_vars %>% filter(ColumnName %in% hist_choices) %>% pluck("DisplayName")
+    # append the prettified calculation options with any other column in emeta
+    meta_hist_choices <- colnames(peakIcr2$e_meta)[!(colnames(peakIcr2$e_meta) %in% hist_choices)]
+    names(meta_hist_choices) <- meta_hist_choices
+    # combine prettified names and not prettified names
+    hist_choices <- c(meta_hist_choices, hist_choices)
+    # don't allow columns of all unique values (e.g. MolForm)
+    all_unique <- unlist(lapply(peakIcr2$e_meta, function(x) length(unique(x)) > 20 & !is.numeric(x)))
+    hist_choices <- hist_choices[!all_unique]
+  })
+  
+  
   # Allow a button click to undo filtering
   f <- reactiveValues(clearFilters = FALSE)
   observeEvent(input$clear_filters_yes, {
@@ -709,6 +728,27 @@ shinyServer(function(session, input, output) {
                 choices = seq(1, (length(edata_cnames()) - 1), 1), selected = 2)
     
   }) # End minobs
+  output$filterUI <- renderUI({
+    req(input$customfilterz)
+    if (input$customfilterz) {
+      return(selectInput("custom1", label = "Select filter item", choices = c("Select item", display_name_choices())))
+    }
+  })
+  
+  output$customfilter1UI <- renderUI({
+    req(input$custom1)
+    if (input$custom1 != "Select item"){
+      #check to see if the selected filter is numeric or categorical
+      if (is.numeric(peakIcr2$e_meta[, input$custom1])) {
+          tagList(
+          numericInput(inputId = "minimum_custom1", label = "Min", value = min(peakIcr2$e_meta[, input$custom1], na.rm = TRUE)),
+          numericInput(inputId = "maximum_custom1", label = "Max", value = max(peakIcr2$e_meta[, input$custom1], na.rm = TRUE)))
+      }
+    } else {
+      return(NULL)
+    }
+  })
+  
   output$head_emeta <- DT::renderDataTable(expr = Emeta(),
                                            options = list(scrollX = TRUE))
   #### Action Button Reactions (Filter Tab) ####
@@ -1066,23 +1106,23 @@ shinyServer(function(session, input, output) {
                        selected = 'bs1'))
   })
   
-  display_name_choices <- reactive({
-    req(calc_vars)
-    validate(
-      need(input$chooseplots != 0 & input$choose_single !=0, message = "Please select plotting criteria")
-    )
-    # Create named list with potential histogram options
-    hist_choices <- intersect(calc_vars$ColumnName, peakIcr2$e_meta %>% colnames())
-    names(hist_choices) <- calc_vars %>% filter(ColumnName %in% hist_choices) %>% pluck("DisplayName")
-    # append the prettified calculation options with any other column in emeta
-    meta_hist_choices <- colnames(peakIcr2$e_meta)[!(colnames(peakIcr2$e_meta) %in% hist_choices)]
-    names(meta_hist_choices) <- meta_hist_choices
-    # combine prettified names and not prettified names
-    hist_choices <- c(meta_hist_choices, hist_choices)
-    # don't allow columns of all unique values (e.g. MolForm)
-    all_unique <- unlist(lapply(peakIcr2$e_meta, function(x) length(unique(x)) > 20 & !is.numeric(x)))
-    hist_choices <- hist_choices[!all_unique]
-  })
+  # display_name_choices <- reactive({
+  #   req(calc_vars)
+  #   validate(
+  #     need(input$chooseplots != 0 & input$choose_single !=0, message = "Please select plotting criteria")
+  #   )
+  #   # Create named list with potential histogram options
+  #   hist_choices <- intersect(calc_vars$ColumnName, peakIcr2$e_meta %>% colnames())
+  #   names(hist_choices) <- calc_vars %>% filter(ColumnName %in% hist_choices) %>% pluck("DisplayName")
+  #   # append the prettified calculation options with any other column in emeta
+  #   meta_hist_choices <- colnames(peakIcr2$e_meta)[!(colnames(peakIcr2$e_meta) %in% hist_choices)]
+  #   names(meta_hist_choices) <- meta_hist_choices
+  #   # combine prettified names and not prettified names
+  #   hist_choices <- c(meta_hist_choices, hist_choices)
+  #   # don't allow columns of all unique values (e.g. MolForm)
+  #   all_unique <- unlist(lapply(peakIcr2$e_meta, function(x) length(unique(x)) > 20 & !is.numeric(x)))
+  #   hist_choices <- hist_choices[!all_unique]
+  # })
   output$vk_colors <- renderUI({
     req(input$chooseplots)
     # (Conditional on vkbounds):

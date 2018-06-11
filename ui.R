@@ -239,6 +239,9 @@ shinyUI(navbarPage(title = (windowTitle = "FREDA"),
                                 
                                 # Drop-down list: Min/max mass filter
                                 uiOutput('minobs'), 
+                                checkboxInput('customfilterz', label = "Implement up to 3 custom filters", value = FALSE),
+                                uiOutput("filterUI"),
+                                uiOutput("customfilter1UI"),
                                 fluidRow(
                                   column(
                                     width = 6, actionButton('filter_click', "Filter Data", icon = icon("cog"), lib = "glyphicon")
@@ -298,7 +301,7 @@ shinyUI(navbarPage(title = (windowTitle = "FREDA"),
                               mainPanel(
                                 #tags$div(plotlyOutput('FxnPlot'), class = "square"),
                                 plotlyOutput('FxnPlot', width = '700px', height = '600px'),
-                                width = 7,
+                                # width = 7,
                                 conditionalPanel(
                                   condition = "input.chooseplots == 'Van Krevelen Plot'",
                                   # Set default width to 7
@@ -316,7 +319,7 @@ shinyUI(navbarPage(title = (windowTitle = "FREDA"),
                                 actionButton(inputId = "add_plot", label = "I want to download a hi-res version of this plot on the Download tab", icon = icon("download")),
                               br(),
                               br(),
-                                dataTableOutput("parmsTable")
+                                dataTableOutput("parmsTable", width = "55%")
                                 )# End main panel on Visualize tab #
                               
                             )), # End Visualize tab #
