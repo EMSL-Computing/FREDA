@@ -106,13 +106,23 @@ shinyUI(navbarPage(title = (windowTitle = "FREDA"),
                                 # (Conditional on the above selectInput) Elemental columns: 
                                 ##  which columns contain the elements?
                                 conditionalPanel(
-                                  condition = "input.select == 2", 
-                                  uiOutput("c_column"), 
-                                  uiOutput("h_column"), 
-                                  uiOutput("n_column"), 
-                                  uiOutput("o_column"), 
-                                  uiOutput("s_column"), 
-                                  uiOutput("p_column")
+                                  condition = "input.select == 2",
+                                  fluidRow(
+                                    column(width = 4,
+                                      uiOutput("c_column"), 
+                                      uiOutput("h_column")
+                                    ),
+                                    column(width = 4,
+                                           uiOutput("n_column"),
+                                           uiOutput("o_column") 
+                                           ),
+                                    column(width = 4,
+                                           uiOutput("s_column"), 
+                                           uiOutput("p_column")
+                                    )
+                                  )
+                                  
+                                  
                                 ), 
                                 
                                 # HOrizontal rule

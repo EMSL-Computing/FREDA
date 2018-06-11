@@ -144,7 +144,7 @@ shinyServer(function(session, input, output) {
   # Note: All require emeta_cnames()
   output$c_column <- renderUI({
     
-    selectInput("c_column", "Choose column representing C",
+    selectInput("c_column", "Choose column for C",
                 choices  = c('Select a column', emeta_cnames()),
                 selected = ifelse(grepl("^c$", tolower(emeta_cnames())),
                                   yes = emeta_cnames()[grepl("^c$", tolower(emeta_cnames()))][1],
