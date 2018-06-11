@@ -732,7 +732,7 @@ shinyServer(function(session, input, output) {
   output$filterUI <- renderUI({
     req(input$customfilterz)
     if (input$customfilterz) {
-      return(selectInput("custom1", label = "Select filter item", choices = c("Select item", display_name_choices())))
+      return(selectInput("custom1", label = "Select first filter item", choices = c("Select item", display_name_choices())))
     }
   })
   
@@ -741,9 +741,20 @@ shinyServer(function(session, input, output) {
     if (input$custom1 != "Select item"){
       #check to see if the selected filter is numeric or categorical
       if (is.numeric(peakIcr2$e_meta[, input$custom1])) {
+        # if the filter applies to numeric data, allow inputs for min, max, and keep NA
           tagList(
-          numericInput(inputId = "minimum_custom1", label = "Min", value = min(peakIcr2$e_meta[, input$custom1], na.rm = TRUE)),
-          numericInput(inputId = "maximum_custom1", label = "Max", value = max(peakIcr2$e_meta[, input$custom1], na.rm = TRUE)))
+            checkboxInput(inputId = "na_custom1", label = "Keep NAs?", value = FALSE),
+            numericInput(inputId = "minimum_custom1", label = "Min", value = min(peakIcr2$e_meta[, input$custom1], na.rm = TRUE)),
+            numericInput(inputId = "maximum_custom1", label = "Max", value = max(peakIcr2$e_meta[, input$custom1], na.rm = TRUE)))
+      } else if (!is.numeric(peakIcr2$e_meta[, input$custom1])) {
+        # if the filter applies to categorical data, populate a box of options along with a keep NA option
+        tagList(
+          checkboxInput(inputId = "na_custom1", label = "Keep NAs?", value = FALSE),
+          selectInput(inputId = "categorical_custom1", label = "Categories to Keep",
+                      multiple = TRUE, selected = unique(peakIcr2$e_meta[, input$custom1]), choices = unique(peakIcr2$e_meta[, input$custom1]))
+        )
+        
+        
       }
     } else {
       return(NULL)
@@ -777,7 +788,7 @@ shinyServer(function(session, input, output) {
     }
     
     # If molecule filtering is checked
-    if (input$molfilter){
+    if (input$molfilter) {
   
       # Create and apply molecule filter to nonreactive peakICR object
       filterMols <- molecule_filter(peakIcr2)
