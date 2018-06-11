@@ -924,8 +924,10 @@ shinyServer(function(session, input, output) {
   # Depends on: summaryFilterDataFrame
   output$barplot_filter <- renderPlot({
     # Melt dataframe into 2 objects
-    ggdata_barplot <- melt(summaryFilterDataFrame()[,c('data_state', 'assigned', 'unassigned')])
-    ggdata_text <- summaryFilterDataFrame()[, c('data_state', 'sum_peaks', 'dispText')]
+    which_filts <- c("Unfiltered", "After Mass Filter", "After Molecule Filter")[c(TRUE, input$massfilter, input$molfilter)]
+    
+    ggdata_barplot <- melt(summaryFilterDataFrame()[,c('data_state', 'assigned', 'unassigned')]) %>% filter(data_state %in% which_filts)
+    ggdata_text <- summaryFilterDataFrame()[, c('data_state', 'sum_peaks', 'dispText')] %>% filter(data_state %in% which_filts)
     
     # Aesthetic purposes: get max height, divide by 30, use as offset in geom_text
     num_displaced <- round(ggdata_text[1, 2] / 35, digits = -1)
@@ -1247,7 +1249,6 @@ shinyServer(function(session, input, output) {
         validate(need(!is.null(input$whichGroups1), message = "Please select samples for grouping"))
         division_data <- subset(peakIcr2, input$whichGroups1)
         summarized_data <- summarizeGroups(division_data, summary_functions = getGroupSummaryFunctionNames())
-        print(summarized_data$e_data)
         #-------Kendrick Plot-----------# 
         if (input$chooseplots == 'Kendrick Plot') {
             p <- groupKendrickPlot(summarized_data, colorCName = input$vk_colors,

@@ -240,7 +240,7 @@ shinyUI(navbarPage(title = (windowTitle = "FREDA"),
                                 
                                 wellPanel(
                                       tags$h5("This page allows you to filter the data by various metrics.  
-                                          The default options are to retain molecules within a particular mass range (mass filter), and to retain molecules that appear a minimum number of times across all samples.  
+                                          The default options are to retain molecules within a particular mass range (mass filter), and to retain molecules that appear a minimum number of times across all samples (molecule filter).  
                                           Additionally, one can filter by up to three variables contained in the molecular identification file.\n
                                               ",
                                           style = "color:CornFlowerBlue;font-weight:bold"),
