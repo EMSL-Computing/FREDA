@@ -1060,7 +1060,10 @@ shinyServer(function(session, input, output) {
     
     #----- group summary color choices -------#
     if (input$choose_single == 2) {
-      hist_choices <- getGroupSummaryFunctionNames()
+      hist_choices <- lapply(getGroupSummaryFunctionNames(), function(fn){
+        paste0(input$whichGroups1, "_", fn)
+      }) %>%
+        unlist()
       return(selectInput('vk_colors', 'Color by:', 
                          choices = c(hist_choices),
                          selected = hist_choices[1]))
@@ -1082,7 +1085,11 @@ shinyServer(function(session, input, output) {
     if (input$chooseplots == 'Van Krevelen Plot') {
       if (input$vkbounds == 0) {#no boundaries
         if (input$choose_single == 2) {
-          hist_choices <- getGroupSummaryFunctionNames()
+          hist_choices <- lapply(getGroupSummaryFunctionNames(), function(fn){
+            paste0(input$whichGroups1, "_", fn)
+          }) %>%
+            unlist()
+          
           return(selectInput('vk_colors', 'Color by:', 
                              choices = c(hist_choices),
                              selected = hist_choices[1]))
@@ -1142,9 +1149,12 @@ shinyServer(function(session, input, output) {
       #---------- Group Plots ------------#
       else if (input$choose_single == 2) {# single group
         # Make sure at least one test has been calculated
+        
+        #____WORK____
         validate(need(!is.null(input$whichGroups1), message = "Please select samples for grouping"))
         division_data <- subset(peakIcr2, input$whichGroups1)
-        summarized_data <- summarizeGroups(division_data, summary_functions = input$vk_colors)
+        summarized_data <- summarizeGroups(division_data, summary_functions = getGroupSummaryFunctionNames())
+        print(summarized_data$e_data)
         #-------Kendrick Plot-----------# 
         if (input$chooseplots == 'Kendrick Plot') {
             p <- groupKendrickPlot(summarized_data, colorCName = input$vk_colors,
