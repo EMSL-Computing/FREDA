@@ -631,7 +631,7 @@ shinyServer(function(session, input, output) {
   output$which_hist <- renderUI({
     
     # Error handling: input csv of calculations variables required
-    req(calc_vars, revals$numeric_cols)
+    req(calc_vars, revals$numeric_cols, revals$categorical_cols)
 
     # Create named list with potential histogram options
     hist_choices <- intersect(calc_vars$ColumnName, peakIcr2$e_meta %>% colnames())
@@ -724,6 +724,7 @@ shinyServer(function(session, input, output) {
   # Depends on edata_cnames()
   output$minobs <- renderUI({
     
+    #tags$h()
     selectInput('minobs', "Minimum number of times observed", 
                 choices = seq(1, (length(edata_cnames()) - 1), 1), selected = 2)
     
@@ -1141,7 +1142,10 @@ shinyServer(function(session, input, output) {
     hist_choices <- display_name_choices()#c(hist_choices, meta_hist_choices)
     #----- group summary color choices -------#
     if (input$choose_single == 2) {
-      hist_choices <- getGroupSummaryFunctionNames()
+      hist_choices <- lapply(getGroupSummaryFunctionNames(), function(fn){
+        paste0(input$whichGroups1, "_", fn)
+      }) %>%
+        unlist()
       return(selectInput('vk_colors', 'Color by:', 
                          choices = c(hist_choices),
                          selected = hist_choices[1]))
@@ -1164,7 +1168,11 @@ shinyServer(function(session, input, output) {
       req(input$vkbounds)
       if (input$vkbounds == 0) {#no boundaries
         if (input$choose_single == 2) {
-          hist_choices <- getGroupSummaryFunctionNames()
+          hist_choices <- lapply(getGroupSummaryFunctionNames(), function(fn){
+            paste0(input$whichGroups1, "_", fn)
+          }) %>%
+            unlist()
+          
           return(selectInput('vk_colors', 'Color by:', 
                              choices = c(hist_choices),
                              selected = hist_choices[1]))
@@ -1224,10 +1232,11 @@ shinyServer(function(session, input, output) {
       #---------- Group Plots ------------#
       else if (input$choose_single == 2) {# single group
         # Make sure at least one test has been calculated
-       # browser()
+
         validate(need(!is.null(input$whichGroups1), message = "Please select samples for grouping"))
         division_data <- subset(peakIcr2, input$whichGroups1)
-        summarized_data <- summarizeGroups(division_data, summary_functions = input$vk_colors)
+        summarized_data <- summarizeGroups(division_data, summary_functions = getGroupSummaryFunctionNames())
+        print(summarized_data$e_data)
         #-------Kendrick Plot-----------# 
         if (input$chooseplots == 'Kendrick Plot') {
             p <- groupKendrickPlot(summarized_data, colorCName = input$vk_colors,
