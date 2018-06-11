@@ -8,8 +8,7 @@
 #
 
 
-library(markdown)
-library(shiny)
+
 library(plotly)
 library(shiny)
 library(DT)
