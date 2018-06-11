@@ -1121,6 +1121,7 @@ shinyServer(function(session, input, output) {
                          selected = 'bs1'))  
     }
     if (input$chooseplots == 'Van Krevelen Plot') {
+      req(input$vkbounds)
       if (input$vkbounds == 0) {#no boundaries
         if (input$choose_single == 2) {
           hist_choices <- getGroupSummaryFunctionNames()
