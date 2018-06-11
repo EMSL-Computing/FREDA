@@ -226,7 +226,16 @@ shinyUI(navbarPage(title = (windowTitle = "FREDA"),
                                 width = 5,
                                 
                                 # Checkbox: Mass filter yes/no
-                                checkboxInput('massfilter', HTML('<h5><b>Mass Filter</b></h5>'), value = FALSE),
+                                #HTML('<h5><b>Mass Filter</b></h5>')
+                                
+                                wellPanel(
+                                      tags$h5("This page allows you to filter the data by various metrics.  
+                                          The default options are to retain molecules within a particular mass range (mass filter), and to retain molecules that appear a minimum number of times across all samples.  
+                                          Additionally, one can filter by up to three variables contained in the molecular identification file.",
+                                          style = "color:CornFlowerBlue;font-weight:bold")
+                                ),
+                                
+                                checkboxInput('massfilter', tags$b("Mass Filter") ,value = FALSE),
                                 
                                 # Numeric: Min/max mass filter
                                 numericInput('min_mass', 'Minimum Mass value', 
@@ -235,7 +244,7 @@ shinyUI(navbarPage(title = (windowTitle = "FREDA"),
                                              min = 0, value = 900),
                                 
                                 # Checkbox: Mass filter yes/no
-                                checkboxInput('molfilter', HTML('<h5><b>Molecule Filter</b></h5>'), value = FALSE),
+                                checkboxInput('molfilter', tags$b("Molecule Filter"), value = FALSE),
                                 
                                 # Drop-down list: Min/max mass filter
                                 uiOutput('minobs'), 
