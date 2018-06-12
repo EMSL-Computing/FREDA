@@ -1431,7 +1431,7 @@ shinyServer(function(session, input, output) {
     newLine$ChartTitle <- input$title_input
     newLine$XaxisTitle <- ifelse(is.na(input$x_axis_input), yes = "default", no = input$x_axis_input)
     newLine$YaxisTitle <- ifelse(is.na(input$y_axis_input), yes = "default", no = input$y_axis_input)
-    newLine$FileName <- paste("Plot", input$add_plot, ".pdf", sep = "")
+    newLine$FileName <- paste("Plot", input$add_plot, sep = "")
     # Nope, plotly doesn't title legends on categorical vars
     # so don't allow this option anymorenewLine$LegendTitle <- ifelse(input$chooseplots == 'Density Plot', yes = "default", no = input$legend_title_input)
     
@@ -1490,13 +1490,14 @@ shinyServer(function(session, input, output) {
       
       if (length(input$parmsTable2_rows_selected) > 0) {
         for (i in input$parmsTable2_rows_selected) {
-          path <- parmTable$parms$FileName[i] #create a plot name
+          path <- paste(parmTable$parms$FileName[i],".svg", sep = "") #create a plot name
           fs <- c(fs, path) # append the new plot to the old plots
           export(renderDownloadPlots(parmTable = parmTable$parms[i,], peakIcr2),
                  file = paste("plot",i,".png", sep = ""), zoom = 2) # use webshot to export a screenshot to the opened pdf
           r <- brick(file.path(getwd(), paste("plot",i,".png", sep = ""))) # create a raster of the screenshot
           img <- magick::image_read(attr(r,"file")@name) #turn the raster into an image of selected format
-          image_write(img, path = path, format = "pdf") #write the image
+          image_write(img, path = path, format = "svg") #write the image
+          #rsvg::rsvg_svg(img, file = path)
         }
         fs <- c(fs, "Plot_key.csv")
         outtable <- parmTable$parms[input$parmsTable2_rows_selected, ]
