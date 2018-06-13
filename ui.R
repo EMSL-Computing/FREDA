@@ -106,13 +106,23 @@ shinyUI(navbarPage(title = (windowTitle = "FREDA"),
                                 # (Conditional on the above selectInput) Elemental columns: 
                                 ##  which columns contain the elements?
                                 conditionalPanel(
-                                  condition = "input.select == 2", 
-                                  uiOutput("c_column"), 
-                                  uiOutput("h_column"), 
-                                  uiOutput("n_column"), 
-                                  uiOutput("o_column"), 
-                                  uiOutput("s_column"), 
-                                  uiOutput("p_column")
+                                  condition = "input.select == 2",
+                                  fluidRow(
+                                    column(width = 4,
+                                      uiOutput("c_column"), 
+                                      uiOutput("h_column")
+                                    ),
+                                    column(width = 4,
+                                           uiOutput("n_column"),
+                                           uiOutput("o_column") 
+                                           ),
+                                    column(width = 4,
+                                           uiOutput("s_column"), 
+                                           uiOutput("p_column")
+                                    )
+                                  )
+                                  
+                                  
                                 ), 
                                 
                                 # HOrizontal rule
@@ -249,6 +259,11 @@ shinyUI(navbarPage(title = (windowTitle = "FREDA"),
                                 #               style = "color:CornFlowerBlue;")
                                 # ),
                                 
+
+                                # Checkbox: Mass filter yes/no
+                                #HTML('<h5><b>Mass Filter</b></h5>')
+                                
+                                
                                 checkboxInput('massfilter', tags$b("Mass Filter") ,value = FALSE),
 
                                 
@@ -259,10 +274,13 @@ shinyUI(navbarPage(title = (windowTitle = "FREDA"),
                                              min = 0, value = 900),
                                 
                                 # Checkbox: Mass filter yes/no
-                                checkboxInput('molfilter', HTML('<h5><b>Molecule Filter</b></h5>'), value = FALSE),
+                                checkboxInput('molfilter', tags$b("Molecule Filter"), value = FALSE),
                                 
                                 # Drop-down list: Min/max mass filter
                                 uiOutput('minobs'), 
+                                checkboxInput('customfilterz', label = "Implement up to 3 custom filters", value = FALSE),
+                                uiOutput("filterUI"),
+                                uiOutput("customfilter1UI"),
                                 fluidRow(
                                   column(
                                     width = 6, actionButton('filter_click', "Filter Data", icon = icon("cog"), lib = "glyphicon")
@@ -323,7 +341,7 @@ shinyUI(navbarPage(title = (windowTitle = "FREDA"),
                                 uiOutput("title_input"),
                                 uiOutput("x_axis_input"),
                                 uiOutput("y_axis_input"),
-                                uiOutput("legend_title_input"),
+                                #uiOutput("legend_title_input"),
                                 splitLayout(
                                   actionButton("plot_submit", label = "Submit"),
                                   actionButton("clear_plots", label = "Clear Plot")
@@ -333,10 +351,12 @@ shinyUI(navbarPage(title = (windowTitle = "FREDA"),
                               mainPanel(
                                 #tags$div(plotlyOutput('FxnPlot'), class = "square"),
 
+
                                 wellPanel(
                                   plotlyOutput('FxnPlot', width = '700px', height = '600px')
                                 ),
                                 # width = 7,
+
 
                                 conditionalPanel(
                                   condition = "input.chooseplots == 'Van Krevelen Plot'",
@@ -365,7 +385,7 @@ shinyUI(navbarPage(title = (windowTitle = "FREDA"),
                                 actionButton(inputId = "add_plot", label = "I want to download a hi-res version of this plot on the Download tab", icon = icon("download")),
                               br(),
                               br(),
-                                dataTableOutput("parmsTable")
+                                dataTableOutput("parmsTable", width = "55%")
                                 )# End main panel on Visualize tab #
                               
                             )), # End Visualize tab #
@@ -374,16 +394,17 @@ shinyUI(navbarPage(title = (windowTitle = "FREDA"),
                    tabPanel('Download',
                             checkboxGroupInput("download_selection", label = "Select Processed Data to Download",
                                                choices = c('Data File as one .csv and Molecular Identification File as another .csv' = "separate",
-                                                           'merged Data File and Molecular Identification File as a single .csv' = "merged")),
+                                                           'merged Data File and Molecular Identification File as a single .csv' = "merged"),
+                                                width = "40%"),
                             hr(),
                             checkboxInput("report_selection", label = "Report (Coming Soon)"),
                             hr(),
-                            checkboxInput("figure_selection", label = "High Resolution Figures (Coming Soon)"),
-                            dataTableOutput("parmsTable2"),
-                            downloadButton(outputId = "download_plots", label = "Download the plot"),
+                            p("Figures"),
+                            p("Please select figures to download in the table below by clicking on the row. When clicked, the selection will highlight."),
+                            dataTableOutput("parmsTable2", width = "55%"),
                             verbatimTextOutput('x4'),
                             hr(),
-                            downloadButton('download_processed_data', 'Download Selection')
+                            downloadButton('download_processed_data', 'Download Selected Items')
                             
                    ), 
                    
