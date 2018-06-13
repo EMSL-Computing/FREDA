@@ -56,7 +56,7 @@ $1 + C - O - S - 0.5*(N + P + H)$ [Koch \& Dittmar, 2006](https://onlinelibrary.
 **DBE-O:** 
 
 Double bond equivalent minus oxygen, an alternative way of calculating DBE. Calculated as:
-$1 + C - O - S - 0.5*(N + P + H) - O$. $^1$ $^2$
+$1 + C - O - S - 0.5*(N + P + H) - O$ [Koch \& Dittmar, 2006](https://onlinelibrary.wiley.com/doi/abs/10.1002/rcm.2386)$^1$ [Erratum](https://onlinelibrary.wiley.com/doi/full/10.1002/rcm.7433)$^2$ 
 
 <hr></hr>
 <a name="E"></a> 
@@ -156,6 +156,14 @@ $\frac{1 + C - 0.5O - S - 0.5*(N + P + H)}{C - 0.5*O - S - N - P}$. When the num
 
 chemical element Nitrogen
 
+**N:C ratio:**
+
+Nitrogen to Carbon ratio
+
+**N:P ratio:**
+
+Nitrogen to Phosphorous ratio
+
 **NOSC:** 
 
 Nominal oxidation state of carbon. Calculated as:
@@ -180,6 +188,10 @@ Oxygen to Carbon ratio
 **P:** 
 
 chemcial element Phoshporus
+
+**P:C ratio**
+
+Phosphorus to Carbon ratio
 
 <hr></hr>
 <a name="Q"></a> 
