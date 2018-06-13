@@ -522,7 +522,7 @@ shinyServer(function(session, input, output) {
     
     tooltip_checkbox("tests", "What Values Should be Calculated?", choices, selected = c("calc_element_ratios", "calc_kendrick"),
                      extensions = lapply(1:length(choices), function(i){  
-                       tipify(icon("question-sign", lib = "glyphicon"), title = title0, placement = "top", trigger = 'hover')
+                       tipify(icon("question-sign", lib = "glyphicon"), title = calc_opts$Info[i], placement = "top", trigger = 'hover')
                        # tipify(bsButton(paste0("Option", as.character(i)), "", icon = icon("question-sign", lib = "glyphicon"), size = "extra-small"),
                        #        title = "", placement = "top", trigger = 'click')
                      }))
@@ -1030,7 +1030,7 @@ shinyServer(function(session, input, output) {
                          style = "color:CornFlowerBlue"),
                   tags$ul(
                     tags$li("Select the type of plot you want to generate."),
-                    tags$li("Choose whether you would like to plot a single sample, multiple grouped samples, or a comparison of groups"),
+                    tags$li("Choose whether you would like to plot a single sample, multiple samples, or a comparison of groups"),
                     tags$li("If you selected a single sample, specify which one.  If you selected multiple samples by group, select samples that 
                             should be included in the first group, then the samples that will be included in the second group.  If you selected a
                             comparison of groups, specify which variable you would like to group by."),
@@ -1161,7 +1161,7 @@ shinyServer(function(session, input, output) {
   })
   
   output$plotUI_2 <- renderUI({
-    if(!is.null(input$whichGroups1)){
+    if(length(input$whichGroups1)>1){
       selectInput("whichGroups2", "Group2", choices = setdiff(sample_names(), input$whichGroups1), multiple = TRUE)
     }
   })
@@ -1206,11 +1206,6 @@ shinyServer(function(session, input, output) {
   #     selectInput('vk_colors', 'Color by:', choices = NULL)
   #   })
   # }
-  
-  axes_changed <- eventReactive(input$plot_submit,{
-    return(input$title_input)
-    
-  })
   
   observeEvent(input$plot_submit,{
       # Create named list with potential histogram options
@@ -1339,21 +1334,19 @@ shinyServer(function(session, input, output) {
   
   
   #### Main Panel ####
-  v <- reactiveValues(clearPlot = TRUE, newAxes = FALSE)
+  v <- reactiveValues(clearPlot = TRUE)
   observeEvent(c(input$chooseplots, input$choose_single, input$whichSample), {
     v$clearPlot <- TRUE
-    v$newAxes <- TRUE
   }, priority = 10)
   observeEvent(input$plot_submit, {
     v$clearPlot <- FALSE
-    v$newAxes <-  FALSE
   }, priority = 10)
   
   #observeEvent(input$plot_submit,{
   output$FxnPlot <- renderPlotly({
     input$vk_colors
     revals$makeplot
-    #axes_changed()
+    
     if (isolate(v$clearPlot)){
       return(NULL)
     } else {
