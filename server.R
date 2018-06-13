@@ -1224,7 +1224,8 @@ shinyServer(function(session, input, output) {
       #----- group summary color choices -------#
     # (Conditional on vkbounds):
     # Error handling: input csv required   
-    
+      previous_val <- input$vk_colors[1]
+      
       req(calc_vars)
       validate(
         need(isolate(input$chooseplots) != 0 & isolate(input$choose_single) !=0, message = "Please select plotting criteria")
@@ -1247,10 +1248,11 @@ shinyServer(function(session, input, output) {
             paste0(c("Sample_Group_1", "Sample_Group_2"), "_", fn)
           }) %>% unlist()
         }
-        print(hist_choices[1])
+        
         updateSelectInput(session, 'vk_colors', 'Color by:', 
                            choices = c(hist_choices),
                            selected = hist_choices[1])
+        if(previous_val == hist_choices[1]){revals$makeplot <- -revals$makeplot}
 
       }
       #------- density plot color choices --------#
@@ -1258,6 +1260,7 @@ shinyServer(function(session, input, output) {
         updateSelectInput(session, 'vk_colors', 'Color by:', 
                           choices = c(hist_choices),
                           selected = hist_choices[1])
+        if(previous_val == hist_choices[1]){revals$makeplot <- -revals$makeplot}
       }
       # Kendrick Colors
       else if (isolate(input$chooseplots) == 'Kendrick Plot') {
@@ -1265,7 +1268,8 @@ shinyServer(function(session, input, output) {
                            choices = c('Van Krevelen Boundary Set 1' = 'bs1',
                                        'Van Krevelen Boundary Set 2' = 'bs2', 
                                        hist_choices),
-                           selected = 'bs1')  
+                           selected = 'bs1')
+        if(previous_val == 'bs1'){revals$makeplot <- -revals$makeplot}
       }
       if (isolate(input$chooseplots) == 'Van Krevelen Plot') {
         #req(input$vkbounds)
@@ -1279,12 +1283,14 @@ shinyServer(function(session, input, output) {
             updateSelectInput(session, 'vk_colors', 'Color by:', 
                               choices = c(hist_choices),
                               selected = hist_choices[1])
+            if(previous_val == hist_choices[1]){revals$makeplot <- -revals$makeplot}
           } else {
             updateSelectInput(session, 'vk_colors', 'Color by:', 
                                choices = c('Van Krevelen Boundary Set 1' = 'bs1',
                                            'Van Krevelen Boundary Set 2' = 'bs2', 
                                            hist_choices),
                                selected = 'bs1')  
+            if(previous_val == 'bs1'){revals$makeplot <- -revals$makeplot}
           }
         } else if (input$vkbounds == 'bs1') { #only allow bs1 boundary colors
           if (isolate(input$choose_single) == 2) {
@@ -1302,23 +1308,27 @@ shinyServer(function(session, input, output) {
             updateSelectInput(session, 'vk_colors', 'Color by:', 
                               choices = c(hist_choices),
                               selected = hist_choices[1])
+            if(previous_val == hist_choices[1]){revals$makeplot <- -revals$makeplot}
             
           } else {
             updateSelectInput(session, 'vk_colors', 'Color by:', 
                                choices = c('Van Krevelen Boundary Set 1' = 'bs1',
                                            hist_choices),
                                selected = 'bs1')
+            if(previous_val == 'bs1'){revals$makeplot <- -revals$makeplot}
           }
         } else if (input$vkbounds == 'bs2') { #only allow bs2 boundary colors
           if (isolate(input$choose_single) == 2) {
             updateSelectInput(session, 'vk_colors', 'Color by:', 
                               choices = c(hist_choices),
                               selected = hist_choices[1])
+            if(previous_val == hist_choices[1]){revals$makeplot <- -revals$makeplot}
           } else {
             updateSelectInput(session, 'vk_colors', 'Color by:', 
                         choices = c('Van Krevelen Boundary Set 2' = 'bs2', 
                                     hist_choices),
                         selected = 'bs2')
+            if(previous_val == 'bs2'){revals$makeplot <- -revals$makeplot}
           }
         } 
       }
@@ -1327,21 +1337,23 @@ shinyServer(function(session, input, output) {
       
   }, priority = 9)
   
+  
   #### Main Panel ####
-  v <- reactiveValues(clearPlot = TRUE)
-  observeEvent(input$clear_plots, {
+  v <- reactiveValues(clearPlot = TRUE, newAxes = FALSE)
+  observeEvent(c(input$chooseplots, input$choose_single, input$whichSample), {
     v$clearPlot <- TRUE
+    v$newAxes <- TRUE
   }, priority = 10)
   observeEvent(input$plot_submit, {
     v$clearPlot <- FALSE
+    v$newAxes <-  FALSE
   }, priority = 10)
   
   #observeEvent(input$plot_submit,{
   output$FxnPlot <- renderPlotly({
     input$vk_colors
-    axes_changed()
-    
-
+    revals$makeplot
+    #axes_changed()
     if (isolate(v$clearPlot)){
       return(NULL)
     } else {
