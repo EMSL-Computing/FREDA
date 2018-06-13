@@ -7,8 +7,10 @@ library(ggplot2)
 library(reshape2)
 library(webshot)
 library(htmlwidgets)
+library(dplyr)
 library(raster)
 library(magick)
+library(purrr)
 f <- list(
   family = "Courier New, monospace",
   size = 18,
@@ -23,10 +25,14 @@ shinyServer(function(session, input, output) {
   source('summaryPreprocess.R')
   source("renderDownloadPlots.R")
   
+  revals <- reactiveValues(ntables = 0)
+  
   ######## Welcome Tab #############
   #------ Download Example Data ---------#
   example_edata <- read.csv('Data/example12T_edata.csv')
   example_emeta <- read.csv('Data/example12T_emeta.csv')
+  calc_opts <- read.csv('calculation_options.csv', stringsAsFactors = FALSE)
+  calc_vars <- read.csv('calculation_variables.csv', stringsAsFactors = FALSE)
   #### in case we want a preview rendered #####
   # output$example_data_table <- DT::renderDataTable({
   #   example_edata
@@ -486,93 +492,159 @@ shinyServer(function(session, input, output) {
   
   ####### Preprocess Tab #######
   
+  #### Populate List from CSV File ####
+  
+  output$which_calcs <- renderUI({
+    choices <- calc_opts$Function
+    names(choices) <- calc_opts$DisplayName
+    
+    checkboxGroupInput("tests", "What Values should be Calculated?", choices, selected = c("calc_element_ratios", "calc_kendrick"))
+  })
+  
   #### Action Button reactions ####
   
   ## Action button: Apply calculation functions When action button is clicked
   # Depends on: peakIcr2, input$tests
   observeEvent(input$preprocess_click, {
-    
     validate(need(input$tests, message = "Please choose at least one test to calculate"))
-    # Apply all relevant functions
-    peakIcr2 <<- compound_calcs(peakIcr2, calc_fns = c(input$tests))
-  }) # End action button event
-  
-  # Object: Create dataframe of possible calculations to show in summary/histogram
-  # Note: dependent on preprocess click and the user-specified calculations
-  test_names <- eventReactive(input$preprocess_click, {
     
+    ## Include functionality to possibly reset 
+    
+    #peakIcr2$e_meta <<- peakIcr2$e_meta %>% select(-one_of(calc_vars$ColumnName))   
+    
+    # Apply all relevant functions
+    for(el in input$tests){
+      # set f to the function that is named in the ith element of compound_calcs # 
+      f <- get(el, envir=asNamespace("fticRanalysis"), mode="function")
+      peakIcr2 <<- f(peakIcr2)
+    }
+  
+  }, priority = 10) # End action button event
+  
+  # Creates two reactive variables for continuous and categorical variables
+  # Note: dependent on preprocess click and the user-specified calculations
+  observeEvent(input$preprocess_click, {
     # Error handling: peakIcr2 must have a non-NULL Kendrick Mass column name
     req(!is.null(attr(peakIcr2, 'cnames')$kmass_cname))
     
     # Get csv file of all possible calculation column names
-    possible_calc_cnames <- read.csv("processedCols.csv", 
-                                     header = FALSE, stringsAsFactors = FALSE)
+    possible_calc_cnames <- read.csv("calculation_variables.csv", header = TRUE, stringsAsFactors = FALSE)
     
     # Get column names from peakIcr2's e_meta
     actual_cnames <- colnames(peakIcr2$e_meta)
     
     # Find all columns with names that match names for calculated columns
-    v_index <- which(possible_calc_cnames[,1] %in% actual_cnames & possible_calc_cnames[,3] == "continuous")
+    v_index <- which(possible_calc_cnames[,1] %in% actual_cnames)
     
     # Save calculation column names from above and their display names 
-    possible_calc_cnames[v_index,]
+    intersect <- possible_calc_cnames[v_index,]
     
-  }) # End test_names
+    # get numeric columns
+    numeric_cols <- peakIcr2$e_meta %>% 
+      dplyr::select(which(sapply(.[intersect[,1]], is.numeric))) %>% 
+      names()
+    
+    # get categorical columns
+    categorical_cols <- peakIcr2$e_meta %>% 
+      dplyr::select(which(!sapply(.[intersect[,1]], is.numeric))) %>%
+      names() 
+    
+    #set reactive variables for observers
+    revals$numeric_cols <- intersect %>% filter(ColumnName %in% numeric_cols)
+    revals$categorical_cols <- intersect %>% filter(ColumnName %in% categorical_cols)
+
+  }) 
   
   #### Main Panel ####
   
-  # Summary Panel: Display output of summaryPreprocess
-  # Depends on: test_names
-  output$summary_preprocess <- renderTable({
-    
-    # Error handling
-    req(test_names())
-    
-    # Call summaryPreprocess
-    summaryPreprocess(peakIcr2, test_names())
-    
-  }, # End code for summary_preprocess
+  # Summary Panel: Display table summaries of numeric and categorical columns in e_meta
   
-  # Options for renderTable
-  rownames = TRUE, 
-  digits = 2 # This maybe needs to change?
+  # For numeric columns:
+  observe({
+
+    req(nrow(revals$numeric_cols) > 0)
+    
+    # Create Table Output
+    output$numeric_summary <- DT::renderDataTable({
+      columns <- summaryPreprocess(peakIcr2, revals$numeric_cols) %>% colnames()
+      
+      summaryPreprocess(peakIcr2, revals$numeric_cols) %>%
+        datatable(options = list(dom = "t", pageLength = nrow(.))) %>% 
+        formatRound(columns, digits = 2)
+    }) 
+    
+    # Summary Header
+    output$numeric_header <- renderUI(tags$p("Summary Statistics for Numeric Variables"))
+    
+  })
   
-  ) # End summary_preprocess
+  # For Categorical Columns
+  
+  # This observer assigns renderTable calls to various output ID's and passes them to the renderUI call immediately below
+  observe({
+    req(nrow(revals$categorical_cols) > 0) 
+    
+    # List of tables which will be passed to renderTable()
+    table_list <- summaryPreprocess(peakIcr2, revals$categorical_cols, categorical = TRUE)
+    
+    # Reactive variable which lets lapply know how many output ID's to generate depending on number of categorical variables selected
+    revals$ntables <- length(table_list)
+    
+    # Call renderTable on each table and assign it to an output ID
+    lapply(1:length(table_list), function(i){
+      output[[paste0('Table_',i)]] <- DT::renderDataTable({table_list[[i]]}, options = list(scrollX = TRUE, dom = "t"))
+    })
+    
+    # Summary Header
+    output$cat_header <- renderUI(tags$p("Mode and Counts for Categorical Variables"))
+  })
+  
+  # The renderUI call that takes input from the above observer
+  output$categorical_summary <- renderUI({
+    tagList(lapply(1:revals$ntables, function(i){
+      DT::dataTableOutput(paste0('Table_',i))
+      })
+    )
+  })
+
+  ## END TABLE SUMMARY SECTION ##
   
   # Drop down list: potential histogram options
-  # Depends on: test_names
   output$which_hist <- renderUI({
     
-    # Error handling: test_names required
-    req(test_names())
-    
+    # Error handling: input csv of calculations variables required
+    req(calc_vars, revals$numeric_cols, revals$categorical_cols)
+
     # Create named list with potential histogram options
-    hist_choices <- unlist(test_names()[,1])
-    names(hist_choices) <- test_names()[,2]
-    
+    hist_choices <- intersect(calc_vars$ColumnName, peakIcr2$e_meta %>% colnames())
+    names(hist_choices) <- calc_vars %>% filter(ColumnName %in% hist_choices) %>% pluck("DisplayName")
     # Drop down list 
-    selectInput('which_hist', 'I would like to see the histogram across all values of...',
-                choices = hist_choices)
-    
+    tagList(
+      br(),
+      br(),
+      tags$p('I would like to see a histogram/bar-chart across all values of:'),
+      selectInput('which_hist', NULL,
+                  choices = hist_choices)
+    )
   }) # End which_hist
-  
+    
   # Plot the histogram chosen above
-  # Depends on: which_hist (above) and test_names
+  # Depends on: which_hist
   output$preprocess_hist <- renderPlotly({
     
-    # Error handling: Require which_hist and test_names (for display)
+    # Error handling: Require some columns to be selected
     req(input$which_hist)
-    req(test_names())
     
     # Save column name for later display
     columnName <- input$which_hist
     
-    # Get 'display name' from test_names
-    displayName <- test_names()[which(test_names()[,1] == columnName), 2]
+    # set display name
+    displayName <- calc_vars %>% filter(ColumnName == columnName) %>%
+      pluck("DisplayName")
     
     # Plot histogram using plotly
     p <- plot_ly(x = peakIcr2$e_meta[,columnName], type = 'histogram') %>%
-      layout( title = paste('Histogram of ', displayName),
+      layout( title = paste('Observed distribution of', displayName),
               scene = list(
                 xaxis = list(title = displayName),
                 yaxis = list(title = 'Frequency')))
@@ -586,14 +658,22 @@ shinyServer(function(session, input, output) {
   # Keep a
   # reactive copy of the pre-filtered data in case of a filter reset event
   uploaded_data <- reactive({
-    req(peakICR())
-    req(input$tests)
-    return(compound_calcs(peakICR(), calc_fns = c(input$tests)))
+    req(peakICR(), input$tests)
+  
+    temp <- peakICR()
+    
+    for(el in input$tests){
+      # set f to the function that is named in the ith element of compound_calcs # 
+      f <- get(el, envir=asNamespace("fticRanalysis"), mode="function")
+      temp <- f(temp)
+    }
+    
+    return(temp)
   })
   
   # Allow a button click to undo filtering
   f <- reactiveValues(clearFilters = FALSE)
-  observeEvent(input$reset_filters, {
+  observeEvent(input$clear_filters_yes, {
     f$clearFilters <- TRUE
   }, priority = 10)
   
@@ -619,6 +699,11 @@ shinyServer(function(session, input, output) {
   # Depends on action button 'filter_click'
   observeEvent(input$filter_click, {
     
+    # if the data is already filtered start over from the uploaded data
+    if(any(c("moleculeFilt", "massFilt") %in% names(attributes(peakIcr2)$filters))){
+      peakIcr2 <<- uploaded_data()
+    }
+    
     # If mass filtering is checked
     if (input$massfilter){
       
@@ -634,7 +719,7 @@ shinyServer(function(session, input, output) {
     
     # If molecule filtering is checked
     if (input$molfilter){
-      
+  
       # Create and apply molecule filter to nonreactive peakICR object
       filterMols <- molecule_filter(peakIcr2)
       peakIcr2 <<- applyFilt(filterMols, peakIcr2, min_num = as.integer(input$minobs))
@@ -792,13 +877,42 @@ shinyServer(function(session, input, output) {
   
   #-------- Reset Activity -------#
   # Allow a 'reset' that restores the uploaded object and unchecks the filter
-  # boxes
-  observeEvent(input$reset_filters, {
+  # boxes.  Will display a popup that warns the user of plot erasure and gives 
+  # the option to reset or to go back without clearing filters.
+  
+  observeEvent(input$reset_filters,{
+    showModal(modalDialog(
+      
+      ##### There is probably a better way to code the display behavior of this dialog -DC
+      
+      fluidPage(
+        fluidRow(
+          column(10, align = "center", offset = 1,
+                 tags$p("Caution:  If you reset filters all plots made using filtered data will be lost.", style = "color:red;font:bold", align = "center"),
+                 actionButton("clear_filters_yes", "Yes, clear filters without saving plots.", width = '100%'),
+                 br(),
+                 br(),
+                 br(),
+                 actionButton("clear_filters_no", "No, take me back.", width = '100%')
+                ))),
+      footer = NULL
+      )
+    )
+  })
+  
+  # if they click no, just exit the modal dialog
+  observeEvent(input$clear_filters_no,{
+    removeModal()
+  })
+  
+  # if they click yes, reset data and exit modal dialog
+  observeEvent(input$clear_filters_yes, {
     if (f$clearFilters) {
       updateCheckboxInput(session = session, inputId = "massfilter", value = FALSE)
       updateCheckboxInput(session = session, inputId = "molfilter", value = FALSE)
     }
     peakIcr2 <<- uploaded_data()
+    removeModal()
   })
   
   ####### Visualize Tab #######
@@ -843,8 +957,7 @@ shinyServer(function(session, input, output) {
           
           selectInput('whichSample', 'Sample',
                       choices = sample_names())
-        ), # End conditional output, single sample #
-        actionButton("plot_submit", label = "Submit")
+        ) # End conditional output, single sample #
       ))
     }
     #------ Kendrick Sidebar Options ---------#
@@ -882,8 +995,7 @@ shinyServer(function(session, input, output) {
           
           selectInput('whichSample', 'Sample',
                       choices = sample_names())
-        ), # End conditional output, single sample #
-        actionButton("plot_submit", label = "Submit")
+        ) # End conditional output, single sample #
       ))
     }
     #------ Density Sidebar Options ---------#
@@ -921,8 +1033,7 @@ shinyServer(function(session, input, output) {
           
           selectInput('whichSample', 'Sample',
                       choices = sample_names())
-        ), # End conditional output, single sample #
-        actionButton("plot_submit", label = "Submit")
+        )# End conditional output, single sample #
       ))
     }
     
@@ -938,18 +1049,21 @@ shinyServer(function(session, input, output) {
   })
   output$vk_colors <- renderUI({
     # (Conditional on vkbounds):
-    # Error handling: test_names required
-    req(test_names())
+    # Error handling: input csv required
+    req(calc_vars)
     validate(
       need(input$chooseplots != 0 & input$choose_single !=0, message = "Please select plotting criteria")
     )
     # Create named list with potential histogram options
-    hist_choices <- unlist(test_names()[,1])
-    names(hist_choices) <- test_names()[,2]
+    hist_choices <- intersect(calc_vars$ColumnName, peakIcr2$e_meta %>% colnames())
+    names(hist_choices) <- calc_vars %>% filter(ColumnName %in% hist_choices) %>% pluck("DisplayName")
     
     #----- group summary color choices -------#
     if (input$choose_single == 2) {
-      hist_choices <- getGroupSummaryFunctionNames()
+      hist_choices <- lapply(getGroupSummaryFunctionNames(), function(fn){
+        paste0(input$whichGroups1, "_", fn)
+      }) %>%
+        unlist()
       return(selectInput('vk_colors', 'Color by:', 
                          choices = c(hist_choices),
                          selected = hist_choices[1]))
@@ -971,7 +1085,11 @@ shinyServer(function(session, input, output) {
     if (input$chooseplots == 'Van Krevelen Plot') {
       if (input$vkbounds == 0) {#no boundaries
         if (input$choose_single == 2) {
-          hist_choices <- getGroupSummaryFunctionNames()
+          hist_choices <- lapply(getGroupSummaryFunctionNames(), function(fn){
+            paste0(input$whichGroups1, "_", fn)
+          }) %>%
+            unlist()
+          
           return(selectInput('vk_colors', 'Color by:', 
                              choices = c(hist_choices),
                              selected = hist_choices[1]))
@@ -1031,12 +1149,17 @@ shinyServer(function(session, input, output) {
       #---------- Group Plots ------------#
       else if (input$choose_single == 2) {# single group
         # Make sure at least one test has been calculated
+        
+        #____WORK____
         validate(need(!is.null(input$whichGroups1), message = "Please select samples for grouping"))
         division_data <- subset(peakIcr2, input$whichGroups1)
-        summarized_data <- summarizeGroups(division_data, summary_functions = input$vk_colors)
+        summarized_data <- summarizeGroups(division_data, summary_functions = getGroupSummaryFunctionNames())
+        print(summarized_data$e_data)
         #-------Kendrick Plot-----------# 
         if (input$chooseplots == 'Kendrick Plot') {
-            p <- groupKendrickPlot(summarized_data, colorCName = input$vk_colors)
+            p <- groupKendrickPlot(summarized_data, colorCName = input$vk_colors,
+                                   xlabel = input$x_axis_input, ylabel = input$y_axis_input,
+                                   title = input$title_input, legendTitle = input$legend_title_input)
         }
       }
       #----------- Single sample plots ------------#
@@ -1048,10 +1171,14 @@ shinyServer(function(session, input, output) {
             validate(need(!is.null(input$whichSample) | !is.null(input$whichGroups1),
                           message = "Please choose a sample below"))
             if (input$vk_colors %in% c('bs1', 'bs2')) {
-              p <- kendrickPlot(division_data, vkBoundarySet = input$vk_colors)
+              p <- kendrickPlot(division_data, vkBoundarySet = input$vk_colors,
+                                xlabel = input$x_axis_input, ylabel = input$y_axis_input,
+                                title = input$title_input,legendTitle = input$legend_title_input)
             } else {
               # if color selection doesn't belong to a boundary, color by test
-              p <- kendrickPlot(division_data, colorCName = input$vk_colors)
+              p <- kendrickPlot(division_data, colorCName = input$vk_colors,
+                                xlabel = input$x_axis_input, ylabel = input$y_axis_input,
+                                title = input$title_input,legendTitle = input$legend_title_input)
             }
         }
       }
@@ -1059,9 +1186,13 @@ shinyServer(function(session, input, output) {
       if (input$chooseplots == 'Van Krevelen Plot') {
         if (input$choose_single == 2) {
           if (input$vkbounds == 0) {
-              p <- groupVanKrevelenPlot(summarized_data, colorCName = input$vk_colors, showVKBounds = FALSE)
+              p <- groupVanKrevelenPlot(summarized_data, colorCName = input$vk_colors, showVKBounds = FALSE,
+                                        xlabel = input$x_axis_input, ylabel = input$y_axis_input,
+                                        title = input$title_input,legendTitle = input$legend_title_input)
           } else {
-              p <- groupVanKrevelenPlot(summarized_data, colorCName = input$vk_colors, vkBoundarySet = input$vkbounds)
+              p <- groupVanKrevelenPlot(summarized_data, colorCName = input$vk_colors, vkBoundarySet = input$vkbounds,
+                                        xlabel = input$x_axis_input, ylabel = input$y_axis_input,
+                                        title = input$title_input,legendTitle = input$legend_title_input)
           }
           
         } else if (input$choose_single == 1) {
@@ -1071,25 +1202,34 @@ shinyServer(function(session, input, output) {
             if (input$vkbounds == 0) { #no bounds
               # if no boundary lines, leave the option to color by boundary
               if (input$vk_colors %in% c('bs1', 'bs2')) {
-                p <- vanKrevelenPlot(division_data, showVKBounds = FALSE, vkBoundarySet = input$vk_colors)
+                p <- vanKrevelenPlot(division_data, showVKBounds = FALSE, vkBoundarySet = input$vk_colors,
+                                     xlabel = input$x_axis_input, ylabel = input$y_axis_input,
+                                     title = input$title_input,legendTitle = input$legend_title_input)
               } else {
                 # if no boundary lines and color selection doesn't belong to a boundary, color by test
-                p <- vanKrevelenPlot(division_data, showVKBounds = FALSE, colorCName = input$vk_colors)
+                p <- vanKrevelenPlot(division_data, showVKBounds = FALSE, colorCName = input$vk_colors,
+                                     xlabel = input$x_axis_input, ylabel = input$y_axis_input,
+                                     title = input$title_input,legendTitle = input$legend_title_input)
               }
             } else {
               # if boundary lines, allow a color by boundary class 
               if (input$vk_colors %in% c('bs1', 'bs2')) {
-                p <- vanKrevelenPlot(division_data, vkBoundarySet = input$vkbounds, showVKBounds = TRUE)
+                p <- vanKrevelenPlot(division_data, vkBoundarySet = input$vkbounds, showVKBounds = TRUE,
+                                     xlabel = input$x_axis_input, ylabel = input$y_axis_input,
+                                     title = input$title_input,legendTitle = input$legend_title_input)
               } else {
                 # if boundary lines and color isn't a boundary class
-                p <- vanKrevelenPlot(division_data, vkBoundarySet = input$vkbounds, showVKBounds = TRUE, colorCName = input$vk_colors)
+                p <- vanKrevelenPlot(division_data, vkBoundarySet = input$vkbounds, showVKBounds = TRUE, colorCName = input$vk_colors,
+                                     xlabel = input$x_axis_input, ylabel = input$y_axis_input,
+                                     title = input$title_input,legendTitle = input$legend_title_input)
                 
               }
             }
         }
         
-        p <- p %>% layout(xaxis = list(scaleanchor = "y", constraintoward = "left"))
+        # p <- p %>% layout(xaxis = list(scaleanchor = "y", constraintoward = "left")) # SQUARE SCALING
         
+        p
       }
       
       #--------- Density Plot --------#
@@ -1101,7 +1241,9 @@ shinyServer(function(session, input, output) {
                  message = "Please choose a sample below"),
             need(!is.na(input$vk_colors), message = "Please select a variable to color by")
           )
-          p <- densityPlot(division_data, variable = input$vk_colors)
+          p <- densityPlot(division_data, variable = input$vk_colors,
+                           xlabel = input$x_axis_input, ylabel = input$y_axis_input,
+                           title = input$title_input)
         #})
       }
     }
@@ -1118,20 +1260,49 @@ shinyServer(function(session, input, output) {
   }) 
 
   #------ plot axes and titles options ------#
+  # use the 'formals' argument to figure out default chart labels
+  plot_defaults <- reactive({
+    validate((
+      need(input$chooseplots != 0, message = "")
+    ))
+    if (input$chooseplots == 'Van Krevelen Plot') {
+      defs <- formals(vanKrevelenPlot)
+    } else if (input$chooseplots == 'Kendrick Plot') {
+      defs <- formals(kendrickPlot)
+    } else if (input$chooseplots == 'Density Plot') {
+      defs <- formals(densityPlot)
+      defs$ylabel = "Density"
+      defs$xlabel = input$vk_colors
+    }
+    return(defs)
+  })
   output$title_input <- renderUI({
-    textInput(inputId = "title_input", label = "Plot Title", value = input$chooseplots)
+    validate(
+      need(input$chooseplots != 0, message = "")
+    )
+    textInput(inputId = "title_input", label = "Plot Title", value = plot_defaults()$title)
   })
   
   output$x_axis_input <- renderUI({
-    textInput(inputId = "x_axis_input", label = "X Axis Label", value = NA)
+    validate(
+      need(input$chooseplots != 0, message = "")
+    )
+    textInput(inputId = "x_axis_input", label = "X Axis Label", value = plot_defaults()$xlabel)
   })
   
   output$y_axis_input <- renderUI({
-    textInput(inputId = "y_axis_input", label = "Y Axis Label", value = NA)
+    validate(
+      need(input$chooseplots != 0, message = "")
+    )
+    textInput(inputId = "y_axis_input", label = "Y Axis Label", value = plot_defaults()$ylabel)
   })
   
   output$legend_title_input <- renderUI({
-    textInput(inputId = "legend_title_input", label = "Legend Label", value = NA)
+    if (input$chooseplots == 'Density Plot') {
+      return(NULL)
+    } else{
+      textInput(inputId = "legend_title_input", label = "Legend Label", value = plot_defaults()$legendTitle)
+    }
   })
   
   #-------- create a table that stores plotting information -------#
@@ -1226,32 +1397,9 @@ shinyServer(function(session, input, output) {
     },
     contentType = "application/zip"
   )
-  # output$download_plots <- downloadHandler(
-  #   filename =  "test.pdf",
-  #   # content is a function with argument file. content writes the plot to the device
-  #   content = function(file) {
-  #     pdf(file) # open the pdf device
-  #     renderDownloadPlots(parmTable = parmsTable2$parms[1,], peakIcr2)
-  #     dev.off()  # turn the device off
-  #     
-  #   } 
-  # )
-  # 
-  # output$download_plots <- downloadHandler("test.pdf", function(theFile) {
-  #   # solution from https://community.plot.ly/t/save-custom-ggplotly-plot-to-pdf-in-shiny/5096
-  #   # figure out why this works
-  #   makePdf <- function(filename){
-  #     pdf(file = filename)
-  #     export(renderDownloadPlots(parmTable = parmTable$parms[1,], peakIcr2), file = "test.png")
-  #     r <- brick(file.path(getwd(), "test.png"))
-  #     plotRGB(r)
-  #     dev.off()
-  #   }
-  #   
-  #   makePdf(theFile)
-  # })
-  
+ 
   #----------- plot download ---------#
+
   output$download_plots <- downloadHandler(
     filename = 'pdfs.zip', #this creates a directory to store the pdfs...not sure why it's not zipping
     content = function(fname) { #write a function to create the content populating said directory
@@ -1264,7 +1412,7 @@ shinyServer(function(session, input, output) {
         fs <- c(fs, path) # append the new plot to the old plots
         export(renderDownloadPlots(parmTable = parmTable$parms[i,], peakIcr2),
                file = paste("plot",i,".png", sep = ""), zoom = 2) # use webshot to export a screenshot to the opened pdf
-        r <- brick(file.path(getwd(), paste("plot",i,".png", sep = ""))) #create a raster of the screenshot
+        r <- brick(file.path(getwd(), paste("plot",i,".png", sep = ""))) # create a raster of the screenshot
         img <- magick::image_read(attr(r,"file")@name) #turn the raster into an image of selected format
         image_write(img, path=path, format="pdf") #write the image
 
