@@ -162,6 +162,11 @@ shinyUI(navbarPage(title = (windowTitle = "FREDA"),
                    ################## Preprocess Panel ###############################################
                    tabPanel("Preprocess",
                             
+                            bsButton("preprocess_help", "How do I use this page?", style = "info"),
+                            
+                            br(),
+                            br(),
+                            
                             sidebarLayout(
                               
                               # Sidebar panel
@@ -175,6 +180,9 @@ shinyUI(navbarPage(title = (windowTitle = "FREDA"),
                                 # tags$hr(),
                                 
                                 # Checkbox: which tests should also be applied
+                               
+                                
+                                
                                 uiOutput("which_calcs"),
                             
                                 # Action button: add test columns with reasults to peakIcr2
@@ -219,14 +227,30 @@ shinyUI(navbarPage(title = (windowTitle = "FREDA"),
                    ################## Filter Panel ##############################################
                    tabPanel("Filter", 
                             
+                            bsButton("filter_help", "How do I use this page?", style = "info"),
+                            
+                            br(),
+                            br(),
+                            
                             sidebarLayout(
                               sidebarPanel(
                                 
                                 # Set default width for panel
                                 width = 5,
+
+                   
+                                # wellPanel(
+                                #       tags$h5("This page allows you to filter the data by various metrics.  
+                                #           The default options are to retain molecules within a particular mass range (mass filter), and to retain molecules that appear a minimum number of times across all samples (molecule filter).  
+                                #           Additionally, one can filter by up to three variables contained in the molecular identification file.\n
+                                #               ",
+                                #           style = "color:CornFlowerBlue"),
+                                #       tags$h5("Check boxes to select which filters to apply, specify filtering criteria and then click 'Filter Data'",
+                                #               style = "color:CornFlowerBlue;")
+                                # ),
                                 
-                                # Checkbox: Mass filter yes/no
-                                checkboxInput('massfilter', HTML('<h5><b>Mass Filter</b></h5>'), value = FALSE),
+                                checkboxInput('massfilter', tags$b("Mass Filter") ,value = FALSE),
+
                                 
                                 # Numeric: Min/max mass filter
                                 numericInput('min_mass', 'Minimum Mass value', 
@@ -273,6 +297,11 @@ shinyUI(navbarPage(title = (windowTitle = "FREDA"),
                    ################## Visualize Panel ###############################################
                    tabPanel("Visualize", 
                             
+                            bsButton("visualize_help", "How do I use this page?", style = "info"),
+                            
+                            br(),
+                            br(),
+                            
                             sidebarLayout(
                               
                               # Sidebar Panel
@@ -288,17 +317,27 @@ shinyUI(navbarPage(title = (windowTitle = "FREDA"),
                                 ), 
                                 # UI options will change depending on plot type.
                                 uiOutput("plotUI"),
+                                conditionalPanel(condition = "(input.whichSample !== null && input.choose_single == 2)",
+                                  uiOutput("plotUI_2")
+                                ),
                                 uiOutput("title_input"),
                                 uiOutput("x_axis_input"),
                                 uiOutput("y_axis_input"),
                                 uiOutput("legend_title_input"),
-                                actionButton("plot_submit", label = "Submit")
+                                splitLayout(
+                                  actionButton("plot_submit", label = "Submit"),
+                                  actionButton("clear_plots", label = "Clear Plot")
+                                )
                               ),# End sidebar conditionals on Visualize tab #
                               
                               mainPanel(
                                 #tags$div(plotlyOutput('FxnPlot'), class = "square"),
-                                plotlyOutput('FxnPlot', width = '700px', height = '600px'),
-                                width = 7,
+
+                                wellPanel(
+                                  plotlyOutput('FxnPlot', width = '700px', height = '600px')
+                                ),
+                                # width = 7,
+
                                 conditionalPanel(
                                   condition = "input.chooseplots == 'Van Krevelen Plot'",
                                   # Set default width to 7
@@ -310,7 +349,17 @@ shinyUI(navbarPage(title = (windowTitle = "FREDA"),
                                   uiOutput("vkbounds")
                                   
                                 ),
-                                uiOutput('vk_colors'),
+                                conditionalPanel(
+                                  condition = "input.chooseplots !== null",
+                                  # Set default width to 7
+                                  
+                                  # Drop down list: Use boundary?
+                                  # selectInput('vkbounds', 'Use Van Krevelen boundary set:',
+                                  #             choices = c('BS1' = 'bs1', 'BS2' = 'bs2', 'None' = 0),
+                                  #             selected = 'bs1')
+                                  selectInput("vk_colors", "Color By:", choices = NULL, selected = NULL)
+                                  
+                                ),
                                 br(),
                                 hr(),
                                 actionButton(inputId = "add_plot", label = "I want to download a hi-res version of this plot on the Download tab", icon = icon("download")),
