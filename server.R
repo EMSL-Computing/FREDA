@@ -12,6 +12,7 @@ library(raster)
 library(magick)
 library(purrr)
 library(shinyBS)
+library(rgdal)
 
 f <- list(
   family = "Courier New, monospace",
