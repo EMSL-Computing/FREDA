@@ -11,6 +11,7 @@
 
 library(plotly)
 library(shiny)
+library(shinyBS)
 library(DT)
 
 
