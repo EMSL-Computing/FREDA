@@ -51,7 +51,7 @@ renderDownloadPlots <- function(parmTable, peakIcr2){
       } else if (parmTable$SampleType == "Single Sample") {
         return({
           #-----boundary line logic------#
-          if (is.na(parmTable$BoundarySet)) { #no bounds
+          if (parmTable$BoundarySet == 0) { #no bounds
             # if no boundary lines, leave the option to color by boundary
             if (parmTable$ColorBy %in% c('bs1', 'bs2')) {
               return(vanKrevelenPlot(division_data, showVKBounds = FALSE, vkBoundarySet = parmTable$ColorBy))
