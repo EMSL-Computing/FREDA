@@ -366,10 +366,10 @@ shinyServer(function(session, input, output) {
                  modalDialog(
                    title = "Upload message",
                    HTML('<h4 style= "color:#1A5276">Your data has been successfully uploaded. 
-               You may proceed to the subsequent tabs for analysis.</h4>')
+                        You may proceed to the subsequent tabs for analysis.</h4>')
+                   )
                  )
                )
-  )
   
   # Summary: Display number of peaks and samples
   output$num_peaks <- renderText({
@@ -504,13 +504,13 @@ shinyServer(function(session, input, output) {
     showModal(
       modalDialog("",
                   tags$p("Here you can tell FREDA to compute certain values based on your input data.  The result of these calculations will be appended
-                                           to your molecular identification file and can be used as filtering variables in the next tab.\n",
-                          style = "color:CornFlowerBlue"),
+                         to your molecular identification file and can be used as filtering variables in the next tab.\n",
+                         style = "color:CornFlowerBlue"),
                   HTML("<p style = color:CornFlowerBlue> Check boxes to select which values you want calculated and then hit 'Process Data'.  
                        <span style = font-weight:bold>Element ratios are selected by default as they are required to produce Van-Krevelen
                        and Kendrick plots.</span>  Table summaries and an interactive histogram/bar chart of the values you selected will be generated.<p>")
-      )
-    )
+                  )
+                  )
   })
   
   output$which_calcs <- renderUI({
@@ -518,8 +518,8 @@ shinyServer(function(session, input, output) {
     names(choices) <- calc_opts$DisplayName
     
     title0 <-  paste0("Cox Gibbs Free Energy. Calculated as:",
-                   "60.3 - 28.5*NOSC ",
-                   tags$a(href = "https://www.sciencedirect.com/science/article/pii/S0016703711000378", "[LaRowe & Van Cappellen, 2011]"))
+                      "60.3 - 28.5*NOSC ",
+                      tags$a(href = "https://www.sciencedirect.com/science/article/pii/S0016703711000378", "[LaRowe & Van Cappellen, 2011]"))
     
     tooltip_checkbox("tests", "What Values Should be Calculated?", choices, selected = c("calc_element_ratios", "calc_kendrick"),
                      extensions = lapply(1:length(choices), function(i){  
@@ -584,7 +584,7 @@ shinyServer(function(session, input, output) {
     revals$categorical_cols <- intersect %>% filter(ColumnName %in% categorical_cols)
     
     
-  
+    
   }) 
   
   #### Main Panel ####
@@ -593,7 +593,7 @@ shinyServer(function(session, input, output) {
   
   # For numeric columns:
   observe({
-
+    
     req(nrow(revals$numeric_cols) > 0)
     
     # Create Table Output
@@ -635,10 +635,10 @@ shinyServer(function(session, input, output) {
   output$categorical_summary <- renderUI({
     tagList(lapply(1:revals$ntables, function(i){
       DT::dataTableOutput(paste0('Table_',i))
-      })
+    })
     )
   })
-
+  
   ## END TABLE SUMMARY SECTION ##
   
   # Drop down list: potential histogram options
@@ -646,7 +646,7 @@ shinyServer(function(session, input, output) {
     
     # Error handling: input csv of calculations variables required
     req(calc_vars, revals$numeric_cols, revals$categorical_cols)
-
+    
     # Create named list with potential histogram options
     hist_choices <- intersect(calc_vars$ColumnName, peakIcr2$e_meta %>% colnames())
     names(hist_choices) <- calc_vars %>% filter(ColumnName %in% hist_choices) %>% pluck("DisplayName")
@@ -659,7 +659,7 @@ shinyServer(function(session, input, output) {
                   choices = hist_choices)
     )
   }) # End which_hist
-    
+  
   # Plot the histogram chosen above
   # Depends on: which_hist
   output$preprocess_hist <- renderPlotly({
@@ -691,7 +691,7 @@ shinyServer(function(session, input, output) {
   # reactive copy of the pre-filtered data in case of a filter reset event
   uploaded_data <- reactive({
     req(peakICR(), input$tests)
-  
+    
     temp <- peakICR()
     
     for(el in input$tests){
@@ -703,22 +703,22 @@ shinyServer(function(session, input, output) {
     return(temp)
   })
   
-
-
+  
+  
   observeEvent(input$filter_help,{
     showModal(
       modalDialog("",
                   tags$p("This page allows you to filter the data by various metrics.  
-                          The default options are to retain molecules within a particular mass range (mass filter), and to retain molecules that appear a minimum number of times across all samples (molecule filter).  
-                          Additionally, one can filter by up to three variables contained in the molecular identification file.\n
-                          As you select options, a plot will update showing the remaining observations after the application of each filter.\n",
-                          style = "color:CornFlowerBlue"),
+                         The default options are to retain molecules within a particular mass range (mass filter), and to retain molecules that appear a minimum number of times across all samples (molecule filter).  
+                         Additionally, one can filter by up to three variables contained in the molecular identification file.\n
+                         As you select options, a plot will update showing the remaining observations after the application of each filter.\n",
+                         style = "color:CornFlowerBlue"),
                   tags$p("Check boxes to select which filters to apply, specify filtering criteria by a range for numeric data or a selection of values for categorical data and then click 'Filter Data'",
                          style = "color:CornFlowerBlue;"))
     )
   })
   
-
+  
   display_name_choices <- reactive({
     req(calc_vars)
     # validate(
@@ -738,7 +738,7 @@ shinyServer(function(session, input, output) {
   })
   
   
-
+  
   # Allow a button click to undo filtering
   f <- reactiveValues(clearFilters = FALSE)
   observeEvent(input$clear_filters_yes, {
@@ -773,10 +773,10 @@ shinyServer(function(session, input, output) {
       #check to see if the selected filter is numeric or categorical
       if (is.numeric(peakIcr2$e_meta[, input$custom1])) {
         # if the filter applies to numeric data, allow inputs for min, max, and keep NA
-          tagList(
-            checkboxInput(inputId = "na_custom1", label = "Keep NAs?", value = FALSE),
-            numericInput(inputId = "minimum_custom1", label = "Min", value = min(peakIcr2$e_meta[, input$custom1], na.rm = TRUE)),
-            numericInput(inputId = "maximum_custom1", label = "Max", value = max(peakIcr2$e_meta[, input$custom1], na.rm = TRUE)))
+        tagList(
+          checkboxInput(inputId = "na_custom1", label = "Keep NAs?", value = FALSE),
+          numericInput(inputId = "minimum_custom1", label = "Min", value = min(peakIcr2$e_meta[, input$custom1], na.rm = TRUE)),
+          numericInput(inputId = "maximum_custom1", label = "Max", value = max(peakIcr2$e_meta[, input$custom1], na.rm = TRUE)))
       } else if (!is.numeric(peakIcr2$e_meta[, input$custom1])) {
         # if the filter applies to categorical data, populate a box of options along with a keep NA option
         tagList(
@@ -820,7 +820,7 @@ shinyServer(function(session, input, output) {
     
     # If molecule filtering is checked
     if (input$molfilter) {
-  
+      
       # Create and apply molecule filter to nonreactive peakICR object
       filterMols <- molecule_filter(peakIcr2)
       peakIcr2 <<- applyFilt(filterMols, peakIcr2, min_num = as.integer(input$minobs))
@@ -855,7 +855,7 @@ shinyServer(function(session, input, output) {
       modalDialog(title = "Filter Success",
                   HTML('<h4 style= "color:#1A5276">Your data has been filtered using mass and/or minimum observations. 
                        You may proceed to the next tabs for subsequnt analysis.</h4>'))
-    )
+                  )
     HTML('<h4 style= "color:#1A5276">You may now proceed to preprocessing and visualization</h4>')
     
   }) # End successMessage
@@ -997,9 +997,9 @@ shinyServer(function(session, input, output) {
                  br(),
                  br(),
                  actionButton("clear_filters_no", "No, take me back.", width = '100%')
-                ))),
+          ))),
       footer = NULL
-      )
+    )
     )
   })
   
@@ -1039,8 +1039,8 @@ shinyServer(function(session, input, output) {
                     
                     style = "color:CornFlowerBlue"),
                   HTML("<p style = color:CornFlowerBlue> A plot will appear and can be customized to color by certain calculated values<p>")
+                  )
       )
-    )
   })
   
   output$plotUI <- renderUI({
@@ -1062,17 +1062,11 @@ shinyServer(function(session, input, output) {
           fluidRow(
             # Column with width 6: which samples are in Group 1?
             column(12,
-                   selectInput('whichGroups1', 'Group 1',
+                   selectInput('whichGroups1', 'Grouped Samples',
                                choices = sample_names(),
                                multiple = TRUE)
-            )#,
-            
-            # Column with width 6: which samples are in Group 2?
-            #column(6,
-            #        uiOutput('whichGroups2')
-            # )
+            )
           )
-          
         ), # End conditional output multiple samples#
         
         # (Conditional on choose_single) If single: choose sample
@@ -1099,20 +1093,12 @@ shinyServer(function(session, input, output) {
           fluidRow(
             # Column with width 6: which samples are in Group 1?
             column(12,
-                   selectInput('whichGroups1', 'Group 1',
+                   selectInput('whichGroups1', 'Grouped Samples',
                                choices = sample_names(),
                                multiple = TRUE)
-            )#,
-            
-            # Column with width 6: which samples are in Group 2?
-            # column(6,
-            #        uiOutput('whichGroups2')
-            # )
+            )
           )
-          
-        ), # End conditional output multiple samples#
-        
-        # (Conditional on choose_single) If single: choose sample
+        ),
         conditionalPanel(
           condition = 'input.choose_single == 1',
           
@@ -1136,17 +1122,11 @@ shinyServer(function(session, input, output) {
           fluidRow(
             # Column with width 6: which samples are in Group 1?
             column(12,
-                   selectInput('whichGroups1', 'Group 1',
+                   selectInput('whichGroups1', 'Grouped Samples',
                                choices = sample_names(),
                                multiple = TRUE)
-            )#,
-            
-            # Column with width 6: which samples are in Group 2?
-            # column(6,
-            #        uiOutput('whichGroups2')
-            # )
+            )
           )
-          
         ), # End conditional output multiple samples#
         
         # (Conditional on choose_single) If single: choose sample
@@ -1161,11 +1141,11 @@ shinyServer(function(session, input, output) {
     
   })
   
-  output$plotUI_2 <- renderUI({
-    if(length(input$whichGroups1)>1){
-      selectInput("whichGroups2", "Group2", choices = setdiff(sample_names(), input$whichGroups1), multiple = TRUE)
-    }
-  })
+  # output$plotUI_2 <- renderUI({
+  #   if(length(input$whichGroups1)>1){
+  #     selectInput("whichGroups2", "Group2", choices = setdiff(sample_names(), input$whichGroups1), multiple = TRUE)
+  #   }
+  # })
   
   output$vkbounds <- renderUI({
     validate(
@@ -1177,191 +1157,137 @@ shinyServer(function(session, input, output) {
                        selected = 'bs1'))
   })
   
-
-  # display_name_choices <- reactive({
-  #   req(calc_vars)
-  #   validate(
-  #     need(input$chooseplots != 0 & input$choose_single !=0, message = "Please select plotting criteria")
-  #   )
-  #   # Create named list with potential histogram options
-  #   hist_choices <- intersect(calc_vars$ColumnName, peakIcr2$e_meta %>% colnames())
-  #   names(hist_choices) <- calc_vars %>% filter(ColumnName %in% hist_choices) %>% pluck("DisplayName")
-  #   # append the prettified calculation options with any other column in emeta
-  #   meta_hist_choices <- colnames(peakIcr2$e_meta)[!(colnames(peakIcr2$e_meta) %in% hist_choices)]
-  #   names(meta_hist_choices) <- meta_hist_choices
-  #   # combine prettified names and not prettified names
-  #   hist_choices <- c(meta_hist_choices, hist_choices)
-  #   # don't allow columns of all unique values (e.g. MolForm)
-  #   all_unique <- unlist(lapply(peakIcr2$e_meta, function(x) length(unique(x)) > 20 & !is.numeric(x)))
-  #   hist_choices <- hist_choices[!all_unique]
-  # })
-
-  # if(is.null(input$vk_colors)){
-  #   output$vk_colors <- renderUI({
-  #     req(input$chooseplots, calc_vars)
-  #     # (Conditional on vkbounds):
-  #     # Error handling: input csv required
-  #     validate(
-  #       need(input$chooseplots != 0 & input$choose_single != 0, message = "Please select plotting criteria")
-  #     )
-  #     selectInput('vk_colors', 'Color by:', choices = NULL)
-  #   })
-  # }
-  
+  ### THE BELOW OBSERVEEVENT BLOCK DOES THE FOLLOWING:  
+  ### (1) CONDITIONALLY CREATES A DATAFRAME TO BE USED IN EITHER GROUP PLOTS OR SINGLE PLOTS DEPENDING ON USER INPUT
+  ### (2) UPDATES THE PLOT COLOR DROPDOWN OPTIONS BASED ON METADATA IN THE ORIGINAL OR POST-PROCESSED ICRDATA OBJECT
+  ### (3) INVALIDATES THE FXN PLOT LISTENER TO GET THE PLOT TO REDRAW
   observeEvent(input$plot_submit,{
-      # Create named list with potential histogram options
-      # hist_choices <- intersect(calc_vars$ColumnName, peakIcr2$e_meta %>% colnames())
-      # names(hist_choices) <- calc_vars %>% filter(ColumnName %in% hist_choices) %>% pluck("DisplayName")
-      # # append the prettified calculation options with any other column in emeta
-      # meta_hist_choices <- colnames(peakIcr2$e_meta)[!(colnames(peakIcr2$e_meta) %in% hist_choices)]
-      # names(meta_hist_choices) <- meta_hist_choices
-      # # combine prettified names and not prettified names
-      #hist_choices <- display_name_choices()#c(hist_choices, meta_hist_choices)
-      #----- group summary color choices -------#
-    # (Conditional on vkbounds):
-    # Error handling: input csv required   
-      previous_val <- input$vk_colors[1]
-      
-      req(calc_vars)
-      validate(
-        need(isolate(input$chooseplots) != 0 & isolate(input$choose_single) !=0, message = "Please select plotting criteria")
-      )
-<<<<<<< HEAD
-=======
-      
-      ################### (1) ################     
-      
-      if (isolate(input$choose_single) == 1) { #single sample
-        # Make sure at least one test has been calculated
-        division_data <<- subset(peakIcr2, isolate(input$whichSample))
-        #key_name <- paste(attributes(peakIcr2)$cnames$fdata_cname, "=", isolate(input$whichSample), sep = "")
-      }
-      #---------- Group Plots ------------#
-      else if (isolate(input$choose_single) == 2) {# single group
-        # Make sure at least one test has been calculated
-        validate(need(!is.null(isolate(input$whichGroups1)), message = "Please select samples for grouping"))
-        
-        temp_group_df <- data.frame(isolate(input$whichGroups1), "Group")
-        colnames(temp_group_df) <- c(getFDataColName(peakIcr2), "Group")
-        
-        summarized_data <<- peakIcr2 %>% 
-          subset(isolate(input$whichGroups1)) 
-        
-        attr(summarized_data, "group_DF") <<- temp_group_df
-        summarized_data <<- summarizeGroups(summarized_data, summary_functions = getGroupSummaryFunctionNames())
     
-        
-      }
+    ###EXPLANATION OF PREVIOUS VAL BEHAVIOR###
+    previous_val <- isolate(input$vk_colors[1])
+    
+    req(calc_vars)
+    validate(
+      need(isolate(input$chooseplots) != 0 & isolate(input$choose_single) !=0, message = "Please select plotting criteria")
+    )
+    
+    ################### (1) ################     
+    
+    if (isolate(input$choose_single) == 1) { #single sample
+      # Make sure at least one test has been calculated
+      division_data <<- subset(peakIcr2, isolate(input$whichSample))
+      #key_name <- paste(attributes(peakIcr2)$cnames$fdata_cname, "=", isolate(input$whichSample), sep = "")
+    }
+    #---------- Group Plots ------------#
+    else if (isolate(input$choose_single) == 2) {# single group
+      # Make sure at least one test has been calculated
+      validate(need(!is.null(isolate(input$whichGroups1)), message = "Please select samples for grouping"))
       
-      ############## END (1) ############
+      temp_group_df <- data.frame(isolate(input$whichGroups1), "Group")
+      colnames(temp_group_df) <- c(getFDataColName(peakIcr2), "Group")
       
-      ############## (2) #################
->>>>>>> 3942a52... group_DF issue
-      # Create named list with potential histogram options
-      hist_choices <- intersect(calc_vars$ColumnName, peakIcr2$e_meta %>% colnames())
-      names(hist_choices) <- calc_vars %>% filter(ColumnName %in% hist_choices) %>% pluck("DisplayName")
+      summarized_data <<- peakIcr2 %>% 
+        subset(isolate(input$whichGroups1)) 
       
-        
-      if (isolate(input$choose_single) == 2) {
-        if(isolate(!is.null(input$whichGroups1)) && isolate(is.null(input$whichGroups2))){
-          hist_choices <- lapply(getGroupSummaryFunctionNames(), function(fn){
-            paste0(isolate(input$whichGroups1), "_", fn)
-          }) %>% unlist()
-
-
-        }
-        else if(isolate(!is.null(input$whichGroups2))){
-          hist_choices <- lapply(getGroupSummaryFunctionNames(), function(fn){
-            paste0(c("Sample_Group_1", "Sample_Group_2"), "_", fn)
-          }) %>% unlist()
-        }
-        
+      attr(summarized_data, "group_DF") <<- temp_group_df
+      summarized_data <<- summarizeGroups(summarized_data, summary_functions = getGroupSummaryFunctionNames())
+      
+      
+    }
+    
+    ############## END (1) ############
+    
+    ############## (2) #################
+    # Create named list with potential histogram options
+    hist_choices <- intersect(calc_vars$ColumnName, peakIcr2$e_meta %>% colnames())
+    names(hist_choices) <- calc_vars %>% filter(ColumnName %in% hist_choices) %>% pluck("DisplayName")
+    
+    
+    if (isolate(input$choose_single) == 2) {
+      
+      hist_choices <- summarized_data$e_data %>% 
+        dplyr::select(-one_of(getEDataColName(summarized_data))) %>%
+        colnames()
+    }
+    
+    # Density Colors
+    if (isolate(input$chooseplots) == 'Density Plot') {
+      updateSelectInput(session, 'vk_colors', 'Color by:', 
+                        choices = c(hist_choices),
+                        selected = hist_choices[1])
+      if(previous_val == hist_choices[1]){revals$makeplot <- -revals$makeplot}
+    }
+    # Kendrick Colors
+    if (isolate(input$chooseplots) == 'Kendrick Plot') {
+      if (isolate(input$choose_single) == 1){
         updateSelectInput(session, 'vk_colors', 'Color by:', 
-                           choices = c(hist_choices),
-                           selected = hist_choices[1])
-        if(previous_val == hist_choices[1]){revals$makeplot <- -revals$makeplot}
-
-      }
-      #------- density plot color choices --------#
-      else if (isolate(input$chooseplots) == 'Density Plot') {
+                          choices = c('Van Krevelen Boundary Set 1' = 'bs1',
+                                      'Van Krevelen Boundary Set 2' = 'bs2', 
+                                      hist_choices),
+                          selected = 'bs1')
+        if(previous_val == 'bs1'){revals$makeplot <- -revals$makeplot}
+      } else if (isolate(input$choose_single) == 2){
         updateSelectInput(session, 'vk_colors', 'Color by:', 
                           choices = c(hist_choices),
                           selected = hist_choices[1])
         if(previous_val == hist_choices[1]){revals$makeplot <- -revals$makeplot}
       }
-      # Kendrick Colors
-      else if (isolate(input$chooseplots) == 'Kendrick Plot') {
-        updateSelectInput(session, 'vk_colors', 'Color by:', 
-                           choices = c('Van Krevelen Boundary Set 1' = 'bs1',
-                                       'Van Krevelen Boundary Set 2' = 'bs2', 
-                                       hist_choices),
-                           selected = 'bs1')
-        if(previous_val == 'bs1'){revals$makeplot <- -revals$makeplot}
-      }
-      if (isolate(input$chooseplots) == 'Van Krevelen Plot') {
-        #req(input$vkbounds)
-        if (input$vkbounds == 0) {#no boundaries
-          if (isolate(input$choose_single) == 2) {
-            hist_choices <- lapply(getGroupSummaryFunctionNames(), function(fn){
-              paste0(isolate(input$whichGroups1), "_", fn)
-            }) %>%
-              unlist()
-            
-            updateSelectInput(session, 'vk_colors', 'Color by:', 
-                              choices = c(hist_choices),
-                              selected = hist_choices[1])
-            if(previous_val == hist_choices[1]){revals$makeplot <- -revals$makeplot}
-          } else {
-            updateSelectInput(session, 'vk_colors', 'Color by:', 
-                               choices = c('Van Krevelen Boundary Set 1' = 'bs1',
-                                           'Van Krevelen Boundary Set 2' = 'bs2', 
-                                           hist_choices),
-                               selected = 'bs1')  
-            if(previous_val == 'bs1'){revals$makeplot <- -revals$makeplot}
-          }
-        } else if (input$vkbounds == 'bs1') { #only allow bs1 boundary colors
-          if (isolate(input$choose_single) == 2) {
-            if(isolate(!is.null(input$whichGroups1)) && isolate(is.null(input$whichGroups2))){
-              hist_choices <- lapply(getGroupSummaryFunctionNames(), function(fn){
-                paste0(isolate(input$whichGroups1), "_", fn)
-              }) %>% unlist()
-            }
-            else if(isolate(!is.null(input$whichGroups2))){
-              hist_choices <- lapply(getGroupSummaryFunctionNames(), function(fn){
-                paste0(c("Sample_Group_1", "Sample_Group_2"), "_", fn)
-              }) %>% unlist()
-            }
-            
-            updateSelectInput(session, 'vk_colors', 'Color by:', 
-                              choices = c(hist_choices),
-                              selected = hist_choices[1])
-            if(previous_val == hist_choices[1]){revals$makeplot <- -revals$makeplot}
-            
-          } else {
-            updateSelectInput(session, 'vk_colors', 'Color by:', 
-                               choices = c('Van Krevelen Boundary Set 1' = 'bs1',
-                                           hist_choices),
-                               selected = 'bs1')
-            if(previous_val == 'bs1'){revals$makeplot <- -revals$makeplot}
-          }
-        } else if (input$vkbounds == 'bs2') { #only allow bs2 boundary colors
-          if (isolate(input$choose_single) == 2) {
-            updateSelectInput(session, 'vk_colors', 'Color by:', 
-                              choices = c(hist_choices),
-                              selected = hist_choices[1])
-            if(previous_val == hist_choices[1]){revals$makeplot <- -revals$makeplot}
-          } else {
-            updateSelectInput(session, 'vk_colors', 'Color by:', 
-                        choices = c('Van Krevelen Boundary Set 2' = 'bs2', 
-                                    hist_choices),
-                        selected = 'bs2')
-            if(previous_val == 'bs2'){revals$makeplot <- -revals$makeplot}
-          }
-        } 
-      }
-      
-      
-      
+    }
+    
+    # Van Krevelen Colors
+    if (isolate(input$chooseplots) == 'Van Krevelen Plot') {
+      #req(input$vkbounds)
+      if (input$vkbounds == 0) {#no boundaries
+        if (isolate(input$choose_single) == 2) {
+          #### EXAMPLE OF (3) ####
+          # first, update vk_colors, if this changes the selection in the dropdown, it will invalidate FxnPlot
+          updateSelectInput(session, 'vk_colors', 'Color by:',
+                            choices = c(hist_choices),
+                            selected = hist_choices[1])
+          # if nothing in vk_colors changes, we will want to invalidate FxnPlot, do this by simply sign-flipping a dummy reactivevalue that FxnPlot depends on
+          if(previous_val == hist_choices[1]){revals$makeplot <- -revals$makeplot}
+          
+          
+        } else {
+          updateSelectInput(session, 'vk_colors', 'Color by:', 
+                            choices = c('Van Krevelen Boundary Set 1' = 'bs1',
+                                        'Van Krevelen Boundary Set 2' = 'bs2', 
+                                        hist_choices),
+                            selected = 'bs1')  
+          if(previous_val == 'bs1'){revals$makeplot <- -revals$makeplot}
+        }
+      } else if (input$vkbounds == 'bs1') { #only allow bs1 boundary colors
+        if (isolate(input$choose_single) == 2) {
+          
+          updateSelectInput(session, 'vk_colors', 'Color by:',
+                            choices = c(hist_choices),
+                            selected = hist_choices[1])
+          if(previous_val == hist_choices[1]){revals$makeplot <- -revals$makeplot}
+          
+        } else {
+          updateSelectInput(session, 'vk_colors', 'Color by:', 
+                            choices = c('Van Krevelen Boundary Set 1' = 'bs1',
+                                        hist_choices),
+                            selected = 'bs1')
+          if(previous_val == 'bs1'){revals$makeplot <- -revals$makeplot}
+        }
+      } else if (input$vkbounds == 'bs2') { #only allow bs2 boundary colors
+        if (isolate(input$choose_single) == 2) {
+          updateSelectInput(session, 'vk_colors', 'Color by:', 
+                            choices = c(hist_choices),
+                            selected = hist_choices[1])
+          if(previous_val == hist_choices[1]){revals$makeplot <- -revals$makeplot}
+        } else {
+          updateSelectInput(session, 'vk_colors', 'Color by:', 
+                            choices = c('Van Krevelen Boundary Set 2' = 'bs2', 
+                                        hist_choices),
+                            selected = 'bs2')
+          if(previous_val == 'bs2'){revals$makeplot <- -revals$makeplot}
+        }
+      } 
+    }
+    
+    ######### END (2) ###########
   }, priority = 9)
   
   
@@ -1374,7 +1300,7 @@ shinyServer(function(session, input, output) {
     v$clearPlot <- FALSE
   }, priority = 10)
   
-  #observeEvent(input$plot_submit,{
+  
   output$FxnPlot <- renderPlotly({
     input$vk_colors
     revals$makeplot
@@ -1384,56 +1310,7 @@ shinyServer(function(session, input, output) {
     } else {
       # Make sure a plot stype selection has been chosen
       validate(need(isolate(input$choose_single) != 0, message = "Please select plotting criteria"))
-      if (isolate(input$choose_single) == 1) { #single sample
-        # Make sure at least one test has been calculated
-        division_data <- subset(peakIcr2, isolate(input$whichSample))
-        #key_name <- paste(attributes(peakIcr2)$cnames$fdata_cname, "=", isolate(input$whichSample), sep = "")
-      }
-      #---------- Group Plots ------------#
-      else if (isolate(input$choose_single) == 2) {# single group
-        # Make sure at least one test has been calculated
-
-        
-        validate(need(!is.null(isolate(input$whichGroups1)), message = "Please select samples for grouping"))
-        if(!is.null(isolate(input$whichGroups1)) && is.null(isolate(input$whichGroups2))){
-          division_data <- subset(peakIcr2, isolate(input$whichGroups1))
-          
-        }
-        else if(!is.null(isolate(input$whichGroups1)) && !is.null(isolate(input$whichGroups2))){
-          group_1 <- subset(peakIcr2, isolate(input$whichGroups1))
-          group_2 <- subset(peakIcr2, isolate(input$whichGroups2))
-          
-          new_fdata <- rbind(group_1$f_data %>% mutate(Sample_Split = "Sample_Group_1"),
-                             group_2$f_data %>% mutate(Sample_Split = "Sample_Group_2"),
-                             use.names = TRUE,
-                             stringsAsFactors = FALSE) #%>%
-          # {`colnames<-`(., c(colnames(group_1$f_data), "Sample_Split")}
-          
-          
-          new_edata <- cbind(group_1$e_data, 
-                             group_2$e_data %>% dplyr::select(-one_of(attr(group_1, "cnames")$edata_cname)))
-          
-          division_data <- as.peakIcrData(new_edata, new_fdata, peakIcr2$e_meta, 
-                                          getEDataColName(group_1), getFDataColName(group_1), getMassColName(group_1), 
-                                          mf_cname=getMFColName(group_1)) %>%
-            group_designation("Sample_Split") 
-          
-          attr(division_data, "cnames") <- attr(peakIcr2, "cnames")
-          
-        }
-        
-        # make data for group plots
-        summarized_data <- summarizeGroups(division_data, summary_functions = getGroupSummaryFunctionNames())
-
-
-
-        #-------Kendrick Plot-----------# 
-        if (input$chooseplots == 'Kendrick Plot') {
-          p <- groupKendrickPlot(summarized_data, colorCName = isolate(input$vk_colors),
-                                 xlabel = isolate(input$x_axis_input), ylabel = isolate(input$y_axis_input),
-                                 title = isolate(input$title_input), legendTitle = isolate(input$legend_title_input))
-        }
-      }
+      
       #----------- Single sample plots ------------#
       #-------Kendrick Plot-----------# 
       if (input$chooseplots == 'Kendrick Plot') {
@@ -1516,7 +1393,6 @@ shinyServer(function(session, input, output) {
         p <- densityPlot(division_data, variable = isolate(input$vk_colors),
                          xlabel = isolate(input$x_axis_input), ylabel = isolate(input$y_axis_input),
                          title = isolate(input$title_input))
-        #})
       }
     }
     
@@ -1531,9 +1407,8 @@ shinyServer(function(session, input, output) {
     return(p)
     
   })
-  #},priority = -1)
-
-
+  
+  
   #------ plot axes and titles options ------#
   # use the 'formals' argument to figure out default chart labels
   plot_defaults <- reactive({
@@ -1542,11 +1417,11 @@ shinyServer(function(session, input, output) {
     ))
     if (input$chooseplots == 'Van Krevelen Plot') {
       defs <- formals(vanKrevelenPlot)
-
+      
       validate(need(!is.null(input$whichGroups1) || !is.null(input$whichSample), message = ""))
       #defs$legendTitle = names(display_name_choices())[display_name_choices() == input$vk_colors]
-
-
+      
+      
     } else if (input$chooseplots == 'Kendrick Plot') {
       defs <- formals(kendrickPlot)
       #defs$legendTitle = input$vk_colors
@@ -1576,9 +1451,9 @@ shinyServer(function(session, input, output) {
     textInput(inputId = "y_axis_input", label = "Y Axis Label", value = plot_defaults()$ylabel)
   })
   
-
+  
   output$legend_title_input <- renderUI({
-
+    
     validate(
       need(input$chooseplots != 0, message = "")
     )
@@ -1586,10 +1461,10 @@ shinyServer(function(session, input, output) {
       return(NULL)
     } else{
       textInput(inputId = "legend_title_input", label = "Legend Label", value = "")
-
+      
     }
   })
-
+  
   
   #-------- create a table that stores plotting information -------#
   # the table needs to grow with each click of the download button
