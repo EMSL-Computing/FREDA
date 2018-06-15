@@ -1226,6 +1226,37 @@ shinyServer(function(session, input, output) {
       validate(
         need(isolate(input$chooseplots) != 0 & isolate(input$choose_single) !=0, message = "Please select plotting criteria")
       )
+<<<<<<< HEAD
+=======
+      
+      ################### (1) ################     
+      
+      if (isolate(input$choose_single) == 1) { #single sample
+        # Make sure at least one test has been calculated
+        division_data <<- subset(peakIcr2, isolate(input$whichSample))
+        #key_name <- paste(attributes(peakIcr2)$cnames$fdata_cname, "=", isolate(input$whichSample), sep = "")
+      }
+      #---------- Group Plots ------------#
+      else if (isolate(input$choose_single) == 2) {# single group
+        # Make sure at least one test has been calculated
+        validate(need(!is.null(isolate(input$whichGroups1)), message = "Please select samples for grouping"))
+        
+        temp_group_df <- data.frame(isolate(input$whichGroups1), "Group")
+        colnames(temp_group_df) <- c(getFDataColName(peakIcr2), "Group")
+        
+        summarized_data <<- peakIcr2 %>% 
+          subset(isolate(input$whichGroups1)) 
+        
+        attr(summarized_data, "group_DF") <<- temp_group_df
+        summarized_data <<- summarizeGroups(summarized_data, summary_functions = getGroupSummaryFunctionNames())
+    
+        
+      }
+      
+      ############## END (1) ############
+      
+      ############## (2) #################
+>>>>>>> 3942a52... group_DF issue
       # Create named list with potential histogram options
       hist_choices <- intersect(calc_vars$ColumnName, peakIcr2$e_meta %>% colnames())
       names(hist_choices) <- calc_vars %>% filter(ColumnName %in% hist_choices) %>% pluck("DisplayName")

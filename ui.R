@@ -7,13 +7,10 @@
 #    http://shiny.rstudio.com/
 #
 
-
-
 library(plotly)
 library(shiny)
 library(shinyBS)
 library(DT)
-
 
 # Define UI for application that draws a histogram
 shinyUI(navbarPage(title = (windowTitle = "FREDA"),
