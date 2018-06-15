@@ -1062,17 +1062,11 @@ shinyServer(function(session, input, output) {
           fluidRow(
             # Column with width 6: which samples are in Group 1?
             column(12,
-                   selectInput('whichGroups1', 'Group 1',
+                   selectInput('whichGroups1', 'Grouped Samples',
                                choices = sample_names(),
                                multiple = TRUE)
-            )#,
-            
-            # Column with width 6: which samples are in Group 2?
-            #column(6,
-            #        uiOutput('whichGroups2')
-            # )
+            )
           )
-          
         ), # End conditional output multiple samples#
         
         # (Conditional on choose_single) If single: choose sample
@@ -1099,20 +1093,12 @@ shinyServer(function(session, input, output) {
           fluidRow(
             # Column with width 6: which samples are in Group 1?
             column(12,
-                   selectInput('whichGroups1', 'Group 1',
+                   selectInput('whichGroups1', 'Grouped Samples',
                                choices = sample_names(),
                                multiple = TRUE)
-            )#,
-            
-            # Column with width 6: which samples are in Group 2?
-            # column(6,
-            #        uiOutput('whichGroups2')
-            # )
+            )
           )
-          
-        ), # End conditional output multiple samples#
-        
-        # (Conditional on choose_single) If single: choose sample
+       ),
         conditionalPanel(
           condition = 'input.choose_single == 1',
           
@@ -1136,17 +1122,11 @@ shinyServer(function(session, input, output) {
           fluidRow(
             # Column with width 6: which samples are in Group 1?
             column(12,
-                   selectInput('whichGroups1', 'Group 1',
+                   selectInput('whichGroups1', 'Grouped Samples',
                                choices = sample_names(),
                                multiple = TRUE)
-            )#,
-            
-            # Column with width 6: which samples are in Group 2?
-            # column(6,
-            #        uiOutput('whichGroups2')
-            # )
+            )
           )
-          
         ), # End conditional output multiple samples#
         
         # (Conditional on choose_single) If single: choose sample
@@ -1161,11 +1141,11 @@ shinyServer(function(session, input, output) {
     
   })
   
-  output$plotUI_2 <- renderUI({
-    if(length(input$whichGroups1)>1){
-      selectInput("whichGroups2", "Group2", choices = setdiff(sample_names(), input$whichGroups1), multiple = TRUE)
-    }
-  })
+  # output$plotUI_2 <- renderUI({
+  #   if(length(input$whichGroups1)>1){
+  #     selectInput("whichGroups2", "Group2", choices = setdiff(sample_names(), input$whichGroups1), multiple = TRUE)
+  #   }
+  # })
   
   output$vkbounds <- renderUI({
     validate(
@@ -1177,109 +1157,89 @@ shinyServer(function(session, input, output) {
                        selected = 'bs1'))
   })
   
-
-  # display_name_choices <- reactive({
-  #   req(calc_vars)
-  #   validate(
-  #     need(input$chooseplots != 0 & input$choose_single !=0, message = "Please select plotting criteria")
-  #   )
-  #   # Create named list with potential histogram options
-  #   hist_choices <- intersect(calc_vars$ColumnName, peakIcr2$e_meta %>% colnames())
-  #   names(hist_choices) <- calc_vars %>% filter(ColumnName %in% hist_choices) %>% pluck("DisplayName")
-  #   # append the prettified calculation options with any other column in emeta
-  #   meta_hist_choices <- colnames(peakIcr2$e_meta)[!(colnames(peakIcr2$e_meta) %in% hist_choices)]
-  #   names(meta_hist_choices) <- meta_hist_choices
-  #   # combine prettified names and not prettified names
-  #   hist_choices <- c(meta_hist_choices, hist_choices)
-  #   # don't allow columns of all unique values (e.g. MolForm)
-  #   all_unique <- unlist(lapply(peakIcr2$e_meta, function(x) length(unique(x)) > 20 & !is.numeric(x)))
-  #   hist_choices <- hist_choices[!all_unique]
-  # })
-
-  # if(is.null(input$vk_colors)){
-  #   output$vk_colors <- renderUI({
-  #     req(input$chooseplots, calc_vars)
-  #     # (Conditional on vkbounds):
-  #     # Error handling: input csv required
-  #     validate(
-  #       need(input$chooseplots != 0 & input$choose_single != 0, message = "Please select plotting criteria")
-  #     )
-  #     selectInput('vk_colors', 'Color by:', choices = NULL)
-  #   })
-  # }
-  
+  ### THE BELOW OBSERVEEVENT BLOCK DOES THE FOLLOWING:  
+  ### (1) CONDITIONALLY CREATES A DATAFRAME TO BE USED IN EITHER GROUP PLOTS OR SINGLE PLOTS DEPENDING ON USER INPUT
+  ### (2) UPDATES THE PLOT COLOR DROPDOWN OPTIONS BASED ON METADATA IN THE ORIGINAL OR POST-PROCESSED ICRDATA OBJECT
+  ### (3) INVALIDATES THE FXN PLOT LISTENER TO GET THE PLOT TO REDRAW
   observeEvent(input$plot_submit,{
-      # Create named list with potential histogram options
-      # hist_choices <- intersect(calc_vars$ColumnName, peakIcr2$e_meta %>% colnames())
-      # names(hist_choices) <- calc_vars %>% filter(ColumnName %in% hist_choices) %>% pluck("DisplayName")
-      # # append the prettified calculation options with any other column in emeta
-      # meta_hist_choices <- colnames(peakIcr2$e_meta)[!(colnames(peakIcr2$e_meta) %in% hist_choices)]
-      # names(meta_hist_choices) <- meta_hist_choices
-      # # combine prettified names and not prettified names
-      #hist_choices <- display_name_choices()#c(hist_choices, meta_hist_choices)
-      #----- group summary color choices -------#
-    # (Conditional on vkbounds):
-    # Error handling: input csv required   
-      previous_val <- input$vk_colors[1]
+     
+      ###EXPLANATION OF PREVIOUS VAL BEHAVIOR###
+      previous_val <- isolate(input$vk_colors[1])
       
       req(calc_vars)
       validate(
         need(isolate(input$chooseplots) != 0 & isolate(input$choose_single) !=0, message = "Please select plotting criteria")
       )
+      
+      ################### (1) ################     
+      
+      if (isolate(input$choose_single) == 1) { #single sample
+        # Make sure at least one test has been calculated
+        division_data <<- subset(peakIcr2, isolate(input$whichSample))
+        #key_name <- paste(attributes(peakIcr2)$cnames$fdata_cname, "=", isolate(input$whichSample), sep = "")
+      }
+      #---------- Group Plots ------------#
+      else if (isolate(input$choose_single) == 2) {# single group
+        # Make sure at least one test has been calculated
+        validate(need(!is.null(isolate(input$whichGroups1)), message = "Please select samples for grouping"))
+          summarized_data <<- subset(peakIcr2, isolate(input$whichGroups1)) %>% 
+            summarizeGroups(summary_functions = getGroupSummaryFunctionNames())
+        
+      }
+      
+      ############## END (1) ############
+      
+      ############## (2) #################
       # Create named list with potential histogram options
       hist_choices <- intersect(calc_vars$ColumnName, peakIcr2$e_meta %>% colnames())
       names(hist_choices) <- calc_vars %>% filter(ColumnName %in% hist_choices) %>% pluck("DisplayName")
       
         
       if (isolate(input$choose_single) == 2) {
-        if(isolate(!is.null(input$whichGroups1)) && isolate(is.null(input$whichGroups2))){
-          hist_choices <- lapply(getGroupSummaryFunctionNames(), function(fn){
-            paste0(isolate(input$whichGroups1), "_", fn)
-          }) %>% unlist()
-
-
-        }
-        else if(isolate(!is.null(input$whichGroups2))){
-          hist_choices <- lapply(getGroupSummaryFunctionNames(), function(fn){
-            paste0(c("Sample_Group_1", "Sample_Group_2"), "_", fn)
-          }) %>% unlist()
-        }
-        
-        updateSelectInput(session, 'vk_colors', 'Color by:', 
-                           choices = c(hist_choices),
-                           selected = hist_choices[1])
-        if(previous_val == hist_choices[1]){revals$makeplot <- -revals$makeplot}
-
+       
+          hist_choices <- summarized_data$e_data %>% 
+            dplyr::select(-one_of(getEDataColName(summarized_data))) %>%
+            colnames()
       }
-      #------- density plot color choices --------#
-      else if (isolate(input$chooseplots) == 'Density Plot') {
+      
+      # Density Colors
+      if (isolate(input$chooseplots) == 'Density Plot') {
         updateSelectInput(session, 'vk_colors', 'Color by:', 
                           choices = c(hist_choices),
                           selected = hist_choices[1])
         if(previous_val == hist_choices[1]){revals$makeplot <- -revals$makeplot}
       }
       # Kendrick Colors
-      else if (isolate(input$chooseplots) == 'Kendrick Plot') {
+      if (isolate(input$chooseplots) == 'Kendrick Plot') {
+        if (isolate(input$choose_single) == 1){
         updateSelectInput(session, 'vk_colors', 'Color by:', 
                            choices = c('Van Krevelen Boundary Set 1' = 'bs1',
                                        'Van Krevelen Boundary Set 2' = 'bs2', 
                                        hist_choices),
                            selected = 'bs1')
         if(previous_val == 'bs1'){revals$makeplot <- -revals$makeplot}
+        } else if (isolate(input$choose_single) == 2){
+          updateSelectInput(session, 'vk_colors', 'Color by:', 
+                            choices = c(hist_choices),
+                            selected = hist_choices[1])
+          if(previous_val == hist_choices[1]){revals$makeplot <- -revals$makeplot}
+        }
       }
+      
+      # Van Krevelen Colors
       if (isolate(input$chooseplots) == 'Van Krevelen Plot') {
         #req(input$vkbounds)
         if (input$vkbounds == 0) {#no boundaries
           if (isolate(input$choose_single) == 2) {
-            hist_choices <- lapply(getGroupSummaryFunctionNames(), function(fn){
-              paste0(isolate(input$whichGroups1), "_", fn)
-            }) %>%
-              unlist()
-            
-            updateSelectInput(session, 'vk_colors', 'Color by:', 
+            #### EXAMPLE OF (3) ####
+            # first, update vk_colors, if this changes the selection in the dropdown, it will invalidate FxnPlot
+            updateSelectInput(session, 'vk_colors', 'Color by:',
                               choices = c(hist_choices),
                               selected = hist_choices[1])
+            # if nothing in vk_colors changes, we will want to invalidate FxnPlot, do this by simply sign-flipping a dummy reactivevalue that FxnPlot depends on
             if(previous_val == hist_choices[1]){revals$makeplot <- -revals$makeplot}
+            
+            
           } else {
             updateSelectInput(session, 'vk_colors', 'Color by:', 
                                choices = c('Van Krevelen Boundary Set 1' = 'bs1',
@@ -1290,18 +1250,8 @@ shinyServer(function(session, input, output) {
           }
         } else if (input$vkbounds == 'bs1') { #only allow bs1 boundary colors
           if (isolate(input$choose_single) == 2) {
-            if(isolate(!is.null(input$whichGroups1)) && isolate(is.null(input$whichGroups2))){
-              hist_choices <- lapply(getGroupSummaryFunctionNames(), function(fn){
-                paste0(isolate(input$whichGroups1), "_", fn)
-              }) %>% unlist()
-            }
-            else if(isolate(!is.null(input$whichGroups2))){
-              hist_choices <- lapply(getGroupSummaryFunctionNames(), function(fn){
-                paste0(c("Sample_Group_1", "Sample_Group_2"), "_", fn)
-              }) %>% unlist()
-            }
             
-            updateSelectInput(session, 'vk_colors', 'Color by:', 
+            updateSelectInput(session, 'vk_colors', 'Color by:',
                               choices = c(hist_choices),
                               selected = hist_choices[1])
             if(previous_val == hist_choices[1]){revals$makeplot <- -revals$makeplot}
@@ -1329,8 +1279,7 @@ shinyServer(function(session, input, output) {
         } 
       }
       
-      
-      
+      ######### END (2) ###########
   }, priority = 9)
   
   
@@ -1343,7 +1292,7 @@ shinyServer(function(session, input, output) {
     v$clearPlot <- FALSE
   }, priority = 10)
   
-  #observeEvent(input$plot_submit,{
+
   output$FxnPlot <- renderPlotly({
     input$vk_colors
     revals$makeplot
@@ -1353,56 +1302,7 @@ shinyServer(function(session, input, output) {
     } else {
       # Make sure a plot stype selection has been chosen
       validate(need(isolate(input$choose_single) != 0, message = "Please select plotting criteria"))
-      if (isolate(input$choose_single) == 1) { #single sample
-        # Make sure at least one test has been calculated
-        division_data <- subset(peakIcr2, isolate(input$whichSample))
-        #key_name <- paste(attributes(peakIcr2)$cnames$fdata_cname, "=", isolate(input$whichSample), sep = "")
-      }
-      #---------- Group Plots ------------#
-      else if (isolate(input$choose_single) == 2) {# single group
-        # Make sure at least one test has been calculated
-
-        
-        validate(need(!is.null(isolate(input$whichGroups1)), message = "Please select samples for grouping"))
-        if(!is.null(isolate(input$whichGroups1)) && is.null(isolate(input$whichGroups2))){
-          division_data <- subset(peakIcr2, isolate(input$whichGroups1))
-          
-        }
-        else if(!is.null(isolate(input$whichGroups1)) && !is.null(isolate(input$whichGroups2))){
-          group_1 <- subset(peakIcr2, isolate(input$whichGroups1))
-          group_2 <- subset(peakIcr2, isolate(input$whichGroups2))
-          
-          new_fdata <- rbind(group_1$f_data %>% mutate(Sample_Split = "Sample_Group_1"),
-                             group_2$f_data %>% mutate(Sample_Split = "Sample_Group_2"),
-                             use.names = TRUE,
-                             stringsAsFactors = FALSE) #%>%
-          # {`colnames<-`(., c(colnames(group_1$f_data), "Sample_Split")}
-          
-          
-          new_edata <- cbind(group_1$e_data, 
-                             group_2$e_data %>% dplyr::select(-one_of(attr(group_1, "cnames")$edata_cname)))
-          
-          division_data <- as.peakIcrData(new_edata, new_fdata, peakIcr2$e_meta, 
-                                          getEDataColName(group_1), getFDataColName(group_1), getMassColName(group_1), 
-                                          mf_cname=getMFColName(group_1)) %>%
-            group_designation("Sample_Split") 
-          
-          attr(division_data, "cnames") <- attr(peakIcr2, "cnames")
-          
-        }
-        
-        # make data for group plots
-        summarized_data <- summarizeGroups(division_data, summary_functions = getGroupSummaryFunctionNames())
-
-
-
-        #-------Kendrick Plot-----------# 
-        if (input$chooseplots == 'Kendrick Plot') {
-          p <- groupKendrickPlot(summarized_data, colorCName = isolate(input$vk_colors),
-                                 xlabel = isolate(input$x_axis_input), ylabel = isolate(input$y_axis_input),
-                                 title = isolate(input$title_input), legendTitle = isolate(input$legend_title_input))
-        }
-      }
+      
       #----------- Single sample plots ------------#
       #-------Kendrick Plot-----------# 
       if (input$chooseplots == 'Kendrick Plot') {
@@ -1485,7 +1385,6 @@ shinyServer(function(session, input, output) {
         p <- densityPlot(division_data, variable = isolate(input$vk_colors),
                          xlabel = isolate(input$x_axis_input), ylabel = isolate(input$y_axis_input),
                          title = isolate(input$title_input))
-        #})
       }
     }
     
@@ -1500,7 +1399,6 @@ shinyServer(function(session, input, output) {
     return(p)
     
   })
-  #},priority = -1)
 
 
   #------ plot axes and titles options ------#

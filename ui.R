@@ -122,8 +122,6 @@ shinyUI(navbarPage(title = (windowTitle = "FREDA"),
                                            uiOutput("p_column")
                                     )
                                   )
-                                  
-                                  
                                 ), 
                                 
                                 # HOrizontal rule
@@ -182,17 +180,6 @@ shinyUI(navbarPage(title = (windowTitle = "FREDA"),
                               
                               # Sidebar panel
                               sidebarPanel(
-                                # 
-                                # # Test: Display message at top of sidebar
-                                # 'By default, O:C, H:C, Kendrick Mass, 
-                                #               and Kendrick defect will be calculated.',
-                                # 
-                                # # Horizontal rule
-                                # tags$hr(),
-                                
-                                # Checkbox: which tests should also be applied
-                               
-                                
                                 
                                 uiOutput("which_calcs"),
                             
@@ -223,7 +210,6 @@ shinyUI(navbarPage(title = (windowTitle = "FREDA"),
                                   )
                                 ),
                                 
-                                
                                 # Drop down list: which histogram should be displayed?
                                 uiOutput('which_hist'),
                                 
@@ -248,18 +234,6 @@ shinyUI(navbarPage(title = (windowTitle = "FREDA"),
                                 
                                 # Set default width for panel
                                 width = 5,
-
-                   
-                                # wellPanel(
-                                #       tags$h5("This page allows you to filter the data by various metrics.  
-                                #           The default options are to retain molecules within a particular mass range (mass filter), and to retain molecules that appear a minimum number of times across all samples (molecule filter).  
-                                #           Additionally, one can filter by up to three variables contained in the molecular identification file.\n
-                                #               ",
-                                #           style = "color:CornFlowerBlue"),
-                                #       tags$h5("Check boxes to select which filters to apply, specify filtering criteria and then click 'Filter Data'",
-                                #               style = "color:CornFlowerBlue;")
-                                # ),
-                                
 
                                 # Checkbox: Mass filter yes/no
                                 #HTML('<h5><b>Mass Filter</b></h5>')
@@ -336,9 +310,11 @@ shinyUI(navbarPage(title = (windowTitle = "FREDA"),
                                 ), 
                                 # UI options will change depending on plot type.
                                 uiOutput("plotUI"),
-                                conditionalPanel(condition = "(input.whichSample !== null && input.choose_single == 2)",
-                                  uiOutput("plotUI_2")
-                                ),
+                                
+                                # conditionalPanel(condition = "(input.whichSample !== null && input.choose_single == 2)",
+                                #   uiOutput("plotUI_2")
+                                # ),
+                                
                                 uiOutput("title_input"),
                                 uiOutput("x_axis_input"),
                                 uiOutput("y_axis_input"),
