@@ -1182,8 +1182,16 @@ shinyServer(function(session, input, output) {
       else if (isolate(input$choose_single) == 2) {# single group
         # Make sure at least one test has been calculated
         validate(need(!is.null(isolate(input$whichGroups1)), message = "Please select samples for grouping"))
-          summarized_data <<- subset(peakIcr2, isolate(input$whichGroups1)) %>% 
-            summarizeGroups(summary_functions = getGroupSummaryFunctionNames())
+        
+        temp_group_df <- data.frame(isolate(input$whichGroups1), "Group")
+        colnames(temp_group_df) <- c(getFDataColName(peakIcr2), "Group")
+        
+        summarized_data <<- peakIcr2 %>% 
+          subset(isolate(input$whichGroups1)) 
+        
+        attr(summarized_data, "group_DF") <<- temp_group_df
+        summarized_data <<- summarizeGroups(summarized_data, summary_functions = getGroupSummaryFunctionNames())
+    
         
       }
       
