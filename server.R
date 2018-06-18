@@ -12,7 +12,6 @@ library(raster)
 library(magick)
 library(purrr)
 library(shinyBS)
-library(rgdal)
 
 f <- list(
   family = "Courier New, monospace",
@@ -1658,8 +1657,8 @@ shinyServer(function(session, input, output) {
           fs <- c(fs, path) # append the new plot to the old plots
           export(renderDownloadPlots(parmTable = parmTable$parms[i,], peakIcr2),
                  file = paste("plot",i,".png", sep = ""), zoom = 2) # use webshot to export a screenshot to the opened pdf
-          r <- brick(file.path(getwd(), paste("plot",i,".png", sep = ""))) # create a raster of the screenshot
-          img <- magick::image_read(attr(r,"file")@name) #turn the raster into an image of selected format
+          #r <- brick(file.path(getwd(), paste("plot",i,".png", sep = ""))) # create a raster of the screenshot
+          img <- magick::image_read(paste("plot",i,".png", sep = ""))#attr(r,"file")@name) #turn the raster into an image of selected format
           image_write(img, path = path, format = "svg") #write the image
           #rsvg::rsvg_svg(img, file = path)
         }
