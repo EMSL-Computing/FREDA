@@ -7,13 +7,10 @@
 #    http://shiny.rstudio.com/
 #
 
-
-
 library(plotly)
 library(shiny)
 library(shinyBS)
 library(DT)
-
 
 # Define UI for application that draws a histogram
 shinyUI(navbarPage(title = (windowTitle = "FREDA"),
@@ -320,8 +317,8 @@ shinyUI(navbarPage(title = (windowTitle = "FREDA"),
                                 uiOutput("y_axis_input"),
                                 #uiOutput("legend_title_input"),
                                 splitLayout(
-                                  actionButton("plot_submit", label = "Submit"),
-                                  actionButton("clear_plots", label = "Clear Plot")
+                                  actionButton("plot_submit", label = "Submit")
+                                  #actionButton("clear_plots", label = "Clear Plot")
                                 )
                               ),# End sidebar conditionals on Visualize tab #
                               
