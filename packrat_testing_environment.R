@@ -30,7 +30,7 @@ packrat::on()
 # - packages to not include in local packrat lib (always make sure KEGGdata and MetaCycData are here)
 # - don't automatically load the things in external.packages on startup (personal preference)
 # - local.repos = directories of package sources (e.g. local clone of fticr_viz repo if you need icRanalysis)
-packrat::set_opts(external.packages=c("stringi", "plogr", "BH", "devtools", "roxygen2"),
+packrat::set_opts(external.packages=c("stringi", "plogr", "BH", "devtools", "roxygen2", "rgdal"),
                   load.external.packages.on.startup=FALSE,
                   local.repos= localDir)
 
@@ -39,7 +39,7 @@ packrat::set_opts(external.packages=c("stringi", "plogr", "BH", "devtools", "rox
 options(repos=c(CRAN="http://cran.rstudio.com"))
 
 # Install necessary libraries in packrat's lib directory (this DOES NOT copy the source, just installs for use locally)
-install.packages(c("shiny", "shinyBS", "ggplot2", "reshape2","webshot","htmlwidgets","dplyr","raster","magick","purrr", "rgdal", "DT")) 
+install.packages(c("shiny", "shinyBS", "ggplot2", "reshape2","webshot","htmlwidgets","dplyr","raster","magick","purrr", "DT")) 
 
 webshot::install_phantomjs()
 
