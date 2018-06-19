@@ -1160,6 +1160,7 @@ shinyServer(function(session, input, output) {
   # })
   
   output$vkbounds <- renderUI({
+    req(input$chooseplots == "Van Krevelen Plot")
     validate(
       need(input$choose_single != 0, message = "Please select sample(s)"),
       need(input$chooseplots != 0, message = "")
@@ -1209,81 +1210,45 @@ observeEvent(plot_data(),{
     if (isolate(input$choose_single) == 1){
       hist_choices <- intersect(calc_vars$ColumnName, peakIcr2$e_meta %>% colnames())
       names(hist_choices) <- calc_vars %>% filter(ColumnName %in% hist_choices) %>% pluck("DisplayName")
+      
+      if(input$chooseplots == "Van Krevelen Plot"){
+        hist_choices <- switch(as.character(input$vkbounds), 
+                               'bs1' = c('Van Krevelen Boundary Set 1' = 'bs1', hist_choices),
+                               'bs2' = c('Van Krevelen Boundary Set 2' = 'bs2', hist_choices),
+                               "0" = c('Van Krevelen Boundary Set 1' = 'bs1', 'Van Krevelen Boundary Set 2' = 'bs2', hist_choices))
+      }
     }
     else if (isolate(input$choose_single) == 2) {
-      
       hist_choices <- plot_data()$e_data %>% 
         dplyr::select(-one_of(getEDataColName(plot_data()))) %>%
         colnames()
     }#more logic to be added
     
     selected = hist_choices[1]
-    if(isolate(input$vk_colors) %in% hist_choices){
+    if (isolate(input$vk_colors) %in% hist_choices){
       selected <- isolate(input$vk_colors)
     }
-  
+    
+
     # Density Colors
     if (isolate(input$chooseplots) == 'Density Plot') {
-      updateSelectInput(session, 'vk_colors', 'Color by:', 
+      updateSelectInput(session, 'vk_colors', 'Plot Distribution of Variable:', 
                         choices = hist_choices,
                         selected = selected)
     }
     # Kendrick Colors
     if (isolate(input$chooseplots) == 'Kendrick Plot') {
-      if (isolate(input$choose_single) == 1){
-        updateSelectInput(session, 'vk_colors', 'Color by:', 
-                          choices = c('Van Krevelen Boundary Set 1' = 'bs1',
-                                      'Van Krevelen Boundary Set 2' = 'bs2', 
-                                      hist_choices),
-                          selected = selected)
-        
-      } else if (isolate(input$choose_single) == 2){
-        updateSelectInput(session, 'vk_colors', 'Color by:', 
+        updateSelectInput(session, 'vk_colors', 'Color by:',
                           choices = hist_choices,
                           selected = selected)
-      }
     }
     
     # Van Krevelen Colors
     if (isolate(input$chooseplots) == 'Van Krevelen Plot') {
-      #req(input$vkbounds)
-      if (input$vkbounds == 0) {#no boundaries
-        if (isolate(input$choose_single) == 2) {
           updateSelectInput(session, 'vk_colors', 'Color by:',
                             choices = hist_choices,
                             selected = selected)
-        } else {
-          updateSelectInput(session, 'vk_colors', 'Color by:', 
-                            choices = c('Van Krevelen Boundary Set 1' = 'bs1',
-                                        'Van Krevelen Boundary Set 2' = 'bs2', 
-                                        hist_choices),
-                            selected = selected)
-        }
-      } else if (input$vkbounds == 'bs1') { #only allow bs1 boundary colors
-        if (isolate(input$choose_single) == 2) {
-          
-          updateSelectInput(session, 'vk_colors', 'Color by:',
-                            choices = hist_choices,
-                            selected = selected)
-        } else {
-          updateSelectInput(session, 'vk_colors', 'Color by:', 
-                            choices = c('Van Krevelen Boundary Set 1' = 'bs1',
-                                        'Van Krevelen Boundary Set 2' = 'bs2', 
-                                        hist_choices),
-                            selected = selected)
-        }
-      } else if (input$vkbounds == 'bs2') { #only allow bs2 boundary colors
-        if (isolate(input$choose_single) == 2) {
-          updateSelectInput(session, 'vk_colors', 'Color by:', 
-                            choices = hist_choices,
-                            selected = selected)
-        } else {
-          updateSelectInput(session, 'vk_colors', 'Color by:', 
-                            choices = c('Van Krevelen Boundary Set 2' = 'bs2', 
-                                        hist_choices),
-                            selected = selected)
-        }
-      } 
+       
     }
     
     if(isolate(input$vk_colors) %in% hist_choices){
@@ -1319,7 +1284,9 @@ observeEvent(plot_data(),{
       if (input$chooseplots == 'Kendrick Plot') {
         if (isolate(input$choose_single) == 2) {
           validate(need(length(input$whichGroups1) > 1, message = "Please select at least 2 samples"))
-          p <- groupKendrickPlot(isolate(plot_data()), colorCName = isolate(input$vk_colors), title = isolate(input$title_input))
+          p <- groupKendrickPlot(isolate(plot_data()), colorCName = isolate(input$vk_colors),
+                                 xlabel = isolate(input$x_axis_input), ylabel = isolate(input$y_axis_input),
+                                 title = isolate(input$title_input),legendTitle = isolate(input$legend_title_input))
         } else if (isolate(input$choose_single) == 1) {
           validate(need(!is.null(isolate(input$whichSample)) | !is.null(isolate(input$whichGroups1)),
                         message = "Please choose a sample below"))
@@ -1398,6 +1365,13 @@ observeEvent(plot_data(),{
         p <- densityPlot(isolate(plot_data()), variable = isolate(input$vk_colors),
                          xlabel = isolate(input$vk_colors), ylabel = isolate(input$y_axis_input),
                          title = isolate(input$title_input))
+        
+        if(isolate(!is.null(input$x_axis_input) && input$x_axis_input != "")){
+          p <- densityPlot(isolate(plot_data()), variable = isolate(input$vk_colors),
+                           xlabel = isolate(input$x_axis_input), ylabel = isolate(input$y_axis_input),
+                           title = isolate(input$title_input))
+        }
+        
       }
     }
     
@@ -1433,7 +1407,7 @@ observeEvent(plot_data(),{
     } else if (input$chooseplots == 'Density Plot') {
       defs <- formals(densityPlot)
       defs$ylabel = "Density"
-      defs$xlabel = isolate(input$vk_colors)
+      defs$xlabel = NULL
     }
     return(defs)
   })
