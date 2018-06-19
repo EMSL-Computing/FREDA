@@ -523,11 +523,7 @@ shinyServer(function(session, input, output) {
     tooltip_checkbox("tests", "What Values Should be Calculated?", choices, selected = c("calc_element_ratios", "calc_kendrick"),
                      extensions = lapply(1:length(choices), function(i){  
                        tipify(icon("question-sign", lib = "glyphicon"), title = calc_opts$Info[i], placement = "top", trigger = 'hover')
-                       # tipify(bsButton(paste0("Option", as.character(i)), "", icon = icon("question-sign", lib = "glyphicon"), size = "extra-small"),
-                       #        title = "", placement = "top", trigger = 'click')
                      }))
-    
-    #checkboxGroupInput("tests", "What Values should be Calculated?", choices, selected = c("calc_element_ratios", "calc_kendrick"))
   })
   
   #### Action Button reactions ####
@@ -646,16 +642,12 @@ shinyServer(function(session, input, output) {
     # Error handling: input csv of calculations variables required
     req(calc_vars, revals$numeric_cols, revals$categorical_cols)
     
-    # Create named list with potential histogram options
-    hist_choices <- intersect(calc_vars$ColumnName, peakIcr2$e_meta %>% colnames())
-    names(hist_choices) <- calc_vars %>% filter(ColumnName %in% hist_choices) %>% pluck("DisplayName")
-    # Drop down list 
     tagList(
       br(),
       br(),
       tags$p('I would like to see a histogram/bar-chart across all values of:'),
       selectInput('which_hist', NULL,
-                  choices = hist_choices)
+                  choices = isolate(display_name_choices()))
     )
   }) # End which_hist
   
@@ -717,26 +709,25 @@ shinyServer(function(session, input, output) {
     )
   })
   
-  
+  #get display name choices for dropdown
   display_name_choices <- reactive({
-    req(calc_vars)
-    # validate(
-    #   need(input$chooseplots != 0 & input$choose_single !=0, message = "Please select plotting criteria")
-    # )
-    # Create named list with potential histogram options
-    hist_choices <- intersect(calc_vars$ColumnName, peakIcr2$e_meta %>% colnames())
-    names(hist_choices) <- calc_vars %>% filter(ColumnName %in% hist_choices) %>% pluck("DisplayName")
-    # append the prettified calculation options with any other column in emeta
-    meta_hist_choices <- colnames(peakIcr2$e_meta)[!(colnames(peakIcr2$e_meta) %in% hist_choices)]
-    names(meta_hist_choices) <- meta_hist_choices
-    # combine prettified names and not prettified names
-    hist_choices <- c(meta_hist_choices, hist_choices)
-    # don't allow columns of all unique values (e.g. MolForm)
-    all_unique <- unlist(lapply(peakIcr2$e_meta, function(x) length(unique(x)) > 20 & !is.numeric(x)))
-    hist_choices <- hist_choices[!all_unique]
+    drop_cols <- c(input$f_column, input$o_column, input$h_column, input$n_column,
+                   input$s_column, input$p_column, input$c_column, attr(peakIcr2, "cnames")$mass_cname)
+    
+    hist_choices <- peakIcr2$e_meta %>% 
+      dplyr::select(-one_of(drop_cols)) %>%
+      dplyr::select(which(sapply(., function(col){ length(unique(col)) < 20 } ) | sapply(., is.numeric))) %>% #dont include columns with too many categories
+      colnames() 
+    
+    names(hist_choices) <- lapply(hist_choices, function(x){
+      if(x %in% calc_vars$ColumnName){
+        calc_vars %>% filter(ColumnName == x) %>% pluck("DisplayName")
+      }
+      else x
+    }) %>% unlist()
+    
+    hist_choices
   })
-  
-  
   
   # Allow a button click to undo filtering
   f <- reactiveValues(clearFilters = FALSE)
@@ -774,8 +765,10 @@ shinyServer(function(session, input, output) {
         # if the filter applies to numeric data, allow inputs for min, max, and keep NA
         tagList(
           checkboxInput(inputId = "na_custom1", label = "Keep NAs?", value = FALSE),
-          numericInput(inputId = "minimum_custom1", label = "Min", value = min(peakIcr2$e_meta[, input$custom1], na.rm = TRUE)),
-          numericInput(inputId = "maximum_custom1", label = "Max", value = max(peakIcr2$e_meta[, input$custom1], na.rm = TRUE)))
+          splitLayout(
+            numericInput(inputId = "minimum_custom1", label = "Min", value = min(peakIcr2$e_meta[, input$custom1], na.rm = TRUE)),
+            numericInput(inputId = "maximum_custom1", label = "Max", value = max(peakIcr2$e_meta[, input$custom1], na.rm = TRUE)))
+        )
       } else if (!is.numeric(peakIcr2$e_meta[, input$custom1])) {
         # if the filter applies to categorical data, populate a box of options along with a keep NA option
         tagList(
@@ -1017,11 +1010,10 @@ shinyServer(function(session, input, output) {
     removeModal()
   })
   
-  #############################
+
   ####### Visualize Tab #######
-  #############################
-  
-  #### Sidebar Panel ####
+ 
+  ## Sidebar Panel ##
   # choose ui to render depending on which plot is chosen from input$chooseplot
   observeEvent(input$visualize_help,{
     showModal(
@@ -1153,12 +1145,6 @@ shinyServer(function(session, input, output) {
     
   })
   
-  # output$plotUI_2 <- renderUI({
-  #   if(length(input$whichGroups1)>1){
-  #     selectInput("whichGroups2", "Group2", choices = setdiff(sample_names(), input$whichGroups1), multiple = TRUE)
-  #   }
-  # })
-  
   output$vkbounds <- renderUI({
     req(input$chooseplots == "Van Krevelen Plot")
     validate(
@@ -1201,11 +1187,8 @@ shinyServer(function(session, input, output) {
     }
   })
     
-    ############## END (1) ############
-    
-    ############## (2) #################
     # Create named list with potential histogram options
-observeEvent(plot_data(),{
+  observeEvent(plot_data(),{
     
     if (isolate(input$choose_single) == 1){
       hist_choices <- intersect(calc_vars$ColumnName, peakIcr2$e_meta %>% colnames())
@@ -1255,7 +1238,6 @@ observeEvent(plot_data(),{
       isolate(revals$makeplot <- -revals$makeplot)
     }
     
-    ######### END (2) ###########
   }, priority = 9)
   
   
@@ -1348,15 +1330,11 @@ observeEvent(plot_data(),{
             }
           }
         }
-        
-        # p <- p %>% layout(xaxis = list(scaleanchor = "y", constraintoward = "left")) # SQUARE SCALING
-        
         p
       }
       
       #--------- Density Plot --------#
       if (input$chooseplots == 'Density Plot') {
-        #return({
         validate(
           need(!is.null(isolate(input$whichSample)) | !is.null(isolate(input$whichGroups1)),
                message = "Please choose a sample below"),
@@ -1499,10 +1477,9 @@ observeEvent(plot_data(),{
   
   # End Visualize tab #
   
-  ############################
+
   ####### Download Tab #######
-  ############################
-  
+
   # copy the table from the visualize tab so as not to confuse javascript
   output$parmsTable2 <- DT::renderDataTable(parmTable$parms,
                                             options = list(scrollX = TRUE),

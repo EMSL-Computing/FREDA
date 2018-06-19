@@ -240,10 +240,12 @@ shinyUI(navbarPage(title = (windowTitle = "FREDA"),
 
                                 
                                 # Numeric: Min/max mass filter
-                                numericInput('min_mass', 'Minimum Mass value', 
-                                             min = 0, value = 200),
-                                numericInput('max_mass', "Maximum Mass value", 
-                                             min = 0, value = 900),
+                                splitLayout(
+                                  numericInput('min_mass', 'Minimum Mass value', 
+                                               min = 0, value = 200),
+                                  numericInput('max_mass', "Maximum Mass value", 
+                                               min = 0, value = 900)
+                                  ),
                                 
                                 # Checkbox: Mass filter yes/no
                                 checkboxInput('molfilter', tags$b("Molecule Filter"), value = FALSE),
