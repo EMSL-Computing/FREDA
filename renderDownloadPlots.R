@@ -1,36 +1,40 @@
 renderDownloadPlots <- function(parmTable, peakIcr2){
-    if (parmTable$SampleType == "Single Sample") { #single sample
-      # Make sure at least one test has been calculated
-      division_data <- subset(peakIcr2, parmTable$G1)
-    }
-    #---------- Group Plots ------------#
-    else if (parmTable$SampleType == "Multiple Samples") {# single group
-      #parse the pasted string back into a vector
-      parmTable$G1 <- strsplit(parmTable$G1, split = ",")[[1]]
-      #TODO: Make sure at least one test has been calculated
-      division_data <- subset(peakIcr2, parmTable$G1)
-      summarized_data <- summarizeGroups(division_data, summary_functions = parmTable$ColorBy)
-      #-------Kendrick Plot-----------# 
-      if (parmTable$PlotType == 'Kendrick Plot') {
-        return({
-          groupKendrickPlot(summarized_data, colorCName = parmTable$ColorBy)
-        })
-      }
-    }
+  
+  if (parmTable$SampleType == "Single Sample") { #single sample
+    # Make sure at least one test has been calculated
+    plot_data <- subset(peakIcr2, parmTable$G1)
+    #key_name <- paste(attributes(peakIcr2)$cnames$fdata_cname, "=", isolate(input$whichSample), sep = "")
+  }
+  #---------- Group Plots ------------#
+  else if (parmTable$SampleType == "Multiple Samples") {# single group
+    # Make sure at least one test has been calculated
+    
+    samples <- strsplit(parmTable$G1, split = ",")[[1]]
+    temp_group_df <- data.frame(samples, "Group")
+    colnames(temp_group_df) <- c(getFDataColName(peakIcr2), "Group")
+    
+    temp_data <- peakIcr2 %>% 
+      subset(samples)
+    
+    attr(temp_data, "group_DF") <- temp_group_df
+    plot_data <- summarizeGroups(temp_data, summary_functions = getGroupSummaryFunctionNames())
+    
+  }
+  
     #----------- Single sample plots ------------#
     #-------Kendrick Plot-----------# 
     if (parmTable$PlotType == 'Kendrick Plot') {
       if (parmTable$SampleType == "Multiple Samples") {
         return({
-          groupKendrickPlot(summarized_data, colorCName = parmTable$ColorBy)
+          groupKendrickPlot(plot_data, colorCName = parmTable$ColorBy)
         })
       } else if (parmTable$SampleType == "Single Sample") {
         return({
           if (parmTable$ColorBy %in% c('bs1', 'bs2')) {
-            return(kendrickPlot(division_data, vkBoundarySet = parmTable$ColorBy))
+            return(kendrickPlot(plot_data, vkBoundarySet = parmTable$ColorBy))
           } else {
             # if color selection doesn't belong to a boundary, color by test
-            return(kendrickPlot(division_data, colorCName = parmTable$ColorBy))
+            return(kendrickPlot(plot_data, colorCName = parmTable$ColorBy))
           }
         })
       }
@@ -40,13 +44,12 @@ renderDownloadPlots <- function(parmTable, peakIcr2){
       if (parmTable$SampleType == "Multiple Samples") {
         if (is.na(parmTable$BoundarySet)) {
           return({
-            groupVanKrevelenPlot(summarized_data, colorCName = parmTable$ColorBy)
-          })
-        } else {
-          return({
-            groupVanKrevelenPlot(summarized_data, colorCName = parmTable$ColorBy, vkBoundarySet = parmTable$BoundarySet)
+            groupVanKrevelenPlot(plot_data, colorCName = parmTable$ColorBy, showVKBounds = FALSE)
           })
         }
+        else return({
+          groupVanKrevelenPlot(plot_data, colorCName = parmTable$ColorBy, showVKBounds = TRUE)
+        })
         
       } else if (parmTable$SampleType == "Single Sample") {
         return({
@@ -54,18 +57,18 @@ renderDownloadPlots <- function(parmTable, peakIcr2){
           if (is.na(parmTable$BoundarySet)) { #no bounds
             # if no boundary lines, leave the option to color by boundary
             if (parmTable$ColorBy %in% c('bs1', 'bs2')) {
-              return(vanKrevelenPlot(division_data, showVKBounds = FALSE, vkBoundarySet = parmTable$ColorBy))
+              return(vanKrevelenPlot(plot_data, showVKBounds = FALSE, vkBoundarySet = parmTable$ColorBy))
             } else {
               # if no boundary lines and color selection doesn't belong to a boundary, color by test
-              return(vanKrevelenPlot(division_data, showVKBounds = FALSE, colorCName = parmTable$ColorBy))
+              return(vanKrevelenPlot(plot_data, showVKBounds = FALSE, colorCName = parmTable$ColorBy))
             }
           } else {
             # if boundary lines, allow a color by boundary class 
             if (parmTable$ColorBy %in% c('bs1', 'bs2')) {
-              return(vanKrevelenPlot(division_data, vkBoundarySet = parmTable$BoundarySet, showVKBounds = TRUE))
+              return(vanKrevelenPlot(plot_data, vkBoundarySet = parmTable$BoundarySet, showVKBounds = TRUE))
             } else {
               # if boundary lines and color isn't a boundary class
-              return(vanKrevelenPlot(division_data, vkBoundarySet = parmTable$BoundarySet, showVKBounds = TRUE, colorCName = parmTable$ColorBy))
+              return(vanKrevelenPlot(plot_data, vkBoundarySet = parmTable$BoundarySet, showVKBounds = TRUE, colorCName = parmTable$ColorBy))
               
             }
           }
@@ -76,7 +79,7 @@ renderDownloadPlots <- function(parmTable, peakIcr2){
     #--------- Density Plot --------#
     if (parmTable$PlotType == 'Density Plot') {
       return({
-        densityPlot(division_data, variable = parmTable$ColorBy)
+        densityPlot(plot_data, variable = parmTable$ColorBy)
       })
     }
 } 
