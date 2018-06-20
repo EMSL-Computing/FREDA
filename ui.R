@@ -7,12 +7,10 @@
 #    http://shiny.rstudio.com/
 #
 
-
-
 library(plotly)
 library(shiny)
+library(shinyBS)
 library(DT)
-
 
 # Define UI for application that draws a histogram
 shinyUI(navbarPage(title = (windowTitle = "FREDA"),
@@ -106,13 +104,21 @@ shinyUI(navbarPage(title = (windowTitle = "FREDA"),
                                 # (Conditional on the above selectInput) Elemental columns: 
                                 ##  which columns contain the elements?
                                 conditionalPanel(
-                                  condition = "input.select == 2", 
-                                  uiOutput("c_column"), 
-                                  uiOutput("h_column"), 
-                                  uiOutput("n_column"), 
-                                  uiOutput("o_column"), 
-                                  uiOutput("s_column"), 
-                                  uiOutput("p_column")
+                                  condition = "input.select == 2",
+                                  fluidRow(
+                                    column(width = 4,
+                                      uiOutput("c_column"), 
+                                      uiOutput("h_column")
+                                    ),
+                                    column(width = 4,
+                                           uiOutput("n_column"),
+                                           uiOutput("o_column") 
+                                           ),
+                                    column(width = 4,
+                                           uiOutput("s_column"), 
+                                           uiOutput("p_column")
+                                    )
+                                  )
                                 ), 
                                 
                                 # HOrizontal rule
@@ -162,19 +168,16 @@ shinyUI(navbarPage(title = (windowTitle = "FREDA"),
                    ################## Preprocess Panel ###############################################
                    tabPanel("Preprocess",
                             
+                            bsButton("preprocess_help", "How do I use this page?", style = "info"),
+                            
+                            br(),
+                            br(),
+                            
                             sidebarLayout(
                               
                               # Sidebar panel
                               sidebarPanel(
-                                # 
-                                # # Test: Display message at top of sidebar
-                                # 'By default, O:C, H:C, Kendrick Mass, 
-                                #               and Kendrick defect will be calculated.',
-                                # 
-                                # # Horizontal rule
-                                # tags$hr(),
                                 
-                                # Checkbox: which tests should also be applied
                                 uiOutput("which_calcs"),
                             
                                 # Action button: add test columns with reasults to peakIcr2
@@ -204,7 +207,6 @@ shinyUI(navbarPage(title = (windowTitle = "FREDA"),
                                   )
                                 ),
                                 
-                                
                                 # Drop down list: which histogram should be displayed?
                                 uiOutput('which_hist'),
                                 
@@ -219,26 +221,49 @@ shinyUI(navbarPage(title = (windowTitle = "FREDA"),
                    ################## Filter Panel ##############################################
                    tabPanel("Filter", 
                             
+                            bsButton("filter_help", "How do I use this page?", style = "info"),
+                            
+                            br(),
+                            br(),
+                            
                             sidebarLayout(
                               sidebarPanel(
                                 
                                 # Set default width for panel
                                 width = 5,
-                                
+
                                 # Checkbox: Mass filter yes/no
-                                checkboxInput('massfilter', HTML('<h5><b>Mass Filter</b></h5>'), value = FALSE),
+                                #HTML('<h5><b>Mass Filter</b></h5>')
+                                
+                                
+                                checkboxInput('massfilter', tags$b("Mass Filter") ,value = FALSE),
+
                                 
                                 # Numeric: Min/max mass filter
-                                numericInput('min_mass', 'Minimum Mass value', 
-                                             min = 0, value = 200),
-                                numericInput('max_mass', "Maximum Mass value", 
-                                             min = 0, value = 900),
+                                splitLayout(
+                                  numericInput('min_mass', 'Minimum Mass value', 
+                                               min = 0, value = 200),
+                                  numericInput('max_mass', "Maximum Mass value", 
+                                               min = 0, value = 900)
+                                  ),
                                 
                                 # Checkbox: Mass filter yes/no
-                                checkboxInput('molfilter', HTML('<h5><b>Molecule Filter</b></h5>'), value = FALSE),
+                                checkboxInput('molfilter', tags$b("Molecule Filter"), value = FALSE),
                                 
                                 # Drop-down list: Min/max mass filter
                                 uiOutput('minobs'), 
+                                checkboxInput('customfilterz', label = "Implement up to 3 custom filters", value = FALSE),
+                                uiOutput("filter1UI"),
+                                uiOutput("customfilter1UI"),
+                                  conditionalPanel(condition = "input.custom1 !== 'Select item'",
+                                                  uiOutput("filter2UI"),
+                                                  uiOutput("customfilter2UI")
+                                  ),
+                                  conditionalPanel(condition = "input.custom2 !== 'Select item'",
+                                                   uiOutput("filter3UI"),
+                                                   uiOutput("customfilter3UI")
+                                  ),
+                                
                                 fluidRow(
                                   column(
                                     width = 6, actionButton('filter_click', "Filter Data", icon = icon("cog"), lib = "glyphicon")
@@ -273,6 +298,11 @@ shinyUI(navbarPage(title = (windowTitle = "FREDA"),
                    ################## Visualize Panel ###############################################
                    tabPanel("Visualize", 
                             
+                            bsButton("visualize_help", "How do I use this page?", style = "info"),
+                            
+                            br(),
+                            br(),
+                            
                             sidebarLayout(
                               
                               # Sidebar Panel
@@ -285,20 +315,35 @@ shinyUI(navbarPage(title = (windowTitle = "FREDA"),
                                                         'Density Plot',
                                                         'Select an Option' = 0),
                                             selected = 0
-                                ), 
-                                # UI options will change depending on plot type.
+                                ),
+                                
                                 uiOutput("plotUI"),
+                                uiOutput("plotUI_cond"),
+                                
+                                # conditionalPanel(condition = "(input.whichSample !== null && input.choose_single == 2)",
+                                #   uiOutput("plotUI_2")
+                                # ),
+                                
                                 uiOutput("title_input"),
                                 uiOutput("x_axis_input"),
                                 uiOutput("y_axis_input"),
-                                uiOutput("legend_title_input"),
-                                actionButton("plot_submit", label = "Submit")
+                                #uiOutput("legend_title_input"),
+                                splitLayout(
+                                  actionButton("plot_submit", label = "Submit")
+                                  #actionButton("clear_plots", label = "Clear Plot")
+                                )
                               ),# End sidebar conditionals on Visualize tab #
                               
                               mainPanel(
                                 #tags$div(plotlyOutput('FxnPlot'), class = "square"),
-                                plotlyOutput('FxnPlot', width = '700px', height = '600px'),
-                                width = 7,
+
+
+                                wellPanel(
+                                  plotlyOutput('FxnPlot', width = '700px', height = '600px')
+                                ),
+                                # width = 7,
+
+
                                 conditionalPanel(
                                   condition = "input.chooseplots == 'Van Krevelen Plot'",
                                   # Set default width to 7
@@ -310,13 +355,23 @@ shinyUI(navbarPage(title = (windowTitle = "FREDA"),
                                   uiOutput("vkbounds")
                                   
                                 ),
-                                uiOutput('vk_colors'),
+                                conditionalPanel(
+                                  condition = "input.chooseplots !== null",
+                                  # Set default width to 7
+                                  
+                                  # Drop down list: Use boundary?
+                                  # selectInput('vkbounds', 'Use Van Krevelen boundary set:',
+                                  #             choices = c('BS1' = 'bs1', 'BS2' = 'bs2', 'None' = 0),
+                                  #             selected = 'bs1')
+                                  selectInput("vk_colors", "Color By:", choices = NULL, selected = NULL)
+                                  
+                                ),
                                 br(),
                                 hr(),
                                 actionButton(inputId = "add_plot", label = "I want to download a hi-res version of this plot on the Download tab", icon = icon("download")),
                               br(),
                               br(),
-                                dataTableOutput("parmsTable")
+                                dataTableOutput("parmsTable", width = "55%")
                                 )# End main panel on Visualize tab #
                               
                             )), # End Visualize tab #
@@ -325,14 +380,14 @@ shinyUI(navbarPage(title = (windowTitle = "FREDA"),
                    tabPanel('Download',
                             checkboxGroupInput("download_selection", label = "Select Processed Data to Download",
                                                choices = c('Data File as one .csv and Molecular Identification File as another .csv' = "separate",
-                                                           'merged Data File and Molecular Identification File as a single .csv' = "merged")),
+                                                           'merged Data File and Molecular Identification File as a single .csv' = "merged"),
+                                                width = "40%"),
                             hr(),
                             checkboxInput("report_selection", label = "Report (Coming Soon)"),
                             hr(),
-                            checkboxInput("figure_selection", label = "High Resolution Figures (Coming Soon)"),
-                            radioButtons(inputId = "image_format", label = "Select an image format",
-                                         choices = c("svg", "pdf", "tiff", "png")),
-                            dataTableOutput("parmsTable2"),
+                            p("Figures"),
+                            p("Please select figures to download in the table below by clicking on the row. When clicked, the selection will highlight."),
+                            dataTableOutput("parmsTable2", width = "55%"),
                             verbatimTextOutput('x4'),
                             hr(),
                             downloadButton('download_processed_data', 'Download Selected Items')
