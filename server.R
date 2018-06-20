@@ -26,7 +26,7 @@ shinyServer(function(session, input, output) {
   source('tooltip_checkbox.R')
   source('summaryFilter.R') 
   source('summaryPreprocess.R')
-  source("renderDownloadPlots.R")
+  source("renderDownloadPlots.R", local = TRUE)
   
   revals <- reactiveValues(ntables = 0, makeplot = 1)
   
@@ -1427,7 +1427,7 @@ shinyServer(function(session, input, output) {
     # Sample(s) in the second group. Automatically NA if input$choose_single is single sample or single group
     newLine$G2 <- ifelse(input$choose_single %in% c(1,2), yes = "NA", no = "not yet available")
     # Boundary set borders to use (NA for non-Van Krevelen plots)
-    newLine$BoundarySet <- ifelse(input$chooseplots == "Van Krevelen Plot", yes = input$vkbounds, no = "NA")
+    newLine$BoundarySet <- ifelse(input$chooseplots == "Van Krevelen Plot", yes = ifelse(input$vkbounds == 0, NA, input$vkbounds), no = "NA")
     # Color By
     newLine$ColorBy <- input$vk_colors
     newLine$ChartTitle <- input$title_input
