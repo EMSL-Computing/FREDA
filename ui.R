@@ -253,8 +253,17 @@ shinyUI(navbarPage(title = (windowTitle = "FREDA"),
                                 # Drop-down list: Min/max mass filter
                                 uiOutput('minobs'), 
                                 checkboxInput('customfilterz', label = "Implement up to 3 custom filters", value = FALSE),
-                                uiOutput("filterUI"),
+                                uiOutput("filter1UI"),
                                 uiOutput("customfilter1UI"),
+                                  conditionalPanel(condition = "input.custom1 !== 'Select item'",
+                                                  uiOutput("filter2UI"),
+                                                  uiOutput("customfilter2UI")
+                                  ),
+                                  conditionalPanel(condition = "input.custom2 !== 'Select item'",
+                                                   uiOutput("filter3UI"),
+                                                   uiOutput("customfilter3UI")
+                                  ),
+                                
                                 fluidRow(
                                   column(
                                     width = 6, actionButton('filter_click', "Filter Data", icon = icon("cog"), lib = "glyphicon")
@@ -306,8 +315,8 @@ shinyUI(navbarPage(title = (windowTitle = "FREDA"),
                                                         'Density Plot',
                                                         'Select an Option' = 0),
                                             selected = 0
-                                ), 
-                                # UI options will change depending on plot type.
+                                ),
+                                
                                 uiOutput("plotUI"),
                                 uiOutput("plotUI_cond"),
                                 
