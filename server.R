@@ -495,8 +495,6 @@ shinyServer(function(session, input, output) {
   
   ####### Preprocess Tab #######
   
-  
-  
   #### Populate List from CSV File ####
   
   observeEvent(input$preprocess_help,{
@@ -712,7 +710,8 @@ shinyServer(function(session, input, output) {
   #get display name choices for dropdown
   display_name_choices <- reactive({
     drop_cols <- c(input$f_column, input$o_column, input$h_column, input$n_column,
-                   input$s_column, input$p_column, input$c_column, attr(peakIcr2, "cnames")$mass_cname)
+                   input$s_column, input$p_column, input$c_column, attr(peakIcr2, "cnames")$mass_cname,
+                   input$iso_info_column)
     
     hist_choices <- peakIcr2$e_meta %>% 
       dplyr::select(-one_of(drop_cols)) %>%
@@ -750,13 +749,74 @@ shinyServer(function(session, input, output) {
                 choices = seq(1, (length(edata_cnames()) - 1), 1), selected = 2)
     
   }) # End minobs
-  output$filterUI <- renderUI({
+  output$filter1UI <- renderUI({
     req(input$customfilterz)
     if (input$customfilterz) {
-      return(selectInput("custom1", label = "Select first filter item", choices = c("Select item", display_name_choices())))
+      return(selectInput("custom1", label = "Select first filter item", 
+                         choices = c("Select item", setdiff(display_name_choices(), c(isolate(input$custom2), isolate(input$custom3))))))
     }
   })
   
+  output$filter2UI <- renderUI({
+    req(input$customfilterz)
+    if (input$customfilterz) {
+      return(selectInput("custom2", label = "Select second filter item", 
+                         choices = c("Select item", setdiff(display_name_choices(), c(input$custom1, isolate(input$custom3))))))
+    }
+  })
+  
+  output$filter3UI <- renderUI({
+    req(input$customfilterz)
+    if (input$customfilterz) {
+      return(selectInput("custom3", label = "Select first filter item", 
+                         choices = c("Select item", setdiff(display_name_choices(), c(input$custom1, input$custom2)))))
+    }
+  })
+  
+  observe({
+    req(input$customfilterz == TRUE)
+    input$custom1
+    input$custom2
+    input$custom3
+    
+    inputlist <- list(input[["custom1"]], input[["custom2"]], input[["custom3"]])
+    lapply(1:3, function(i){
+      output[[paste0("customfilter",i,"UI")]] <- renderUI({
+        req(inputlist[[i]])
+        if (inputlist[[i]] != "Select item"){
+          #check to see if the selected filter is numeric or categorical
+          if (is.numeric(peakIcr2$e_meta[, inputlist[[i]]])) {
+            # if the filter applies to numeric data, allow inputs for min, max, and keep NA
+   
+              splitLayout(cellWidths = c("40%", "40%", "20%"),
+                numericInput(inputId = paste0("minimum_custom",i), label = "Min", value = min(peakIcr2$e_meta[, inputlist[[i]]], na.rm = TRUE)),
+                numericInput(inputId = paste0("maximum_custom",i), label = "Max", value = max(peakIcr2$e_meta[, inputlist[[i]]], na.rm = TRUE)),
+                tagList(
+                  br(),
+                  checkboxInput(inputId = paste0("na_custom",i), label = "Keep NAs?", value = FALSE)
+                  )
+                )
+            
+          } else if (!is.numeric(peakIcr2$e_meta[, inputlist[[i]]])) {
+            # if the filter applies to categorical data, populate a box of options along with a keep NA option
+            splitLayout(cellWidths = c("40%", "40%", "20%"),
+              selectInput(inputId = paste0("categorical_custom",i), label = "Categories to Keep",
+                          multiple = TRUE, selected = unique(peakIcr2$e_meta[, inputlist[[i]]]), choices = unique(peakIcr2$e_meta[, inputlist[[i]]])),
+              tagList(
+                br(),
+                checkboxInput(inputId = paste0("na_custom",i), label = "Keep NAs?", value = FALSE)
+              )
+            )
+            
+            
+          }
+        } else {
+          return(NULL)
+        }
+      }) 
+    })
+    
+  })
   output$customfilter1UI <- renderUI({
     req(input$custom1)
     if (input$custom1 != "Select item"){
@@ -1038,112 +1098,31 @@ shinyServer(function(session, input, output) {
     validate(
       need(input$chooseplots != 0, message = "Please select plotting criteria")
     )
-    #------ Van Krevelen Sidebar Options ---------#
-    if (input$chooseplots == 'Van Krevelen Plot') {
-      return(tagList(
-        # Drop down list: single samples or multiple?
-        selectInput('choose_single', 'I want to plot using:',
+    selectInput('choose_single', 'I want to plot using:',
                     choices = c('Make a selection' = 0, 'A single sample' = 1, 'Multiple samples by group' = 2, 'A comparison of groups' = 3),
-                    selected = 0), 
-        
-        # (Conditional on choose_single) If Multiple: show options for grouping
-        conditionalPanel(
-          condition = 'input.choose_single == 2',
-          
-          fluidRow(
-            # Column with width 6: which samples are in Group 1?
-            column(12,
-                   selectInput('whichGroups1', 'Grouped Samples',
-                               choices = sample_names(),
-                               multiple = TRUE)
-            )
-          ),
-          conditionalPanel(
-            condition = 'input.whichGroups1.length < 2',
-            tags$p("Please select at least 2 samples")
-          )
-        ), # End conditional output multiple samples#
-        
-        
-        # (Conditional on choose_single) If single: choose sample
-        conditionalPanel(
-          condition = 'input.choose_single == 1',
-          
-          selectInput('whichSample', 'Sample',
-                      choices = sample_names())
-        ) # End conditional output, single sample #
-      ))
-    }
-    #------ Kendrick Sidebar Options ---------#
-    if (input$chooseplots == 'Kendrick Plot') {
-      return(tagList(
-        # Drop down list: single samples or multiple?
-        selectInput('choose_single', 'I want to plot using:',
-                    choices = c('Make a selection' = 0, 'A single sample' = 1, 'Multiple samples by group' = 2, 'A comparison of groups' = 3),
-                    selected = 0), 
-        
-        # (Conditional on choose_single) If Multiple: show options for grouping
-        conditionalPanel(
-          condition = 'input.choose_single == 2',
-          
-          fluidRow(
-            # Column with width 6: which samples are in Group 1?
-            column(12,
-                   selectInput('whichGroups1', 'Grouped Samples',
-                               choices = sample_names(),
-                               multiple = TRUE)
-            )
-          ),
-          conditionalPanel(
-            condition = 'input.whichGroups1.length < 2',
-            tags$p("Please select at least 2 samples")
-          )
-        ),
-        conditionalPanel(
-          condition = 'input.choose_single == 1',
-          
-          selectInput('whichSample', 'Sample',
-                      choices = sample_names())
-        ) # End conditional output, single sample #
-      ))
-    }
-    #------ Density Sidebar Options ---------#
-    if (input$chooseplots == 'Density Plot') {
-      return(tagList(
-        # Drop down list: single samples or multiple?
-        selectInput('choose_single', 'I want to plot using:',
-                    choices = c('Make a selection' = 0, 'A single sample' = 1, 'Multiple samples by group' = 2, 'A comparison of groups' = 3),
-                    selected = 0), 
-        
-        # (Conditional on choose_single) If Multiple: show options for grouping
-        conditionalPanel(
-          condition = 'input.choose_single == 2',
-          
-          fluidRow(
-            # Column with width 6: which samples are in Group 1?
-            column(12,
-                   selectInput('whichGroups1', 'Grouped Samples',
-                               choices = sample_names(),
-                               multiple = TRUE)
-            )
-          ),
-          conditionalPanel(
-            condition = 'input.whichGroups1.length < 2',
-            tags$p("Please select at least 2 samples")
-          )
-        ), # End conditional output multiple samples#
-        
-        # (Conditional on choose_single) If single: choose sample
-        conditionalPanel(
-          condition = 'input.choose_single == 1',
-          
-          selectInput('whichSample', 'Sample',
-                      choices = sample_names())
-        )# End conditional output, single sample #
-      ))
-    }
+                    selected = 0)
     
   })
+  
+  output$plotUI_cond <- renderUI({
+    req(input$choose_single != 0)
+    if(input$choose_single == 2){
+      return(tagList(
+          selectInput('whichGroups1', 'Grouped Samples',
+                               choices = sample_names(),
+                               multiple = TRUE),
+          conditionalPanel(
+            condition = 'input.whichGroups1.length < 2',
+            tags$p("Please select at least 2 samples", style = "color:gray")
+          ) # End conditional output multiple samples#
+      ))
+    }
+    else if(input$choose_single == 1){
+        return(selectInput('whichSample', 'Sample',
+                    choices = sample_names()))
+    }
+    else return(NULL)
+    })
   
   output$vkbounds <- renderUI({
     req(input$chooseplots == "Van Krevelen Plot")
