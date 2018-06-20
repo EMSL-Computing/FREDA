@@ -1495,13 +1495,13 @@ shinyServer(function(session, input, output) {
       
       if (length(input$parmsTable2_rows_selected) > 0) {
         for (i in input$parmsTable2_rows_selected) {
-          path <- paste(parmTable$parms$FileName[i],".svg", sep = "") #create a plot name
+          path <- paste(parmTable$parms$FileName[i],".", input$image_format, sep = "") #create a plot name
           fs <- c(fs, path) # append the new plot to the old plots
           export(renderDownloadPlots(parmTable = parmTable$parms[i,], peakIcr2),
                  file = paste("plot",i,".png", sep = ""), zoom = 2) # use webshot to export a screenshot to the opened pdf
           #r <- brick(file.path(getwd(), paste("plot",i,".png", sep = ""))) # create a raster of the screenshot
           img <- magick::image_read(paste("plot",i,".png", sep = ""))#attr(r,"file")@name) #turn the raster into an image of selected format
-          image_write(img, path = path, format = "svg") #write the image
+          image_write(img, path = path, format = input$image_format) #write the image
           #rsvg::rsvg_svg(img, file = path)
         }
         fs <- c(fs, "Plot_key.csv")
