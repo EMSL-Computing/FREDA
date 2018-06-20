@@ -495,8 +495,6 @@ shinyServer(function(session, input, output) {
   
   ####### Preprocess Tab #######
   
-  
-  
   #### Populate List from CSV File ####
   
   observeEvent(input$preprocess_help,{
@@ -712,7 +710,8 @@ shinyServer(function(session, input, output) {
   #get display name choices for dropdown
   display_name_choices <- reactive({
     drop_cols <- c(input$f_column, input$o_column, input$h_column, input$n_column,
-                   input$s_column, input$p_column, input$c_column, attr(peakIcr2, "cnames")$mass_cname)
+                   input$s_column, input$p_column, input$c_column, attr(peakIcr2, "cnames")$mass_cname,
+                   input$iso_info_column)
     
     hist_choices <- peakIcr2$e_meta %>% 
       dplyr::select(-one_of(drop_cols)) %>%
@@ -1044,34 +1043,10 @@ shinyServer(function(session, input, output) {
         # Drop down list: single samples or multiple?
         selectInput('choose_single', 'I want to plot using:',
                     choices = c('Make a selection' = 0, 'A single sample' = 1, 'Multiple samples by group' = 2, 'A comparison of groups' = 3),
-                    selected = 0), 
+                    selected = 0) 
         
         # (Conditional on choose_single) If Multiple: show options for grouping
-        conditionalPanel(
-          condition = 'input.choose_single == 2',
-          
-          fluidRow(
-            # Column with width 6: which samples are in Group 1?
-            column(12,
-                   selectInput('whichGroups1', 'Grouped Samples',
-                               choices = sample_names(),
-                               multiple = TRUE)
-            )
-          ),
-          conditionalPanel(
-            condition = 'input.whichGroups1.length < 2',
-            tags$p("Please select at least 2 samples")
-          )
-        ), # End conditional output multiple samples#
-        
-        
-        # (Conditional on choose_single) If single: choose sample
-        conditionalPanel(
-          condition = 'input.choose_single == 1',
-          
-          selectInput('whichSample', 'Sample',
-                      choices = sample_names())
-        ) # End conditional output, single sample #
+         # End conditional output, single sample #
       ))
     }
     #------ Kendrick Sidebar Options ---------#
@@ -1080,32 +1055,12 @@ shinyServer(function(session, input, output) {
         # Drop down list: single samples or multiple?
         selectInput('choose_single', 'I want to plot using:',
                     choices = c('Make a selection' = 0, 'A single sample' = 1, 'Multiple samples by group' = 2, 'A comparison of groups' = 3),
-                    selected = 0), 
+                    selected = 0) 
         
         # (Conditional on choose_single) If Multiple: show options for grouping
-        conditionalPanel(
-          condition = 'input.choose_single == 2',
-          
-          fluidRow(
-            # Column with width 6: which samples are in Group 1?
-            column(12,
-                   selectInput('whichGroups1', 'Grouped Samples',
-                               choices = sample_names(),
-                               multiple = TRUE)
-            )
-          ),
-          conditionalPanel(
-            condition = 'input.whichGroups1.length < 2',
-            tags$p("Please select at least 2 samples")
-          )
-        ),
-        conditionalPanel(
-          condition = 'input.choose_single == 1',
-          
-          selectInput('whichSample', 'Sample',
-                      choices = sample_names())
-        ) # End conditional output, single sample #
-      ))
+         # End conditional output, single sample #
+       )
+      )
     }
     #------ Density Sidebar Options ---------#
     if (input$chooseplots == 'Density Plot') {
@@ -1113,36 +1068,33 @@ shinyServer(function(session, input, output) {
         # Drop down list: single samples or multiple?
         selectInput('choose_single', 'I want to plot using:',
                     choices = c('Make a selection' = 0, 'A single sample' = 1, 'Multiple samples by group' = 2, 'A comparison of groups' = 3),
-                    selected = 0), 
+                    selected = 0) 
         
         # (Conditional on choose_single) If Multiple: show options for grouping
-        conditionalPanel(
-          condition = 'input.choose_single == 2',
-          
-          fluidRow(
-            # Column with width 6: which samples are in Group 1?
-            column(12,
-                   selectInput('whichGroups1', 'Grouped Samples',
-                               choices = sample_names(),
-                               multiple = TRUE)
-            )
-          ),
-          conditionalPanel(
-            condition = 'input.whichGroups1.length < 2',
-            tags$p("Please select at least 2 samples")
-          )
-        ), # End conditional output multiple samples#
-        
-        # (Conditional on choose_single) If single: choose sample
-        conditionalPanel(
-          condition = 'input.choose_single == 1',
-          
-          selectInput('whichSample', 'Sample',
-                      choices = sample_names())
-        )# End conditional output, single sample #
+        # End conditional output, single sample #
       ))
     }
     
+  })
+  
+  output$plotUI_cond <- renderUI({
+    req(input$choose_single != 0)
+    if(input$choose_single == 2){
+      return(tagList(
+          selectInput('whichGroups1', 'Grouped Samples',
+                               choices = sample_names(),
+                               multiple = TRUE),
+          conditionalPanel(
+            condition = 'input.whichGroups1.length < 2',
+            tags$p("Please select at least 2 samples", style = "color:gray")
+          ) # End conditional output multiple samples#
+      ))
+    }
+    else if(input$choose_single == 1){
+        return(selectInput('whichSample', 'Sample',
+                    choices = sample_names()))
+    }
+    else return(NULL)
   })
   
   output$vkbounds <- renderUI({
