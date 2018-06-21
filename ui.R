@@ -309,13 +309,14 @@ shinyUI(navbarPage(title = (windowTitle = "FREDA"),
                               sidebarPanel(
                                 
                                 # Drop down list: Van Krevelen or Kendrick plot?
-                                selectInput('chooseplots', 'I want to plot a', 
-                                            choices = c('Van Krevelen Plot', 
-                                                        'Kendrick Plot',
-                                                        'Density Plot',
-                                                        'Select an Option' = 0),
-                                            selected = 0
-                                ),
+                                uiOutput('plot_type'),
+                                # selectInput('chooseplots', 'I want to plot a', 
+                                #             choices = c('Van Krevelen Plot', 
+                                #                         'Kendrick Plot',
+                                #                         'Density Plot',
+                                #                         'Select an Option' = 0),
+                                #             selected = 0
+                                # ),
                                 
                                 uiOutput("plotUI"),
                                 uiOutput("plotUI_cond"),

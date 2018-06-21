@@ -1072,7 +1072,30 @@ shinyServer(function(session, input, output) {
   
 
   ####### Visualize Tab #######
- 
+  output$plot_type <- renderUI({
+    choices <- c('Van Krevelen Plot', 'Kendrick Plot', 'Density Plot', 'Select an Option' = 0)
+    
+    if(is.null(attr(peakIcr2, "cnames")$kmass_cname) | is.null(attr(peakIcr2, "cnames")$kdefect_cname)){
+      choices <- choices[choices != "Kendrick Plot"]
+    }
+    
+    if(is.null(attr(peakIcr2, "cnames")$o2c_cname) | is.null(attr(peakIcr2, "cnames")$h2c_cname)){
+      choices <- choices[choices != "Van Krevelen Plot"]
+    }
+    
+    if(!any(sapply(peakIcr2$e_meta %>% dplyr::select(-one_of(getEDataColName(peakIcr2))), is.numeric))){
+      choices <- choices[choices != "Density Plot"]
+    }
+    
+    selectInput('chooseplots', 'I want to plot a', 
+                choices = choices,
+                selected = 0
+    )
+    
+    
+  })
+  
+   
   ## Sidebar Panel ##
   # choose ui to render depending on which plot is chosen from input$chooseplot
   observeEvent(input$visualize_help,{
@@ -1098,10 +1121,20 @@ shinyServer(function(session, input, output) {
     validate(
       need(input$chooseplots != 0, message = "Please select plotting criteria")
     )
-    selectInput('choose_single', 'I want to plot using:',
-                    choices = c('Make a selection' = 0, 'A single sample' = 1, 'Multiple samples by group' = 2, 'A comparison of groups' = 3),
-                    selected = 0)
-    
+    #ncol(peakIcr2$e_data %>% dplyr::select(-one_of(getEDataColName(peakIcr2)))) == 1
+    if(nrow(peakIcr2$f_data) == 1){
+      return(tagList(
+        tags$p("Data file contains 1 sample, grouping options will be hidden.", style = "color:gray"),
+        conditionalPanel('false', selectInput('choose_single', 'I want to plot using:',
+                                              choices = c('Make a selection' = 0, 'A single sample' = 1, 'Multiple samples by group' = 2, 'A comparison of groups' = 3),
+                                              selected = 1))
+      ))
+    }
+    else{
+      return(selectInput('choose_single', 'I want to plot using:',
+                      choices = c('Make a selection' = 0, 'A single sample' = 1, 'Multiple samples by group' = 2, 'A comparison of groups' = 3),
+                      selected = 0))
+    }
   })
   
   output$plotUI_cond <- renderUI({
@@ -1126,6 +1159,12 @@ shinyServer(function(session, input, output) {
   
   output$vkbounds <- renderUI({
     req(input$chooseplots == "Van Krevelen Plot")
+    if(is.null(input$choose_single)){
+      return(selectInput('vkbounds', 'Use Van Krevelen boundary set:',
+                         choices = c('BS1' = 'bs1', 'BS2' = 'bs2', 'None' = 0),
+                         selected = 'bs1'))
+    }
+    
     validate(
       need(input$choose_single != 0, message = "Please select sample(s)"),
       need(input$chooseplots != 0, message = "")
@@ -1142,7 +1181,10 @@ shinyServer(function(session, input, output) {
     validate(
       need(isolate(input$chooseplots) != 0 & isolate(input$choose_single) !=0, message = "Please select plotting criteria")
     )
-    
+    # corresponds to data with a single sample
+    if(isolate(is.null(input$choose_single))){
+      return(peakIcr2)
+    }
     if (isolate(input$choose_single) == 1) { #single sample
       # Make sure at least one test has been calculated
       return(subset(peakIcr2, isolate(input$whichSample)))
