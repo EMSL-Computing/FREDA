@@ -1208,8 +1208,7 @@ shinyServer(function(session, input, output) {
     
     # ifelse block determines how to populate vk_colors dropdown
     if (input$choose_single == 1){
-      hist_choices <- intersect(calc_vars$ColumnName, peakIcr2$e_meta %>% colnames())
-      names(hist_choices) <- calc_vars %>% filter(ColumnName %in% hist_choices) %>% pluck("DisplayName")
+      hist_choices <- display_name_choices()
       
       if(input$chooseplots == "Van Krevelen Plot"){
         hist_choices <- switch(as.character(input$vkbounds), 
