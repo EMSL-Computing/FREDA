@@ -121,7 +121,6 @@ shinyUI(navbarPage(title = (windowTitle = "FREDA"),
                                   )
                                 ), 
                                 
-                                # HOrizontal rule
                                 tags$hr(),
                                 
                                 # Action button: pressing this creates the peakICR object
@@ -150,8 +149,7 @@ shinyUI(navbarPage(title = (windowTitle = "FREDA"),
                                 tags$hr(), 
                                 
                                 # Show preview of e_data
-                                htmlOutput('edata_text'),
-                                #dataTableOutput("head_edata"), 
+                                htmlOutput('edata_text'), 
                                 DTOutput("head_edata", width = "90%"),
                                 
                                 # Horizontal rule
@@ -159,7 +157,6 @@ shinyUI(navbarPage(title = (windowTitle = "FREDA"),
                                 
                                 # Show preview of e_meta
                                 htmlOutput('emeta_text'),
-                                #dataTableOutput('head_emeta'),
                                 DTOutput("head_emeta", width = "90%")
                                 
                               ) # End main panel
@@ -308,15 +305,8 @@ shinyUI(navbarPage(title = (windowTitle = "FREDA"),
                               # Sidebar Panel
                               sidebarPanel(
                                 
-                                # Drop down list: Van Krevelen or Kendrick plot?
+                                # Select Plot Type
                                 uiOutput('plot_type'),
-                                # selectInput('chooseplots', 'I want to plot a', 
-                                #             choices = c('Van Krevelen Plot', 
-                                #                         'Kendrick Plot',
-                                #                         'Density Plot',
-                                #                         'Select an Option' = 0),
-                                #             selected = 0
-                                # ),
                                 
                                 uiOutput("plotUI"),
                                 uiOutput("plotUI_cond"),
@@ -331,7 +321,6 @@ shinyUI(navbarPage(title = (windowTitle = "FREDA"),
                                 #uiOutput("legend_title_input"),
                                 splitLayout(
                                   actionButton("plot_submit", label = "Submit")
-                                  #actionButton("clear_plots", label = "Clear Plot")
                                 )
                               ),# End sidebar conditionals on Visualize tab #
                               
@@ -350,9 +339,6 @@ shinyUI(navbarPage(title = (windowTitle = "FREDA"),
                                   # Set default width to 7
                                   
                                   # Drop down list: Use boundary?
-                                  # selectInput('vkbounds', 'Use Van Krevelen boundary set:',
-                                  #             choices = c('BS1' = 'bs1', 'BS2' = 'bs2', 'None' = 0),
-                                  #             selected = 'bs1')
                                   uiOutput("vkbounds")
                                   
                                 ),
@@ -370,8 +356,8 @@ shinyUI(navbarPage(title = (windowTitle = "FREDA"),
                                 br(),
                                 hr(),
                                 actionButton(inputId = "add_plot", label = "I want to download a hi-res version of this plot on the Download tab", icon = icon("download")),
-                              br(),
-                              br(),
+                                br(),
+                                br(),
                                 dataTableOutput("parmsTable", width = "55%")
                                 )# End main panel on Visualize tab #
                               
