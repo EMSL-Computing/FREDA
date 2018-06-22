@@ -389,6 +389,8 @@ shinyUI(navbarPage(title = (windowTitle = "FREDA"),
                             p("Figures"),
                             p("Please select figures to download in the table below by clicking on the row. When clicked, the selection will highlight."),
                             dataTableOutput("parmsTable2", width = "55%"),
+                            radioButtons(inputId = "image_format", label = "Select an image format",
+                                         choices = c("svg", "pdf", "tiff", "png"), selected = "svg"),
                             verbatimTextOutput('x4'),
                             hr(),
                             downloadButton('download_processed_data', 'Download Selected Items')
