@@ -1235,9 +1235,10 @@ shinyServer(function(session, input, output) {
       }
     }
     else if (input$choose_single == 2) {
-      hist_choices <- plot_data()$e_data %>% 
-        dplyr::select(-one_of(getEDataColName(plot_data()))) %>%
-        colnames()
+      hist_choices <- c('Number present in group' = "Group_n_present", "Proportion present in group" = 'Group_prop_present',
+                        plot_data()$e_meta %>% 
+                          dplyr::select(-one_of(getEDataColName(plot_data()))) %>%
+                          colnames())
     }
     
     # prevent plot from redrawing due to selection update
@@ -1303,7 +1304,7 @@ shinyServer(function(session, input, output) {
       if (input$chooseplots == 'Kendrick Plot') {
         if (isolate(input$choose_single) == 2) {
           validate(need(length(input$whichGroups1) > 1, message = "Please select at least 2 samples"))
-          p <- groupKendrickPlot(isolate(plot_data()), colorCName = isolate(input$vk_colors),
+          p <- kendrickPlot(isolate(plot_data()), colorCName = isolate(input$vk_colors),
                                  xlabel = isolate(input$x_axis_input), ylabel = isolate(input$y_axis_input),
                                  title = isolate(input$title_input),legendTitle = isolate(input$legend_title_input))
         } else if (isolate(input$choose_single) == 1) {
@@ -1326,12 +1327,12 @@ shinyServer(function(session, input, output) {
         if (isolate(input$choose_single) == 2) {
           validate(need(length(input$whichGroups1) > 1, message = "Please select at least 2 samples"))
           if (input$vkbounds == 0) {
-            p <- groupVanKrevelenPlot(isolate(plot_data()), colorCName = isolate(input$vk_colors), showVKBounds = FALSE,
+            p <- vanKrevelenPlot(isolate(plot_data()), colorCName = isolate(input$vk_colors), showVKBounds = FALSE,
                                       xlabel = isolate(input$x_axis_input), ylabel = isolate(input$y_axis_input),
                                       title = isolate(input$title_input),legendTitle = isolate(input$legend_title_input))
           } else {
             
-            p <- groupVanKrevelenPlot(isolate(plot_data()), colorCName = isolate(input$vk_colors), vkBoundarySet = input$vkbounds,
+            p <- vanKrevelenPlot(isolate(plot_data()), colorCName = isolate(input$vk_colors), vkBoundarySet = input$vkbounds,
                                       xlabel = isolate(input$x_axis_input), ylabel = isolate(input$y_axis_input),
                                       title = isolate(input$title_input),legendTitle = isolate(input$legend_title_input))
           }
