@@ -702,7 +702,8 @@ shinyServer(function(session, input, output) {
     showModal(
       modalDialog("",
                   tags$p("This page allows you to filter the data by various metrics.  
-                         The default options are to retain molecules within a particular mass range (mass filter), and to retain molecules that appear a minimum number of times across all samples (molecule filter).  
+                         The default options are to retain peaks within a particular mass range (mass filter), retain peaks that appear a minimum number of times across all samples (molecule filter),
+                         and retain peaks that have elemental information - either elemental columns or a full formula column (formula filter).
                          Additionally, one can filter by up to three variables contained in the molecular identification file.\n
                          As you select options, a plot will update showing the remaining observations after the application of each filter.\n",
                          style = "color:CornFlowerBlue"),
@@ -864,6 +865,12 @@ shinyServer(function(session, input, output) {
       
     } # End molecule filter if statement
     
+    if (input$formfilter){
+      filterForm <- formula_filter(peakIcr2)
+      peakIcr2 <<- applyFilt(filterForm, peakIcr2)
+      
+    }
+    
   }) # End creating peakIcr2
   
   #### Main Panel (Filter Tab) ####
@@ -926,8 +933,8 @@ shinyServer(function(session, input, output) {
     }
     
     # Get summary table from sourced file 'summaryFilter.R'
-    summaryFilt(peakICR(), input$massfilter, min_mass, 
-                max_mass, input$molfilter, input$minobs)
+    summaryFilt(peakICR(), c(input$massfilter, input$molfilter, input$formfilter), min_mass, 
+                max_mass, input$minobs)
     
   }) # End summaryFilterDataFrame
   
@@ -954,6 +961,16 @@ shinyServer(function(session, input, output) {
       
       # Get which row has the row name 'After Mass Filter'
       rowNum <- which(summaryFilterDataFrame()$data_state == 'After Molecule Filter')
+      
+      # Get relevant columns out of summaryFilterDataFrame
+      afterResults <- unlist(summaryFilterDataFrame()[rowNum, c('sum_peaks', 'assigned', 
+                                                                'min_mass', 'max_mass')])
+    }
+    
+    if (input$formfilter) {
+      
+      # Get which row has the row name 'After Mass Filter'
+      rowNum <- which(summaryFilterDataFrame()$data_state == 'After Formula Filter')
       
       # Get relevant columns out of summaryFilterDataFrame
       afterResults <- unlist(summaryFilterDataFrame()[rowNum, c('sum_peaks', 'assigned', 
@@ -992,7 +1009,7 @@ shinyServer(function(session, input, output) {
   # Depends on: summaryFilterDataFrame
   output$barplot_filter <- renderPlot({
     # Melt dataframe into 2 objects
-    which_filts <- c("Unfiltered", "After Mass Filter", "After Molecule Filter")[c(TRUE, input$massfilter, input$molfilter)]
+    which_filts <- c("Unfiltered", "After Mass Filter", "After Molecule Filter", "After Formula Filter")[c(TRUE, input$massfilter, input$molfilter, input$formfilter)]
     
     ggdata_barplot <- melt(summaryFilterDataFrame()[,c('data_state', 'assigned', 'unassigned')]) %>% filter(data_state %in% which_filts)
     ggdata_text <- summaryFilterDataFrame()[, c('data_state', 'sum_peaks', 'dispText')] %>% filter(data_state %in% which_filts)

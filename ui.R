@@ -249,6 +249,9 @@ shinyUI(navbarPage(title = (windowTitle = "FREDA"),
                                 
                                 # Drop-down list: Min/max mass filter
                                 uiOutput('minobs'), 
+                                
+                                checkboxInput('formfilter', tags$b("Formula Presence Filter"), value = FALSE),
+                            
                                 # checkboxInput('customfilterz', label = "Implement up to 3 custom filters", value = FALSE),
                                 # uiOutput("filter1UI"),
                                 # uiOutput("customfilter1UI"),
