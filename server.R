@@ -26,7 +26,7 @@ shinyServer(function(session, input, output) {
   source('tooltip_checkbox.R')
   source('summaryFilter.R') 
   source('summaryPreprocess.R')
-  source("renderDownloadPlots.R", local = TRUE)
+  source("renderDownloadPlots.R")
   
   revals <- reactiveValues(ntables = 0, makeplot = 1)
   
@@ -1108,21 +1108,46 @@ shinyServer(function(session, input, output) {
     req(input$choose_single != 0)
     if(input$choose_single == 2){
       return(tagList(
-          selectInput('whichGroups1', 'Grouped Samples',
-                               choices = sample_names(),
-                               multiple = TRUE),
-          conditionalPanel(
-            condition = 'input.whichGroups1.length < 2',
-            tags$p("Please select at least 2 samples", style = "color:gray")
-          ) # End conditional output multiple samples#
+        selectInput('whichGroups1', 'Grouped Samples',
+                    choices = sample_names(),
+                    multiple = TRUE),
+        conditionalPanel(
+          condition = 'input.whichGroups1.length < 2',
+          tags$p("Please select at least 2 samples", style = "color:gray")
+        ) # End conditional output multiple samples#
       ))
-    }
-    else if(input$choose_single == 1){
-        return(selectInput('whichSample', 'Sample',
-                    choices = sample_names()))
-    }
-    else return(NULL)
-    })
+    } else if (input$choose_single == 1){
+      return(selectInput('whichSample', 'Sample',
+                         choices = sample_names()))
+    } else if (input$choose_single == 3) {
+      return(tagList(
+        selectInput('whichGroups1', 'Group 1 Samples',
+                    choices = sample_names(),
+                    multiple = TRUE),
+        selectInput('whichGroups2', 'Group 2 Samples',
+                    choices = sample_names(),
+                    multiple = TRUE)
+      )
+      )
+    } else return(NULL)
+  })
+  
+  observeEvent(input$plot_submit,
+               # # Error handling: peakICR() must exist
+               # req(peakICR())
+               if (input$choose_single == 3) {
+                 req(input$whichGroups1)
+                 req(input$whichGroups2)
+                 if (any(input$whichGroups1 %in% input$whichGroups2) | any(input$whichGroups2 %in% input$whichGroups1)){
+                   showModal(
+                     modalDialog(
+                       title = "Group Warning",
+                       HTML('<h4 style= "color:#FF0000">Samples must be unique between groups.</h4>')
+                       )
+                     ) 
+                 }
+               }
+               )
   
   output$vkbounds <- renderUI({
     req(input$chooseplots == "Van Krevelen Plot")
@@ -1163,7 +1188,29 @@ shinyServer(function(session, input, output) {
       attr(temp_data, "group_DF") <- temp_group_df
       return(summarizeGroups(temp_data, summary_functions = getGroupSummaryFunctionNames()))
       
+    } else if (isolate(input$choose_single) == 3) {# two groups how to figure that out
+      # Make sure at least one test has been calculated
+      validate(need(!is.null(isolate(input$whichGroups1)), message = "Please select samples for first grouping"))
+      validate(need(length(input$whichGroups1) > 0, message = "Please select at least 1 sample"))
+      validate(need(!is.null(isolate(input$whichGroups2)), message = "Please select samples for second grouping"))
+      validate(need(length(input$whichGroups2) > 0, message = "Please select at least 1 sample"))
+      
+      group1_samples <- isolate(input$whichGroups1)
+      group2_samples <- isolate(input$whichGroups2)
+      temp_group_df <- data.frame(c(group1_samples, group2_samples), c(rep("Group1", times=length(group1_samples)), rep("Group2", length(group2_samples))))
+      colnames(temp_group_df) <- c(getFDataColName(peakIcr2), "Group")
+      
+      temp_data <- peakIcr2 %>%
+        subset(samples=c(group1_samples, group2_samples))
+      
+      temp_data <- fticRanalysis:::setGroupDF(temp_data, temp_group_df)
+      grpComparisonsObj <- divideByGroupComparisons(temp_data, comparisons = "all")[[1]]$value
+      return(grpComparisonsObj)
+      
     }
+    #else if (isolate(input$choose_single) == 3){
+    #  
+    #}
   })
     
     # Create named list with potential histogram options
@@ -1180,7 +1227,7 @@ shinyServer(function(session, input, output) {
                                "0" = c('Van Krevelen Boundary Set 1' = 'bs1', 'Van Krevelen Boundary Set 2' = 'bs2', hist_choices))
       }
     }
-    else if (isolate(input$choose_single) == 2) {
+    else if (isolate(input$choose_single) == 2 | isolate(input$choose_single) == 3) {
       hist_choices <- plot_data()$e_data %>% 
         dplyr::select(-one_of(getEDataColName(plot_data()))) %>%
         colnames()
@@ -1260,6 +1307,21 @@ shinyServer(function(session, input, output) {
             p <- kendrickPlot(isolate(plot_data()), colorCName = isolate(input$vk_colors),
                               xlabel = isolate(input$x_axis_input), ylabel = isolate(input$y_axis_input),
                               title = isolate(input$title_input),legendTitle = isolate(input$legend_title_input))
+          }
+        }else if (isolate(input$choose_single == 3)) { #group overlay plots
+          validate(need(!is.null(isolate(input$whichGroups1)), message = "Please select samples for first grouping"))
+          validate(need(length(input$whichGroups1) > 0, message = "Please select at least 1 sample"))
+          validate(need(!is.null(isolate(input$whichGroups2)), message = "Please select samples for second grouping"))
+          validate(need(length(input$whichGroups2) > 0, message = "Please select at least 1 sample"))
+          if (isolate(input$vk_colors) %in% c('bs1', 'bs2')) {
+            p <- comparisonKendrickPlot(isolate(plot_data()), vkBoundarySet = isolate(input$vk_colors),
+                              xlabel = isolate(input$x_axis_input), ylabel = isolate(input$y_axis_input),
+                              title = isolate(input$title_input))
+          } else {
+            # if color selection doesn't belong to a boundary, color by test
+            p <- comparisonKendrickPlot(isolate(plot_data()), colorCName = isolate(input$vk_colors),
+                              xlabel = isolate(input$x_axis_input), ylabel = isolate(input$y_axis_input),
+                              title = isolate(input$title_input))
           }
         }
       }
@@ -1427,7 +1489,7 @@ shinyServer(function(session, input, output) {
     # Sample(s) in the second group. Automatically NA if input$choose_single is single sample or single group
     newLine$G2 <- ifelse(input$choose_single %in% c(1,2), yes = "NA", no = "not yet available")
     # Boundary set borders to use (NA for non-Van Krevelen plots)
-    newLine$BoundarySet <- ifelse(input$chooseplots == "Van Krevelen Plot", yes = ifelse(input$vkbounds == 0, NA, input$vkbounds), no = "NA")
+    newLine$BoundarySet <- ifelse(input$chooseplots == "Van Krevelen Plot", yes = input$vkbounds, no = "NA")
     # Color By
     newLine$ColorBy <- input$vk_colors
     newLine$ChartTitle <- input$title_input
@@ -1495,13 +1557,13 @@ shinyServer(function(session, input, output) {
       
       if (length(input$parmsTable2_rows_selected) > 0) {
         for (i in input$parmsTable2_rows_selected) {
-          path <- paste(parmTable$parms$FileName[i],".", input$image_format, sep = "") #create a plot name
+          path <- paste(parmTable$parms$FileName[i],".svg", sep = "") #create a plot name
           fs <- c(fs, path) # append the new plot to the old plots
           export(renderDownloadPlots(parmTable = parmTable$parms[i,], peakIcr2),
                  file = paste("plot",i,".png", sep = ""), zoom = 2) # use webshot to export a screenshot to the opened pdf
           #r <- brick(file.path(getwd(), paste("plot",i,".png", sep = ""))) # create a raster of the screenshot
           img <- magick::image_read(paste("plot",i,".png", sep = ""))#attr(r,"file")@name) #turn the raster into an image of selected format
-          image_write(img, path = path, format = input$image_format) #write the image
+          image_write(img, path = path, format = "svg") #write the image
           #rsvg::rsvg_svg(img, file = path)
         }
         fs <- c(fs, "Plot_key.csv")
