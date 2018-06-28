@@ -87,7 +87,6 @@ summaryFilt <- function(icRobject, which_filts, minMass = 200, maxMass = 900,
   if (which_filts[2]) {
     
     molfilter <- molecule_filter(icRobject)
-    vmolfilter <<- molfilter
     # Find the name of the ID column
     id_col <- which(colnames(molfilter) != 'Num_Observations')
     
