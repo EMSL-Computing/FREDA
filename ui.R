@@ -313,10 +313,7 @@ shinyUI(navbarPage(title = (windowTitle = "FREDA"),
                                 
                                 uiOutput("plotUI"),
                                 uiOutput("plotUI_cond"),
-                                
-                                # conditionalPanel(condition = "(input.whichSample !== null && input.choose_single == 2)",
-                                #   uiOutput("plotUI_2")
-                                # ),
+                                # uiOutput("plotUI_2"),
                                 
                                 uiOutput("title_input"),
                                 uiOutput("x_axis_input"),
