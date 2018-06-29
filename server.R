@@ -1154,7 +1154,8 @@ shinyServer(function(session, input, output) {
                     multiple = TRUE),
         selectInput("whichGroups2", "Group 2", 
                     choices = setdiff(sample_names(), isolate(input$whichGroups1)), 
-                    multiple = TRUE)
+                    multiple = TRUE),
+        selectInput("summary_fxn", "Summary Function", choices = "uniqueness_gtest")
       ))
     }
     else if(input$choose_single == 2){
@@ -1235,7 +1236,7 @@ shinyServer(function(session, input, output) {
       attr(temp_data, "group_DF") <- temp_group_df
       return(summarizeGroups(temp_data, summary_functions = getGroupSummaryFunctionNames()))
       
-    } else if (isolate(input$choose_single) == 3) {# two groups how to figure that out
+    } else if (isolate(input$choose_single) == 3) {# two groups 
       # Make sure at least one test has been calculated
       validate(need(!is.null(isolate(input$whichGroups1)), message = "Please select samples for first grouping"))
       validate(need(length(input$whichGroups1) > 0, message = "Please select at least 1 sample"))
@@ -1252,7 +1253,8 @@ shinyServer(function(session, input, output) {
       
       temp_data <- fticRanalysis:::setGroupDF(temp_data, temp_group_df)
       grpComparisonsObj <- divideByGroupComparisons(temp_data, comparisons = "all")[[1]]$value
-      return(grpComparisonsObj)
+      summaryObj <- summarizeComparisons(grpComparisonsObj, summary_functions = input$summary_fxn)
+      return(summaryObj)
       
     }
   })
@@ -1276,6 +1278,8 @@ shinyServer(function(session, input, output) {
                         plot_data()$e_meta %>% 
                           dplyr::select(-one_of(getEDataColName(plot_data()))) %>%
                           colnames())
+    } else if (input$choose_single == 3) {
+      hist_choices <- c("unique_gtest")
     }
     
     # prevent plot from redrawing due to selection update
@@ -1370,8 +1374,8 @@ shinyServer(function(session, input, output) {
       }
       #-------VanKrevelen Plot--------#
       if (input$chooseplots == 'Van Krevelen Plot') {
-        if (any(isolate(input$choose_single) == c(1,2))) {
-          validate(need(!is.null(isolate(input$whichSamples)), message = "Please select at least 1 sample"))
+        if (any(isolate(input$choose_single) == c(1,2,3))) {
+          validate(need(!is.null(isolate(input$whichSamples)) | !(is.null(isolate(input$whichGroups1)) & is.null(isolate(input$whichGroups2))), message = "Please select at least 1 sample"))
           if (input$vkbounds == 0) { #no bounds
             # if no boundary lines, leave the option to color by boundary
             if (isolate(input$vk_colors) %in% c('bs1', 'bs2')) {
@@ -1397,7 +1401,7 @@ shinyServer(function(session, input, output) {
                                    title = isolate(input$title_input),legendTitle = isolate(input$legend_title_input))
             }
           }
-        }
+        } 
       }
       
       #--------- Density Plot --------#
@@ -1440,8 +1444,6 @@ shinyServer(function(session, input, output) {
     ))
     if (input$chooseplots == 'Van Krevelen Plot') {
       defs <- formals(vanKrevelenPlot)
-      
-      validate(need(!is.null(input$whichSamples) || !is.null(input$whichSamples), message = ""))
       #defs$legendTitle = names(display_name_choices())[display_name_choices() == input$vk_colors]
       
       
