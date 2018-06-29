@@ -1339,8 +1339,8 @@ shinyServer(function(session, input, output) {
       #----------- Single sample plots ------------#
       #-------Kendrick Plot-----------# 
       if (input$chooseplots == 'Kendrick Plot') {
-        if (any(isolate(input$choose_single) == c(1,2))) {
-          validate(need(!is.null(isolate(input$whichSamples)), message = "Please select at least 1 sample"))
+        if (any(isolate(input$choose_single) == c(1,2,3))) {
+          validate(need(!is.null(isolate(input$whichSamples)) | !(is.null(isolate(input$whichGroups1)) & is.null(isolate(input$whichGroups2))), message = "Please select at least 1 sample"))
           p <- kendrickPlot(isolate(plot_data()), colorCName = isolate(input$vk_colors),
                                  xlabel = isolate(input$x_axis_input), ylabel = isolate(input$y_axis_input),
                                  title = isolate(input$title_input),legendTitle = isolate(input$legend_title_input))
@@ -1355,22 +1355,22 @@ shinyServer(function(session, input, output) {
                               xlabel = isolate(input$x_axis_input), ylabel = isolate(input$y_axis_input),
                               title = isolate(input$title_input),legendTitle = isolate(input$legend_title_input))
           }
-        }else if (isolate(input$choose_single == 3)) { #group overlay plots
-          validate(need(!is.null(isolate(input$whichGroups1)), message = "Please select samples for first grouping"))
-          validate(need(length(input$whichGroups1) > 0, message = "Please select at least 1 sample"))
-          validate(need(!is.null(isolate(input$whichGroups2)), message = "Please select samples for second grouping"))
-          validate(need(length(input$whichGroups2) > 0, message = "Please select at least 1 sample"))
-          if (isolate(input$vk_colors) %in% c('bs1', 'bs2')) {
-            p <- comparisonKendrickPlot(isolate(plot_data()), vkBoundarySet = isolate(input$vk_colors),
-                              xlabel = isolate(input$x_axis_input), ylabel = isolate(input$y_axis_input),
-                              title = isolate(input$title_input))
-          } else {
-            # if color selection doesn't belong to a boundary, color by test
-            p <- comparisonKendrickPlot(isolate(plot_data()), colorCName = isolate(input$vk_colors),
-                              xlabel = isolate(input$x_axis_input), ylabel = isolate(input$y_axis_input),
-                              title = isolate(input$title_input))
-          }
-        }
+         }#else if (isolate(input$choose_single == 3)) { #group overlay plots
+        #   validate(need(!is.null(isolate(input$whichGroups1)), message = "Please select samples for first grouping"))
+        #   validate(need(length(input$whichGroups1) > 0, message = "Please select at least 1 sample"))
+        #   validate(need(!is.null(isolate(input$whichGroups2)), message = "Please select samples for second grouping"))
+        #   validate(need(length(input$whichGroups2) > 0, message = "Please select at least 1 sample"))
+        #   if (isolate(input$vk_colors) %in% c('bs1', 'bs2')) {
+        #     p <- comparisonKendrickPlot(isolate(plot_data()), vkBoundarySet = isolate(input$vk_colors),
+        #                       xlabel = isolate(input$x_axis_input), ylabel = isolate(input$y_axis_input),
+        #                       title = isolate(input$title_input))
+        #   } else {
+        #     # if color selection doesn't belong to a boundary, color by test
+        #     p <- comparisonKendrickPlot(isolate(plot_data()), colorCName = isolate(input$vk_colors),
+        #                       xlabel = isolate(input$x_axis_input), ylabel = isolate(input$y_axis_input),
+        #                       title = isolate(input$title_input))
+        #   }
+        # }
       }
       #-------VanKrevelen Plot--------#
       if (input$chooseplots == 'Van Krevelen Plot') {
