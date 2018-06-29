@@ -26,7 +26,7 @@ renderDownloadPlots <- function(parmTable, peakIcr2){
     if (parmTable$PlotType == 'Kendrick Plot') {
       if (parmTable$SampleType == "Multiple Samples") {
         return({
-          groupKendrickPlot(plot_data, colorCName = parmTable$ColorBy)
+          kendrickPlot(plot_data, colorCName = parmTable$ColorBy)
         })
       } else if (parmTable$SampleType == "Single Sample") {
         return({
@@ -44,11 +44,11 @@ renderDownloadPlots <- function(parmTable, peakIcr2){
       if (parmTable$SampleType == "Multiple Samples") {
         if (is.na(parmTable$BoundarySet)) {
           return({
-            groupVanKrevelenPlot(plot_data, colorCName = parmTable$ColorBy, showVKBounds = FALSE)
+            vanKrevelenPlot(plot_data, colorCName = parmTable$ColorBy, showVKBounds = FALSE)
           })
         }
         else return({
-          groupVanKrevelenPlot(plot_data, colorCName = parmTable$ColorBy, showVKBounds = TRUE)
+          vanKrevelenPlot(plot_data, colorCName = parmTable$ColorBy, showVKBounds = TRUE)
         })
         
       } else if (parmTable$SampleType == "Single Sample") {
