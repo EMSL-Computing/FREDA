@@ -1137,6 +1137,11 @@ shinyServer(function(session, input, output) {
                                               selected = 1))
       ))
     }
+    if (input$chooseplots == "Density Plot") {
+      return(selectInput('choose_single', 'I want to plot using:',
+                         choices = c('Make a selection' = 0, 'A single sample' = 1, 'Multiple samples by group' = 2),
+                         selected = 0))
+    }
     else{
       return(selectInput('choose_single', 'I want to plot using:',
                       choices = c('Make a selection' = 0, 'A single sample' = 1, 'Multiple samples by group' = 2, 'A comparison of groups' = 3),
