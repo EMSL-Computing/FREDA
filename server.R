@@ -718,20 +718,20 @@ shinyServer(function(session, input, output) {
                    input$s_column, input$p_column, input$c_column, attr(peakIcr2, "cnames")$mass_cname,
                    input$iso_info_column)
     
-    hist_choices <- peakIcr2$e_meta %>% 
+    column_choices <- peakIcr2$e_meta %>% 
       dplyr::select(-one_of(drop_cols)) %>%
       dplyr::select(which(sapply(., function(col){ length(unique(col)) < 20 } ) | sapply(., is.numeric))) %>% #dont include columns with too many categories
       colnames() 
     
     #columns included in calculation_options.csv get their prettified names, everything else gets the column name
-    names(hist_choices) <- lapply(hist_choices, function(x){
+    names(column_choices) <- lapply(column_choices, function(x){
       if(x %in% calc_vars$ColumnName){
         calc_vars %>% filter(ColumnName == x) %>% pluck("DisplayName")
       }
       else x
     }) %>% unlist()
     
-    hist_choices
+    column_choices
   })
   
   # Allow a button click to undo filtering
@@ -1067,6 +1067,7 @@ shinyServer(function(session, input, output) {
     if (f$clearFilters) {
       updateCheckboxInput(session = session, inputId = "massfilter", value = FALSE)
       updateCheckboxInput(session = session, inputId = "molfilter", value = FALSE)
+      updateCheckboxInput(session = session, inputId = "formfilter", value = FALSE)
     }
     peakIcr2 <<- uploaded_data()
     removeModal()
@@ -1269,54 +1270,59 @@ shinyServer(function(session, input, output) {
     
     # ifelse block determines how to populate vk_colors dropdown
     if (input$choose_single == 1){
-      hist_choices <- display_name_choices()
+      color_by_choices <- display_name_choices()
       
       if(input$chooseplots == "Van Krevelen Plot"){
-        hist_choices <- switch(as.character(input$vkbounds), 
-                               'bs1' = c('Van Krevelen Boundary Set 1' = 'bs1', hist_choices),
-                               'bs2' = c('Van Krevelen Boundary Set 2' = 'bs2', hist_choices),
-                               "0" = c('Van Krevelen Boundary Set 1' = 'bs1', 'Van Krevelen Boundary Set 2' = 'bs2', hist_choices))
+        color_by_choices <- switch(as.character(input$vkbounds), 
+                               'bs1' = c('Van Krevelen Boundary Set 1' = 'bs1', color_by_choices),
+                               'bs2' = c('Van Krevelen Boundary Set 2' = 'bs2', color_by_choices),
+                               "0" = c('Van Krevelen Boundary Set 1' = 'bs1', 'Van Krevelen Boundary Set 2' = 'bs2', color_by_choices))
       }
     }
     else if (input$choose_single == 2) {
-      hist_choices <- c('Number present in group' = "Group_n_present", "Proportion present in group" = 'Group_prop_present',
+      color_by_choices <- c('Number present in group' = "Group_n_present", "Proportion present in group" = 'Group_prop_present',
                         plot_data()$e_meta %>% 
                           dplyr::select(-one_of(getEDataColName(plot_data()))) %>%
                           colnames())
     } else if (input$choose_single == 3) {
-      hist_choices <- c("unique_gtest")
+      color_by_choices <- c("unique_gtest")
     }
     
     # prevent plot from redrawing due to selection update
-    selected = hist_choices[1]
-    if (input$vk_colors %in% hist_choices){
+    selected = color_by_choices[1]
+    if (input$vk_colors %in% color_by_choices){
       selected <- input$vk_colors
     }
     
     # Density Colors
     if (input$chooseplots == 'Density Plot') {
+      
+      # only allow numeric options for density plot
+      numeric_cols <- which(sapply(plot_data()$e_meta %>% dplyr::select(color_by_choices), is.numeric))
+      color_by_choices <- color_by_choices[numeric_cols]
+      
       updateSelectInput(session, 'vk_colors', 'Plot Distribution of Variable:', 
-                        choices = hist_choices,
+                        choices = color_by_choices,
                         selected = selected)
     }
     
     # Kendrick Colors
     if (input$chooseplots == 'Kendrick Plot') {
         updateSelectInput(session, 'vk_colors', 'Color by:',
-                          choices = hist_choices,
+                          choices = color_by_choices,
                           selected = selected)
     }
     
     # Van Krevelen Colors
     if (input$chooseplots == 'Van Krevelen Plot') {
           updateSelectInput(session, 'vk_colors', 'Color by:',
-                            choices = hist_choices,
+                            choices = color_by_choices,
                             selected = selected)
        
     }
     
     # The dropdown value will not be updated if this is true, force re-execution of plotting in this case with a reactive var
-    if(input$vk_colors %in% hist_choices){
+    if(input$vk_colors %in% color_by_choices){
       revals$makeplot <- -revals$makeplot
     }
     
@@ -1413,8 +1419,8 @@ shinyServer(function(session, input, output) {
       if (input$chooseplots == 'Density Plot') {
         validate(
           validate(need(!is.null(isolate(input$whichSamples)), message = "Please select at least 1 sample")),
-          need(!is.na(isolate(input$vk_colors)), message = "Please select a variable to color by")
-        )
+                   need(!is.na(isolate(input$vk_colors)), message = "Please select a variable to color by")
+            )
         p <- densityPlot(isolate(plot_data()), variable = isolate(input$vk_colors),
                          xlabel = isolate(input$vk_colors), ylabel = isolate(input$y_axis_input),
                          title = isolate(input$title_input))
