@@ -9,18 +9,32 @@ renderDownloadPlots <- function(parmTable, peakIcr2){
   else if (parmTable$SampleType == "Multiple Samples") {# single group
     # Make sure at least one test has been calculated
     
-    samples <- strsplit(parmTable$G1, split = ",")[[1]]
-    temp_group_df <- data.frame(samples, "Group")
-    colnames(temp_group_df) <- c(getFDataColName(peakIcr2), "Group")
-    
-    temp_data <- peakIcr2 %>% 
-      subset(samples)
-    
-    attr(temp_data, "group_DF") <- temp_group_df
-    plot_data <- summarizeGroups(temp_data, summary_functions = getGroupSummaryFunctionNames())
+    # check for one or two groups
+    if (is.na(parmTable$G2)) { #one group
+      samples <- strsplit(parmTable$G1, split = ",")[[1]]
+      temp_group_df <- data.frame(samples, "Group")
+      colnames(temp_group_df) <- c(getFDataColName(peakIcr2), "Group")
+      
+      temp_data <- peakIcr2 %>% 
+        subset(samples)
+      
+      attr(temp_data, "group_DF") <- temp_group_df
+      plot_data <- summarizeGroups(temp_data, summary_functions = getGroupSummaryFunctionNames())
+    } else {#two groups
+      group1_samples <- strsplit(parmTable$G1, split = ",")[[1]]
+      group2_samples <- strsplit(parmTable$G2, split = ",")[[1]]
+      temp_group_df <- data.frame(c(group1_samples, group2_samples), c(rep("Group1", times=length(group1_samples)), rep("Group2", length(group2_samples))))
+      colnames(temp_group_df) <- c(getFDataColName(peakIcr2), "Group")
+      
+      temp_data <- peakIcr2 %>%
+        subset(samples = c(group1_samples, group2_samples))
+      
+      temp_data <- fticRanalysis:::setGroupDF(temp_data, temp_group_df)
+      grpComparisonsObj <- divideByGroupComparisons(temp_data, comparisons = "all")[[1]]$value
+      plot_data <- summarizeComparisons(grpComparisonsObj, summary_functions = parmTable$UniqueCommon)
+    }
     
   }
-  
     #----------- Single sample plots ------------#
     #-------Kendrick Plot-----------# 
     if (parmTable$PlotType == 'Kendrick Plot') {

@@ -318,7 +318,7 @@ shinyUI(navbarPage(title = (windowTitle = "FREDA"),
                                 uiOutput("title_input"),
                                 uiOutput("x_axis_input"),
                                 uiOutput("y_axis_input"),
-                                #uiOutput("legend_title_input"),
+                                uiOutput("legend_title_input"),
                                 splitLayout(
                                   actionButton("plot_submit", label = "Submit")
                                 )

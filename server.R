@@ -1272,11 +1272,11 @@ shinyServer(function(session, input, output) {
     if (input$choose_single == 1){
       color_by_choices <- display_name_choices()
       
-      if(input$chooseplots == "Van Krevelen Plot"){
-        color_by_choices <- switch(as.character(input$vkbounds), 
-                               'bs1' = c('Van Krevelen Boundary Set 1' = 'bs1', color_by_choices),
-                               'bs2' = c('Van Krevelen Boundary Set 2' = 'bs2', color_by_choices),
-                               "0" = c('Van Krevelen Boundary Set 1' = 'bs1', 'Van Krevelen Boundary Set 2' = 'bs2', color_by_choices))
+      if (input$chooseplots == "Van Krevelen Plot"){
+        hist_choices <- switch(as.character(input$vkbounds), 
+                               'bs1' = c('Van Krevelen Boundary Set 1' = 'bs1', hist_choices),
+                               'bs2' = c('Van Krevelen Boundary Set 2' = 'bs2', hist_choices),
+                               "0" = c('Van Krevelen Boundary Set 1' = 'bs1', 'Van Krevelen Boundary Set 2' = 'bs2', hist_choices))
       }
     }
     else if (input$choose_single == 2) {
@@ -1285,12 +1285,12 @@ shinyServer(function(session, input, output) {
                           dplyr::select(-one_of(getEDataColName(plot_data()))) %>%
                           colnames())
     } else if (input$choose_single == 3) {
-      color_by_choices <- c("unique_gtest")
+      hist_choices <- c("Unique GTest" = "unique_gtest")
     }
     
     # prevent plot from redrawing due to selection update
-    selected = color_by_choices[1]
-    if (input$vk_colors %in% color_by_choices){
+    selected = hist_choices[1]
+    if (input$vk_colors %in% hist_choices) {
       selected <- input$vk_colors
     }
     
@@ -1509,34 +1509,34 @@ shinyServer(function(session, input, output) {
   parmTable$parms <- data.frame(PlotType = NA, SampleType = NA, G1 = NA, G2 = NA, BoundarySet = NA,
                                 ColorBy = NA, ContinuousVariable = NA, UniqueCommon = NA,
                                 UniqueCommonParameters = NA,FileName = NA, ChartTitle = NA, XaxisTitle = NA,
-                                YaxisTitle = NA)#, LegendTitle = NA)
+                                YaxisTitle = NA, LegendTitle = NA)
   
   observeEvent(input$add_plot, {
     # initialize a new line
     newLine <- data.frame(PlotType = input$chooseplots, SampleType = NA, G1 = NA, G2 = NA, BoundarySet = NA,
                           ColorBy = NA, ContinuousVariable = NA, UniqueCommon = NA,
                           UniqueCommonParameters = NA,FileName = NA, ChartTitle = NA, XaxisTitle = NA,
-                          YaxisTitle = NA)#, LegendTitle = NA)
+                          YaxisTitle = NA, LegendTitle = NA)
     # fill values to a position depending on input$add_plot
     # which type of plot
     newLine$PlotType <- input$chooseplots
     # Single or Multiple Samples
     newLine$SampleType <- ifelse(input$choose_single == 1, yes = "Single Sample", no = "Multiple Samples")
     # Sample(s) in The first group (depends on input$choose_single to decide if this is a single or multiple sample list)
-    newLine$G1 <- ifelse(input$choose_single == 1, yes = input$whichSamples, no = paste(input$whichSamples, collapse = ","))
+    newLine$G1 <- ifelse(input$choose_single %in% c(1,2), yes = input$whichSamples, no = paste(input$whichGroups1, collapse = ","))
     # Sample(s) in the second group. Automatically NA if input$choose_single is single sample or single group
-    newLine$G2 <- ifelse(input$choose_single %in% c(1,2), yes = "NA", no = "not yet available")
+    newLine$G2 <- ifelse(input$choose_single == 3, yes =  paste(input$whichGroups2, collapse = ","), no = "NA")
     # Boundary set borders to use (NA for non-Van Krevelen plots)
     newLine$BoundarySet <- ifelse(input$chooseplots == "Van Krevelen Plot", yes = ifelse(input$vkbounds == 0, NA, input$vkbounds), no = "NA")
     # Color By
     newLine$ColorBy <- input$vk_colors
+    newLine$UniqueCommon <- ifelse(input$choose_single == 3, yes = input$summary_fxn, no = "NA")
     newLine$ChartTitle <- input$title_input
     newLine$XaxisTitle <- ifelse(is.na(input$x_axis_input), yes = "default", no = input$x_axis_input)
     newLine$YaxisTitle <- ifelse(is.na(input$y_axis_input), yes = "default", no = input$y_axis_input)
     newLine$FileName <- paste("Plot", input$add_plot, sep = "")
-    # Nope, plotly doesn't title legends on categorical vars
-    # so don't allow this option anymorenewLine$LegendTitle <- ifelse(input$chooseplots == 'Density Plot', yes = "default", no = input$legend_title_input)
-    
+    newLine$LegendTitle <- ifelse(input$chooseplots == 'Density Plot', yes = "default", no = input$legend_title_input)
+     
     if (input$add_plot == 1) {
       # replace the existing line on the first click
       parmTable$parms[input$add_plot, ] <- newLine
