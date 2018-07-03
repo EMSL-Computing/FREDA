@@ -1271,7 +1271,7 @@ shinyServer(function(session, input, output) {
     if (input$choose_single == 1){
       hist_choices <- display_name_choices()
       
-      if(input$chooseplots == "Van Krevelen Plot"){
+      if (input$chooseplots == "Van Krevelen Plot"){
         hist_choices <- switch(as.character(input$vkbounds), 
                                'bs1' = c('Van Krevelen Boundary Set 1' = 'bs1', hist_choices),
                                'bs2' = c('Van Krevelen Boundary Set 2' = 'bs2', hist_choices),
@@ -1284,12 +1284,12 @@ shinyServer(function(session, input, output) {
                           dplyr::select(-one_of(getEDataColName(plot_data()))) %>%
                           colnames())
     } else if (input$choose_single == 3) {
-      hist_choices <- c("unique_gtest")
+      hist_choices <- c("Unique GTest" = "unique_gtest")
     }
     
     # prevent plot from redrawing due to selection update
     selected = hist_choices[1]
-    if (input$vk_colors %in% hist_choices){
+    if (input$vk_colors %in% hist_choices) {
       selected <- input$vk_colors
     }
     
@@ -1503,14 +1503,14 @@ shinyServer(function(session, input, output) {
   parmTable$parms <- data.frame(PlotType = NA, SampleType = NA, G1 = NA, G2 = NA, BoundarySet = NA,
                                 ColorBy = NA, ContinuousVariable = NA, UniqueCommon = NA,
                                 UniqueCommonParameters = NA,FileName = NA, ChartTitle = NA, XaxisTitle = NA,
-                                YaxisTitle = NA)#, LegendTitle = NA)
+                                YaxisTitle = NA, LegendTitle = NA)
   
   observeEvent(input$add_plot, {
     # initialize a new line
     newLine <- data.frame(PlotType = input$chooseplots, SampleType = NA, G1 = NA, G2 = NA, BoundarySet = NA,
                           ColorBy = NA, ContinuousVariable = NA, UniqueCommon = NA,
                           UniqueCommonParameters = NA,FileName = NA, ChartTitle = NA, XaxisTitle = NA,
-                          YaxisTitle = NA)#, LegendTitle = NA)
+                          YaxisTitle = NA, LegendTitle = NA)
     # fill values to a position depending on input$add_plot
     # which type of plot
     newLine$PlotType <- input$chooseplots
@@ -1529,9 +1529,8 @@ shinyServer(function(session, input, output) {
     newLine$XaxisTitle <- ifelse(is.na(input$x_axis_input), yes = "default", no = input$x_axis_input)
     newLine$YaxisTitle <- ifelse(is.na(input$y_axis_input), yes = "default", no = input$y_axis_input)
     newLine$FileName <- paste("Plot", input$add_plot, sep = "")
-    # Nope, plotly doesn't title legends on categorical vars
-    # so don't allow this option anymorenewLine$LegendTitle <- ifelse(input$chooseplots == 'Density Plot', yes = "default", no = input$legend_title_input)
-    
+    newLine$LegendTitle <- ifelse(input$chooseplots == 'Density Plot', yes = "default", no = input$legend_title_input)
+     
     if (input$add_plot == 1) {
       # replace the existing line on the first click
       parmTable$parms[input$add_plot, ] <- newLine
