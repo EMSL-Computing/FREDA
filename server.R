@@ -1130,9 +1130,9 @@ shinyServer(function(session, input, output) {
     validate(
       need(input$chooseplots != 0, message = "Please select plotting criteria")
     )
-    if(nrow(peakIcr2$f_data) == 1){
+    if(nrow(peakIcr2$f_data) == 1 | input$chooseplots == "Custom Scatter Plot"){
       return(tagList(
-        tags$p("Data file contains 1 sample, grouping options will be hidden.", style = "color:gray"),
+        tags$p("Grouping dropdowns hidden for custom scatter plots and single sample datasets.", style = "color:gray"),
         conditionalPanel('false', selectInput('choose_single', 'I want to plot using:',
                                               choices = c('Make a selection' = 0, 'A single sample' = 1, 'Multiple samples by group' = 2, 'A comparison of groups' = 3),
                                               selected = 1))
@@ -1287,13 +1287,23 @@ shinyServer(function(session, input, output) {
       color_by_choices <- c("unique_gtest")
     }
     
-    # prevent plot from redrawing due to selection update
+    # Give default names to unnamed choices
+    names(color_by_choices) <- sapply(1:length(color_by_choices), function(i){
+      ifelse(names(color_by_choices[i]) == "" | is.null(names(color_by_choices[i])),
+             yes = color_by_choices[i],
+             no = names(color_by_choices[i]))
+    })
+    
+    # prevent plot from resetting colors/axes when plot is redrawn.
     selected = color_by_choices[1]
-    selected_x = color_by_choices[2]
-    selected_y = color_by_choices[3]
+    
     if (input$vk_colors %in% color_by_choices){
       selected <- input$vk_colors
     }
+    
+    selected_x = color_by_choices[color_by_choices != selected][1]
+    selected_y = color_by_choices[!(color_by_choices %in% c(selected, selected_x))][1]
+    
     if ((input$scatter_x %in% color_by_choices) & (input$scatter_y %in% color_by_choices)){
       selected_x <- input$scatter_x
       selected_y <- input$scatter_y
@@ -1336,15 +1346,15 @@ shinyServer(function(session, input, output) {
         
         axes_choices <- revals$axes_choices <- color_by_choices[numeric_cols]
         
-        updateSelectInput(session, 'vk_colors', 'Color  by:',
-                          choices = color_by_choices,
-                          selected = selected)
         updateSelectInput(session, 'scatter_x', "Horizontal Axis Variable:",
                           choices = axes_choices[!(axes_choices %in% c(input$scatter_y, input$vk_colors))],
                           selected = selected_x)
         updateSelectInput(session, "scatter_y", "Vertical Axis Variable:",
                           choices = axes_choices[!(axes_choices %in% c(input$scatter_x, input$vk_colors))],
                           selected = selected_y)
+        updateSelectInput(session, 'vk_colors', 'Color  by:',
+                          choices = color_by_choices[!(color_by_choices %in% c(input$scatter_x, input$scatter_y))],
+                          selected = selected)
     }
     
     revals$color_by_choices <- color_by_choices
@@ -1466,28 +1476,28 @@ shinyServer(function(session, input, output) {
                  need(!is.na(input$vk_colors), message = "Please select a variable to color by")
                 )
         p <- densityPlot(isolate(plot_data()), variable = input$vk_colors,
-                         xlabel = input$vk_colors, ylabel = isolate(input$y_axis_input),
+                         xlabel = ifelse(isolate(is.null(input$x_axis_input) || input$x_axis_input == ""), 
+                                         yes = names(revals$color_by_choices[revals$color_by_choices == input$vk_colors]), 
+                                         no = isolate(input$x_axis_input)),
+                         ylabel = isolate(input$y_axis_input),
                          title = isolate(input$title_input))
-        
-        if (isolate(!is.null(input$x_axis_input) && input$x_axis_input != "")){
-          p <- densityPlot(isolate(plot_data()), variable = input$vk_colors,
-                           xlabel = isolate(input$x_axis_input), ylabel = isolate(input$y_axis_input),
-                           title = isolate(input$title_input))
-        }
         
       }
       
       #---------- Custom Scatter Plot --------#
       if(input$chooseplots == 'Custom Scatter Plot'){
         validate(need(!is.null(isolate(input$whichSamples)), message = "Please select at least 1 sample"),
-                 need(!is.na(input$vk_colors), message = "Please select a variable to color by"),
-                 need(!is.na(input$scatter_x), message = "Please select a variable for the x-axis"),
-                 need(!is.na(input$scatter_y), message = "Please select a variable for the y-axis")
-        )
+                 need(!is.na(input$vk_colors), message = "Please select a variable to color by"))
+        req(!is.null(input$scatter_x), !is.null(input$scatter_y), !("" %in% c(input$scatter_x, input$scatter_y)))
         
-      p <- scatterPlot(isolate(plot_data()), input$scatter_x, input$scatter_y, colorCName = input$vk_colors,
-                       xlabel = isolate(input$x_axis_input), ylabel = isolate(input$y_axis_input),
-                       title = isolate(input$title_input))
+        p <- scatterPlot(isolate(plot_data()), input$scatter_x, input$scatter_y, colorCName = input$vk_colors,
+                         xlabel = isolate(ifelse(is.null(input$x_axis_input) | (input$x_axis_input == ""), 
+                                                 yes = names(revals$color_by_choices[revals$color_by_choices == input$scatter_x]), 
+                                                 no = input$x_axis_input)), 
+                         ylabel = isolate(ifelse(is.null(input$y_axis_input) | (input$y_axis_input == ""), 
+                                                 yes = names(revals$color_by_choices[revals$color_by_choices == input$scatter_y]), 
+                                                 no = input$y_axis_input)),
+                         title = isolate(input$title_input))
         
       }
     }
