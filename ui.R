@@ -353,6 +353,17 @@ shinyUI(navbarPage(title = (windowTitle = "FREDA"),
                                   selectInput("vk_colors", "Color By:", choices = NULL, selected = NULL)
                                   
                                 ),
+                                conditionalPanel(
+                                  condition = "input.chooseplots == 'Custom Scatter Plot'",
+                                  fluidRow(
+                                    column(width = 4,
+                                      selectInput("scatter_x", "Horizontal Axis Variable:", choices = NULL, selected = NULL)
+                                    ),
+                                    column(width = 4,
+                                      selectInput("scatter_y", "Vertical Axis Variable:", choices = NULL, selected = NULL)
+                                    )
+                                  )
+                                ),
                                 br(),
                                 hr(),
                                 actionButton(inputId = "add_plot", label = "I want to download a hi-res version of this plot on the Download tab", icon = icon("download")),
