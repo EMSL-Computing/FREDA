@@ -363,23 +363,39 @@ shinyServer(function(session, input, output) {
     
   }) # End success #
   
+  # create 
   observeEvent(peakICR(),{
-              if (isTRUE(getOption("shiny.testmode"))) {
-                revals$peakICR_export <- peakICR()
-              }
+    #Error handling: peakICR() must exist
+    req(peakICR())
     
-               #Error handling: peakICR() must exist
-               req(peakICR())
-               showModal(
-                 modalDialog(
-                   title = "Upload message",
-                   HTML('<h4 style= "color:#1A5276">Your data has been successfully uploaded. 
-                        You may proceed to the subsequent tabs for analysis.</h4>'),
-                   actionButton("upload_dismiss", "Dismiss", width = '100%')
-                   ,footer = NULL)
-                 )
-               })
+    #___test-export___
+    if (isTRUE(getOption("shiny.testmode"))) {
+      revals$peakICR_export <- peakICR()
+    }
+    
+    showModal(
+      modalDialog(
+        title = "Upload Success",
+        fluidRow(
+          column(10, align = "center", offset = 1,
+                 HTML('<h4 style= "color:#1A5276">Your data has been successfully uploaded. 
+                            You may proceed to the subsequent tabs for analysis.</h4>'),
+                 hr(),
+                 actionButton("upload_dismiss", "Dismiss", width = '75%'),
+                 br(),
+                 br(),
+                 actionButton("goto_preprocess", "Continue to preprocessing", width = '75%')
+          )
+        )
+        ,footer = NULL)
+    )
+  })
+  # modal dialog behavior
   observeEvent(input$upload_dismiss,{removeModal()})
+  observeEvent(input$goto_preprocess, {
+    updateTabsetPanel(session, "top_page", selected = "Preprocess")
+    removeModal()
+    })
   
   # Summary: Display number of peaks and samples
   output$num_peaks <- renderText({
@@ -521,9 +537,10 @@ shinyServer(function(session, input, output) {
                   tags$p("Here you can tell FREDA to compute certain values based on your input data.  The result of these calculations will be appended
                          to your molecular identification file and can be used as filtering variables in the next tab.\n",
                          style = "color:CornFlowerBlue"),
+                  br(),
                   HTML("<p style = color:CornFlowerBlue> Check boxes to select which values you want calculated and then hit 'Process Data'.  
                        <span style = font-weight:bold>Element ratios are selected by default as they are required to produce Van-Krevelen
-                       and Kendrick plots.</span>  Table summaries and an interactive histogram/bar chart of the values you selected will be generated.<p>")
+                       and Kendrick plots.</span>  \n Table summaries and an interactive histogram/bar chart of the values you selected will be generated.<p>")
                   )
               )
   })
@@ -531,10 +548,6 @@ shinyServer(function(session, input, output) {
   output$which_calcs <- renderUI({
     choices <- calc_opts$Function
     names(choices) <- calc_opts$DisplayName
-    
-    title0 <-  paste0("Cox Gibbs Free Energy. Calculated as:",
-                      "60.3 - 28.5*NOSC ",
-                      tags$a(href = "https://www.sciencedirect.com/science/article/pii/S0016703711000378", "[LaRowe & Van Cappellen, 2011]"))
     
     tooltip_checkbox("tests", "What Values Should be Calculated?", choices, selected = c("calc_element_ratios", "calc_kendrick"),
                      extensions = lapply(1:length(choices), function(i){  
@@ -700,6 +713,30 @@ shinyServer(function(session, input, output) {
 
   }) # End process_hist
   
+  observeEvent(input$preprocess_click,{
+    req(peakIcr2)
+    
+    showModal(
+      modalDialog(title = "Preprocess Success",
+                  fluidRow(
+                    column(10, align = "center", offset = 1,
+                           HTML('<h4 style= "color:#1A5276">Your data has been preprocessed.  Calculated variables have been added to the molecular identification file and can be used in subsequent filtering and visualization.</h4>'),
+                           hr(),
+                           actionButton("preprocess_dismiss", "Dismiss", width = '75%'),
+                           br(),
+                           br(),
+                           actionButton("goto_filter", "Continue to filtering", width = '75%')
+                           )
+                  )
+                  ,footer = NULL)
+    ) 
+  }) # End successMessage
+  observeEvent(input$preprocess_dismiss,{removeModal()})
+  observeEvent(input$goto_filter,{
+    updateTabsetPanel(session, "top_page", selected = "Filter")
+    removeModal()
+  })
+  
   ############## Filter tab ##############
   # ----- Filter Reset Setup -----# 
   # Keep a reactive copy of the pre-filtered data in case of a filter reset event
@@ -716,20 +753,23 @@ shinyServer(function(session, input, output) {
     
     return(temp)
   })
-  
-  
-  
+
   observeEvent(input$filter_help,{
     showModal(
       modalDialog("",
-                  tags$p("This page allows you to filter the data by various metrics.  
-                         The default options are to retain peaks within a particular mass range (mass filter), retain peaks that appear a minimum number of times across all samples (molecule filter),
-                         and retain peaks that have elemental information - either elemental columns or a full formula column (formula filter).
-                         Additionally, one can filter by up to three variables contained in the molecular identification file.\n
+                  tags$p("This page allows you to filter the data by various metrics.\n 
+                         The default options are to:", style = "color:CornFlowerBlue"),
+                  tags$ul(
+                    tags$li("Retain peaks within a mass range (Mass Filter)"),
+                    tags$li("Retain peaks that appear a minimum number of times across all samples (Molecule Filter)"),
+                    tags$li("Retain peaks that have elemental information - either elemental columns or a full formula column (Formula Filter)"),
+                    style = "color:CornFlowerBlue"
+                  ),
+                  tags$p("Additionally, one can filter by up to three variables contained in the molecular identification file.\n
                          As you select options, a plot will update showing the remaining observations after the application of each filter.\n",
                          style = "color:CornFlowerBlue"),
                   tags$p("Check boxes to select which filters to apply, specify filtering criteria by a range for numeric data or a selection of values for categorical data and then click 'Filter Data'",
-                         style = "color:CornFlowerBlue;"))
+                         style = "color:CornFlowerBlue"))
     )
   })
   
@@ -925,10 +965,17 @@ shinyServer(function(session, input, output) {
     }
     showModal(
       modalDialog(title = "Filter Success",
-                  HTML('<h4 style= "color:#1A5276">Your data has been filtered using mass and/or minimum observations. 
-                       You may proceed to the next tabs for subsequnt analysis.</h4>'),
-                  hr(),
-                  actionButton("filter_dismiss", "Dismiss", width = '100%')
+                  fluidRow(
+                    column(10, align = "center", offset = 1,
+                      HTML('<h4 style= "color:#1A5276">Your data has been filtered using mass and/or minimum observations. 
+                           You may proceed to the next tabs for subsequnt analysis.</h4>'),
+                      hr(),
+                      actionButton("filter_dismiss", "Dismiss", width = '75%'),
+                      br(),
+                      br(),
+                      actionButton("goto_viz", "Continue to Visualize", width = '75%')
+                    )
+                  )
                   ,footer = NULL)
                   )
     
@@ -936,6 +983,10 @@ shinyServer(function(session, input, output) {
     
   }) # End successMessage
   observeEvent(input$filter_dismiss,{removeModal()})
+  observeEvent(input$goto_viz,{
+    updateTabsetPanel(session, "top_page", selected = "Visualize")
+    removeModal()
+    })
   
   # Display successMessage
   # Depends on: successMessage
@@ -1120,12 +1171,14 @@ shinyServer(function(session, input, output) {
                     tags$li("Select the type of plot you want to generate."),
                     tags$li("Choose whether you would like to plot a single sample, multiple samples, or a comparison of groups"),
                     tags$li("If you selected a single sample, specify which one.  If you selected multiple samples by group, select samples that 
-                            should be included in the first group, then the samples that will be included in the second group.  If you selected a
-                            comparison of groups, specify which variable you would like to group by."),
-                    tags$li("Specify axis and title labels and hit 'Submit'\n"),
+                            should be grouped. If you selected a comparison of groups, two group dropdowns will appear; select samples that
+                            you want included in each of the two groups"),
+                    tags$li("If desired, specify axis and title labels and hit 'Submit'\n"),
                     
                     style = "color:CornFlowerBlue"),
-                  HTML("<p style = color:CornFlowerBlue> A plot will appear and can be customized to color by certain calculated values<p>")
+                  HTML("<p style = color:CornFlowerBlue> A plot will appear and can be customized to color by certain calculated values.  
+                       Van Krevelen boundaries can be displayed for VK-plots.
+                       Custom scatterplots will allow for selection of arbitrary x and y axes.<p>")
                   )
       )
   })
