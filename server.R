@@ -21,6 +21,7 @@ f <- list(
 #peakIcr2 <- NULL #when finished developing, uncomment this to clear the workspace on exit
 
 shinyServer(function(session, input, output) {
+
   Sys.setenv(R_ZIPCMD="/usr/bin/zip")
   # Source files for 'summaryFilt' and 'summaryPreprocess'
   source('tooltip_checkbox.R')
@@ -28,8 +29,11 @@ shinyServer(function(session, input, output) {
   source('summaryPreprocess.R')
   source("renderDownloadPlots.R")
   
-  revals <- reactiveValues(ntables = 0, makeplot = 1, color_by_choices = NULL, axes_choices = NULL)
-  
+
+  revals <- reactiveValues(ntables = 0, makeplot = 1, color_by_choices = NULL, axes_choices = NULL,
+                           plot_data_export = NULL, peakICR_export = NULL)
+
+  exportTestValues(plot_data = revals$plot_data_export, peakICR = revals$peakICR_export)
   ######## Welcome Tab #############
   #------ Download Example Data ---------#
   example_edata <- read.csv('Data/example12T_edata.csv')
@@ -73,6 +77,8 @@ shinyServer(function(session, input, output) {
     
     # Load file
     filename <- input$file_edata$datapath
+    
+    exportTestValues(e_data = read.csv(filename, stringsAsFactors = FALSE))
     read.csv(filename, stringsAsFactors = FALSE)
     
   }) # End Edata #
@@ -103,6 +109,8 @@ shinyServer(function(session, input, output) {
     
     # Load file
     filename <- input$file_emeta$datapath
+    
+    exportTestValues(e_meta = read.csv(filename, stringsAsFactors = FALSE))
     read.csv(filename, stringsAsFactors = FALSE)
     
   }) # End Emeta #
@@ -201,13 +209,13 @@ shinyServer(function(session, input, output) {
                                   no = 'Select a column'))
   })
   
-  output$iso_info_column <- renderUI({
+  output$iso_info_column_out <- renderUI({
     selectInput("iso_info_column", "Which column contains isotope information?",
                 choices  = c('Select a column' = 0, emeta_cnames()))
     
   })
   
-  output$iso_symbol <- renderUI({
+  output$iso_symbol_out <- renderUI({
     textInput("iso_symbol", label = "Enter a symbol denoting isotopic notation:",
               value = "1")
   })
@@ -350,25 +358,28 @@ shinyServer(function(session, input, output) {
     # Create nonreactive peakICR object
     peakIcr2 <<- peakICR()
     
-    # Create fake dependency on peakICR()
-    test1 <- peakICR()$e_data #why is this here?
-    
     # If no errors, show Success message
     HTML('<h4 style= "color:#1A5276">You may proceed to data filtering</h4>')
     
   }) # End success #
   
   observeEvent(peakICR(),{
+              if (isTRUE(getOption("shiny.testmode"))) {
+                revals$peakICR_export <- peakICR()
+              }
+    
                #Error handling: peakICR() must exist
                req(peakICR())
                showModal(
                  modalDialog(
                    title = "Upload message",
                    HTML('<h4 style= "color:#1A5276">Your data has been successfully uploaded. 
-                        You may proceed to the subsequent tabs for analysis.</h4>')
-                   )
+                        You may proceed to the subsequent tabs for analysis.</h4>'),
+                   actionButton("upload_dismiss", "Dismiss", width = '100%')
+                   ,footer = NULL)
                  )
                })
+  observeEvent(input$upload_dismiss,{removeModal()})
   
   # Summary: Display number of peaks and samples
   output$num_peaks <- renderText({
@@ -498,6 +509,8 @@ shinyServer(function(session, input, output) {
     
   })# End emeta_text
   
+
+  
   ####### Preprocess Tab #######
   
   #### Populate List from CSV File ####
@@ -545,6 +558,10 @@ shinyServer(function(session, input, output) {
       # set f to the function that is named in the ith element of compound_calcs # 
       f <- get(el, envir=asNamespace("fticRanalysis"), mode="function")
       peakIcr2 <<- f(peakIcr2)
+    }
+    
+    if (isTRUE(getOption("shiny.testmode"))) {
+      exportTestValues(peakIcr2 = peakIcr2)
     }
     
   }, priority = 10) # End action button event
@@ -640,7 +657,7 @@ shinyServer(function(session, input, output) {
   ## END TABLE SUMMARY SECTION ##
   
   # Drop down list: potential histogram options
-  output$which_hist <- renderUI({
+  output$which_hist_out <- renderUI({
     
     # Error handling: input csv of calculations variables required
     req(calc_vars, revals$numeric_cols, revals$categorical_cols)
@@ -675,8 +692,12 @@ shinyServer(function(session, input, output) {
                 xaxis = list(title = displayName),
                 yaxis = list(title = 'Frequency')))
     p$elementId <- NULL
-    return(p)
     
+    #____test export_____
+    exportTestValues(preprocess_hist = p, hist_attrs = p$x$attrs[[p$x$cur_data]])
+    
+    return(p)
+
   }) # End process_hist
   
   ############## Filter tab ##############
@@ -731,7 +752,11 @@ shinyServer(function(session, input, output) {
       else x
     }) %>% unlist()
     
+    #____test export_____
+    exportTestValues(display_names = column_choices)
+    
     column_choices
+    
   })
   
   # Allow a button click to undo filtering
@@ -870,6 +895,9 @@ shinyServer(function(session, input, output) {
       peakIcr2 <<- applyFilt(filterForm, peakIcr2)
       
     }
+
+    exportTestValues(peakIcr2 = peakIcr2)
+
     
   }) # End creating peakIcr2
   
@@ -898,11 +926,16 @@ shinyServer(function(session, input, output) {
     showModal(
       modalDialog(title = "Filter Success",
                   HTML('<h4 style= "color:#1A5276">Your data has been filtered using mass and/or minimum observations. 
-                       You may proceed to the next tabs for subsequnt analysis.</h4>'))
+                       You may proceed to the next tabs for subsequnt analysis.</h4>'),
+                  hr(),
+                  actionButton("filter_dismiss", "Dismiss", width = '100%')
+                  ,footer = NULL)
                   )
+    
     HTML('<h4 style= "color:#1A5276">You may now proceed to preprocessing and visualization</h4>')
     
   }) # End successMessage
+  observeEvent(input$filter_dismiss,{removeModal()})
   
   # Display successMessage
   # Depends on: successMessage
@@ -1194,7 +1227,7 @@ shinyServer(function(session, input, output) {
   #### Main Panel (Visualize Tab) ####
   
   # vk bounds dropdown
-  output$vkbounds <- renderUI({
+  output$vkbounds_out <- renderUI({
     req(input$chooseplots == "Van Krevelen Plot")
     # behavior for 1 sample data file, required since input$choose_single will not exist if this is the case
     if(is.null(input$choose_single)){
@@ -1267,6 +1300,11 @@ shinyServer(function(session, input, output) {
     
   # When plot_data() is recalculated, repopulate the dropdowns under the plot.  Specifically vk_colors and custom scatterplot options.
   observeEvent(plot_data(),{
+   
+    # store test value
+    if (isTRUE(getOption("shiny.testmode"))) {
+      revals$plot_data_export <- plot_data()
+    }
     
     # ifelse block determines how to populate vk_colors dropdown
     if (input$choose_single == 1){
@@ -1509,6 +1547,9 @@ shinyServer(function(session, input, output) {
     )
     p$elementId <- NULL
     layout(p, xaxis = x, yaxis = y)
+    
+    exportTestValues(plot = p, plot_attrs = p$x$attrs[[p$x$cur_data]])
+    
     return(p)
     
   })
@@ -1537,27 +1578,30 @@ shinyServer(function(session, input, output) {
     }
     return(defs)
   })
-  
-  output$title_input <- renderUI({
+
+  output$title_out <- renderUI({
+
     validate(
       need(input$chooseplots != 0, message = "")
     )
-    textInput(inputId = "title_input", label = "Plot Title")
+    textInput(inputId = "title_input", label = "Plot Title", value = "")
   })
-  output$x_axis_input <- renderUI({
+  output$x_axis_out <- renderUI({
     validate(
       need(input$chooseplots != 0, message = "")
     )
     textInput(inputId = "x_axis_input", label = "X Axis Label", value = plot_defaults()$xlabel)
   })
-  output$y_axis_input <- renderUI({
+  output$y_axis_out <- renderUI({
     validate(
       need(input$chooseplots != 0, message = "")
     )
     textInput(inputId = "y_axis_input", label = "Y Axis Label", value = plot_defaults()$ylabel)
   })
   
-  output$legend_title_input <- renderUI({
+
+  
+  output$legend_title_out <- renderUI({
     
     validate(
       need(input$chooseplots != 0, message = "")
@@ -1592,9 +1636,9 @@ shinyServer(function(session, input, output) {
     # Single or Multiple Samples
     newLine$SampleType <- ifelse(input$choose_single == 1, yes = "Single Sample", no = "Multiple Samples")
     # Sample(s) in The first group (depends on input$choose_single to decide if this is a single or multiple sample list)
-    newLine$G1 <- ifelse(input$choose_single %in% c(1,2), yes = input$whichSamples, no = paste(input$whichGroups1, collapse = ","))
+    newLine$G1 <- ifelse(input$choose_single %in% c(1,2), yes = paste(input$whichSamples, collapse = ","), no = paste(input$whichGroups1, collapse = ","))
     # Sample(s) in the second group. Automatically NA if input$choose_single is single sample or single group
-    newLine$G2 <- ifelse(input$choose_single == 3, yes =  paste(input$whichGroups2, collapse = ","), no = "NA")
+    newLine$G2 <- ifelse(input$choose_single == 3, yes =  paste(input$whichGroups2, collapse = ","), no = NA)
     # Boundary set borders to use (NA for non-Van Krevelen plots)
     newLine$BoundarySet <- ifelse(input$chooseplots == "Van Krevelen Plot", yes = ifelse(input$vkbounds == 0, NA, input$vkbounds), no = "NA")
     # Color By
@@ -1609,9 +1653,11 @@ shinyServer(function(session, input, output) {
     if (input$add_plot == 1) {
       # replace the existing line on the first click
       parmTable$parms[input$add_plot, ] <- newLine
+      exportTestValues(parmTable_1 = parmTable$parms)
     } else {
       # concat every new line after
       parmTable$parms <- rbind(parmTable$parms, newLine)
+      exportTestValues(parmTable_1 = parmTable$parms)
     }
     
     

@@ -14,6 +14,7 @@ library(DT)
 
 # Define UI for application that draws a histogram
 shinyUI(navbarPage(title = (windowTitle = "FREDA"),
+                   id = "top_page",
                    theme = "yeti.css",
                    ############# Welcome Panel #########################
                    navbarMenu("Welcome",
@@ -76,8 +77,8 @@ shinyUI(navbarPage(title = (windowTitle = "FREDA"),
                                 # Condition on presence of isotope information
                                 conditionalPanel(
                                   condition = "input.isotope_yn == 1",
-                                  uiOutput('iso_info_column'),
-                                  uiOutput('iso_symbol')
+                                  uiOutput('iso_info_column_out'),
+                                  uiOutput('iso_symbol_out')
                                 ),
                                 # # Condition on absence of isotope information
                                 # conditionalPanel(
@@ -205,7 +206,7 @@ shinyUI(navbarPage(title = (windowTitle = "FREDA"),
                                 ),
                                 
                                 # Drop down list: which histogram should be displayed?
-                                uiOutput('which_hist'),
+                                uiOutput('which_hist_out'),
                                 
                                 # Plot: histogram
                                 plotlyOutput('preprocess_hist')
@@ -310,15 +311,15 @@ shinyUI(navbarPage(title = (windowTitle = "FREDA"),
                                 
                                 # Select Plot Type
                                 uiOutput('plot_type'),
-                                
                                 uiOutput("plotUI"),
                                 uiOutput("plotUI_cond"),
                                 # uiOutput("plotUI_2"),
                                 
-                                uiOutput("title_input"),
-                                uiOutput("x_axis_input"),
-                                uiOutput("y_axis_input"),
-                                uiOutput("legend_title_input"),
+                                uiOutput("title_out"),
+                                uiOutput("x_axis_out"),
+                                uiOutput("y_axis_out"),
+                                uiOutput("legend_title_out"),
+
                                 splitLayout(
                                   actionButton("plot_submit", label = "Submit")
                                 )
@@ -339,7 +340,7 @@ shinyUI(navbarPage(title = (windowTitle = "FREDA"),
                                   # Set default width to 7
                                   
                                   # Drop down list: Use boundary?
-                                  uiOutput("vkbounds")
+                                  uiOutput("vkbounds_out")
                                   
                                 ),
                                 conditionalPanel(
