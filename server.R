@@ -13,11 +13,7 @@ library(magick)
 library(purrr)
 library(shinyBS)
 
-f <- list(
-  family = "Courier New, monospace",
-  size = 18,
-  color = "#7f7f7f"
-)
+
 #peakIcr2 <- NULL #when finished developing, uncomment this to clear the workspace on exit
 
 shinyServer(function(session, input, output) {
@@ -29,7 +25,6 @@ shinyServer(function(session, input, output) {
   source('summaryPreprocess.R')
   source("renderDownloadPlots.R")
   
-
   revals <- reactiveValues(ntables = 0, makeplot = 1, color_by_choices = NULL, axes_choices = NULL,
                            plot_data_export = NULL, peakICR_export = NULL)
 
@@ -228,13 +223,15 @@ shinyServer(function(session, input, output) {
   # Object: Create peakICR when Upload Button clicked
   peakICR <- eventReactive(input$upload_click, {
     # Error handling: unique identifier chosen
-    validate(
-      need(input$edata_id_col != 'Select one', 
-           'Please select a unique identifier column'), 
+    validate(need(input$edata_id_col != 'Select one', 'Please select a unique identifier column'))
+             
+    validate(         
       need(input$select != 0, 
            'Please select either Formula or Elemental columns'),
       need(input$isotope_yn != 0,
-           'Please select yes or no on information for isotopes')
+           'Please select yes or no on information for isotopes'),
+      need(sum(!(Edata()[,input$edata_id_col] %in% Emeta()[,input$edata_id_col])) == 0,
+           'Not all peaks in data file are present in molecular identification file, please add/remove these peaks to emeta / from edata')
       
     ) # End error handling #
     
@@ -264,22 +261,22 @@ shinyServer(function(session, input, output) {
                'The entered isotopic notation does not match the entries in the chosen isotope information column. Please revise.')
         ) # End error handling
         
-        return(as.peakIcrData(e_data = Edata(), f_data = fdata(),
+        res <- as.peakIcrData(e_data = Edata(), f_data = fdata(),
                               e_meta = Emeta(), edata_cname = input$edata_id_col, 
                               fdata_cname = 'SampleId', mass_cname = input$edata_id_col, 
                               instrument_type = input$instrument,
                               mf_cname = input$f_column,
                               isotopic_cname = input$iso_info_column,
-                              isotopic_notation = as.character(input$iso_symbol)))
+                              isotopic_notation = as.character(input$iso_symbol))
         
       } # End C13 / no C13 if statement
       
       if (input$isotope_yn == 2) { #no C13
         # Calculate peakIcrData with formula column
-        return(as.peakIcrData(e_data = Edata(), f_data = fdata(),
+        res <- as.peakIcrData(e_data = Edata(), f_data = fdata(),
                               e_meta = Emeta(), edata_cname = input$edata_id_col, 
                               fdata_cname = 'SampleId', mass_cname = input$edata_id_col, 
-                              instrument_type = input$instrument, mf_cname = input$f_column))
+                              instrument_type = input$instrument, mf_cname = input$f_column)
       } 
     }
     
@@ -312,13 +309,13 @@ shinyServer(function(session, input, output) {
       # If no C13
       if (input$isotope_yn == 2) {
         # Create peakICR object
-        return(as.peakIcrData(e_data = Edata(), f_data = fdata(),
+        res <- as.peakIcrData(e_data = Edata(), f_data = fdata(),
                               e_meta = Emeta(), edata_cname = input$edata_id_col, 
                               fdata_cname = 'SampleId', mass_cname = input$edata_id_col,
                               instrument_type = input$instrument,
                               c_cname = input$c_column, h_cname = input$h_column, 
                               n_cname = input$n_column, o_cname = input$o_column, 
-                              s_cname = input$s_column, p_cname = input$p_column))
+                              s_cname = input$s_column, p_cname = input$p_column)
         
       }
       if (input$isotope_yn == 1) { # If there's C13 # 
@@ -330,7 +327,7 @@ shinyServer(function(session, input, output) {
                'The entered isotopic notation does not match the entries in the chosen isotope information column. Please revise.')
         ) # End error handling
         
-        return(as.peakIcrData(e_data = Edata(), f_data = fdata(),
+        res <- as.peakIcrData(e_data = Edata(), f_data = fdata(),
                               e_meta = Emeta(), edata_cname = input$edata_id_col, 
                               fdata_cname = 'SampleId', mass_cname = input$edata_id_col, 
                               instrument_type = input$instrument,
@@ -338,11 +335,16 @@ shinyServer(function(session, input, output) {
                               n_cname = input$n_column, o_cname = input$o_column, 
                               s_cname = input$s_column, p_cname = input$p_column, 
                               isotopic_cname = input$iso_info_column,
-                              isotopic_notation = as.character(input$iso_symbol)))
+                              isotopic_notation = as.character(input$iso_symbol))
         
       } # End C13 / no C13 if statement
       
     } # End elemental column if statement
+    
+    # create nonreactive peakIcr object
+    peakIcr2 <<- res
+    
+    return(res)
     
   }) # End peakICR creation
   
@@ -354,10 +356,7 @@ shinyServer(function(session, input, output) {
     
     # Error handling: peakICR() must exist
     req(peakICR())
-    
-    # Create nonreactive peakICR object
-    peakIcr2 <<- peakICR()
-    
+
     # If no errors, show Success message
     HTML('<h4 style= "color:#1A5276">You may proceed to data filtering</h4>')
     
@@ -399,17 +398,13 @@ shinyServer(function(session, input, output) {
   
   # Summary: Display number of peaks and samples
   output$num_peaks <- renderText({
-    validate(
-      need(!is.null(peakICR()), message = "")
-    )
+    peakICR()
     c('Number of peaks: ', nrow(peakICR()$e_data))
     
   }) # End num_peaks
   
   output$num_samples <- renderText({
-    validate(
-      need(!is.null(peakICR()), message = "")
-    )
+    peakICR()
     c('Number of samples: ', (length(edata_cnames()) - 1))
     
   }) # End num_samples # 
@@ -973,7 +968,7 @@ shinyServer(function(session, input, output) {
                       actionButton("filter_dismiss", "Dismiss", width = '75%'),
                       br(),
                       br(),
-                      actionButton("goto_viz", "Continue to Visualize", width = '75%')
+                      actionButton("goto_viz", "Continue to Visualization", width = '75%')
                     )
                   )
                   ,footer = NULL)
@@ -1495,23 +1490,28 @@ shinyServer(function(session, input, output) {
       # Make sure a plot stype selection has been chosen
       validate(need(isolate(input$choose_single) != 0, message = "Please select plotting criteria"))
       
+      legendTitle = ifelse(isolate(is.null(input$legend_title_input) || input$legend_title_input == ""),
+                                   yes = names(revals$color_by_choices[revals$color_by_choices == input$vk_colors]),
+                                   no = isolate(input$legend_title_input)
+                           )
+      
       #----------- Single sample plots ------------#
       #-------Kendrick Plot-----------# 
       if (input$chooseplots == 'Kendrick Plot') {
           validate(need(!is.null(isolate(input$whichSamples)) | !(is.null(isolate(input$whichGroups1)) & is.null(isolate(input$whichGroups2))), message = "Please select at least 1 sample"))
           p <- kendrickPlot(isolate(plot_data()), colorCName = input$vk_colors,
                                  xlabel = isolate(input$x_axis_input), ylabel = isolate(input$y_axis_input),
-                                 title = isolate(input$title_input),legendTitle = isolate(input$legend_title_input))
+                                 title = isolate(input$title_input),legendTitle = legendTitle)
          
           if (input$vk_colors %in% c('bs1', 'bs2')) {
             p <- kendrickPlot(isolate(plot_data()), vkBoundarySet = input$vk_colors,
                               xlabel = isolate(input$x_axis_input), ylabel = isolate(input$y_axis_input),
-                              title = isolate(input$title_input),legendTitle = isolate(input$legend_title_input))
+                              title = isolate(input$title_input),legendTitle = legendTitle)
           } else {
             # if color selection doesn't belong to a boundary, color by test
             p <- kendrickPlot(isolate(plot_data()), colorCName = input$vk_colors,
                               xlabel = isolate(input$x_axis_input), ylabel = isolate(input$y_axis_input),
-                              title = isolate(input$title_input),legendTitle = isolate(input$legend_title_input))
+                              title = isolate(input$title_input),legendTitle = legendTitle)
           }
          #else if (isolate(input$choose_single == 3)) { #group overlay plots
         #   validate(need(!is.null(isolate(input$whichGroups1)), message = "Please select samples for first grouping"))
@@ -1529,6 +1529,7 @@ shinyServer(function(session, input, output) {
         #                       title = isolate(input$title_input))
         #   }
         # }
+          
       }
       #-------VanKrevelen Plot--------#
       if (input$chooseplots == 'Van Krevelen Plot') {
@@ -1538,24 +1539,24 @@ shinyServer(function(session, input, output) {
             if (input$vk_colors %in% c('bs1', 'bs2')) {
               p <- vanKrevelenPlot(isolate(plot_data()), showVKBounds = FALSE, vkBoundarySet = input$vk_colors,
                                    xlabel = isolate(input$x_axis_input), ylabel = isolate(input$y_axis_input),
-                                   title = isolate(input$title_input),legendTitle = isolate(input$legend_title_input))
+                                   title = isolate(input$title_input),legendTitle = legendTitle)
             } else {
               # if no boundary lines and color selection doesn't belong to a boundary, color by test
               p <- vanKrevelenPlot(isolate(plot_data()), showVKBounds = FALSE, colorCName = input$vk_colors,
                                    xlabel = isolate(input$x_axis_input), ylabel = isolate(input$y_axis_input),
-                                   title = isolate(input$title_input),legendTitle = isolate(input$legend_title_input))
+                                   title = isolate(input$title_input),legendTitle = legendTitle)
             }
           } else {
             # if boundary lines, allow a color by boundary class 
             if (input$vk_colors %in% c('bs1', 'bs2')) {
               p <- vanKrevelenPlot(isolate(plot_data()), vkBoundarySet = input$vkbounds, showVKBounds = TRUE,
                                    xlabel = isolate(input$x_axis_input), ylabel = isolate(input$y_axis_input),
-                                   title = isolate(input$title_input),legendTitle = isolate(input$legend_title_input))
+                                   title = isolate(input$title_input),legendTitle = legendTitle)
             } else {
               # if boundary lines and color isn't a boundary class
               p <- vanKrevelenPlot(isolate(plot_data()), vkBoundarySet = input$vkbounds, showVKBounds = TRUE, colorCName = input$vk_colors,
                                    xlabel = isolate(input$x_axis_input), ylabel = isolate(input$y_axis_input),
-                                   title = isolate(input$title_input),legendTitle = isolate(input$legend_title_input))
+                                   title = isolate(input$title_input),legendTitle = legendTitle)
             }
          }
       }
@@ -1587,22 +1588,24 @@ shinyServer(function(session, input, output) {
                          ylabel = isolate(ifelse(is.null(input$y_axis_input) | (input$y_axis_input == ""), 
                                                  yes = names(revals$color_by_choices[revals$color_by_choices == input$scatter_y]), 
                                                  no = input$y_axis_input)),
-                         title = isolate(input$title_input))
+                         title = isolate(input$title_input), legendTitle = legendTitle)
         
       }
     }
     
-    x <- list(
-      titlefont = f
-    )
-    y <- list(
-      titlefont = f
-    )
-    p$elementId <- NULL
-    layout(p, xaxis = x, yaxis = y)
+    # Axes Options
+    f <- list(family = "Droid Sans, monospace", size = 18, color = "#7f7f7f")
     
+    x <- list(titlefont = f)
+    y <- list(titlefont = f)
+    
+    # ___test-export___
     exportTestValues(plot = p, plot_attrs = p$x$attrs[[p$x$cur_data]])
     
+    p <- p %>% layout(xaxis = x, yaxis = y)
+    
+    # Null assignment bypasses plotly bug
+    p$elementId <- NULL
     return(p)
     
   })
@@ -1631,7 +1634,8 @@ shinyServer(function(session, input, output) {
     }
     return(defs)
   })
-
+  
+  # Axis and title label input menus
   output$title_out <- renderUI({
 
     validate(
@@ -1652,14 +1656,22 @@ shinyServer(function(session, input, output) {
     textInput(inputId = "y_axis_input", label = "Y Axis Label", value = plot_defaults()$ylabel)
   })
   
-
+  # reactive variable that keeps track of whether the selected column is numeric or categorical.
+  numeric_selected <- eventReactive(input$vk_colors,{
+                        if(input$vk_colors %in% (plot_data()$e_data %>% colnames())){
+                          (is.numeric(plot_data()$e_data %>% pluck(input$vk_colors)) & !is_integer(plot_data()$e_data %>% pluck(input$vk_colors)))
+                        }else if(input$vk_colors %in% (plot_data()$e_meta %>% colnames())){
+                          (is.numeric(plot_data()$e_meta %>% pluck(input$vk_colors)) & !is_integer(plot_data()$e_meta %>% pluck(input$vk_colors)))
+                        }else TRUE
+                      })
   
+  # legend input, will be hidden if numeric_selected() is FALSE.
   output$legend_title_out <- renderUI({
     
     validate(
       need(input$chooseplots != 0, message = "")
     )
-    if (input$chooseplots == 'Density Plot') {
+    if ((input$chooseplots == 'Density Plot') | !numeric_selected()) {
       return(NULL)
     } else{
       textInput(inputId = "legend_title_input", label = "Legend Label", value = "")
