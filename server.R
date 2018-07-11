@@ -17,7 +17,7 @@ library(shinyBS)
 #peakIcr2 <- NULL #when finished developing, uncomment this to clear the workspace on exit
 
 shinyServer(function(session, input, output) {
-
+  
   Sys.setenv(R_ZIPCMD="/usr/bin/zip")
   # Source files for 'summaryFilt' and 'summaryPreprocess'
   source('tooltip_checkbox.R')
@@ -27,7 +27,7 @@ shinyServer(function(session, input, output) {
   
   revals <- reactiveValues(ntables = 0, makeplot = 1, color_by_choices = NULL, axes_choices = NULL,
                            plot_data_export = NULL, peakICR_export = NULL)
-
+  
   exportTestValues(plot_data = revals$plot_data_export, peakICR = revals$peakICR_export)
   ######## Welcome Tab #############
   #------ Download Example Data ---------#
@@ -224,7 +224,7 @@ shinyServer(function(session, input, output) {
   peakICR <- eventReactive(input$upload_click, {
     # Error handling: unique identifier chosen
     validate(need(input$edata_id_col != 'Select one', 'Please select a unique identifier column'))
-             
+    
     validate(         
       need(input$select != 0, 
            'Please select either Formula or Elemental columns'),
@@ -356,7 +356,7 @@ shinyServer(function(session, input, output) {
     
     # Error handling: peakICR() must exist
     req(peakICR())
-
+    
     # If no errors, show Success message
     HTML('<h4 style= "color:#1A5276">You may proceed to data filtering</h4>')
     
@@ -378,13 +378,13 @@ shinyServer(function(session, input, output) {
         fluidRow(
           column(10, align = "center", offset = 1,
                  HTML('<h4 style= "color:#1A5276">Your data has been successfully uploaded. 
-                            You may proceed to the subsequent tabs for analysis.</h4>'),
+                      You may proceed to the subsequent tabs for analysis.</h4>'),
                  hr(),
                  actionButton("upload_dismiss", "Dismiss", width = '75%'),
                  br(),
                  br(),
                  actionButton("goto_preprocess", "Continue to preprocessing", width = '75%')
-          )
+                 )
         )
         ,footer = NULL)
     )
@@ -394,7 +394,7 @@ shinyServer(function(session, input, output) {
   observeEvent(input$goto_preprocess, {
     updateTabsetPanel(session, "top_page", selected = "Preprocess")
     removeModal()
-    })
+  })
   
   # Summary: Display number of peaks and samples
   output$num_peaks <- renderText({
@@ -520,7 +520,7 @@ shinyServer(function(session, input, output) {
     
   })# End emeta_text
   
-
+  
   
   ####### Preprocess Tab #######
   
@@ -537,7 +537,7 @@ shinyServer(function(session, input, output) {
                        <span style = font-weight:bold>Element ratios are selected by default as they are required to produce Van-Krevelen
                        and Kendrick plots.</span>  \n Table summaries and an interactive histogram/bar chart of the values you selected will be generated.<p>")
                   )
-              )
+                  )
   })
   
   output$which_calcs <- renderUI({
@@ -559,7 +559,7 @@ shinyServer(function(session, input, output) {
     
     ## Include functionality to possibly reset 
     
-    #peakIcr2$e_meta <<- peakIcr2$e_meta %>% select(-one_of(calc_vars$ColumnName))   
+    # peakIcr2$e_meta <<- peakIcr2$e_meta %>% dplyr::select(-one_of(calc_vars$ColumnName))
     
     # Apply all relevant functions
     for(el in input$tests){
@@ -705,7 +705,7 @@ shinyServer(function(session, input, output) {
     exportTestValues(preprocess_hist = p, hist_attrs = p$x$attrs[[p$x$cur_data]])
     
     return(p)
-
+    
   }) # End process_hist
   
   observeEvent(input$preprocess_click,{
@@ -721,7 +721,7 @@ shinyServer(function(session, input, output) {
                            br(),
                            br(),
                            actionButton("goto_filter", "Continue to filtering", width = '75%')
-                           )
+                    )
                   )
                   ,footer = NULL)
     ) 
@@ -748,7 +748,7 @@ shinyServer(function(session, input, output) {
     
     return(temp)
   })
-
+  
   observeEvent(input$filter_help,{
     showModal(
       modalDialog("",
@@ -765,7 +765,7 @@ shinyServer(function(session, input, output) {
                          style = "color:CornFlowerBlue"),
                   tags$p("Check boxes to select which filters to apply, specify filtering criteria by a range for numeric data or a selection of values for categorical data and then click 'Filter Data'",
                          style = "color:CornFlowerBlue"))
-    )
+      )
   })
   
   #get display name choices for dropdown
@@ -861,24 +861,24 @@ shinyServer(function(session, input, output) {
           #check to see if the selected filter is numeric or categorical
           if (is.numeric(peakIcr2$e_meta[, inputlist[[i]]])) {
             # if the filter applies to numeric data, allow inputs for min, max, and keep NA
-              splitLayout(cellWidths = c("40%", "40%", "20%"),
-                numericInput(inputId = paste0("minimum_custom",i), label = "Min", value = min(peakIcr2$e_meta[, inputlist[[i]]], na.rm = TRUE)),
-                numericInput(inputId = paste0("maximum_custom",i), label = "Max", value = max(peakIcr2$e_meta[, inputlist[[i]]], na.rm = TRUE)),
-                tagList(
-                  br(),
-                  checkboxInput(inputId = paste0("na_custom",i), label = "Keep NAs?", value = FALSE)
-                  )
-                )
+            splitLayout(cellWidths = c("40%", "40%", "20%"),
+                        numericInput(inputId = paste0("minimum_custom",i), label = "Min", value = min(peakIcr2$e_meta[, inputlist[[i]]], na.rm = TRUE)),
+                        numericInput(inputId = paste0("maximum_custom",i), label = "Max", value = max(peakIcr2$e_meta[, inputlist[[i]]], na.rm = TRUE)),
+                        tagList(
+                          br(),
+                          checkboxInput(inputId = paste0("na_custom",i), label = "Keep NAs?", value = FALSE)
+                        )
+            )
             
           } else if (!is.numeric(peakIcr2$e_meta[, inputlist[[i]]])) {
             # if the filter applies to categorical data, populate a box of options along with a keep NA option
             splitLayout(cellWidths = c("40%", "40%", "20%"),
-              selectInput(inputId = paste0("categorical_custom",i), label = "Categories to Keep",
-                          multiple = TRUE, selected = unique(peakIcr2$e_meta[, inputlist[[i]]]), choices = unique(peakIcr2$e_meta[, inputlist[[i]]])),
-              tagList(
-                br(),
-                checkboxInput(inputId = paste0("na_custom",i), label = "Keep NAs?", value = FALSE)
-              )
+                        selectInput(inputId = paste0("categorical_custom",i), label = "Categories to Keep",
+                                    multiple = TRUE, selected = unique(peakIcr2$e_meta[, inputlist[[i]]]), choices = unique(peakIcr2$e_meta[, inputlist[[i]]])),
+                        tagList(
+                          br(),
+                          checkboxInput(inputId = paste0("na_custom",i), label = "Keep NAs?", value = FALSE)
+                        )
             )
             
             
@@ -890,7 +890,7 @@ shinyServer(function(session, input, output) {
     })
     
   })
-
+  
   
   #### Action Button Reactions (Filter Tab) ####
   
@@ -930,9 +930,9 @@ shinyServer(function(session, input, output) {
       peakIcr2 <<- applyFilt(filterForm, peakIcr2)
       
     }
-
+    
     exportTestValues(peakIcr2 = peakIcr2)
-
+    
     
   }) # End creating peakIcr2
   
@@ -962,17 +962,17 @@ shinyServer(function(session, input, output) {
       modalDialog(title = "Filter Success",
                   fluidRow(
                     column(10, align = "center", offset = 1,
-                      HTML('<h4 style= "color:#1A5276">Your data has been filtered using mass and/or minimum observations. 
-                           You may proceed to the next tabs for subsequnt analysis.</h4>'),
-                      hr(),
-                      actionButton("filter_dismiss", "Dismiss", width = '75%'),
-                      br(),
-                      br(),
-                      actionButton("goto_viz", "Continue to Visualization", width = '75%')
-                    )
+                           HTML('<h4 style= "color:#1A5276">Your data has been filtered using mass and/or minimum observations. 
+                                You may proceed to the next tabs for subsequnt analysis.</h4>'),
+                           hr(),
+                           actionButton("filter_dismiss", "Dismiss", width = '75%'),
+                           br(),
+                           br(),
+                           actionButton("goto_viz", "Continue to Visualization", width = '75%')
+                           )
                   )
                   ,footer = NULL)
-                  )
+    )
     
     HTML('<h4 style= "color:#1A5276">You may now proceed to preprocessing and visualization</h4>')
     
@@ -981,7 +981,7 @@ shinyServer(function(session, input, output) {
   observeEvent(input$goto_viz,{
     updateTabsetPanel(session, "top_page", selected = "Visualize")
     removeModal()
-    })
+  })
   
   # Display successMessage
   # Depends on: successMessage
@@ -1152,9 +1152,9 @@ shinyServer(function(session, input, output) {
     removeModal()
   })
   
-
+  
   ####### Visualize Tab #######
-
+  
   ## Sidebar Panel ##
   # choose ui to render depending on which plot is chosen from input$chooseplot
   observeEvent(input$visualize_help,{
@@ -1175,7 +1175,7 @@ shinyServer(function(session, input, output) {
                        Van Krevelen boundaries can be displayed for VK-plots.
                        Custom scatterplots will allow for selection of arbitrary x and y axes.<p>")
                   )
-      )
+                  )
   })
   
   # Plot options, with selections removed if the necessary columns in e_meta are not present.
@@ -1226,8 +1226,8 @@ shinyServer(function(session, input, output) {
     }
     else{
       return(selectInput('choose_single', 'I want to plot using:',
-                      choices = c('Make a selection' = 0, 'A single sample' = 1, 'Multiple samples by group' = 2, 'A comparison of groups' = 3),
-                      selected = 0))
+                         choices = c('Make a selection' = 0, 'A single sample' = 1, 'Multiple samples by group' = 2, 'A comparison of groups' = 3),
+                         selected = 0))
     }
   })
   
@@ -1247,31 +1247,31 @@ shinyServer(function(session, input, output) {
     }
     else if(input$choose_single == 2){
       return(tagList(
-          selectInput('whichSamples', 'Grouped Samples',
-                               choices = sample_names(),
-                               multiple = TRUE),
-          conditionalPanel(
-            condition = 'input.whichSamples.length < 2',
-            tags$p("Please select at least 2 samples", style = "color:gray")
-          ) # End conditional output multiple samples#
+        selectInput('whichSamples', 'Grouped Samples',
+                    choices = sample_names(),
+                    multiple = TRUE),
+        conditionalPanel(
+          condition = 'input.whichSamples.length < 2',
+          tags$p("Please select at least 2 samples", style = "color:gray")
+        ) # End conditional output multiple samples#
       ))
     }
     else if(input$choose_single == 1){
-        return(selectInput('whichSamples', 'Sample',
-                    choices = sample_names()))
+      return(selectInput('whichSamples', 'Sample',
+                         choices = sample_names()))
     }
     else return(NULL)
-    })
+  })
   
-    # observers which make the options mutually exclusive when doing a comparison of two groups
-    observeEvent(input$whichGroups2,{
-      updateSelectInput(session, "whichGroups1", choices = setdiff(sample_names(), input$whichGroups2), selected = input$whichGroups1)
-    })
-    observeEvent(input$whichGroups1,{
-      updateSelectInput(session, "whichGroups2", choices = setdiff(sample_names(), input$whichGroups1), selected = input$whichGroups2)
-    })
-
-    
+  # observers which make the options mutually exclusive when doing a comparison of two groups
+  observeEvent(input$whichGroups2,{
+    updateSelectInput(session, "whichGroups1", choices = setdiff(sample_names(), input$whichGroups2), selected = input$whichGroups1)
+  })
+  observeEvent(input$whichGroups1,{
+    updateSelectInput(session, "whichGroups2", choices = setdiff(sample_names(), input$whichGroups1), selected = input$whichGroups2)
+  })
+  
+  
   #### Main Panel (Visualize Tab) ####
   
   # vk bounds dropdown
@@ -1345,10 +1345,10 @@ shinyServer(function(session, input, output) {
       
     }
   })
-    
+  
   # When plot_data() is recalculated, repopulate the dropdowns under the plot.  Specifically vk_colors and custom scatterplot options.
   observeEvent(plot_data(),{
-   
+    
     # store test value
     if (isTRUE(getOption("shiny.testmode"))) {
       revals$plot_data_export <- plot_data()
@@ -1360,9 +1360,9 @@ shinyServer(function(session, input, output) {
       
       if (input$chooseplots == "Van Krevelen Plot"){
         color_by_choices <- switch(as.character(input$vkbounds), 
-                               'bs1' = c('Van Krevelen Boundary Set 1' = 'bs1', color_by_choices),
-                               'bs2' = c('Van Krevelen Boundary Set 2' = 'bs2', color_by_choices),
-                               "0" = c('Van Krevelen Boundary Set 1' = 'bs1', 'Van Krevelen Boundary Set 2' = 'bs2', color_by_choices))
+                                   'bs1' = c('Van Krevelen Boundary Set 1' = 'bs1', color_by_choices),
+                                   'bs2' = c('Van Krevelen Boundary Set 2' = 'bs2', color_by_choices),
+                                   "0" = c('Van Krevelen Boundary Set 1' = 'bs1', 'Van Krevelen Boundary Set 2' = 'bs2', color_by_choices))
       }
     }
     else if (input$choose_single == 2) {
@@ -1410,36 +1410,36 @@ shinyServer(function(session, input, output) {
     
     # Kendrick Colors
     if (input$chooseplots == 'Kendrick Plot') {
-        updateSelectInput(session, 'vk_colors', 'Color by:',
-                          choices = color_by_choices,
-                          selected = selected)
+      updateSelectInput(session, 'vk_colors', 'Color by:',
+                        choices = color_by_choices,
+                        selected = selected)
     }
     
     # Van Krevelen Colors
     if (input$chooseplots == 'Van Krevelen Plot') {
-          updateSelectInput(session, 'vk_colors', 'Color by:',
-                            choices = color_by_choices,
-                            selected = selected)
-       
+      updateSelectInput(session, 'vk_colors', 'Color by:',
+                        choices = color_by_choices,
+                        selected = selected)
+      
     }
     
     if (input$chooseplots == 'Custom Scatter Plot') {
-        # allow only numeric columns for the axes but keep categorical coloring options
-        numeric_cols <- which(sapply(full_join(plot_data()$e_meta, plot_data()$e_data) %>% 
-                                       dplyr::select(color_by_choices), 
-                                     is.numeric))
+      # allow only numeric columns for the axes but keep categorical coloring options
+      numeric_cols <- which(sapply(full_join(plot_data()$e_meta, plot_data()$e_data) %>% 
+                                     dplyr::select(color_by_choices), 
+                                   is.numeric))
       
-        axes_choices <- revals$axes_choices <- color_by_choices[numeric_cols]
-        
-        updateSelectInput(session, 'scatter_x', "Horizontal Axis Variable:",
-                          choices = axes_choices[!(axes_choices %in% c(input$scatter_y, input$vk_colors))],
-                          selected = selected_x)
-        updateSelectInput(session, "scatter_y", "Vertical Axis Variable:",
-                          choices = axes_choices[!(axes_choices %in% c(input$scatter_x, input$vk_colors))],
-                          selected = selected_y)
-        updateSelectInput(session, 'vk_colors', 'Color  by:',
-                          choices = color_by_choices[!(color_by_choices %in% c(input$scatter_x, input$scatter_y))],
-                          selected = selected)
+      axes_choices <- revals$axes_choices <- color_by_choices[numeric_cols]
+      
+      updateSelectInput(session, 'scatter_x', "Horizontal Axis Variable:",
+                        choices = axes_choices[!(axes_choices %in% c(input$scatter_y, input$vk_colors))],
+                        selected = selected_x)
+      updateSelectInput(session, "scatter_y", "Vertical Axis Variable:",
+                        choices = axes_choices[!(axes_choices %in% c(input$scatter_x, input$vk_colors))],
+                        selected = selected_y)
+      updateSelectInput(session, 'vk_colors', 'Color  by:',
+                        choices = color_by_choices[!(color_by_choices %in% c(input$scatter_x, input$scatter_y))],
+                        selected = selected)
     }
     
     revals$color_by_choices <- color_by_choices
@@ -1491,29 +1491,29 @@ shinyServer(function(session, input, output) {
       validate(need(isolate(input$choose_single) != 0, message = "Please select plotting criteria"))
       
       legendTitle = ifelse(isolate(is.null(input$legend_title_input) || input$legend_title_input == ""),
-                                   yes = names(revals$color_by_choices[revals$color_by_choices == input$vk_colors]),
-                                   no = isolate(input$legend_title_input)
-                           )
+                           yes = names(isolate(revals$color_by_choices[revals$color_by_choices == input$vk_colors])),
+                           no = isolate(input$legend_title_input)
+      )
       
       #----------- Single sample plots ------------#
       #-------Kendrick Plot-----------# 
       if (input$chooseplots == 'Kendrick Plot') {
-          validate(need(!is.null(isolate(input$whichSamples)) | !(is.null(isolate(input$whichGroups1)) & is.null(isolate(input$whichGroups2))), message = "Please select at least 1 sample"))
+        validate(need(!is.null(isolate(input$whichSamples)) | !(is.null(isolate(input$whichGroups1)) & is.null(isolate(input$whichGroups2))), message = "Please select at least 1 sample"))
+        p <- kendrickPlot(isolate(plot_data()), colorCName = input$vk_colors,
+                          xlabel = isolate(input$x_axis_input), ylabel = isolate(input$y_axis_input),
+                          title = isolate(input$title_input),legendTitle = legendTitle)
+        
+        if (input$vk_colors %in% c('bs1', 'bs2')) {
+          p <- kendrickPlot(isolate(plot_data()), vkBoundarySet = input$vk_colors,
+                            xlabel = isolate(input$x_axis_input), ylabel = isolate(input$y_axis_input),
+                            title = isolate(input$title_input),legendTitle = legendTitle)
+        } else {
+          # if color selection doesn't belong to a boundary, color by test
           p <- kendrickPlot(isolate(plot_data()), colorCName = input$vk_colors,
-                                 xlabel = isolate(input$x_axis_input), ylabel = isolate(input$y_axis_input),
-                                 title = isolate(input$title_input),legendTitle = legendTitle)
-         
-          if (input$vk_colors %in% c('bs1', 'bs2')) {
-            p <- kendrickPlot(isolate(plot_data()), vkBoundarySet = input$vk_colors,
-                              xlabel = isolate(input$x_axis_input), ylabel = isolate(input$y_axis_input),
-                              title = isolate(input$title_input),legendTitle = legendTitle)
-          } else {
-            # if color selection doesn't belong to a boundary, color by test
-            p <- kendrickPlot(isolate(plot_data()), colorCName = input$vk_colors,
-                              xlabel = isolate(input$x_axis_input), ylabel = isolate(input$y_axis_input),
-                              title = isolate(input$title_input),legendTitle = legendTitle)
-          }
-         #else if (isolate(input$choose_single == 3)) { #group overlay plots
+                            xlabel = isolate(input$x_axis_input), ylabel = isolate(input$y_axis_input),
+                            title = isolate(input$title_input),legendTitle = legendTitle)
+        }
+        #else if (isolate(input$choose_single == 3)) { #group overlay plots
         #   validate(need(!is.null(isolate(input$whichGroups1)), message = "Please select samples for first grouping"))
         #   validate(need(length(input$whichGroups1) > 0, message = "Please select at least 1 sample"))
         #   validate(need(!is.null(isolate(input$whichGroups2)), message = "Please select samples for second grouping"))
@@ -1529,43 +1529,43 @@ shinyServer(function(session, input, output) {
         #                       title = isolate(input$title_input))
         #   }
         # }
-          
+        
       }
       #-------VanKrevelen Plot--------#
       if (input$chooseplots == 'Van Krevelen Plot') {
-          validate(need(!is.null(isolate(input$whichSamples)) | !(is.null(isolate(input$whichGroups1)) & is.null(isolate(input$whichGroups2))), message = "Please select at least 1 sample"))
-          if (input$vkbounds == 0) { #no bounds
-            # if no boundary lines, leave the option to color by boundary
-            if (input$vk_colors %in% c('bs1', 'bs2')) {
-              p <- vanKrevelenPlot(isolate(plot_data()), showVKBounds = FALSE, vkBoundarySet = input$vk_colors,
-                                   xlabel = isolate(input$x_axis_input), ylabel = isolate(input$y_axis_input),
-                                   title = isolate(input$title_input),legendTitle = legendTitle)
-            } else {
-              # if no boundary lines and color selection doesn't belong to a boundary, color by test
-              p <- vanKrevelenPlot(isolate(plot_data()), showVKBounds = FALSE, colorCName = input$vk_colors,
-                                   xlabel = isolate(input$x_axis_input), ylabel = isolate(input$y_axis_input),
-                                   title = isolate(input$title_input),legendTitle = legendTitle)
-            }
+        validate(need(!is.null(isolate(input$whichSamples)) | !(is.null(isolate(input$whichGroups1)) & is.null(isolate(input$whichGroups2))), message = "Please select at least 1 sample"))
+        if (input$vkbounds == 0) { #no bounds
+          # if no boundary lines, leave the option to color by boundary
+          if (input$vk_colors %in% c('bs1', 'bs2')) {
+            p <- vanKrevelenPlot(isolate(plot_data()), showVKBounds = FALSE, vkBoundarySet = input$vk_colors,
+                                 xlabel = isolate(input$x_axis_input), ylabel = isolate(input$y_axis_input),
+                                 title = isolate(input$title_input),legendTitle = legendTitle)
           } else {
-            # if boundary lines, allow a color by boundary class 
-            if (input$vk_colors %in% c('bs1', 'bs2')) {
-              p <- vanKrevelenPlot(isolate(plot_data()), vkBoundarySet = input$vkbounds, showVKBounds = TRUE,
-                                   xlabel = isolate(input$x_axis_input), ylabel = isolate(input$y_axis_input),
-                                   title = isolate(input$title_input),legendTitle = legendTitle)
-            } else {
-              # if boundary lines and color isn't a boundary class
-              p <- vanKrevelenPlot(isolate(plot_data()), vkBoundarySet = input$vkbounds, showVKBounds = TRUE, colorCName = input$vk_colors,
-                                   xlabel = isolate(input$x_axis_input), ylabel = isolate(input$y_axis_input),
-                                   title = isolate(input$title_input),legendTitle = legendTitle)
-            }
-         }
+            # if no boundary lines and color selection doesn't belong to a boundary, color by test
+            p <- vanKrevelenPlot(isolate(plot_data()), showVKBounds = FALSE, colorCName = input$vk_colors,
+                                 xlabel = isolate(input$x_axis_input), ylabel = isolate(input$y_axis_input),
+                                 title = isolate(input$title_input),legendTitle = legendTitle)
+          }
+        } else {
+          # if boundary lines, allow a color by boundary class 
+          if (input$vk_colors %in% c('bs1', 'bs2')) {
+            p <- vanKrevelenPlot(isolate(plot_data()), vkBoundarySet = input$vkbounds, showVKBounds = TRUE,
+                                 xlabel = isolate(input$x_axis_input), ylabel = isolate(input$y_axis_input),
+                                 title = isolate(input$title_input),legendTitle = legendTitle)
+          } else {
+            # if boundary lines and color isn't a boundary class
+            p <- vanKrevelenPlot(isolate(plot_data()), vkBoundarySet = input$vkbounds, showVKBounds = TRUE, colorCName = input$vk_colors,
+                                 xlabel = isolate(input$x_axis_input), ylabel = isolate(input$y_axis_input),
+                                 title = isolate(input$title_input),legendTitle = legendTitle)
+          }
+        }
       }
       
       #--------- Density Plot --------#
       if (input$chooseplots == 'Density Plot') {
         validate(need(!is.null(isolate(input$whichSamples)), message = "Please select at least 1 sample"),
                  need(!is.na(input$vk_colors), message = "Please select a variable to color by")
-                )
+        )
         p <- densityPlot(isolate(plot_data()), variable = input$vk_colors,
                          xlabel = ifelse(isolate(is.null(input$x_axis_input) || input$x_axis_input == ""), 
                                          yes = names(revals$color_by_choices[revals$color_by_choices == input$vk_colors]), 
@@ -1637,7 +1637,7 @@ shinyServer(function(session, input, output) {
   
   # Axis and title label input menus
   output$title_out <- renderUI({
-
+    
     validate(
       need(input$chooseplots != 0, message = "")
     )
@@ -1658,12 +1658,12 @@ shinyServer(function(session, input, output) {
   
   # reactive variable that keeps track of whether the selected column is numeric or categorical.
   numeric_selected <- eventReactive(input$vk_colors,{
-                        if(input$vk_colors %in% (plot_data()$e_data %>% colnames())){
-                          (is.numeric(plot_data()$e_data %>% pluck(input$vk_colors)) & !is_integer(plot_data()$e_data %>% pluck(input$vk_colors)))
-                        }else if(input$vk_colors %in% (plot_data()$e_meta %>% colnames())){
-                          (is.numeric(plot_data()$e_meta %>% pluck(input$vk_colors)) & !is_integer(plot_data()$e_meta %>% pluck(input$vk_colors)))
-                        }else TRUE
-                      })
+    if(input$vk_colors %in% (plot_data()$e_data %>% colnames())){
+      (is.numeric(plot_data()$e_data %>% pluck(input$vk_colors)) & !is_integer(plot_data()$e_data %>% pluck(input$vk_colors)))
+    }else if(input$vk_colors %in% (plot_data()$e_meta %>% colnames())){
+      (is.numeric(plot_data()$e_meta %>% pluck(input$vk_colors)) & !is_integer(plot_data()$e_meta %>% pluck(input$vk_colors)))
+    }else TRUE
+  })
   
   # legend input, will be hidden if numeric_selected() is FALSE.
   output$legend_title_out <- renderUI({
@@ -1713,8 +1713,8 @@ shinyServer(function(session, input, output) {
     newLine$XaxisTitle <- ifelse(is.na(input$x_axis_input), yes = "default", no = input$x_axis_input)
     newLine$YaxisTitle <- ifelse(is.na(input$y_axis_input), yes = "default", no = input$y_axis_input)
     newLine$FileName <- paste("Plot", input$add_plot, sep = "")
-    newLine$LegendTitle <- ifelse(input$chooseplots == 'Density Plot', yes = "default", no = input$legend_title_input)
-     
+    newLine$LegendTitle <- ifelse((input$chooseplots == 'Density Plot') | is.null(input$legend_title_input), yes = "default", no = input$legend_title_input)
+    
     if (input$add_plot == 1) {
       # replace the existing line on the first click
       parmTable$parms[input$add_plot, ] <- newLine
@@ -1736,9 +1736,9 @@ shinyServer(function(session, input, output) {
   
   # End Visualize tab #
   
-
+  
   ####### Download Tab #######
-
+  
   # copy the table from the visualize tab so as not to confuse javascript
   output$parmsTable2 <- DT::renderDataTable(parmTable$parms,
                                             options = list(scrollX = TRUE),
@@ -1746,7 +1746,8 @@ shinyServer(function(session, input, output) {
   
   # print the selected indices
   output$x4 = renderPrint({
-    s = input$parmsTable2_rows_selected
+    s = input$parmsTable2_rows_selected    
+    
     if (length(s)) {
       cat('These rows were selected:\n\n')
       cat(s, sep = ', ')
@@ -1762,6 +1763,14 @@ shinyServer(function(session, input, output) {
       print(tempdir())
       fs <- vector()
       
+      # ____test functionality____
+      # if in testmode just select all rows since shinytest doesn't recognize row selection for parmsTable2
+      if(isTRUE(getOption("shiny.testmode"))){
+        rows <- 1:nrow(parmTable$parms)
+      }
+      else rows <- input$parmsTable2_rows_selected
+      #
+      
       if ("separate" %in% input$download_selection){
         fs <- c(fs, "FREDA_processed_e_data.csv", "FREDA_processed_e_meta.csv")
         write.csv(peakIcr2$e_data, file = "FREDA_processed_e_data.csv", row.names = FALSE)
@@ -1773,19 +1782,27 @@ shinyServer(function(session, input, output) {
         write.csv(merged_data, file = "FREDA_processed_merged_data.csv", row.names = FALSE)
       }
       
-      if (length(input$parmsTable2_rows_selected) > 0) {
-        for (i in input$parmsTable2_rows_selected) {
+      if (length(rows) > 0) {
+        bitmaps <- list()
+        for (i in rows) {
           path <- paste(parmTable$parms$FileName[i],".", input$image_format, sep = "") #create a plot name
           fs <- c(fs, path) # append the new plot to the old plots
           export(renderDownloadPlots(parmTable = parmTable$parms[i,], peakIcr2),
                  file = paste("plot",i,".png", sep = ""), zoom = 2) # use webshot to export a screenshot to the opened pdf
           #r <- brick(file.path(getwd(), paste("plot",i,".png", sep = ""))) # create a raster of the screenshot
           img <- magick::image_read(paste("plot",i,".png", sep = ""))#attr(r,"file")@name) #turn the raster into an image of selected format
+          
+          if(isTRUE(getOption("shiny.testmode"))) bitmaps[[i]] <- as.raster(img)
+          
           image_write(img, path = path, format = input$image_format) #write the image
           #rsvg::rsvg_svg(img, file = path)
         }
+        
+        # ___test-export___
+        exportTestValues(images_out = digest::digest(bitmaps))
+        
         fs <- c(fs, "Plot_key.csv")
-        outtable <- parmTable$parms[input$parmsTable2_rows_selected, ]
+        outtable <- parmTable$parms[rows, ]
         write.csv( outtable, row.names = FALSE, file = "Plot_key.csv")
       }
       print(fs)
@@ -1795,25 +1812,25 @@ shinyServer(function(session, input, output) {
     },
     contentType = "application/zip"
   )
- 
+  
   #----------- plot download ---------#
-# 
-#   output$download_plots <- downloadHandler(
-#     filename = 'pdfs.zip', #this creates a directory to store the pdfs...not sure why it's not zipping
-#     content = function(fname) { #write a function to create the content populating said directory
-#       fs <- c()
-#       tmpdir <- tempdir() # render the images in a temporary environment
-#       setwd(tempdir())
-#       print(tempdir())
-# 
-#       print(fs) #print all the pdfs to file
-#       zip(zipfile=fname, files=fs) #zip  it up (this isn't working for some reason!)
-#       if(file.exists(paste0(fname,".zip"))){file.rename(paste0(fname,".zip"),fname)} #bug workaround see https://groups.google.com/forum/?utm_medium=email&utm_source=footer#!msg/shiny-discuss/D5F2nqrIhiM/ZshRutFpiVQJ
-#     },
-#     contentType = "application/zip"
-#   )
+  # 
+  #   output$download_plots <- downloadHandler(
+  #     filename = 'pdfs.zip', #this creates a directory to store the pdfs...not sure why it's not zipping
+  #     content = function(fname) { #write a function to create the content populating said directory
+  #       fs <- c()
+  #       tmpdir <- tempdir() # render the images in a temporary environment
+  #       setwd(tempdir())
+  #       print(tempdir())
+  # 
+  #       print(fs) #print all the pdfs to file
+  #       zip(zipfile=fname, files=fs) #zip  it up (this isn't working for some reason!)
+  #       if(file.exists(paste0(fname,".zip"))){file.rename(paste0(fname,".zip"),fname)} #bug workaround see https://groups.google.com/forum/?utm_medium=email&utm_source=footer#!msg/shiny-discuss/D5F2nqrIhiM/ZshRutFpiVQJ
+  #     },
+  #     contentType = "application/zip"
+  #   )
   ####### Glossary Tab #######
   
   
   
-})
+  })
