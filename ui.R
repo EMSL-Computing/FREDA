@@ -66,25 +66,6 @@ shinyUI(navbarPage(title = (windowTitle = "FREDA"),
                                             selected = 'Select an option'
                                 ), 
                                 
-                                # Create an option for Isotopic Analysis
-                                selectInput('isotope_yn',
-                                            label = 'Do you have information for isotopes?',
-                                            choices = list('Select an Option' = 0,
-                                                           'Yes' = 1,
-                                                           'No' = 2),
-                                            selected = 'Select an Option'
-                                ),
-                                # Condition on presence of isotope information
-                                conditionalPanel(
-                                  condition = "input.isotope_yn == 1",
-                                  uiOutput('iso_info_column_out'),
-                                  uiOutput('iso_symbol_out')
-                                ),
-                                # # Condition on absence of isotope information
-                                # conditionalPanel(
-                                #   condition = "input.isotope_yn == 2",
-                                #   uiOutput('c13_column')
-                                # ),
                                 # Get whether formulas or elemental columns are included #
                                 selectInput('select', 
                                             label = 'Does this file have formulas 
@@ -94,6 +75,7 @@ shinyUI(navbarPage(title = (windowTitle = "FREDA"),
                                                            'Elemental Columns' = 2),
                                             selected = 'Select an option' 
                                 ), 
+                                
                                 
                                 # (Conditional on the above selectInput) Formula: 
                                 ##  which column contains the formula? #
@@ -108,19 +90,41 @@ shinyUI(navbarPage(title = (windowTitle = "FREDA"),
                                   condition = "input.select == 2",
                                   fluidRow(
                                     column(width = 4,
-                                      uiOutput("c_column"), 
-                                      uiOutput("h_column")
+                                           uiOutput("c_column"), 
+                                           uiOutput("h_column")
                                     ),
                                     column(width = 4,
                                            uiOutput("n_column"),
                                            uiOutput("o_column") 
-                                           ),
+                                    ),
                                     column(width = 4,
                                            uiOutput("s_column"), 
                                            uiOutput("p_column")
                                     )
                                   )
                                 ), 
+                                # Create an option for Isotopic Analysis
+                                selectInput('isotope_yn',
+                                            label = 'Were isotopic peaks identified in the molecular assignments file?',
+                                            choices = list('Select an Option' = 0,
+                                                           'Yes' = 1,
+                                                           'No' = 2),
+                                            selected = 'Select an Option'
+                                ),
+                                # Condition on presence of isotope information
+                                conditionalPanel(
+                                  condition = "input.isotope_yn == 1",
+                                  uiOutput("iso_info_filter_out"),
+                                  uiOutput('iso_info_column_out'),
+                                  uiOutput('iso_symbol_out')
+                                ),
+                                # # Condition on absence of isotope information
+                                # conditionalPanel(
+                                #   condition = "input.isotope_yn == 2",
+                                #   uiOutput('c13_column')
+                                # ),
+
+
                                 
                                 tags$hr(),
                                 

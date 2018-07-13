@@ -204,17 +204,38 @@ shinyServer(function(session, input, output) {
                                   no = 'Select a column'))
   })
   
+  output$iso_info_filter_out <- renderUI({
+    selectInput(inputId = "iso_info_filter", label = "Filter isotopic peaks?", 
+                choices = list('Yes' = 1,
+                               'No' = 2),
+                selected = 'Yes'
+    )
+  })
   output$iso_info_column_out <- renderUI({
-    selectInput("iso_info_column", "Which column contains isotope information?",
-                choices  = c('Select a column' = 0, emeta_cnames()))
-    
+    req(input$iso_info_filter )
+    if (input$iso_info_filter == 1) {
+      selectInput("iso_info_column", "Which column contains isotopic information?",
+                  choices  = c('Select a column' = 0, emeta_cnames()))
+    } else (return(NULL))
   })
   
   output$iso_symbol_out <- renderUI({
-    textInput("iso_symbol", label = "Enter a symbol denoting isotopic notation:",
-              value = "1")
+    req(input$iso_info_filter )
+    if (input$iso_info_filter == 1) {
+      textInput("iso_symbol", label = "Enter a symbol denoting isotopic notation:",
+                value = "1")
+    } else (return(NULL))
   })
   
+  
+  observeEvent(input$iso_info_filter,{
+    if (input$iso_info_filter == 2)
+    showModal(
+      modalDialog("",h4("Warning!", style = "color:Orange; font-weight:bold"),
+                  HTML("<p style = color:Orange; font-weight:bold> Leaving isotopic peaks in the data may confound analysis/visualization results. We recommend filtering isotopic peaks.")
+                  )
+                  )
+  })
   ### END of CHNOSP DROP DOWN LISTS ###
   
   
@@ -252,7 +273,7 @@ shinyServer(function(session, input, output) {
         'Formula column is not a character vector. Please select another.')
         
       ) # End error handling #
-      if (input$isotope_yn == 1) { # If there's C13 # 
+      if (input$isotope_yn == 1 & input$iso_info_filter == 1) { # If there's C13 # 
         
         # Error handling: entered isotopic notation must exist in the isotope information column
         validate(
@@ -271,7 +292,7 @@ shinyServer(function(session, input, output) {
         
       } # End C13 / no C13 if statement
       
-      if (input$isotope_yn == 2) { #no C13
+      if (input$isotope_yn == 2 | input$iso_info_filter != 1) { #no C13
         # Calculate peakIcrData with formula column
         res <- as.peakIcrData(e_data = Edata(), f_data = fdata(),
                               e_meta = Emeta(), edata_cname = input$edata_id_col, 
@@ -307,7 +328,7 @@ shinyServer(function(session, input, output) {
         
       ) # End error handling #
       # If no C13
-      if (input$isotope_yn == 2) {
+      if (input$isotope_yn == 2 | input$iso_info_filter == 2) {
         # Create peakICR object
         res <- as.peakIcrData(e_data = Edata(), f_data = fdata(),
                               e_meta = Emeta(), edata_cname = input$edata_id_col, 
@@ -318,7 +339,7 @@ shinyServer(function(session, input, output) {
                               s_cname = input$s_column, p_cname = input$p_column)
         
       }
-      if (input$isotope_yn == 1) { # If there's C13 # 
+      if (input$isotope_yn == 1 & input$iso_info_filter == 1) { # If there's C13 # 
         
         # Error handling: entered isotopic notation must exist in the isotope information column
         validate(
@@ -458,13 +479,17 @@ shinyServer(function(session, input, output) {
       
       # Create data frame of all elemental columns to sum across
       elem_columns <- data.frame(Emeta()[,elem_cnames])
+      req(input$isotope_yn)
+      req(input$iso_info_filter)
       # If isotopic information is included and matching entered notation, filter out where isotopes = denoted symbol
-      if ((!input$isotope_yn %in% c("0","2") ) && (any(Emeta()[,input$iso_info_column] %in% input$iso_symbol))) {
-        
-        iso <- Emeta()[,input$iso_info_column]
-        elem_columns <- elem_columns[-(which(as.character(iso) == as.character(input$iso_symbol))),]
-        
-      } # End if isotopic information is chosen and correctly denoted#
+      if (input$isotope_yn == 1 & input$iso_info_filter == 1) {
+        req(input$iso_info_column)
+        validate(need(input$iso_info_column != 0, message = "Please choose a column of isotopic information"))
+        if (any(Emeta()[,input$iso_info_column] %in% input$iso_symbol)) {
+    iso <- Emeta()[,input$iso_info_column]
+    elem_columns <- elem_columns[-(which(as.character(iso) == as.character(input$iso_symbol))),]
+  }
+      }# End if isotopic information is chosen and correctly denoted#
       
       # Count all remaining rows with nonzero sums
       num_rows_formula <- length(which(rowSums(elem_columns) > 0))
