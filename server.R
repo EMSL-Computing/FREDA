@@ -1684,19 +1684,20 @@ shinyServer(function(session, input, output) {
   # the table needs to grow with each click of the download button
   parmTable <- reactiveValues()
   # need to initialize the table and fill in values
-  parmTable$parms <- data.frame(PlotType = NA, SampleType = NA, G1 = NA, G2 = NA, BoundarySet = NA,
+  parmTable$parms <- data.frame(FileName = NA, PlotType = NA, SampleType = NA, G1 = NA, G2 = NA, BoundarySet = NA,
                                 ColorBy = NA, ContinuousVariable = NA, UniqueCommon = NA,
-                                UniqueCommonParameters = NA,FileName = NA, ChartTitle = NA, XaxisTitle = NA,
+                                UniqueCommonParameters = NA, ChartTitle = NA, XaxisTitle = NA,
                                 YaxisTitle = NA, LegendTitle = NA)
   
   observeEvent(input$add_plot, {
     # initialize a new line
-    newLine <- data.frame(PlotType = input$chooseplots, SampleType = NA, G1 = NA, G2 = NA, BoundarySet = NA,
+    newLine <- data.frame(FileName = NA, PlotType = input$chooseplots, SampleType = NA, G1 = NA, G2 = NA, BoundarySet = NA,
                           ColorBy = NA, ContinuousVariable = NA, UniqueCommon = NA,
-                          UniqueCommonParameters = NA,FileName = NA, ChartTitle = NA, XaxisTitle = NA,
+                          UniqueCommonParameters = NA, ChartTitle = NA, XaxisTitle = NA,
                           YaxisTitle = NA, LegendTitle = NA)
     # fill values to a position depending on input$add_plot
     # which type of plot
+    newLine$FileName <- paste("Plot", input$add_plot, sep = "")
     newLine$PlotType <- input$chooseplots
     # Single or Multiple Samples
     newLine$SampleType <- ifelse(input$choose_single == 1, yes = "Single Sample", no = "Multiple Samples")
@@ -1712,7 +1713,6 @@ shinyServer(function(session, input, output) {
     newLine$ChartTitle <- input$title_input
     newLine$XaxisTitle <- ifelse(is.na(input$x_axis_input), yes = "default", no = input$x_axis_input)
     newLine$YaxisTitle <- ifelse(is.na(input$y_axis_input), yes = "default", no = input$y_axis_input)
-    newLine$FileName <- paste("Plot", input$add_plot, sep = "")
     newLine$LegendTitle <- ifelse((input$chooseplots == 'Density Plot') | is.null(input$legend_title_input), yes = "default", no = input$legend_title_input)
     
     if (input$add_plot == 1) {
