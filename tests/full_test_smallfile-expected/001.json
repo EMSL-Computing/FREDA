@@ -20079,6 +20079,7 @@
     "image_format": "svg",
     "instrument": "12T",
     "iso_info_column": "C13",
+    "iso_info_filter": "1",
     "iso_symbol": "1",
     "isotope_yn": "1",
     "massfilter": false,

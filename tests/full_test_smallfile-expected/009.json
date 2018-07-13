@@ -3,7 +3,7 @@
     "parmsTable": {
       "x": {
         "filter": "none",
-        "container": "<table class=\"display\">\n  <thead>\n    <tr>\n      <th> <\/th>\n      <th>PlotType<\/th>\n      <th>SampleType<\/th>\n      <th>G1<\/th>\n      <th>G2<\/th>\n      <th>BoundarySet<\/th>\n      <th>ColorBy<\/th>\n      <th>ContinuousVariable<\/th>\n      <th>UniqueCommon<\/th>\n      <th>UniqueCommonParameters<\/th>\n      <th>FileName<\/th>\n      <th>ChartTitle<\/th>\n      <th>XaxisTitle<\/th>\n      <th>YaxisTitle<\/th>\n      <th>LegendTitle<\/th>\n    <\/tr>\n  <\/thead>\n<\/table>",
+        "container": "<table class=\"display\">\n  <thead>\n    <tr>\n      <th> <\/th>\n      <th>FileName<\/th>\n      <th>PlotType<\/th>\n      <th>SampleType<\/th>\n      <th>G1<\/th>\n      <th>G2<\/th>\n      <th>BoundarySet<\/th>\n      <th>ColorBy<\/th>\n      <th>ContinuousVariable<\/th>\n      <th>UniqueCommon<\/th>\n      <th>UniqueCommonParameters<\/th>\n      <th>ChartTitle<\/th>\n      <th>XaxisTitle<\/th>\n      <th>YaxisTitle<\/th>\n      <th>LegendTitle<\/th>\n    <\/tr>\n  <\/thead>\n<\/table>",
         "options": {
           "scrollX": true,
           "order": [

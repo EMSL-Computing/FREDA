@@ -325,7 +325,8 @@ shinyUI(navbarPage(title = (windowTitle = "FREDA"),
                                 uiOutput("legend_title_out"),
 
                                 splitLayout(
-                                  actionButton("plot_submit", label = "Submit")
+                                  actionButton("plot_submit", label = "Generate Plot"),
+                                  actionButton("update_axes", label = "Update Axes")
                                 )
                               ),# End sidebar conditionals on Visualize tab #
                               

@@ -273,7 +273,7 @@ shinyServer(function(session, input, output) {
         'Formula column is not a character vector. Please select another.')
         
       ) # End error handling #
-      if (input$isotope_yn == 1 & input$iso_info_filter == 1) { # If there's C13 # 
+      if (input$isotope_yn == 1 & isTRUE(input$iso_info_filter == 1)) { # If there's C13 # 
         
         # Error handling: entered isotopic notation must exist in the isotope information column
         validate(
@@ -292,7 +292,7 @@ shinyServer(function(session, input, output) {
         
       } # End C13 / no C13 if statement
       
-      if (input$isotope_yn == 2 | input$iso_info_filter != 1) { #no C13
+      if (input$isotope_yn == 2 | isTRUE(input$iso_info_filter) != 1) { #no C13
         # Calculate peakIcrData with formula column
         res <- as.peakIcrData(e_data = Edata(), f_data = fdata(),
                               e_meta = Emeta(), edata_cname = input$edata_id_col, 
@@ -328,7 +328,7 @@ shinyServer(function(session, input, output) {
         
       ) # End error handling #
       # If no C13
-      if (input$isotope_yn == 2 | input$iso_info_filter == 2) {
+      if (input$isotope_yn == 2 | isTRUE(input$iso_info_filter == 2)) {
         # Create peakICR object
         res <- as.peakIcrData(e_data = Edata(), f_data = fdata(),
                               e_meta = Emeta(), edata_cname = input$edata_id_col, 
@@ -339,7 +339,7 @@ shinyServer(function(session, input, output) {
                               s_cname = input$s_column, p_cname = input$p_column)
         
       }
-      if (input$isotope_yn == 1 & input$iso_info_filter == 1) { # If there's C13 # 
+      if (input$isotope_yn == 1 & isTRUE(input$iso_info_filter == 1)) { # If there's C13 # 
         
         # Error handling: entered isotopic notation must exist in the isotope information column
         validate(
@@ -1278,12 +1278,11 @@ shinyServer(function(session, input, output) {
         conditionalPanel(
           condition = 'input.whichSamples.length < 2',
           tags$p("Please select at least 2 samples", style = "color:gray")
-        ) # End conditional output multiple samples#
+        )# End conditional output multiple samples#
       ))
     }
     else if(input$choose_single == 1){
-      return(selectInput('whichSamples', 'Sample',
-                         choices = sample_names()))
+      return(selectInput('whichSamples', 'Sample', choices = sample_names()))
     }
     else return(NULL)
   })
@@ -1506,6 +1505,7 @@ shinyServer(function(session, input, output) {
   
   
   output$FxnPlot <- renderPlotly({
+    input$update_axes
     input$vk_colors
     revals$makeplot #in case vk_colors does not change we still want to redraw the plot.
     
@@ -1621,13 +1621,12 @@ shinyServer(function(session, input, output) {
     # Axes Options
     f <- list(family = "Droid Sans, monospace", size = 18, color = "#7f7f7f")
     
-    x <- list(titlefont = f)
-    y <- list(titlefont = f)
+    x <- y <- list(titlefont = f)
     
     # ___test-export___
     exportTestValues(plot = p, plot_attrs = p$x$attrs[[p$x$cur_data]])
     
-    p <- p %>% layout(xaxis = x, yaxis = y)
+    p <- p %>% layout(xaxis = x, yaxis = y, titlefont = f, margin = list(t = 50))
     
     # Null assignment bypasses plotly bug
     p$elementId <- NULL
@@ -1696,7 +1695,7 @@ shinyServer(function(session, input, output) {
     validate(
       need(input$chooseplots != 0, message = "")
     )
-    if ((input$chooseplots == 'Density Plot') | !numeric_selected()) {
+    if ((input$chooseplots == 'Density Plot') | !numeric_selected() | input$vk_colors %in% c("bs1", "bs2")) {
       return(NULL)
     } else{
       textInput(inputId = "legend_title_input", label = "Legend Label", value = "")
