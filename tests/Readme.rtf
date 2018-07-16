@@ -1,0 +1,22 @@
+{\rtf1\ansi\ansicpg1252\cocoartf1561\cocoasubrtf400
+{\fonttbl\f0\fswiss\fcharset0 Helvetica;}
+{\colortbl;\red255\green255\blue255;}
+{\*\expandedcolortbl;;}
+\margl1440\margr1440\vieww10800\viewh8400\viewkind0
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural\partightenfactor0
+
+\f0\fs24 \cf0 TESTING INSTRUCTIONS FOR FREDA \
+\
+The tests/ folder in the project root directory contain all scripts to perform testing.\
+\
+Testing for FREDA is done on a tab-by-tab basis.  Scripts in tests/ call other scripts contained in  the subdirectory tests/sourced_script/.  The files therein perform the invisible navigation of the app and take snapshots, run testthat tests, and export images.  \
+\
+To test, say, the filter tab on the small example dataset, call testApp(\'93.\'94, \'93test_filter_small\'94).  This will call the shinytest code inside \'93tests/sourced_script/filter_tab_small.R\'94\
+\
+It should be noted that this process is cascading.  The app always starts at the upload tab, so it must first navigate through everything to get to the tab you want to test, i.e. when testing the filter tab shinytest will first navigate through the upload and preprocess tabs (and perform tests/take snapshots/save images along the way).  Specifically, one calls testApp(\'93.\'94, \'93test_filter_small\'94). Which calls \'93filter_tab_small.R\'94.  \'93filter_tab_small.R\'94, before running any of its own code, calls \'93preprocess_tab_small.R\'94, which itself calls \'93upload_tab_small.R\'94 before running its code.  \
+\
+Image screenshots are always saved to the tests/screenshots folder and screenshots are overridden every time a test is run to reduce folder clutter.  Additionally, if you test the download tab, it will include a zip file of the downloaded images in its results (if the app worked correctly).\
+\
+I\'92ve tried to add print messages to give the tester so.e idea of what is happening during testing\'85\
+\
+***under construction***}
