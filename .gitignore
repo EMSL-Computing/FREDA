@@ -35,3 +35,4 @@ vignettes/*.pdf
 
 # Test screenshots
 tests/screenshots/*
+!tests/screenshots/info.txt
