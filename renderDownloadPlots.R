@@ -96,4 +96,12 @@ renderDownloadPlots <- function(parmTable, peakIcr2){
         densityPlot(plot_data, variable = parmTable$ColorBy)
       })
     }
+  
+    #---------- Custom Scatter Plot --------#
+    if(parmTable$PlotType == 'Custom Scatter Plot'){
+      return({
+        scatterPlot(plot_data, parmTable$x_var, parmTable$y_var, colorCName = parmTable$ColorBy)
+      })
+      
+    }   
 } 

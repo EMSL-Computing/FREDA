@@ -1709,14 +1709,14 @@ shinyServer(function(session, input, output) {
   parmTable <- reactiveValues()
   # need to initialize the table and fill in values
   parmTable$parms <- data.frame(FileName = NA, PlotType = NA, SampleType = NA, G1 = NA, G2 = NA, BoundarySet = NA,
-                                ColorBy = NA, ContinuousVariable = NA, UniqueCommon = NA,
+                                ColorBy = NA, ContinuousVariable = NA, UniqueCommon = NA, x_var = NA, y_var = NA,
                                 UniqueCommonParameters = NA, ChartTitle = NA, XaxisTitle = NA,
                                 YaxisTitle = NA, LegendTitle = NA)
   
   observeEvent(input$add_plot, {
     # initialize a new line
     newLine <- data.frame(FileName = NA, PlotType = input$chooseplots, SampleType = NA, G1 = NA, G2 = NA, BoundarySet = NA,
-                          ColorBy = NA, ContinuousVariable = NA, UniqueCommon = NA,
+                          ColorBy = NA, ContinuousVariable = NA, UniqueCommon = NA, x_var = NA, y_var = NA,
                           UniqueCommonParameters = NA, ChartTitle = NA, XaxisTitle = NA,
                           YaxisTitle = NA, LegendTitle = NA)
     # fill values to a position depending on input$add_plot
@@ -1738,6 +1738,8 @@ shinyServer(function(session, input, output) {
     newLine$XaxisTitle <- ifelse(is.na(input$x_axis_input), yes = "default", no = input$x_axis_input)
     newLine$YaxisTitle <- ifelse(is.na(input$y_axis_input), yes = "default", no = input$y_axis_input)
     newLine$LegendTitle <- ifelse((input$chooseplots == 'Density Plot') | is.null(input$legend_title_input), yes = "default", no = input$legend_title_input)
+    newLine$x_var = input$scatter_x
+    newLine$y_var = input$scatter_y
     
     if (input$add_plot == 1) {
       # replace the existing line on the first click
