@@ -10,14 +10,23 @@
 library(plotly)
 library(shiny)
 library(shinyBS)
+library(shinyjs)
 library(DT)
 
+
 # Define UI for application that draws a histogram
-shinyUI(navbarPage(title = (windowTitle = "FREDA"),
+shinyUI(tagList(useShinyjs(),
+                
+                # type = 'text/css',".disabled label.control-label {color:red}")
+                # ,
+                
+                navbarPage(title = (windowTitle = "FREDA"),
                    id = "top_page",
                    theme = "yeti.css",
                    ############# Welcome Panel #########################
                    navbarMenu("Welcome",
+                              # tabPanel(title = "Introduction",
+                              #             includeHTML("./intropage.html")),
                               tabPanel(title = "Introduction",
                                        includeMarkdown("./Welcome to FREDA.md")),
                               tabPanel(title = "Data Requirements",
@@ -168,57 +177,56 @@ shinyUI(navbarPage(title = (windowTitle = "FREDA"),
                               
                             )), # End Upload tab
                    ################## Preprocess Panel ###############################################
-                   tabPanel("Preprocess",
-                            
-                            bsButton("preprocess_help", "How do I use this page?", style = "info"),
-                            
-                            br(),
-                            br(),
-                            
-                            sidebarLayout(
+                     tabPanel("Preprocess",
                               
-                              # Sidebar panel
-                              sidebarPanel(
-                                
-                                uiOutput("which_calcs"),
-                            
-                                # Action button: add test columns with reasults to peakIcr2
-                                actionButton('preprocess_click', 'Process Data', icon = icon("cog"), lib = "glyphicon")
-                                
-                              ), # End sidebar panel
+                              bsButton("preprocess_help", "How do I use this page?", style = "info"),
                               
-                              mainPanel(
+                              br(),
+                              br(),
+                              
+                              sidebarLayout(
                                 
-                                # Set default main panel width 
-                                width = 8,
+                                # Sidebar panel
+                                sidebarPanel(
+                                  
+                                  uiOutput("which_calcs"),
+                              
+                                  # Action button: add test columns with reasults to peakIcr2
+                                  shinyjs::disabled(actionButton('preprocess_click', 'Process Data', icon = icon("cog"), lib = "glyphicon"))
+                                ), # End sidebar panel
+                                
+                                mainPanel(
+                                  
+                                  # Set default main panel width 
+                                  width = 8,
+  
+                                  # Include numeric and categorical summaries in a well panel
+                                  
+                                  wellPanel(
+                                    tags$div(class = "row",
+                                             tags$div(class = "col-sm-5",
+                                                      uiOutput("numeric_header"),
+                                                      dataTableOutput('numeric_summary')
+                                             ),
+                                             tags$div(class = "col-sm-7",
+                                                      uiOutput("cat_header"),
+                                                      uiOutput('categorical_summary')
+                                                      
+                                            )
+  
+                                    )
+                                  ),
+                                  
+                                  # Drop down list: which histogram should be displayed?
+                                  uiOutput('which_hist_out'),
+                                  
+                                  # Plot: histogram
+                                  plotlyOutput('preprocess_hist')
+                                  
+                                ) # End main panel on Preprocess tab #
+                                
+                              )), # End Preprocess tab #
 
-                                # Include numeric and categorical summaries in a well panel
-                                
-                                wellPanel(
-                                  tags$div(class = "row",
-                                           tags$div(class = "col-sm-5",
-                                                    uiOutput("numeric_header"),
-                                                    dataTableOutput('numeric_summary')
-                                           ),
-                                           tags$div(class = "col-sm-7",
-                                                    uiOutput("cat_header"),
-                                                    uiOutput('categorical_summary')
-                                                    
-                                          )
-
-                                  )
-                                ),
-                                
-                                # Drop down list: which histogram should be displayed?
-                                uiOutput('which_hist_out'),
-                                
-                                # Plot: histogram
-                                plotlyOutput('preprocess_hist')
-                                
-                              ) # End main panel on Preprocess tab #
-                              
-                            )), # End Preprocess tab #
-                   
                    
                    ################## Filter Panel ##############################################
                    tabPanel("Filter", 
@@ -237,9 +245,9 @@ shinyUI(navbarPage(title = (windowTitle = "FREDA"),
                                 # Checkbox: Mass filter yes/no
                                 #HTML('<h5><b>Mass Filter</b></h5>')
                                 
-                                
+                            
                                 checkboxInput('massfilter', tags$b("Mass Filter") ,value = FALSE),
-
+                                
                                 
                                 # Numeric: Min/max mass filter
                                 splitLayout(
@@ -247,7 +255,7 @@ shinyUI(navbarPage(title = (windowTitle = "FREDA"),
                                                min = 0, value = 200),
                                   numericInput('max_mass', "Maximum Mass value", 
                                                min = 0, value = 900)
-                                  ),
+                                ),
                                 
                                 # Checkbox: Mass filter yes/no
                                 checkboxInput('molfilter', tags$b("Molecule Filter"), value = FALSE),
@@ -268,16 +276,17 @@ shinyUI(navbarPage(title = (windowTitle = "FREDA"),
                                 #                    uiOutput("filter3UI"),
                                 #                    uiOutput("customfilter3UI")
                                 #   ),
-                                
-                                fluidRow(
-                                  column(
-                                    width = 6, actionButton('filter_click', "Filter Data", icon = icon("cog"), lib = "glyphicon")
-                                  ),
-                                  column(
-                                    width = 6, actionButton('reset_filters', "Reset Filters", icon = icon("trash"), lib = "glyphicon")
+                                shinyjs::disabled(
+                                  fluidRow(
+                                    column(
+                                      width = 6, actionButton('filter_click', "Filter Data", icon = icon("cog"), lib = "glyphicon")
+                                    ),
+                                    column(
+                                      width = 6, actionButton('reset_filters', "Reset Filters", icon = icon("trash"), lib = "glyphicon")
+                                    )
                                   )
                                 )
-                                
+                              
                               ), # End sidebar panel on Filter tab
                               
                               mainPanel(
@@ -325,8 +334,10 @@ shinyUI(navbarPage(title = (windowTitle = "FREDA"),
                                 uiOutput("legend_title_out"),
 
                                 splitLayout(
-                                  actionButton("plot_submit", label = "Generate Plot"),
-                                  actionButton("update_axes", label = "Update Axes")
+                                  shinyjs::disabled(
+                                    actionButton("plot_submit", label = "Generate Plot"),
+                                    actionButton("update_axes", label = "Update Labels")
+                                  )
                                 )
                               ),# End sidebar conditionals on Visualize tab #
                               
@@ -340,39 +351,29 @@ shinyUI(navbarPage(title = (windowTitle = "FREDA"),
                                 # width = 7,
 
 
-                                conditionalPanel(
-                                  condition = "input.chooseplots == 'Van Krevelen Plot'",
-                                  # Set default width to 7
-                                  
-                                  # Drop down list: Use boundary?
-                                  uiOutput("vkbounds_out")
-                                  
-                                ),
-                                conditionalPanel(
-                                  condition = "input.chooseplots !== null",
-                                  # Set default width to 7
-                                  
-                                  # Drop down list: Use boundary?
-                                  # selectInput('vkbounds', 'Use Van Krevelen boundary set:',
-                                  #             choices = c('BS1' = 'bs1', 'BS2' = 'bs2', 'None' = 0),
-                                  #             selected = 'bs1')
-                                  selectInput("vk_colors", "Color By:", choices = NULL, selected = NULL)
+                                fluidRow(
+                                  column(width = 4, class = "grey_out", id = "js_vk_colors",
+                                         shinyjs::disabled(selectInput("vk_colors", "Color By:", choices = NULL, selected = NULL))
+                                         ),
+                                  column(width = 5, class = "grey_out", id = "js_vkbounds",
+                                         shinyjs::disabled(selectInput('vkbounds', 'Use Van Krevelen boundary set:',
+                                                     choices = c('BS1' = 'bs1', 'BS2' = 'bs2', 'None' = 0),
+                                                     selected = 'bs1'))
+                                         )
                                   
                                 ),
-                                conditionalPanel(
-                                  condition = "input.chooseplots == 'Custom Scatter Plot'",
-                                  fluidRow(
-                                    column(width = 4,
-                                      selectInput("scatter_x", "Horizontal Axis Variable:", choices = NULL, selected = NULL)
-                                    ),
-                                    column(width = 4,
-                                      selectInput("scatter_y", "Vertical Axis Variable:", choices = NULL, selected = NULL)
-                                    )
-                                  )
+                                
+                                fluidRow(
+                                  column(width = 4, class = "grey_out", id = "js_scatter_x",
+                                         shinyjs::disabled(selectInput("scatter_x", "Horizontal Axis Variable:", choices = NULL, selected = NULL))
+                                        ),
+                                  column(width = 4, class = "grey_out", id = "js_scatter_y",
+                                         shinyjs::disabled(selectInput("scatter_y", "Vertical Axis Variable:", choices = NULL, selected = NULL))
+                                        )
                                 ),
                                 br(),
                                 hr(),
-                                actionButton(inputId = "add_plot", label = "I want to download a hi-res version of this plot on the Download tab", icon = icon("download")),
+                                shinyjs::disabled(actionButton(inputId = "add_plot", label = "I want to download a hi-res version of this plot on the Download tab", icon = icon("download"))),
                                 br(),
                                 br(),
                                 dataTableOutput("parmsTable", width = "55%")
@@ -408,6 +409,7 @@ shinyUI(navbarPage(title = (windowTitle = "FREDA"),
                             # )
                             
                    )
-)
+    )
+  )
 )
 

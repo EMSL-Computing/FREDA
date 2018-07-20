@@ -12,6 +12,7 @@ library(raster)
 library(magick)
 library(purrr)
 library(shinyBS)
+library(shinyjs)
 
 
 #peakIcr2 <- NULL #when finished developing, uncomment this to clear the workspace on exit
@@ -227,13 +228,12 @@ shinyServer(function(session, input, output) {
     } else (return(NULL))
   })
   
-  
   observeEvent(input$iso_info_filter,{
     if (input$iso_info_filter == 2)
     showModal(
       modalDialog("",h4("Warning!", style = "color:Orange; font-weight:bold"),
                   HTML("<p style = color:Orange; font-weight:bold> Leaving isotopic peaks in the data may confound analysis/visualization results. We recommend filtering isotopic peaks.")
-                  )
+                    )
                   )
   })
   ### END of CHNOSP DROP DOWN LISTS ###
@@ -277,7 +277,7 @@ shinyServer(function(session, input, output) {
         
         # Error handling: entered isotopic notation must exist in the isotope information column
         validate(
-          need(input$iso_info_column != 0, message = "Please choose a column of isotopic information"),
+          need(input$iso_info_column != "0", message = "Please choose a column of isotopic information"),
           need(any(Emeta()[,input$iso_info_column] %in% input$iso_symbol),
                'The entered isotopic notation does not match the entries in the chosen isotope information column. Please revise.')
         ) # End error handling
@@ -342,10 +342,9 @@ shinyServer(function(session, input, output) {
       if (input$isotope_yn == 1 & isTRUE(input$iso_info_filter == 1)) { # If there's C13 # 
         
         # Error handling: entered isotopic notation must exist in the isotope information column
-        validate(
-          need(input$iso_info_column != 0, message = "Please choose a column of isotopic information"),
-          need(any(Emeta()[,input$iso_info_column] %in% input$iso_symbol),
-               'The entered isotopic notation does not match the entries in the chosen isotope information column. Please revise.')
+        validate(need(input$iso_info_column != "0", message = "Please choose a column of isotopic information"))
+        validate(need(any(Emeta()[,input$iso_info_column] %in% input$iso_symbol),
+                      'The entered isotopic notation does not match the entries in the chosen isotope information column. Please revise.')
         ) # End error handling
         
         res <- as.peakIcrData(e_data = Edata(), f_data = fdata(),
@@ -409,7 +408,13 @@ shinyServer(function(session, input, output) {
         )
         ,footer = NULL)
     )
+    
+    # enable inputs that should only be available if data is sucessfully uploaded
+    disabled_inputs <- c("preprocess_click", "filter_click", "reset_filters", "plot_submit", "update_axes")
+    lapply(disabled_inputs, shinyjs::enable)
+    
   })
+  
   # modal dialog behavior
   observeEvent(input$upload_dismiss,{removeModal()})
   observeEvent(input$goto_preprocess, {
@@ -511,7 +516,7 @@ shinyServer(function(session, input, output) {
     # Error handling: Edata() must exist
     req(Edata())
     
-    HTML('<h4>Displaying uploaded Data File</h4>')
+    HTML('<h4>Displaying Uploaded Data File</h4>')
     
   }) # End edata_text
   
@@ -541,7 +546,7 @@ shinyServer(function(session, input, output) {
   output$emeta_text <- renderUI({
     
     req(Emeta())
-    HTML('<h4>Displaying uploaded Molecular Identification File</h4>')
+    HTML('<h4>Displaying Uploaded Molecular Identification File</h4>')
     
   })# End emeta_text
   
@@ -568,11 +573,11 @@ shinyServer(function(session, input, output) {
   output$which_calcs <- renderUI({
     choices <- calc_opts$Function
     names(choices) <- calc_opts$DisplayName
-    
-    tooltip_checkbox("tests", "What Values Should be Calculated?", choices, selected = c("calc_element_ratios", "calc_kendrick"),
-                     extensions = lapply(1:length(choices), function(i){  
-                       tipify(icon("question-sign", lib = "glyphicon"), title = calc_opts$Info[i], placement = "top", trigger = 'hover')
-                     }))
+      tooltip_checkbox("tests", "What Values Should be Calculated?", choices, selected = c("calc_element_ratios", "calc_kendrick"),
+                       extensions = lapply(1:length(choices), function(i){  
+                         tipify(icon("question-sign", lib = "glyphicon"), title = calc_opts$Info[i], placement = "top", trigger = 'hover')
+                       })
+    )
   })
   
   #### Action Button reactions ####
@@ -1203,6 +1208,10 @@ shinyServer(function(session, input, output) {
                   )
   })
   
+  observeEvent(input$chooseplots, {
+    updateSelectInput(session, 'vk_colors', choices = emeta_display_choices(), selected = emeta_display_choices()[1])
+  })
+  
   # Plot options, with selections removed if the necessary columns in e_meta are not present.
   output$plot_type <- renderUI({
     choices <- c('Van Krevelen Plot', 'Kendrick Plot', 'Density Plot', 'Custom Scatter Plot', 'Select an Option' = 0)
@@ -1226,8 +1235,8 @@ shinyServer(function(session, input, output) {
     if(all(choices == 0)) return(tags$p("There is not enough information in the molecular identification file to produce any plots.  Choose more variables to calculate in the preprocess tab or append some metadata to the molecular identification file prior to uploading", style = "color:gray"))
     
     selectInput('chooseplots', 'I want to plot a', 
-                choices = choices,
-                selected = 0
+                  choices = choices,
+                  selected = 0
     )
   })
   
@@ -1238,10 +1247,12 @@ shinyServer(function(session, input, output) {
     )
     if(nrow(peakIcr2$f_data) == 1 | input$chooseplots == "Custom Scatter Plot"){
       return(tagList(
-        tags$p("Grouping dropdowns hidden for custom scatter plots and single sample datasets.", style = "color:gray"),
-        conditionalPanel('false', selectInput('choose_single', 'I want to plot using:',
-                                              choices = c('Make a selection' = 0, 'A single sample' = 1, 'Multiple samples by group' = 2, 'A comparison of groups' = 3),
-                                              selected = 1))
+        tags$div(class = "grey_out",
+          shinyjs::disabled(selectInput('choose_single', 'I want to plot using:',
+                                                choices = c('Make a selection' = 0, 'A single sample' = 1, 'Multiple samples by group' = 2, 'A comparison of groups' = 3),
+                                                selected = 1))
+          ),
+        tags$p("Grouping options hidden for custom scatter plots and single sample datasets.", style = "color:gray;font-size:small;margin-top:3px")
       ))
     }
     if (input$chooseplots == "Density Plot") {
@@ -1298,37 +1309,46 @@ shinyServer(function(session, input, output) {
   
   #### Main Panel (Visualize Tab) ####
   
-  # vk bounds dropdown
-  output$vkbounds_out <- renderUI({
-    req(input$chooseplots == "Van Krevelen Plot")
-    # behavior for 1 sample data file, required since input$choose_single will not exist if this is the case
-    if(is.null(input$choose_single)){
-      return(selectInput('vkbounds', 'Use Van Krevelen boundary set:',
-                         choices = c('BS1' = 'bs1', 'BS2' = 'bs2', 'None' = 0),
-                         selected = 'bs1'))
-    }
+  # toggle reactive plot options based on plot type
+  observeEvent(input$chooseplots,{
+    dropdown_ids <- c("vkbounds", "vk_colors", "scatter_x", "scatter_y")
+    choices = list('Van Krevelen Plot' = c("vk_colors", "vkbounds"), 
+                'Kendrick Plot' = "vk_colors",
+                'Density Plot' = "vk_colors", 
+                'Custom Scatter Plot' = c("vk_colors", "scatter_x", "scatter_y"), 
+                'Select an Option' = "0")
     
-    #if more than one sample present, input$choose_single will exist and we need to check its value
-    validate(
-      need(input$choose_single != 0, message = "Please select sample(s)"),
-      need(input$chooseplots != 0, message = "")
-    )
-    return(selectInput('vkbounds', 'Use Van Krevelen boundary set:',
-                       choices = c('BS1' = 'bs1', 'BS2' = 'bs2', 'None' = 0),
-                       selected = 'bs1'))
+    # if(input$chooseplots %in% c("Custom Scatter Plot") | nrow(peakIcr2$f_data) == 1){
+    #   shinyjs::disable("choose_single")
+    #   shinyjs::addCssClass("choose_single", "grey_out")
+    # }
+    # else{
+    #   shinyjs::enable("choose_single")
+    #   shinyjs::removeCssClass("choose_single", "grey_out")
+    # }
+    
+    lapply(dropdown_ids, function(inputid){
+      if(inputid %in% choices[[input$chooseplots]]){
+        shinyjs::enable(inputid)
+        shinyjs::removeCssClass(paste0("js_",inputid), "grey_out")
+      }
+      else{
+        shinyjs::disable(inputid)
+        shinyjs::addCssClass(paste0("js_",inputid), "grey_out")
+      }
+    })
   })
   
   # Create plotting dataframe to be passed to FxnPlot
   plot_data <- eventReactive(input$plot_submit,{
     
     req(calc_vars)
-    validate(
-      need(input$chooseplots != 0 & input$choose_single !=0, message = "Please select plotting criteria")
-    )
+    validate(need(input$chooseplots != 0 & input$choose_single !=0, message = "Please select plotting criteria"))
     if(is.null(input$choose_single)){ # corresponds to data with a single sample
       return(peakIcr2) # no need to subset
     }
     if (input$choose_single == 1) { # single sample -selected- but multiple samples present
+      validate(need(!is.null(input$whichSamples), message = "Please select a sample to plot"))
       return(subset(peakIcr2, input$whichSamples))
       #key_name <- paste(attributes(peakIcr2)$cnames$fdata_cname, "=", input$whichSamples, sep = "")
     }
@@ -1383,7 +1403,7 @@ shinyServer(function(session, input, output) {
       color_by_choices <- emeta_display_choices()
       
       if (input$chooseplots == "Van Krevelen Plot"){
-        color_by_choices <- switch(as.character(input$vkbounds), 
+        color_by_choices <- switch(input$vkbounds, 
                                    'bs1' = c('Van Krevelen Boundary Set 1' = 'bs1', color_by_choices),
                                    'bs2' = c('Van Krevelen Boundary Set 2' = 'bs2', color_by_choices),
                                    "0" = c('Van Krevelen Boundary Set 1' = 'bs1', 'Van Krevelen Boundary Set 2' = 'bs2', color_by_choices))
@@ -1498,6 +1518,7 @@ shinyServer(function(session, input, output) {
   v <- reactiveValues(clearPlot = TRUE)
   observeEvent(c(input$chooseplots, input$choose_single, input$whichSamples), {
     v$clearPlot <- TRUE
+    shinyjs::disable("add_plot")
   }, priority = 10)
   observeEvent(input$plot_submit, {
     v$clearPlot <- FALSE
@@ -1505,6 +1526,7 @@ shinyServer(function(session, input, output) {
   
   
   output$FxnPlot <- renderPlotly({
+    req(input$chooseplots != 0)
     input$update_axes
     input$vk_colors
     revals$makeplot #in case vk_colors does not change we still want to redraw the plot.
@@ -1513,7 +1535,7 @@ shinyServer(function(session, input, output) {
       return(NULL)
     } else {
       # Make sure a plot stype selection has been chosen
-      validate(need(isolate(input$choose_single) != 0, message = "Please select plotting criteria"))
+      validate(need(input$choose_single != 0, message = "Please select plotting criteria"))
       
       legendTitle = ifelse(isolate(is.null(input$legend_title_input) || input$legend_title_input == ""),
                            yes = names(isolate(revals$color_by_choices[revals$color_by_choices == input$vk_colors])),
@@ -1523,7 +1545,7 @@ shinyServer(function(session, input, output) {
       #----------- Single sample plots ------------#
       #-------Kendrick Plot-----------# 
       if (input$chooseplots == 'Kendrick Plot') {
-        validate(need(!is.null(isolate(input$whichSamples)) | !(is.null(isolate(input$whichGroups1)) & is.null(isolate(input$whichGroups2))), message = "Please select at least 1 sample"))
+        validate(need(!is.null(input$whichSamples) | !(is.null(isolate(input$whichGroups1)) & is.null(isolate(input$whichGroups2))), message = "Please select at least 1 sample"))
         p <- kendrickPlot(isolate(plot_data()), colorCName = input$vk_colors,
                           xlabel = isolate(input$x_axis_input), ylabel = isolate(input$y_axis_input),
                           title = isolate(input$title_input),legendTitle = legendTitle)
@@ -1558,7 +1580,7 @@ shinyServer(function(session, input, output) {
       }
       #-------VanKrevelen Plot--------#
       if (input$chooseplots == 'Van Krevelen Plot') {
-        validate(need(!is.null(isolate(input$whichSamples)) | !(is.null(isolate(input$whichGroups1)) & is.null(isolate(input$whichGroups2))), message = "Please select at least 1 sample"))
+        validate(need(!is.null(input$whichSamples) | !(is.null(isolate(input$whichGroups1)) & is.null(isolate(input$whichGroups2))), message = "Please select at least 1 sample"))
         if (input$vkbounds == 0) { #no bounds
           # if no boundary lines, leave the option to color by boundary
           if (input$vk_colors %in% c('bs1', 'bs2')) {
@@ -1588,7 +1610,7 @@ shinyServer(function(session, input, output) {
       
       #--------- Density Plot --------#
       if (input$chooseplots == 'Density Plot') {
-        validate(need(!is.null(isolate(input$whichSamples)), message = "Please select at least 1 sample"),
+        validate(need(!is.null(input$whichSamples), message = "Please select at least 1 sample"),
                  need(!is.na(input$vk_colors), message = "Please select a variable to color by")
         )
         p <- densityPlot(isolate(plot_data()), variable = input$vk_colors,
@@ -1602,7 +1624,7 @@ shinyServer(function(session, input, output) {
       
       #---------- Custom Scatter Plot --------#
       if(input$chooseplots == 'Custom Scatter Plot'){
-        validate(need(!is.null(isolate(input$whichSamples)), message = "Please select at least 1 sample"),
+        validate(need(!is.null(input$whichSamples), message = "Please select at least 1 sample"),
                  need(!is.na(input$vk_colors), message = "Please select a variable to color by"))
         req(!is.null(input$scatter_x), !is.null(input$scatter_y), !("" %in% c(input$scatter_x, input$scatter_y)))
         
@@ -1619,7 +1641,7 @@ shinyServer(function(session, input, output) {
     }
     
     # Axes Options
-    f <- list(family = "Droid Sans, monospace", size = 18, color = "#7f7f7f")
+    f <- list(family = "Arial", size = 18, color = "#7f7f7f")
     
     x <- y <- list(titlefont = f)
     
@@ -1630,6 +1652,7 @@ shinyServer(function(session, input, output) {
     
     # Null assignment bypasses plotly bug
     p$elementId <- NULL
+    shinyjs::enable("add_plot")
     return(p)
     
   })
