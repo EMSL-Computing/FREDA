@@ -21,7 +21,7 @@ shinyServer(function(session, input, output) {
   
   Sys.setenv(R_ZIPCMD="/usr/bin/zip")
   # Source files for 'summaryFilt' and 'summaryPreprocess'
-  source('tooltip_checkbox.R')
+  source('selection_addons.R')
   source('summaryFilter.R') 
   source('summaryPreprocess.R')
   source("renderDownloadPlots.R")
@@ -411,7 +411,7 @@ shinyServer(function(session, input, output) {
     
     # enable inputs that should only be available if data is sucessfully uploaded
     disabled_inputs <- c("preprocess_click", "filter_click", "reset_filters", "plot_submit", "update_axes")
-    lapply(disabled_inputs, shinyjs::enable)
+    lapply(disabled_inputs, enable)
     
   })
   
@@ -1185,8 +1185,7 @@ shinyServer(function(session, input, output) {
   
   ####### Visualize Tab #######
   
-  ## Sidebar Panel ##
-  # choose ui to render depending on which plot is chosen from input$chooseplot
+  # Help Button
   observeEvent(input$visualize_help,{
     showModal(
       modalDialog("",
@@ -1208,9 +1207,44 @@ shinyServer(function(session, input, output) {
                   )
   })
   
+  # Multi purpose observer on input$chooseplots
   observeEvent(input$chooseplots, {
+    # Pre-populate dropdowns so users can select colors and custom scatterplot axes before submitting plot.
     updateSelectInput(session, 'vk_colors', choices = emeta_display_choices(), selected = emeta_display_choices()[1])
+    updateSelectInput(session, 'scatter_x', choices = emeta_display_choices(), selected = emeta_display_choices()[2])
+    updateSelectInput(session, 'scatter_y', choices = emeta_display_choices(), selected = emeta_display_choices()[3])
+    
+    
+    # Rest of this observer controls shinyjs disable/enable behavior for reactive plot dropdowns
+    dropdown_ids <- c("vkbounds", "vk_colors", "scatter_x", "scatter_y")
+    choices = list('Van Krevelen Plot' = c("vk_colors", "vkbounds"), 
+                   'Kendrick Plot' = "vk_colors",
+                   'Density Plot' = "vk_colors", 
+                   'Custom Scatter Plot' = c("vk_colors", "scatter_x", "scatter_y"), 
+                   'Select an Option' = "0")
+    
+    # if(input$chooseplots %in% c("Custom Scatter Plot") | nrow(peakIcr2$f_data) == 1){
+    #   disable("choose_single")
+    #   addCssClass("choose_single", "grey_out")
+    # }
+    # else{
+    #   enable("choose_single")
+    #   removeCssClass("choose_single", "grey_out")
+    # }
+    
+    lapply(dropdown_ids, function(inputid){
+      if(inputid %in% choices[[input$chooseplots]]){
+        enable(inputid)
+        removeCssClass(paste0("js_",inputid), "grey_out")
+      }
+      else{
+        disable(inputid)
+        addCssClass(paste0("js_",inputid), "grey_out")
+      }
+    })
   })
+  
+  ## Sidebar Panel ##
   
   # Plot options, with selections removed if the necessary columns in e_meta are not present.
   output$plot_type <- renderUI({
@@ -1248,7 +1282,7 @@ shinyServer(function(session, input, output) {
     if(nrow(peakIcr2$f_data) == 1 | input$chooseplots == "Custom Scatter Plot"){
       return(tagList(
         tags$div(class = "grey_out",
-          shinyjs::disabled(selectInput('choose_single', 'I want to plot using:',
+          disabled(selectInput('choose_single', 'I want to plot using:',
                                                 choices = c('Make a selection' = 0, 'A single sample' = 1, 'Multiple samples by group' = 2, 'A comparison of groups' = 3),
                                                 selected = 1))
           ),
@@ -1257,7 +1291,7 @@ shinyServer(function(session, input, output) {
     }
     if (input$chooseplots == "Density Plot") {
       return(selectInput('choose_single', 'I want to plot using:',
-                         choices = c('Make a selection' = 0, 'A single sample' = 1, 'Multiple samples by group' = 2),
+                         choices = c('Make a selection' = 0, 'A single sample' = 1, 'Multiple samples by group' = 2, 'A comparison of groups' = 3),
                          selected = 0))
     }
     else{
@@ -1271,6 +1305,16 @@ shinyServer(function(session, input, output) {
   output$plotUI_cond <- renderUI({
     req(input$choose_single != 0, input$chooseplots != 0)
     if(input$choose_single == 3){
+      if(input$chooseplots == "Density Plot"){
+        summary_dropdown <- tags$div(class = "grey_out",
+                                     disabled(selectInput('choose_single', 'I want to plot using:',
+                                                                   choices = c('Make a selection' = 0, 'A single sample' = 1, 'Multiple samples by group' = 2, 'A comparison of groups' = 3),
+                                                                   selected = 1)),
+                                     tags$p("No summary functions for comparison density plots", style = "color:gray;font-size:small;margin-top:3px")
+        )
+        
+      }else summary_dropdown <- selectInput("summary_fxn", "Summary Function", choices = "uniqueness_gtest")
+      
       return(tagList(
         selectInput('whichGroups1', 'Group 1',
                     choices = setdiff(sample_names(), isolate(input$whichGroups2)),
@@ -1278,7 +1322,7 @@ shinyServer(function(session, input, output) {
         selectInput("whichGroups2", "Group 2", 
                     choices = setdiff(sample_names(), isolate(input$whichGroups1)), 
                     multiple = TRUE),
-        selectInput("summary_fxn", "Summary Function", choices = "uniqueness_gtest")
+        summary_dropdown
       ))
     }
     else if(input$choose_single == 2){
@@ -1309,34 +1353,23 @@ shinyServer(function(session, input, output) {
   
   #### Main Panel (Visualize Tab) ####
   
-  # toggle reactive plot options based on plot type
-  observeEvent(input$chooseplots,{
-    dropdown_ids <- c("vkbounds", "vk_colors", "scatter_x", "scatter_y")
-    choices = list('Van Krevelen Plot' = c("vk_colors", "vkbounds"), 
-                'Kendrick Plot' = "vk_colors",
-                'Density Plot' = "vk_colors", 
-                'Custom Scatter Plot' = c("vk_colors", "scatter_x", "scatter_y"), 
-                'Select an Option' = "0")
+  # color pallete selection
+  output$colorpal_out <- renderUI({
+    choices = c("YlOrRd", "YlGnBu", "YlGn", "RdYlBu")
     
-    # if(input$chooseplots %in% c("Custom Scatter Plot") | nrow(peakIcr2$f_data) == 1){
-    #   shinyjs::disable("choose_single")
-    #   shinyjs::addCssClass("choose_single", "grey_out")
-    # }
-    # else{
-    #   shinyjs::enable("choose_single")
-    #   shinyjs::removeCssClass("choose_single", "grey_out")
-    # }
-    
-    lapply(dropdown_ids, function(inputid){
-      if(inputid %in% choices[[input$chooseplots]]){
-        shinyjs::enable(inputid)
-        shinyjs::removeCssClass(paste0("js_",inputid), "grey_out")
-      }
-      else{
-        shinyjs::disable(inputid)
-        shinyjs::addCssClass(paste0("js_",inputid), "grey_out")
-      }
+    extensions <- lapply(choices, function(choice){
+      tags$img(src = paste0(choice, ".png"), width = "100px", height = "25px")
     })
+    
+    if(isTRUE(input$chooseplots == "Density Plot")){
+      addClass("js_colorpal", "grey_out")
+      disabled(colored_radiobuttons(inputId = "colorpal", label = "Pick a coloring scheme", inline = TRUE,
+                                         choices = choices, extensions = extensions))
+    }else{
+      removeClass("js_colorpal", "grey_out")
+      colored_radiobuttons(inputId = "colorpal", label = "Pick a coloring scheme", inline = TRUE,
+                               choices = choices, extensions = extensions)
+    }
   })
   
   # Create plotting dataframe to be passed to FxnPlot
@@ -1364,8 +1397,17 @@ shinyServer(function(session, input, output) {
       temp_data <- peakIcr2 %>% 
         subset(input$whichSamples)
       
-      attr(temp_data, "group_DF") <- temp_group_df
-      return(summarizeGroups(temp_data, summary_functions = getGroupSummaryFunctionNames()))
+      temp_data <- fticRanalysis:::setGroupDF(temp_data, temp_group_df)
+      
+      # no need to summarize for density plot function
+      if(input$chooseplots == "Density Plot"){
+        return(temp_data)
+      }
+
+      temp_data <- summarizeGroups(temp_data, summary_functions = getGroupSummaryFunctionNames())
+      temp_data$e_meta <- cbind(temp_data$e_meta, temp_data$e_data %>% dplyr::select(-one_of(getEDataColName(temp_data))))
+      
+      return(temp_data)
       
     } else if (isolate(input$choose_single) == 3) {# two groups 
       # Make sure at least one test has been calculated
@@ -1383,8 +1425,14 @@ shinyServer(function(session, input, output) {
         subset(samples=c(group1_samples, group2_samples))
       
       temp_data <- fticRanalysis:::setGroupDF(temp_data, temp_group_df)
+      
+      # no need to summarize for density plot function
+      if(input$chooseplots == "Density Plot"){
+        return(temp_data)
+      }
+      
       grpComparisonsObj <- divideByGroupComparisons(temp_data, comparisons = "all")[[1]]$value
-      summaryObj <- summarizeComparisons(grpComparisonsObj, summary_functions = input$summary_fxn)
+      summaryObj <<- summarizeComparisons(grpComparisonsObj, summary_functions = input$summary_fxn)
       return(summaryObj)
       
     }
@@ -1398,8 +1446,15 @@ shinyServer(function(session, input, output) {
       revals$plot_data_export <- plot_data()
     }
     
-    # ifelse block determines how to populate vk_colors dropdown
-    if (input$choose_single == 1){
+    ## ifelse block determines how to populate vk_colors dropdown
+    
+    # Density plots care not for choose_single!!!!
+    if(input$chooseplots == "Density Plot"){
+      numeric_cols <- which(sapply(plot_data()$e_meta %>% 
+                                     dplyr::select(one_of(emeta_display_choices())), is.numeric))
+      color_by_choices <- emeta_display_choices()[numeric_cols]
+    }
+    else if (input$choose_single == 1){
       color_by_choices <- emeta_display_choices()
       
       if (input$chooseplots == "Van Krevelen Plot"){
@@ -1410,9 +1465,11 @@ shinyServer(function(session, input, output) {
       }
     }
     else if (input$choose_single == 2) {
+      
       # create vector of color choices by combining unique elements from e_data and e_meta
       edata_colors <- plot_data()$e_data %>% dplyr::select(-one_of(getEDataColName(plot_data()))) %>% colnames()
       color_by_choices <- c(edata_colors[!(edata_colors %in% emeta_display_choices())], emeta_display_choices())
+      
     } else if (input$choose_single == 3) {
       color_by_choices <- c("Unique GTest" = "unique_gtest")
     }
@@ -1441,12 +1498,6 @@ shinyServer(function(session, input, output) {
     
     # Density Colors
     if (input$chooseplots == 'Density Plot') {
-      
-      # only allow numeric options for density plot
-      numeric_cols <- which(sapply(plot_data()$e_meta %>% 
-                                     dplyr::select(color_by_choices), is.numeric))
-      color_by_choices <- color_by_choices[numeric_cols]
-      
       updateSelectInput(session, 'vk_colors', 'Plot Distribution of Variable:', 
                         choices = color_by_choices,
                         selected = selected)
@@ -1518,17 +1569,41 @@ shinyServer(function(session, input, output) {
   v <- reactiveValues(clearPlot = TRUE)
   observeEvent(c(input$chooseplots, input$choose_single, input$whichSamples), {
     v$clearPlot <- TRUE
-    shinyjs::disable("add_plot")
+    disable("add_plot")
+    disable("")
   }, priority = 10)
   observeEvent(input$plot_submit, {
     v$clearPlot <- FALSE
   }, priority = 10)
   
+  # grey out colorscale selection if we have not selected a numeric column to color by
+  observeEvent(numeric_selected(),{
+    req(input$chooseplots != "Density Plot")
+    if(numeric_selected()){
+      enable("colorpal")
+      removeCssClass("js_colorpal", "grey_out")
+      
+      enable("legend_title_input")
+      removeCssClass("js_legend_title_input", "grey_out")
+    }
+    else if(!numeric_selected()){
+      disable("colorpal")
+      addCssClass("js_colorpal", "grey_out")
+      
+      disable("legend_title_input")
+      addCssClass("js_legend_title_input", "grey_out")
+    }
+    
+    
+  })
   
   output$FxnPlot <- renderPlotly({
     req(input$chooseplots != 0)
+    
+    # reactive dependencies
     input$update_axes
     input$vk_colors
+    input$colorpal
     revals$makeplot #in case vk_colors does not change we still want to redraw the plot.
     
     if (isolate(v$clearPlot)){
@@ -1537,16 +1612,25 @@ shinyServer(function(session, input, output) {
       # Make sure a plot stype selection has been chosen
       validate(need(input$choose_single != 0, message = "Please select plotting criteria"))
       
-      legendTitle = ifelse(isolate(is.null(input$legend_title_input) || input$legend_title_input == ""),
+      legendTitle = ifelse(isolate(is.null(input$legend_title_input) || (input$legend_title_input == "")),
                            yes = names(isolate(revals$color_by_choices[revals$color_by_choices == input$vk_colors])),
                            no = isolate(input$legend_title_input)
       )
+      
+      # Apply custom color scale if numeric is selected
+      if(isolate(numeric_selected()) & !(input$vk_colors %in% c("bs1", "bs2"))){
+        pal <- RColorBrewer::brewer.pal(n = 9, input$colorpal)[3:9]
+        domain = range(plot_data()$e_meta[,input$vk_colors], na.rm = TRUE)
+        colorPal <- scales::col_numeric(pal, domain)
+      }
+      else colorPal <- NA
+      
       
       #----------- Single sample plots ------------#
       #-------Kendrick Plot-----------# 
       if (input$chooseplots == 'Kendrick Plot') {
         validate(need(!is.null(input$whichSamples) | !(is.null(isolate(input$whichGroups1)) & is.null(isolate(input$whichGroups2))), message = "Please select at least 1 sample"))
-        p <- kendrickPlot(isolate(plot_data()), colorCName = input$vk_colors,
+        p <- kendrickPlot(isolate(plot_data()), colorCName = input$vk_colors, colorPal = colorPal,
                           xlabel = isolate(input$x_axis_input), ylabel = isolate(input$y_axis_input),
                           title = isolate(input$title_input),legendTitle = legendTitle)
         
@@ -1556,7 +1640,7 @@ shinyServer(function(session, input, output) {
                             title = isolate(input$title_input),legendTitle = legendTitle)
         } else {
           # if color selection doesn't belong to a boundary, color by test
-          p <- kendrickPlot(isolate(plot_data()), colorCName = input$vk_colors,
+          p <- kendrickPlot(isolate(plot_data()), colorCName = input$vk_colors, colorPal = colorPal,
                             xlabel = isolate(input$x_axis_input), ylabel = isolate(input$y_axis_input),
                             title = isolate(input$title_input),legendTitle = legendTitle)
         }
@@ -1589,7 +1673,7 @@ shinyServer(function(session, input, output) {
                                  title = isolate(input$title_input),legendTitle = legendTitle)
           } else {
             # if no boundary lines and color selection doesn't belong to a boundary, color by test
-            p <- vanKrevelenPlot(isolate(plot_data()), showVKBounds = FALSE, colorCName = input$vk_colors,
+            p <- vanKrevelenPlot(isolate(plot_data()), showVKBounds = FALSE, colorCName = input$vk_colors, colorPal = colorPal,
                                  xlabel = isolate(input$x_axis_input), ylabel = isolate(input$y_axis_input),
                                  title = isolate(input$title_input),legendTitle = legendTitle)
           }
@@ -1601,7 +1685,8 @@ shinyServer(function(session, input, output) {
                                  title = isolate(input$title_input),legendTitle = legendTitle)
           } else {
             # if boundary lines and color isn't a boundary class
-            p <- vanKrevelenPlot(isolate(plot_data()), vkBoundarySet = input$vkbounds, showVKBounds = TRUE, colorCName = input$vk_colors,
+            p <- vanKrevelenPlot(isolate(plot_data()), vkBoundarySet = input$vkbounds, showVKBounds = TRUE, 
+                                 colorCName = input$vk_colors, colorPal = colorPal,
                                  xlabel = isolate(input$x_axis_input), ylabel = isolate(input$y_axis_input),
                                  title = isolate(input$title_input),legendTitle = legendTitle)
           }
@@ -1610,15 +1695,36 @@ shinyServer(function(session, input, output) {
       
       #--------- Density Plot --------#
       if (input$chooseplots == 'Density Plot') {
-        validate(need(!is.null(input$whichSamples), message = "Please select at least 1 sample"),
+        validate(need(!is.null(input$whichSamples) | !(is.null(isolate(input$whichGroups1)) & is.null(isolate(input$whichGroups2))), message = "Please select at least 1 sample"),
                  need(!is.na(input$vk_colors), message = "Please select a variable to color by")
         )
-        p <- densityPlot(isolate(plot_data()), variable = input$vk_colors,
-                         xlabel = ifelse(isolate(is.null(input$x_axis_input) || input$x_axis_input == ""), 
-                                         yes = names(revals$color_by_choices[revals$color_by_choices == input$vk_colors]), 
-                                         no = isolate(input$x_axis_input)),
-                         ylabel = isolate(input$y_axis_input),
-                         title = isolate(input$title_input))
+        
+        # sample/group inputs depending on whether or not we are doing a comparison of groups
+        if(input$choose_single == 3){
+          samples = FALSE
+          groups = c("Group1", "Group2")
+        }
+        else if(input$choose_single %in% c(1,2)){
+          samples = input$whichSamples
+          groups = FALSE
+        }
+        
+        # if x axis input field is empty, get the display name of the color_by_choices vector index that equals vk_colors, otherwise use what the user typed
+        xlabel = ifelse(isolate(is.null(input$x_axis_input) || input$x_axis_input == ""),
+                        yes = names(revals$color_by_choices[revals$color_by_choices == input$vk_colors]),
+                        no = isolate(input$x_axis_input))
+        
+        p <- densityPlot(isolate(plot_data()),variable = input$vk_colors, samples = samples, groups = groups,
+                         plot_hist = ifelse(input$choose_single == 1, TRUE, FALSE), 
+                         xlabel = xlabel, ylabel = isolate(input$y_axis_input), title = isolate(input$title_input))
+        
+        
+        # p <- densityPlot(isolate(plot_data()), variable = input$vk_colors,
+        #                  xlabel = ifelse(isolate(is.null(input$x_axis_input) || input$x_axis_input == ""),
+        #                                  yes = names(revals$color_by_choices[revals$color_by_choices == input$vk_colors]),
+        #                                  no = isolate(input$x_axis_input)),
+        #                  ylabel = isolate(input$y_axis_input),
+        #                  title = isolate(input$title_input))
         
       }
       
@@ -1628,7 +1734,7 @@ shinyServer(function(session, input, output) {
                  need(!is.na(input$vk_colors), message = "Please select a variable to color by"))
         req(!is.null(input$scatter_x), !is.null(input$scatter_y), !("" %in% c(input$scatter_x, input$scatter_y)))
         
-        p <- scatterPlot(isolate(plot_data()), input$scatter_x, input$scatter_y, colorCName = input$vk_colors,
+        p <- scatterPlot(isolate(plot_data()), input$scatter_x, input$scatter_y, colorCName = input$vk_colors, colorPal = colorPal,
                          xlabel = isolate(ifelse(is.null(input$x_axis_input) | (input$x_axis_input == ""), 
                                                  yes = names(revals$color_by_choices[revals$color_by_choices == input$scatter_x]), 
                                                  no = input$x_axis_input)), 
@@ -1652,7 +1758,7 @@ shinyServer(function(session, input, output) {
     
     # Null assignment bypasses plotly bug
     p$elementId <- NULL
-    shinyjs::enable("add_plot")
+    enable("add_plot")
     return(p)
     
   })
@@ -1703,28 +1809,34 @@ shinyServer(function(session, input, output) {
     textInput(inputId = "y_axis_input", label = "Y Axis Label", value = plot_defaults()$ylabel)
   })
   
+  # legend input
+  output$legend_title_out <- renderUI({
+    validate(
+      need(input$chooseplots != 0, message = "")
+    )
+    if(input$chooseplots == "Density Plot"){
+      addCssClass("js_legend_title_input", "grey_out")
+      disabled(textInput(inputId = "legend_title_input", label = "Legend Label", value = ""))
+    }
+    else{
+      removeCssClass("js_legend_title_input", "grey_out")
+      textInput(inputId = "legend_title_input", label = "Legend Label", value = "")
+    }
+    
+  })
+  
   # reactive variable that keeps track of whether the selected column is numeric or categorical.
-  numeric_selected <- eventReactive(input$vk_colors,{
+  numeric_selected <- eventReactive(c(input$vk_colors, plot_data()),{
     if(input$vk_colors %in% (plot_data()$e_data %>% colnames())){
       (is.numeric(plot_data()$e_data %>% pluck(input$vk_colors)) & !is_integer(plot_data()$e_data %>% pluck(input$vk_colors)))
     }else if(input$vk_colors %in% (plot_data()$e_meta %>% colnames())){
       (is.numeric(plot_data()$e_meta %>% pluck(input$vk_colors)) & !is_integer(plot_data()$e_meta %>% pluck(input$vk_colors)))
+    }else if(input$vk_colors %in% c("bs1", "bs2")){
+      FALSE
     }else TRUE
-  })
+  }, ignoreNULL = FALSE)
   
-  # legend input, will be hidden if numeric_selected() is FALSE.
-  output$legend_title_out <- renderUI({
-    
-    validate(
-      need(input$chooseplots != 0, message = "")
-    )
-    if ((input$chooseplots == 'Density Plot') | !numeric_selected() | input$vk_colors %in% c("bs1", "bs2")) {
-      return(NULL)
-    } else{
-      textInput(inputId = "legend_title_input", label = "Legend Label", value = "")
-      
-    }
-  })
+ 
   
   
   #-------- create a table that stores plotting information -------#

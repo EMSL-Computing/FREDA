@@ -27,16 +27,16 @@ shinyUI(tagList(useShinyjs(),
                    navbarMenu("Welcome",
                               # tabPanel(title = "Introduction",
                               #             includeHTML("./intropage.html")),
-                              tabPanel(title = "Introduction",
-                                       includeMarkdown("./Welcome to FREDA.md")),
-                              tabPanel(title = "Data Requirements",
+                              tabPanel(title = "Introduction", class = "background_FTICR",
+                                         includeMarkdown("./Welcome to FREDA.md")),
+                              tabPanel(title = "Data Requirements", class = "background_FTICR",
                                        includeMarkdown("./DataRequirements.md"),
                                        # DT::dataTableOutput("example_meta_table"), # in case we want a preview of the data
                                        # DT::dataTableOutput("example_data_table"),
                                        downloadButton('downloadData', 'Download')),
-                              tabPanel(title = "Resources",
+                              tabPanel(title = "Resources", class = "background_FTICR",
                                        HTML('<h4> Resources </h4>')),
-                              tabPanel(title = "Contact",
+                              tabPanel(title = "Contact", class = "background_FTICR",
                                        HTML('<h4> Contact </h4>'))
                    ),
                    ################## Upload Panel #######################################
@@ -331,7 +331,7 @@ shinyUI(tagList(useShinyjs(),
                                 uiOutput("title_out"),
                                 uiOutput("x_axis_out"),
                                 uiOutput("y_axis_out"),
-                                uiOutput("legend_title_out"),
+                                tags$div(id = "js_legend_title_input", uiOutput("legend_title_out")),
 
                                 splitLayout(
                                   shinyjs::disabled(
@@ -371,6 +371,9 @@ shinyUI(tagList(useShinyjs(),
                                          shinyjs::disabled(selectInput("scatter_y", "Vertical Axis Variable:", choices = NULL, selected = NULL))
                                         )
                                 ),
+                                
+                                tags$div(id = "js_colorpal", uiOutput("colorpal_out")),
+                                
                                 br(),
                                 hr(),
                                 shinyjs::disabled(actionButton(inputId = "add_plot", label = "I want to download a hi-res version of this plot on the Download tab", icon = icon("download"))),

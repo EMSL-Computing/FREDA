@@ -1,5 +1,7 @@
 # Data Requirements
 
+***
+
 Analysis with FREDA requires uploading two .csv files
 
 ### File 1: Data File

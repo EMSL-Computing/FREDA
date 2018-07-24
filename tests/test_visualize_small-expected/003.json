@@ -1,7 +1,7 @@
 {
   "output": {
     "barplot_filter": {
-      "src": "[image data sha1: f3a97b7396eba723c1d407c0a9c37672baba369f]",
+      "src": "[image data sha1: 2af212f5e5896e8ee8a3ba28f39e63478b38a288]",
       "width": 549,
       "height": 400,
       "coordmap": [
@@ -12,8 +12,6 @@
           "panel_vars": {
 
           },
-          "scale_x": 1,
-          "scale_y": 1,
           "log": {
             "x": null,
             "y": null
@@ -26,17 +24,18 @@
           },
           "mapping": {
             "x": "data_state",
-            "y": "value"
+            "y": "value",
+            "fill": "variable"
           },
           "range": {
-            "left": 65.426216037603,
-            "right": 373.693957307179,
-            "bottom": 356.124565457335,
+            "left": 61.5817849977524,
+            "right": 358.680562263004,
+            "bottom": 355.205324622185,
             "top": 7.97011207970112
           }
         }
       ]
     },
-    "summary_filter": "<table  class = 'table shiny-table table- spacing-s' style = 'width:auto;'>\n<thead> <tr> <th style='text-align: left;'>  <\/th> <th style='text-align: left;'> Before <\/th> <th style='text-align: left;'> After <\/th>  <\/tr> <\/thead> <tbody>\n  <tr> <td> Number of peaks <\/td> <td> 9,185 <\/td> <td> 5,610 <\/td> <\/tr>\n  <tr> <td> Number of peaks assigned a formula <\/td> <td> 3,189 <\/td> <td> 1,918 <\/td> <\/tr>\n  <tr> <td> Minimum mass observed <\/td> <td> 98.6566 <\/td> <td> 200.0825 <\/td> <\/tr>\n  <tr> <td> Maximum Mass observed <\/td> <td> 897.3851 <\/td> <td> 897.3851 <\/td> <\/tr>\n   <\/tbody> <\/table>"
+    "summary_filter": "<table  class = 'table shiny-table table- spacing-s' style = 'width:auto;'>\n<thead> <tr> <th style='text-align: left;'>  <\/th> <th style='text-align: left;'> Before <\/th> <th style='text-align: left;'> After <\/th>  <\/tr> <\/thead> <tbody>\n  <tr> <td> Number of peaks <\/td> <td> 9,185 <\/td> <td> 5,610 <\/td> <\/tr>\n  <tr> <td> Number of peaks assigned a formula <\/td> <td> 3,189 <\/td> <td> 3,148 <\/td> <\/tr>\n  <tr> <td> Minimum mass observed <\/td> <td> 98.6566 <\/td> <td> 200.0825 <\/td> <\/tr>\n  <tr> <td> Maximum Mass observed <\/td> <td> 897.3851 <\/td> <td> 897.3851 <\/td> <\/tr>\n   <\/tbody> <\/table>"
   }
 }
