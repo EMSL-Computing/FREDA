@@ -10,9 +10,9 @@
 # SET THE FOLLOWING IN YOUR R CONSOLE #
 
 ## path to folder (That doesn't exist) that R should create ##
-# vdbDir <- "/Users/bram489/Desktop/test2"
+# vdbDir <- "/Users/clab683/Documents/testenv"
 ## path to local repositories (where fticRanalysis folder is located ##
-# localDir="/Users/bram489/Documents/Github_Repositories/"
+# localDir="/Users/clab683/Documents/"
 ############################################################
 
 dir.create(vdbDir)
@@ -39,12 +39,12 @@ packrat::set_opts(external.packages=c("stringi", "plogr", "BH", "devtools", "rox
 options(repos=c(CRAN="http://cran.rstudio.com"))
 
 # Install necessary libraries in packrat's lib directory (this DOES NOT copy the source, just installs for use locally)
-install.packages(c("shiny", "shinyBS", "ggplot2", "reshape2","webshot","htmlwidgets","dplyr","raster","magick","purrr", "DT")) 
+install.packages(c("shiny", "shinyBS", "ggplot2", "reshape2","webshot","htmlwidgets","dplyr","raster","magick","purrr", "DT", "shinyjs")) 
 
 webshot::install_phantomjs()
 
 # Can also install from local source if necessary (make sure to list the parent directory of this in "local.repos" above)
-devtools::install_local("/Users/bram489/Documents/Github_Repositories/fticRanalysis/")
+# devtools::install_local("/Users/clab683/Documents/fticRanalysis/")
 
 
 ##############################################################################################

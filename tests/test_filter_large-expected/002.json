@@ -23267,10 +23267,14 @@
         null,
         null
       ],
-      "alpha": 1,
+      "alpha_stroke": 1,
       "sizes": [
         10,
         100
+      ],
+      "spans": [
+        1,
+        20
       ],
       "type": "histogram"
     }

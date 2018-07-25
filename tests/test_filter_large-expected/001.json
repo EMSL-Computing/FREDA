@@ -48986,7 +48986,8 @@
     "update_axes": 0,
     "upload_click": 0,
     "visualize_help": 0,
-    "vk_colors": ""
+    "vk_colors": "",
+    "vkbounds": "bs1"
   },
   "output": {
     "head_edata": {

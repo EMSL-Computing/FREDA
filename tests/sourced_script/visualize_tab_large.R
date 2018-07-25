@@ -150,34 +150,34 @@ test_that("Single sample density plot produced", {
 app$takeScreenshot("screenshots/density_single.png")
 app$snapshot(items = list(output = "parmsTable", export = "plot_attrs"))
 
-#### UNCOMMENT WHEN SCATTER PLOTS CAN BE DOWNLOADED ####
-# print("Single sample density plot tests passed. Moving to custom scatter plot....")
-# 
-# app$setInputs(chooseplots = "Custom Scatter Plot")
-# Sys.sleep(0.5)
-# app$setInputs(choose_single = "1")
-# Sys.sleep(0.5)
-# app$setInputs(whichSamples = "EM0019_sample")
-# app$setInputs(plot_submit = "click")
-# app$setInputs(vk_colors = "kmass")
-# app$setInputs(title_input = "1")
-# app$setInputs(scatter_x = "kmass")
-# app$setInputs(scatter_y = "kdefect")
-# app$setInputs(plot_submit = "click")
-# #app$snapshot(list(output = "FxnPlot"))
-# app$setInputs(add_plot = "click")
-# 
-# vals <- app$getAllValues()
-# test_that("Scatter plot produced", {
-#   
-#   samp_names <- vals$export$plot_data$e_data %>% dplyr::select(-tidyselect::one_of(getEDataColName(vals$export$peakIcr2))) %>% names()
-#   
-#   expect_true(inherits(vals$export$plot, "plotly"))
-#   expect_equal(samp_names, vals$input$whichSamples)
-#   
-# })
-# app$takeScreenshot("screenshots/scatter_single.png")
-# app$snapshot(items = list(output = "parmsTable", export = "plot_attrs"))
+# Custom Scatter Plot
+print("Single sample density plot tests passed. Moving to custom scatter plot....")
+
+app$setInputs(chooseplots = "Custom Scatter Plot")
+Sys.sleep(0.5)
+app$setInputs(choose_single = "1")
+Sys.sleep(0.5)
+app$setInputs(whichSamples = "EM0019_sample")
+app$setInputs(plot_submit = "click")
+app$setInputs(vk_colors = "kmass")
+app$setInputs(title_input = "1")
+app$setInputs(scatter_x = "kmass")
+app$setInputs(scatter_y = "kdefect")
+app$setInputs(plot_submit = "click")
+#app$snapshot(list(output = "FxnPlot"))
+app$setInputs(add_plot = "click")
+
+vals <- app$getAllValues()
+test_that("Scatter plot produced", {
+
+  samp_names <- vals$export$plot_data$e_data %>% dplyr::select(-tidyselect::one_of(getEDataColName(vals$export$peakIcr2))) %>% names()
+
+  expect_true(inherits(vals$export$plot, "plotly"))
+  expect_equal(samp_names, vals$input$whichSamples)
+
+})
+app$takeScreenshot("screenshots/scatter_single.png")
+app$snapshot(items = list(output = "parmsTable", export = "plot_attrs"))
 
 
-print("Single sample density plot tests passed. Moving to DOWNLOAD TAB....")
+print("Custom scatter plot tests passed. Moving to DOWNLOAD TAB....")
