@@ -373,7 +373,7 @@ shinyUI(tagList(useShinyjs(),
                                 ),
                                 br(),
                                 hr(),
-                                shinyjs::disabled(actionButton(inputId = "add_plot", label = "I want to download a hi-res version of this plot on the Download tab", icon = icon("download"))),
+                                shinyjs::disabled(actionButton(inputId = "add_plot", label = "Store these plot parameters", icon = icon("save"))),
                                 br(),
                                 br(),
                                 dataTableOutput("parmsTable", width = "55%")
@@ -386,11 +386,8 @@ shinyUI(tagList(useShinyjs(),
                             fluidRow(
                               column(width = 7,
                                 wellPanel(fluidRow(
-                                  column(width = 2,
-                                         icon("table", "fa-4x")
-                                         ),
                                   column(width = 10,
-                                         tags$h3(tags$b("Processed Data"))
+                                         tags$h4(icon("table", "fa-2x"), tags$b("Processed Data"))
                                          )
                                   ),
                                           checkboxGroupInput("download_selection", label = "Check Download Selection",
@@ -401,29 +398,28 @@ shinyUI(tagList(useShinyjs(),
                               ),
                               column(width = 5,
                                      wellPanel(fluidRow(
-                                       column(width = 2,
-                                              icon("align-left", "fa-4x")
-                                       ),
-                                       column(width = 10,
-                                              tags$h3(tags$b("Summary Report"))
+                                       column(width = 8,
+                                              tags$h4(icon("align-left", "fa-2x"), tags$b("Summary Report"))
                                        )
                                      ),
-                                     checkboxInput("report_selection", label = "Coming Soon")
+                                     checkboxGroupInput("report_selection", label = "Check Download Selection", choices = "Coming Soon"),
+                                    br()
                                      )
                                      )
                             ),
                             fluidRow(
                               column(width = 12,
-                                     wellPanel(fluidRow(
+                                     wellPanel(
+                                       fluidRow(
                                        column(width = 2,
-                                              icon("image", "fa-4x")
-                                       ),
-                                       column(width = 10,
-                                              tags$h3(tags$b("Figures"))
+                                              tags$h4(icon("image", "fa-2x"), tags$b("Figures"))
                                        )
                                      ),
-                                     hr(),
-                                     tags$h4(tags$b("Select figures by row. When clicked, the selection will highlight.")),
+                                     # tags$div(class = "row",
+                                     #          icon("image", "fa-4x"),
+                                     #          tags$h3(tags$b("Figures"))
+                                     # ),
+                                     tags$h5(tags$b("Select figures by row. When clicked, the download selection will highlight.")),
                                      fluidRow(
                                        column(width = 9,
                                               dataTableOutput("parmsTable2", width = "90%")
@@ -437,7 +433,8 @@ shinyUI(tagList(useShinyjs(),
                               )
                             ),
                             #verbatimTextOutput('x4'),
-                            downloadButton('download_processed_data', tags$b('Download Selected Items'), style = "width:100%")
+                            downloadButton('download_processed_data', tags$b('Download Selected Items'), style = "width:100%"),
+                            tags$br()
                             
                    ), 
                    
