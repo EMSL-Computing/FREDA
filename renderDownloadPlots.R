@@ -18,8 +18,19 @@ renderDownloadPlots <- function(parmTable, peakIcr2){
       temp_data <- peakIcr2 %>% 
         subset(samples)
       
-      attr(temp_data, "group_DF") <- temp_group_df
-      plot_data <- summarizeGroups(temp_data, summary_functions = getGroupSummaryFunctionNames())
+      temp_data <- fticRanalysis:::setGroupDF(temp_data, temp_group_df)
+      
+      # Density plots dont need summarizegroups object 
+      if (parmTable$PlotType == "Density Plot"){
+        plot_data <- temp_data
+      }
+      else {
+        temp_data <- summarizeGroups(temp_data, summary_functions = getGroupSummaryFunctionNames())
+        temp_data$e_meta <- cbind(temp_data$e_meta, temp_data$e_data %>% dplyr::select(-one_of(getEDataColName(temp_data))))
+        
+        plot_data <- temp_data
+      }
+      
     } else {#two groups
       group1_samples <- strsplit(parmTable$G1, split = ",")[[1]]
       group2_samples <- strsplit(parmTable$G2, split = ",")[[1]]
@@ -30,8 +41,14 @@ renderDownloadPlots <- function(parmTable, peakIcr2){
         subset(samples = c(group1_samples, group2_samples))
       
       temp_data <- fticRanalysis:::setGroupDF(temp_data, temp_group_df)
-      grpComparisonsObj <- divideByGroupComparisons(temp_data, comparisons = "all")[[1]]$value
-      plot_data <- summarizeComparisons(grpComparisonsObj, summary_functions = parmTable$UniqueCommon)
+      
+      # Density plots dont need summarizegroups object 
+      if (parmTable$PlotType == "Density Plot"){
+        plot_data <- temp_data
+      } else {
+        grpComparisonsObj <- divideByGroupComparisons(temp_data, comparisons = "all")[[1]]$value
+        plot_data <- summarizeComparisons(grpComparisonsObj, summary_functions = parmTable$UniqueCommon)
+      }
     }
     
   }
@@ -92,8 +109,28 @@ renderDownloadPlots <- function(parmTable, peakIcr2){
     
     #--------- Density Plot --------#
     if (parmTable$PlotType == 'Density Plot') {
+      
+      # set parameters depending on single/multiple/groupcomparison
+      if(parmTable$SampleType == "Multiple Samples"){
+        if(is.na(parmTable$G2)){
+          samples <- strsplit(parmTable$G1, split = ",")[[1]]
+          groups = FALSE
+            
+        }
+        else{
+          samples = FALSE
+          groups = c("Group1", "Group2")
+        }
+      }
+      else if(parmTable$SampleType == "Single Sample"){
+        samples = parmTable$G1
+        groups = FALSE
+      }
+      
       return({
-        densityPlot(plot_data, variable = parmTable$ColorBy)
+        densityPlot(plot_data, variable = parmTable$ColorBy, samples = samples, groups = groups,
+                         plot_hist = ifelse(parmTable$SampleType == "Single Sample", TRUE, FALSE))
+        
       })
     }
   

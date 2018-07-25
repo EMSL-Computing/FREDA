@@ -6,6 +6,8 @@ Analysis with FREDA requires uploading two .csv files
 
 ### File 1: Data File
 
+***
+
 This file contains the quantified data for each mass (rows) and sample (columns)
 
 - The first row of the file is the header and contains names for each column.
@@ -15,6 +17,8 @@ This file contains the quantified data for each mass (rows) and sample (columns)
 - All remaining columns contain the peak heights associated with each mass for the samples in the dataset. The column names for these remaining columns are the sample identifiers.
 
 ### File 2: Molecular Identification File
+
+***
 
 This file contains the molecular formula and/or elemental counts for each mass, and optionally an indicator for Carbon13
 
@@ -29,6 +33,8 @@ This file contains the molecular formula and/or elemental counts for each mass, 
       - An optional indicator for Carbon13
       
       - Other optional information that is specific to each mass
+
+***
 
 ### Example Files
 

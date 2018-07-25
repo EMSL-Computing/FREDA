@@ -1,7 +1,7 @@
 {
   "output": {
     "barplot_filter": {
-      "src": "[image data sha1: b9ff2fdf21ee77ec75be1d61ccec1ecf796fc25f]",
+      "src": "[image data sha1: 33c474bc76dd66477777f0306932d8e3c8ceca52]",
       "width": 549,
       "height": 400,
       "coordmap": [
@@ -12,8 +12,6 @@
           "panel_vars": {
 
           },
-          "scale_x": 1,
-          "scale_y": 1,
           "log": {
             "x": null,
             "y": null
@@ -26,12 +24,13 @@
           },
           "mapping": {
             "x": "data_state",
-            "y": "value"
+            "y": "value",
+            "fill": "variable"
           },
           "range": {
-            "left": 72.5449656561332,
-            "right": 373.693957307179,
-            "bottom": 356.124565457335,
+            "left": 68.7005346162827,
+            "right": 358.680562263004,
+            "bottom": 355.205324622185,
             "top": 7.97011207970112
           }
         }

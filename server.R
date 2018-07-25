@@ -244,14 +244,14 @@ shinyServer(function(session, input, output) {
   # Object: Create peakICR when Upload Button clicked
   peakICR <- eventReactive(input$upload_click, {
     # Error handling: unique identifier chosen
-    validate(need(input$edata_id_col != 'Select one', 'Please select a unique identifier column'))
+    validate(need(input$edata_id_col != 'Select one', 'Please select a unique identifier column'),
+             need(input$edata_id_col %in% edata_cnames() & input$edata_id_col %in% emeta_cnames(),
+                  message = "The chosen ID column does not exist in one or both of the Data/Molecular Identification"))
     
     validate(         
-      need(input$select != 0, 
-           'Please select either Formula or Elemental columns'),
-      need(input$isotope_yn != 0,
-           'Please select yes or no on information for isotopes'),
-      need(sum(!(Edata()[,input$edata_id_col] %in% Emeta()[,input$edata_id_col])) == 0,
+      need(input$select != 0, 'Please select either Formula or Elemental columns'),
+      need(input$isotope_yn != 0, 'Please select yes or no on information for isotopes'),
+      need(sum(!(Edata()[,input$edata_id_col] %in% Emeta()[,input$edata_id_col])) == 0, 
            'Not all peaks in data file are present in molecular identification file, please add/remove these peaks to emeta / from edata')
       
     ) # End error handling #
@@ -1197,14 +1197,17 @@ shinyServer(function(session, input, output) {
                     tags$li("If you selected a single sample, specify which one.  If you selected multiple samples by group, select samples that 
                             should be grouped. If you selected a comparison of groups, two group dropdowns will appear; select samples that
                             you want included in each of the two groups"),
-                    tags$li("If desired, specify axis and title labels and hit 'Submit'\n"),
+                    tags$li("If desired, specify axis and title labels and hit 'Generate Plot'\n"),
                     
                     style = "color:CornFlowerBlue"),
-                  HTML("<p style = color:CornFlowerBlue> A plot will appear and can be customized to color by certain calculated values.  
+                  tags$p("A plot will appear and can be customized to color by certain calculated values.  
                        Van Krevelen boundaries can be displayed for VK-plots.
-                       Custom scatterplots will allow for selection of arbitrary x and y axes.<p>")
+                       Custom scatterplots will allow for selection of arbitrary x and y axes.", style = "color:CornFlowerBlue"),
+                  hr(),
+                  tags$p("Certain menu options may 'grey_out' during navigation, indicating disabled functionality for a plot type, 
+                         or because certain values were not calculated during preprocessing")
                   )
-                  )
+              )
   })
   
   # Multi purpose observer on input$chooseplots
@@ -1216,11 +1219,11 @@ shinyServer(function(session, input, output) {
     
     
     # Rest of this observer controls shinyjs disable/enable behavior for reactive plot dropdowns
-    dropdown_ids <- c("vkbounds", "vk_colors", "scatter_x", "scatter_y")
-    choices = list('Van Krevelen Plot' = c("vk_colors", "vkbounds"), 
-                   'Kendrick Plot' = "vk_colors",
+    dropdown_ids <- c("vkbounds", "vk_colors", "scatter_x", "scatter_y", "colorpal", "legend_title_input")
+    choices = list('Van Krevelen Plot' = c("vk_colors", "vkbounds", "colorpal", "legend_title_input"), 
+                   'Kendrick Plot' = c("vk_colors", "colorpal", "legend_title_input"),
                    'Density Plot' = "vk_colors", 
-                   'Custom Scatter Plot' = c("vk_colors", "scatter_x", "scatter_y"), 
+                   'Custom Scatter Plot' = c("vk_colors", "scatter_x", "scatter_y", "colorpal", "legend_title_input"), 
                    'Select an Option' = "0")
     
     # if(input$chooseplots %in% c("Custom Scatter Plot") | nrow(peakIcr2$f_data) == 1){
@@ -1307,9 +1310,7 @@ shinyServer(function(session, input, output) {
     if(input$choose_single == 3){
       if(input$chooseplots == "Density Plot"){
         summary_dropdown <- tags$div(class = "grey_out",
-                                     disabled(selectInput('choose_single', 'I want to plot using:',
-                                                                   choices = c('Make a selection' = 0, 'A single sample' = 1, 'Multiple samples by group' = 2, 'A comparison of groups' = 3),
-                                                                   selected = 1)),
+                                     disabled(selectInput("summary_fxn", "Summary Function", choices = "uniqueness_gtest")),
                                      tags$p("No summary functions for comparison density plots", style = "color:gray;font-size:small;margin-top:3px")
         )
         
