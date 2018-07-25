@@ -383,21 +383,61 @@ shinyUI(tagList(useShinyjs(),
                    
                    ################## Download Panel ##############################################
                    tabPanel('Download',
-                            checkboxGroupInput("download_selection", label = "Select Processed Data to Download",
-                                               choices = c('Data File as one .csv and Molecular Identification File as another .csv' = "separate",
-                                                           'merged Data File and Molecular Identification File as a single .csv' = "merged"),
-                                                width = "40%"),
-                            hr(),
-                            checkboxInput("report_selection", label = "Report (Coming Soon)"),
-                            hr(),
-                            p("Figures"),
-                            p("Please select figures to download in the table below by clicking on the row. When clicked, the selection will highlight."),
-                            dataTableOutput("parmsTable2", width = "55%"),
-                            radioButtons(inputId = "image_format", label = "Select an image format",
-                                         choices = c("svg", "pdf", "tiff", "png"), selected = "svg"),
-                            verbatimTextOutput('x4'),
-                            hr(),
-                            downloadButton('download_processed_data', 'Download Selected Items')
+                            fluidRow(
+                              column(width = 7,
+                                wellPanel(fluidRow(
+                                  column(width = 2,
+                                         icon("table", "fa-4x")
+                                         ),
+                                  column(width = 10,
+                                         tags$h3(tags$b("Processed Data"))
+                                         )
+                                  ),
+                                          checkboxGroupInput("download_selection", label = "Check Download Selection",
+                                                             choices = c('Data File as one .csv and Molecular Identification File as another .csv' = "separate",
+                                                                         'merged Data File and Molecular Identification File as a single .csv' = "merged"),
+                                                             width = "80%")
+                                          )
+                              ),
+                              column(width = 5,
+                                     wellPanel(fluidRow(
+                                       column(width = 2,
+                                              icon("align-left", "fa-4x")
+                                       ),
+                                       column(width = 10,
+                                              tags$h3(tags$b("Summary Report"))
+                                       )
+                                     ),
+                                     checkboxInput("report_selection", label = "Coming Soon")
+                                     )
+                                     )
+                            ),
+                            fluidRow(
+                              column(width = 12,
+                                     wellPanel(fluidRow(
+                                       column(width = 2,
+                                              icon("image", "fa-4x")
+                                       ),
+                                       column(width = 10,
+                                              tags$h3(tags$b("Figures"))
+                                       )
+                                     ),
+                                     hr(),
+                                     tags$h4(tags$b("Select figures by row. When clicked, the selection will highlight.")),
+                                     fluidRow(
+                                       column(width = 9,
+                                              dataTableOutput("parmsTable2", width = "90%")
+                                       ),
+                                       column(width = 3,
+                                              radioButtons(inputId = "image_format", label = "Select an image format",
+                                                           choices = c("svg", "pdf", "tiff", "png"), selected = "svg")
+                                       )
+                                     )
+                                     )
+                              )
+                            ),
+                            #verbatimTextOutput('x4'),
+                            downloadButton('download_processed_data', tags$b('Download Selected Items'), style = "width:100%")
                             
                    ), 
                    
