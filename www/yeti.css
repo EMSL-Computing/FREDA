@@ -7102,3 +7102,23 @@ input[type="checkbox"] {
     left:0;
     opacity:0.15;
 }
+
+.attention .selectize-input{
+  outline-style:solid;
+  outline-color:red;
+  outline-width:thin;
+}
+
+.attention .form-control{
+  outline-style:solid;
+  outline-color:red;
+  outline-width:thin;
+}
+
+.attention-upload .input-group{
+  outline-style:solid;
+  outline-color:red;
+  outline-width:thin;
+}
+
+

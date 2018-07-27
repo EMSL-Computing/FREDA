@@ -20092,7 +20092,7 @@
     "plot_submit": 0,
     "preprocess_click": 0,
     "preprocess_help": 0,
-    "report_selection": false,
+    "report_selection": null,
     "reset_filters": 0,
     "s_column": "S",
     "scatter_x": "",

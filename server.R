@@ -27,7 +27,7 @@ shinyServer(function(session, input, output) {
   source("renderDownloadPlots.R")
   
   revals <- reactiveValues(ntables = 0, makeplot = 1, color_by_choices = NULL, axes_choices = NULL,
-                           plot_data_export = NULL, peakICR_export = NULL)
+                           plot_data_export = NULL, peakICR_export = NULL, warning = list())
   
   exportTestValues(plot_data = revals$plot_data_export, peakICR = revals$peakICR_export)
   ######## Welcome Tab #############
@@ -367,6 +367,16 @@ shinyServer(function(session, input, output) {
     return(res)
     
   }) # End peakICR creation
+  
+  #### shinyjs observers ####
+  
+  # display list of warnings pasted on separate lines
+  output$warnings <- renderUI({
+    HTML(paste("<p, style = color:red>", paste(revals$warningmessage, collapse = "<br>"), "</p>"))
+  })
+  
+  source("upload_observers.R", local = TRUE)
+  
   
   
   #### Main Panel (Upload Tab) ####

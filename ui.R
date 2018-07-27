@@ -48,21 +48,21 @@ shinyUI(tagList(useShinyjs(),
                                 width = 5,
                                 
                                 # Load e_data file
-                                fileInput("file_edata", "Upload CSV Data File",
+                                div(id = "js_file_edata", fileInput("file_edata", "Upload CSV Data File",
                                           multiple = TRUE,
                                           accept = c("text/csv",
                                                      "text/comma-separated-values,text/plain",
-                                                     ".csv")),
+                                                     ".csv"))),
                                 
                                 ## Get unique identifier column from e_data ##
-                                uiOutput('edata_id'),
+                                div(id = "js_edata_id", uiOutput('edata_id')),
                                 
                                 # Load e_meta file
-                                fileInput("file_emeta", "Upload CSV Molecular Identification File",
-                                          multiple = TRUE,
-                                          accept = c("text/csv",
-                                                     "text/comma-separated-values,text/plain",
-                                                     ".csv")), 
+                                div(id = "js_file_emeta", fileInput("file_emeta", "Upload CSV Molecular Identification File",
+                                              multiple = TRUE,
+                                              accept = c("text/csv",
+                                                         "text/comma-separated-values,text/plain",
+                                                         ".csv"))), 
                                 
                                 # Horizontal rule #
                                 tags$hr(),
@@ -95,7 +95,7 @@ shinyUI(tagList(useShinyjs(),
                                 
                                 # (Conditional on the above selectInput) Elemental columns: 
                                 ##  which columns contain the elements?
-                                conditionalPanel(
+                                conditionalPanel(id = "element_select",
                                   condition = "input.select == 2",
                                   fluidRow(
                                     column(width = 4,
@@ -124,8 +124,8 @@ shinyUI(tagList(useShinyjs(),
                                 conditionalPanel(
                                   condition = "input.isotope_yn == 1",
                                   uiOutput("iso_info_filter_out"),
-                                  uiOutput('iso_info_column_out'),
-                                  uiOutput('iso_symbol_out')
+                                  div(id = "js_iso_info_column", uiOutput('iso_info_column_out')),
+                                  div(id = "js_iso_symbol", uiOutput('iso_symbol_out'))
                                 ),
                                 # # Condition on absence of isotope information
                                 # conditionalPanel(
@@ -148,6 +148,8 @@ shinyUI(tagList(useShinyjs(),
                                 width = 7,
                                 
                                 # Show 'Success' message if peakICR created successfully
+                                
+                                div(id = "warnings", style = "overflow-y:scroll;max-height:250px", uiOutput("warnings")),
                                 uiOutput('success_upload'),
                                 
                                 # Summary panel
