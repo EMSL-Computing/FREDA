@@ -34,6 +34,7 @@
     },
     "filter_click": 0,
     "filter_help": 0,
+    "flip_colors": 0,
     "formfilter": false,
     "h_column": "H",
     "head_edata_cell_clicked": {

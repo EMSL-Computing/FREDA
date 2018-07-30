@@ -95,7 +95,8 @@ shinyUI(tagList(useShinyjs(),
                                 
                                 # (Conditional on the above selectInput) Elemental columns: 
                                 ##  which columns contain the elements?
-                                conditionalPanel(id = "element_select",
+                                inlineCSS(list(.redoutline = "outline-style:solid;outline-color:red;outline-width:3px;transition:outline-width 0.3s")),
+                                conditionalPanel(id = "element_select", style = "padding-left:6px;padding-right:6px",
                                   condition = "input.select == 2",
                                   fluidRow(
                                     column(width = 4,
@@ -330,11 +331,13 @@ shinyUI(tagList(useShinyjs(),
                                 uiOutput("plotUI_cond"),
                                 # uiOutput("plotUI_2"),
                                 
+                                # Label inputs
                                 uiOutput("title_out"),
                                 uiOutput("x_axis_out"),
                                 uiOutput("y_axis_out"),
                                 tags$div(id = "js_legend_title_input", uiOutput("legend_title_out")),
-
+                                
+                                # Seperate buttons to generate plot or simply update labels without recalculating data
                                 splitLayout(
                                   shinyjs::disabled(
                                     actionButton("plot_submit", label = "Generate Plot"),
@@ -352,7 +355,7 @@ shinyUI(tagList(useShinyjs(),
                                 ),
                                 # width = 7,
 
-
+                                # color and van-krevelen bounds dropdowns
                                 fluidRow(
                                   column(width = 4, class = "grey_out", id = "js_vk_colors",
                                          shinyjs::disabled(selectInput("vk_colors", "Color By:", choices = NULL, selected = NULL))
@@ -365,6 +368,7 @@ shinyUI(tagList(useShinyjs(),
                                   
                                 ),
                                 
+                                # x and y axis variable dropdowns for custom scatter plot
                                 fluidRow(
                                   column(width = 4, class = "grey_out", id = "js_scatter_x",
                                          shinyjs::disabled(selectInput("scatter_x", "Horizontal Axis Variable:", choices = NULL, selected = NULL))
@@ -374,8 +378,10 @@ shinyUI(tagList(useShinyjs(),
                                         )
                                 ),
                                 
-                                tags$div(id = "js_colorpal", uiOutput("colorpal_out")),
-                                
+                                # color pallete options and button to flip colorscale direction
+                                tags$div(id = "js_colorpal", uiOutput("colorpal_out"), style = "display:inline-block"),
+                                actionButton("flip_colors", "Invert color scale", style = "display:inline-block"),
+                                  
                                 br(),
                                 hr(),
                                 shinyjs::disabled(actionButton(inputId = "add_plot", label = "Store these plot parameters", icon = icon("save"))),

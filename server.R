@@ -1366,7 +1366,7 @@ shinyServer(function(session, input, output) {
   
   # color pallete selection
   output$colorpal_out <- renderUI({
-    choices = c("YlOrRd", "YlGnBu", "YlGn", "RdYlBu")
+    choices = c("YlOrRd", "YlGnBu", "YlGn", "RdYlGn")
     
     extensions <- lapply(choices, function(choice){
       tags$img(src = paste0(choice, ".png"), width = "100px", height = "25px")
@@ -1381,6 +1381,11 @@ shinyServer(function(session, input, output) {
       colored_radiobuttons(inputId = "colorpal", label = "Pick a coloring scheme", inline = TRUE,
                                choices = choices, extensions = extensions)
     }
+  })
+  
+  # color scale inversion observer
+  observeEvent(input$flip_colors, {
+    toggleCssClass("js_colorpal", "img-hor")
   })
   
   # Create plotting dataframe to be passed to FxnPlot
@@ -1469,7 +1474,7 @@ shinyServer(function(session, input, output) {
       color_by_choices <- emeta_display_choices()
       
       if (input$chooseplots == "Van Krevelen Plot"){
-        color_by_choices <- switch(input$vkbounds, 
+        color_by_choices <- switch(input$vkbounds,
                                    'bs1' = c('Van Krevelen Boundary Set 1' = 'bs1', color_by_choices),
                                    'bs2' = c('Van Krevelen Boundary Set 2' = 'bs2', color_by_choices),
                                    "0" = c('Van Krevelen Boundary Set 1' = 'bs1', 'Van Krevelen Boundary Set 2' = 'bs2', color_by_choices))
@@ -1587,7 +1592,7 @@ shinyServer(function(session, input, output) {
     v$clearPlot <- FALSE
   }, priority = 10)
   
-  # grey out colorscale selection if we have not selected a numeric column to color by
+  # Observer which greys-out colorscale selection if we have not selected a numeric column to color by
   observeEvent(numeric_selected(),{
     req(input$chooseplots != "Density Plot")
     if(numeric_selected()){
@@ -1608,6 +1613,7 @@ shinyServer(function(session, input, output) {
     
   })
   
+  # Main plotting output #
   output$FxnPlot <- renderPlotly({
     req(input$chooseplots != 0)
     
@@ -1630,7 +1636,17 @@ shinyServer(function(session, input, output) {
       
       # Apply custom color scale if numeric is selected
       if(isolate(numeric_selected()) & !(input$vk_colors %in% c("bs1", "bs2"))){
-        pal <- RColorBrewer::brewer.pal(n = 9, input$colorpal)[3:9]
+        diverging_options = c("RdYlGn")
+        pal <- RColorBrewer::brewer.pal(n = 9, input$colorpal)
+        
+        if(!(input$colorpal %in% diverging_options)){
+          pal <- RColorBrewer::brewer.pal(n = 9, input$colorpal)[3:9]
+        }
+        
+        if(input$flip_colors%%2 != 0){
+          pal <- rev(pal)
+        }
+        
         domain = range(plot_data()$e_meta[,input$vk_colors], na.rm = TRUE)
         colorPal <- scales::col_numeric(pal, domain)
       }

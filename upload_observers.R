@@ -79,7 +79,7 @@ observeEvent(c(input$c_column, input$h_column, input$n_column,
   }
   else content = NULL
   
-  toggleCssClass("element_select", "attention", any(conditions))
+  toggleCssClass("element_select", "redoutline", any(conditions))
   revals$warningmessage$elements <- content
   
   
