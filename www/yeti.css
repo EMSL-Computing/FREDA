@@ -7081,9 +7081,6 @@ input[type="checkbox"] {
   color:grey;
 }
 
-.background_FTICR{
-}
-
 .background_FTICR h1{
   margin:-15px;
   background-color:rgba(0.1,0.1,0.1,0.1);
@@ -7103,24 +7100,18 @@ input[type="checkbox"] {
     opacity:0.15;
 }
 
-.attention .selectize-input{
+
+.attention .selectize-input, .attention .form-control, .attention-upload .input-group{
   outline-style:solid;
   outline-color:red;
   outline-width:3px;
   transition:outline-width 0.3s;
 }
 
-.attention .form-control{
+.suggest .selectize-input, .suggest .form-control, .suggest-upload .input-group{
   outline-style:solid;
-  outline-color:red;
-  outline-width:3px;
-  transition:outline-width 0.3s;
-}
-
-.attention-upload .input-group{
-  outline-style:solid;
-  outline-color:red;
-  outline-width:3px;
+  outline-color:rgba(0,191,255, 0.8);
+  outline-width:6px;
   transition:outline-width 0.3s;
 }
 
@@ -7131,5 +7122,19 @@ input[type="checkbox"] {
         transform: scaleX(-1);
         filter: FlipH;
         -ms-filter: "FlipH";
+}
+
+.redoutline {
+  outline-style:solid;
+  outline-color:red;
+  outline-width:3px;
+  transition:outline-width 0.3s;
+}
+
+.blueoutline {
+  outline-style:solid;
+  outline-color:deepskyblue;
+  outline-width:6px;
+  transition:outline-width 0.3s;
 }
 

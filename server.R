@@ -27,9 +27,10 @@ shinyServer(function(session, input, output) {
   source("renderDownloadPlots.R")
   
   revals <- reactiveValues(ntables = 0, makeplot = 1, color_by_choices = NULL, axes_choices = NULL,
-                           plot_data_export = NULL, peakICR_export = NULL, warning = list())
+                           plot_data_export = NULL, peakICR_export = NULL, 
+                           warningmessage = list(upload = "<p style = 'color:deepskyblue'>Upload data and molecular identification files described in 'Data Requirements' on the previous page."))
   
-  exportTestValues(plot_data = revals$plot_data_export, peakICR = revals$peakICR_export)
+  exportTestValues(plot_data = revals$plot_data_export, peakICR = revals$peakICR_export, color_choices = revals$color_by_choices)
   ######## Welcome Tab #############
   #------ Download Example Data ---------#
   example_edata <- read.csv('Data/example12T_edata.csv')
@@ -67,7 +68,6 @@ shinyServer(function(session, input, output) {
   
   # Object: Get e_data from file input
   Edata <- reactive({
-    
     # Error handling: Need file_edata path
     req(input$file_edata$datapath)
     
@@ -372,7 +372,12 @@ shinyServer(function(session, input, output) {
   
   # display list of warnings pasted on separate lines
   output$warnings <- renderUI({
-    HTML(paste("<p, style = color:red>", paste(revals$warningmessage, collapse = "<br>"), "</p>"))
+    HTML(lapply(revals$warningmessage, function(el){
+      paste0("<p ", el, "</p>")
+      }) %>%
+      paste(collapse = "")
+      )
+    #HTML(paste("<p,", paste(revals$warningmessage, collapse = "<br>"), "</p>"))
   })
   
   source("upload_observers.R", local = TRUE)
@@ -410,7 +415,7 @@ shinyServer(function(session, input, output) {
                  HTML('<h4 style= "color:#1A5276">Your data has been successfully uploaded. 
                       You may proceed to the subsequent tabs for analysis.</h4>'),
                  hr(),
-                 actionButton("upload_dismiss", "Dismiss", width = '75%'),
+                 actionButton("upload_dismiss", "Review results.", width = '75%'),
                  br(),
                  br(),
                  actionButton("goto_preprocess", "Continue to preprocessing", width = '75%')
@@ -757,7 +762,7 @@ shinyServer(function(session, input, output) {
                     column(10, align = "center", offset = 1,
                            HTML('<h4 style= "color:#1A5276">Your data has been preprocessed.  Calculated variables have been added to the molecular identification file and can be used in subsequent filtering and visualization.</h4>'),
                            hr(),
-                           actionButton("preprocess_dismiss", "Dismiss", width = '75%'),
+                           actionButton("preprocess_dismiss", "Review results.", width = '75%'),
                            br(),
                            br(),
                            actionButton("goto_filter", "Continue to filtering", width = '75%')
@@ -1005,7 +1010,7 @@ shinyServer(function(session, input, output) {
                            HTML('<h4 style= "color:#1A5276">Your data has been filtered using mass and/or minimum observations. 
                                 You may proceed to the next tabs for subsequnt analysis.</h4>'),
                            hr(),
-                           actionButton("filter_dismiss", "Dismiss", width = '75%'),
+                           actionButton("filter_dismiss", "Review results.", width = '75%'),
                            br(),
                            br(),
                            actionButton("goto_viz", "Continue to Visualization", width = '75%')
@@ -1398,6 +1403,7 @@ shinyServer(function(session, input, output) {
     }
     if (input$choose_single == 1) { # single sample -selected- but multiple samples present
       validate(need(!is.null(input$whichSamples), message = "Please select a sample to plot"))
+      inspect <<- subset(peakIcr2, input$whichSamples)
       return(subset(peakIcr2, input$whichSamples))
       #key_name <- paste(attributes(peakIcr2)$cnames$fdata_cname, "=", input$whichSamples, sep = "")
     }
@@ -1623,6 +1629,9 @@ shinyServer(function(session, input, output) {
     input$colorpal
     revals$makeplot #in case vk_colors does not change we still want to redraw the plot.
     
+    # for testing if plot actually got updated in test mode
+    exportTestValues(plot = NULL, plot_attrs = NULL)
+    
     if (isolate(v$clearPlot)){
       return(NULL)
     } else {
@@ -1802,8 +1811,8 @@ shinyServer(function(session, input, output) {
       #defs$legendTitle = names(emeta_display_choices())[emeta_display_choices() == input$vk_colors]
     } else if(input$chooseplots == "Custom Scatter Plot"){
       defs <- formals(scatterPlot)
-      defs$ylabel = isolate(input$scatter_y)
-      defs$xlabel = isolate(input$scatter_x)
+      defs$ylabel = NULL
+      defs$xlabel = NULL
     } else if (input$chooseplots == 'Kendrick Plot') {
       defs <- formals(kendrickPlot)
       #defs$legendTitle = input$vk_colors

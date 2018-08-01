@@ -12,6 +12,7 @@ library(shiny)
 library(shinyBS)
 library(shinyjs)
 library(DT)
+library(shinycssloaders)
 
 
 # Define UI for application that draws a histogram
@@ -48,14 +49,16 @@ shinyUI(tagList(useShinyjs(),
                                 width = 5,
                                 
                                 # Load e_data file
-                                div(id = "js_file_edata", fileInput("file_edata", "Upload CSV Data File",
-                                          multiple = TRUE,
-                                          accept = c("text/csv",
-                                                     "text/comma-separated-values,text/plain",
-                                                     ".csv"))),
+                                div(id = "js_file_edata",
+                                    fileInput("file_edata", "Upload CSV Data File",
+                                              multiple = TRUE,
+                                              accept = c("text/csv",
+                                                         "text/comma-separated-values,text/plain",
+                                                         ".csv"))
+                                    ),
                                 
                                 ## Get unique identifier column from e_data ##
-                                div(id = "js_edata_id", uiOutput('edata_id')),
+                                uiOutput('edata_id'),
                                 
                                 # Load e_meta file
                                 div(id = "js_file_emeta", fileInput("file_emeta", "Upload CSV Molecular Identification File",
@@ -76,13 +79,13 @@ shinyUI(tagList(useShinyjs(),
                                 ), 
                                 
                                 # Get whether formulas or elemental columns are included #
-                                selectInput('select', 
-                                            label = 'Does this file have formulas 
-                                            or elemental columns?',
-                                            choices = list('Select an option' = 0, 
-                                                           'Formulas' = 1, 
-                                                           'Elemental Columns' = 2),
-                                            selected = 'Select an option' 
+                                div(id = "js_select", selectInput('select', 
+                                                                  label = 'Does this file have formulas 
+                                                                  or elemental columns?',
+                                                                  choices = list('Select an option' = 0, 
+                                                                                 'Formulas' = 1, 
+                                                                                 'Elemental Columns' = 2),
+                                                                  selected = 'Select an option') 
                                 ), 
                                 
                                 
@@ -95,7 +98,7 @@ shinyUI(tagList(useShinyjs(),
                                 
                                 # (Conditional on the above selectInput) Elemental columns: 
                                 ##  which columns contain the elements?
-                                inlineCSS(list(.redoutline = "outline-style:solid;outline-color:red;outline-width:3px;transition:outline-width 0.3s")),
+                                
                                 conditionalPanel(id = "element_select", style = "padding-left:6px;padding-right:6px",
                                   condition = "input.select == 2",
                                   fluidRow(
@@ -114,12 +117,12 @@ shinyUI(tagList(useShinyjs(),
                                   )
                                 ), 
                                 # Create an option for Isotopic Analysis
-                                selectInput('isotope_yn',
-                                            label = 'Were isotopic peaks identified in the molecular assignments file?',
-                                            choices = list('Select an Option' = 0,
-                                                           'Yes' = 1,
-                                                           'No' = 2),
-                                            selected = 'Select an Option'
+                                div(id = "js_isotope_yn", selectInput('isotope_yn',
+                                                                      label = 'Were isotopic peaks identified in the molecular assignments file?',
+                                                                      choices = list('Select an Option' = 0,
+                                                                                     'Yes' = 1,
+                                                                                     'No' = 2),
+                                                                      selected = 'Select an Option')
                                 ),
                                 # Condition on presence of isotope information
                                 conditionalPanel(
@@ -351,7 +354,8 @@ shinyUI(tagList(useShinyjs(),
 
 
                                 wellPanel(
-                                  plotlyOutput('FxnPlot', width = '700px', height = '600px')
+                                  plotlyOutput('FxnPlot', width = '700px', height = '600px') %>% 
+                                    withSpinner(color = "orange", type = 8)
                                 ),
                                 # width = 7,
 
@@ -365,7 +369,6 @@ shinyUI(tagList(useShinyjs(),
                                                      choices = c('BS1' = 'bs1', 'BS2' = 'bs2', 'None' = 0),
                                                      selected = 'bs1'))
                                          )
-                                  
                                 ),
                                 
                                 # x and y axis variable dropdowns for custom scatter plot
