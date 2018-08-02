@@ -1638,7 +1638,7 @@ shinyServer(function(session, input, output) {
       # Make sure a plot stype selection has been chosen
       validate(need(input$choose_single != 0, message = "Please select plotting criteria"))
       
-      legendTitle = ifelse(isolate(is.null(input$legend_title_input) || (input$legend_title_input == "")),
+      revals$legendTitle = ifelse(isolate(is.null(input$legend_title_input) || (input$legend_title_input == "")),
                            yes = names(isolate(revals$color_by_choices[revals$color_by_choices == input$vk_colors])),
                            no = isolate(input$legend_title_input)
       )
@@ -1658,8 +1658,12 @@ shinyServer(function(session, input, output) {
         
         domain = range(plot_data()$e_meta[,input$vk_colors], na.rm = TRUE)
         colorPal <- scales::col_numeric(pal, domain)
+        revals$colorPal <- paste(paste(pal, collapse = ","), paste(domain, collapse = ","), sep = ":")
       }
-      else colorPal <- NA
+      else{
+        colorPal <- revals$colorPal <- NA
+        
+      }
       
       
       #----------- Single sample plots ------------#
@@ -1668,17 +1672,17 @@ shinyServer(function(session, input, output) {
         validate(need(!is.null(input$whichSamples) | !(is.null(isolate(input$whichGroups1)) & is.null(isolate(input$whichGroups2))), message = "Please select at least 1 sample"))
         p <- kendrickPlot(isolate(plot_data()), colorCName = input$vk_colors, colorPal = colorPal,
                           xlabel = isolate(input$x_axis_input), ylabel = isolate(input$y_axis_input),
-                          title = isolate(input$title_input),legendTitle = legendTitle)
+                          title = isolate(input$title_input),legendTitle = revals$legendTitle)
         
         if (input$vk_colors %in% c('bs1', 'bs2')) {
           p <- kendrickPlot(isolate(plot_data()), vkBoundarySet = input$vk_colors,
                             xlabel = isolate(input$x_axis_input), ylabel = isolate(input$y_axis_input),
-                            title = isolate(input$title_input),legendTitle = legendTitle)
+                            title = isolate(input$title_input),legendTitle = revals$legendTitle)
         } else {
           # if color selection doesn't belong to a boundary, color by test
           p <- kendrickPlot(isolate(plot_data()), colorCName = input$vk_colors, colorPal = colorPal,
                             xlabel = isolate(input$x_axis_input), ylabel = isolate(input$y_axis_input),
-                            title = isolate(input$title_input),legendTitle = legendTitle)
+                            title = isolate(input$title_input),legendTitle = revals$legendTitle)
         }
         #else if (isolate(input$choose_single == 3)) { #group overlay plots
         #   validate(need(!is.null(isolate(input$whichGroups1)), message = "Please select samples for first grouping"))
@@ -1706,25 +1710,25 @@ shinyServer(function(session, input, output) {
           if (input$vk_colors %in% c('bs1', 'bs2')) {
             p <- vanKrevelenPlot(isolate(plot_data()), showVKBounds = FALSE, vkBoundarySet = input$vk_colors,
                                  xlabel = isolate(input$x_axis_input), ylabel = isolate(input$y_axis_input),
-                                 title = isolate(input$title_input),legendTitle = legendTitle)
+                                 title = isolate(input$title_input),legendTitle = revals$legendTitle)
           } else {
             # if no boundary lines and color selection doesn't belong to a boundary, color by test
             p <- vanKrevelenPlot(isolate(plot_data()), showVKBounds = FALSE, colorCName = input$vk_colors, colorPal = colorPal,
                                  xlabel = isolate(input$x_axis_input), ylabel = isolate(input$y_axis_input),
-                                 title = isolate(input$title_input),legendTitle = legendTitle)
+                                 title = isolate(input$title_input),legendTitle = revals$legendTitle)
           }
         } else {
           # if boundary lines, allow a color by boundary class 
           if (input$vk_colors %in% c('bs1', 'bs2')) {
             p <- vanKrevelenPlot(isolate(plot_data()), vkBoundarySet = input$vkbounds, showVKBounds = TRUE,
                                  xlabel = isolate(input$x_axis_input), ylabel = isolate(input$y_axis_input),
-                                 title = isolate(input$title_input),legendTitle = legendTitle)
+                                 title = isolate(input$title_input),legendTitle = revals$legendTitle)
           } else {
             # if boundary lines and color isn't a boundary class
             p <- vanKrevelenPlot(isolate(plot_data()), vkBoundarySet = input$vkbounds, showVKBounds = TRUE, 
                                  colorCName = input$vk_colors, colorPal = colorPal,
                                  xlabel = isolate(input$x_axis_input), ylabel = isolate(input$y_axis_input),
-                                 title = isolate(input$title_input),legendTitle = legendTitle)
+                                 title = isolate(input$title_input),legendTitle = revals$legendTitle)
           }
         }
       }
@@ -1777,7 +1781,7 @@ shinyServer(function(session, input, output) {
                          ylabel = isolate(ifelse(is.null(input$y_axis_input) | (input$y_axis_input == ""), 
                                                  yes = names(revals$color_by_choices[revals$color_by_choices == input$scatter_y]), 
                                                  no = input$y_axis_input)),
-                         title = isolate(input$title_input), legendTitle = legendTitle)
+                         title = isolate(input$title_input), legendTitle = revals$legendTitle)
         
       }
     }
@@ -1885,6 +1889,8 @@ shinyServer(function(session, input, output) {
                                 YaxisTitle = NA, LegendTitle = NA)
   
   observeEvent(input$add_plot, {
+    
+    print(revals$colorPal)
     # initialize a new line
     newLine <- data.frame(FileName = NA, PlotType = input$chooseplots, SampleType = NA, G1 = NA, G2 = NA, BoundarySet = NA,
                           ColorBy = NA, ContinuousVariable = NA, UniqueCommon = NA, x_var = NA, y_var = NA,

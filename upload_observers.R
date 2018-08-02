@@ -1,5 +1,6 @@
 # Files Selected?
 observeEvent(c(input$top_page, input$file_edata, input$file_emeta), {
+  req(input$top_page == "Upload")
   toggleCssClass("js_file_edata", "suggest-upload", is.null(input$file_edata))
   toggleCssClass("js_file_emeta", "suggest-upload", is.null(input$file_emeta))
   
@@ -28,39 +29,35 @@ observeEvent(input$edata_id_col,{
 observeEvent(c(input$edata_id_col, Edata(), Emeta(), input$select, input$isotope_yn),{
   req(Edata(), Emeta(), input$edata_id_col != "Select one")
   
-  condition <- (input$edata_id_col %in% edata_cnames() & input$edata_id_col %in% emeta_cnames())
-  condition[2] <- input$select == 0
-  condition[3] <- input$isotope_yn == 0
+  conditions <- c(!(input$edata_id_col %in% edata_cnames() & input$edata_id_col %in% emeta_cnames()),
+                  isTRUE(input$select == 0),
+                  isTRUE(input$isotope_yn == 0),
+                  isTRUE(input$f_column == "Select one"))
   
-  print(all(c(condition[1], !condition[2], condition[3])))
-  
-  
-  if(!condition[1]){
+  if(conditions[1]){
     content = "style = 'color:red'>The chosen ID column does not exist in one or both of the Data/Molecular Identification Files"
   }
   else content = NULL
   
-  if(all(condition[1:2])){
+  if(all(!conditions[1], conditions[2])){
     content2 = "style = 'color:deepskyblue'>Please select either Formula or Elemental columns"
   }
   else content2 = NULL
   
-  if(all(c(condition[1], !condition[2], condition[3]))){
-    content3 = "style = 'color:deepskyblue'>Please indicate whether isotope information is present in the molecular identification file"
+  if(input$select != 1){
+    revals$warningmessage$formula_col <- NULL
   }
-  else content3 = NULL
 
-  toggleCssClass("edata_id", "attention", !condition[1])
-  toggleCssClass("js_select", "suggest", all(condition[1:2]))
-  toggleCssClass("js_isotope_yn", "suggest", all(c(condition[1], !condition[2], condition[3])))
+  toggleCssClass("edata_id", "attention", conditions[1])
+  toggleCssClass("js_select", "suggest", all(!conditions[1], conditions[2]))
   revals$warningmessage$warnidcol <- content
   revals$warningmessage$chooselement <- content2
-  revals$warningmessage$chooseiso <- content3
+  
 
 })
 
 
-# Peak ID column mismatch
+# Peak ID column mismatch, gets a separate observer for code-cleanliness
 observeEvent(c(Edata(), Emeta(), input$edata_id_col), {
   conditions <- FALSE
   
@@ -86,7 +83,7 @@ observeEvent(c(Edata(), Emeta(), input$edata_id_col), {
 # Highlight
 
 # ISO info column not selected or doesn't contain selected symbol
-observeEvent(c(input$iso_info_column, input$iso_symbol, input$isotope_yn), {
+observeEvent(c(input$iso_info_column, input$iso_symbol, input$isotope_yn, input$select), {
   
   if(input$isotope_yn != "1"){
     revals$warningmessage$warniso <- NULL
@@ -98,7 +95,10 @@ observeEvent(c(input$iso_info_column, input$iso_symbol, input$isotope_yn), {
     conditions <- input$iso_info_column == "0"
   
     if(conditions){
-      content <- "style = 'color:deepskyblue'>Please choose a column of isotopic information"
+      if(input$select != 0){
+        content <- "style = 'color:deepskyblue'>Please choose a column of isotopic information"
+      }
+      else content <- NULL
     }
     else if(!(any(Emeta()[,input$iso_info_column] %in% input$iso_symbol))){
       conditions[2] <- !(any(Emeta()[,input$iso_info_column] %in% input$iso_symbol))
@@ -106,7 +106,7 @@ observeEvent(c(input$iso_info_column, input$iso_symbol, input$isotope_yn), {
     }
     else content = NULL
     
-    toggleCssClass("js_iso_info_column", "suggest", conditions[1])
+    toggleCssClass("js_iso_info_column", "suggest", conditions[1] & input$select != 0)
     toggleCssClass("js_iso_symbol", "attention", isTRUE(conditions[2]))
     revals$warningmessage$warniso <- content
   }
@@ -114,39 +114,81 @@ observeEvent(c(input$iso_info_column, input$iso_symbol, input$isotope_yn), {
 
 # Non-numeric or non-selected elemental columns
 observeEvent(c(input$c_column, input$h_column, input$n_column, 
-               input$o_column, input$s_column, input$p_column),{
+               input$o_column, input$s_column, input$p_column, 
+               input$select, input$isotope_yn),{
   
+  req(Edata(), Emeta(), input$edata_id_col != "Select one")               
+                 
   elcols <- c(input$c_column, input$h_column, input$n_column, 
               input$o_column, input$s_column, input$p_column)
   conditions <- any(elcols == 'Select a column')
   
   if(conditions[1]){
-    content = "style = 'color:deepskyblue'>One or more element selections are missing, Please double-check drop-down options."
-  }else if(any(lapply(elcols, function(col){!is.numeric(Emeta()[,col])}))){
+    if(input$select == 2){
+      content = "style = 'color:deepskyblue'>One or more element selections are missing, Please double-check drop-down options."
+    }
+    else content = NULL
+    content_isoyn = NULL
+  }else if(any(lapply(elcols, function(col){!is.numeric(Emeta()[,col])})) & input$select == 2){
     conditions[2] <- any(  lapply(elcols, function(col){!is.numeric(Emeta()[,col])})  %>%  unlist())
-    content = "style = 'color:red'>One or more elemental columns are non-numeric."
+    if(input$select == 2){
+      content = "style = 'color:deepskyblue'>One or more elemental columns are non-numeric"
+    }
+    else content = NULL
+    content_isoyn = NULL
   }
-  else content = NULL
+  else{
+    content = NULL
+    if(input$isotope_yn == 0 & input$select != 0){
+      content_isoyn = "style = 'color:deepskyblue'>Please indicate whether isotope information is present in the molecular identification file"
+    }
+    else content_isoyn = NULL
+  }
   
   toggleCssClass("element_select", "blueoutline", conditions[1])
   toggleCssClass("element_select", "redoutline", isTRUE(conditions[2]))
+  toggleCssClass("js_isotope_yn", "suggest", all(!any(conditions), input$isotope_yn == 0, input$select != 0))
   revals$warningmessage$elements <- content
+  revals$warningmessage$chooseiso <- content_isoyn
   
 })
 
 # Non-character elemental column 
-observeEvent(input$f_column,{
+observeEvent(c(input$f_column,input$select, input$isotope_yn),{
   
-  req(input$f_column != 'Select one')
+  req(Edata(), Emeta(), input$edata_id_col != "Select one", input$f_column)
+  
   conditions <- FALSE
+  conditions[2] <- input$f_column == "Select one"
+  print(conditions[2])
   
-  if(!is.character(Emeta()[,req(input$f_column)])){
-    conditions <- !is.character(Emeta()[,input$f_column])
-    content = "style = 'color:red'>Specified formula column does not contain characters"
+  if(conditions[2]){
+    if(input$select == 1){
+      content = "style = 'color:deepskyblue'>Specify a column which contains alphanumeric formulae"
+    }
+    else content = NULL
+      content_isoyn = NULL
   }
-  else content <- NULL
+  else if(!is.character(Emeta()[,input$f_column]) & input$select == 1){
+    conditions[1] <- !is.character(Emeta()[,input$f_column])
+    if(input$select == 1){
+      content = "style = 'color:red'>Specified formula column does not contain character strings"
+    }
+    else content = NULL
+    content_isoyn = NULL
+  }
+  else{
+    content = NULL
+    if(input$isotope_yn == 0 & input$select != 0){
+      content_isoyn = "style = 'color:deepskyblue'>Please indicate whether isotope information is present in the molecular identification file"
+    }
+    else content_isoyn = NULL
+  }
   
-  toggleCssClass("f_column", "attention", conditions)
+  toggleCssClass("f_column", "attention", conditions[1])
+  toggleCssClass("f_column", "suggest", !conditions[1] & conditions[2])
+  toggleCssClass("js_isotope_yn", "suggest", all(!any(conditions), input$isotope_yn == 0, input$select != 0))
+  revals$warningmessage$chooseiso <- content_isoyn
   revals$warningmessage$formula_col <- content
   
 })

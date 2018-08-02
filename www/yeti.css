@@ -7110,7 +7110,7 @@ input[type="checkbox"] {
 
 .suggest .selectize-input, .suggest .form-control, .suggest-upload .input-group{
   outline-style:solid;
-  outline-color:rgba(0,191,255, 0.8);
+  outline-color:rgba(0,191,255, 0.5);
   outline-width:6px;
   transition:outline-width 0.3s;
 }
@@ -7133,7 +7133,7 @@ input[type="checkbox"] {
 
 .blueoutline {
   outline-style:solid;
-  outline-color:deepskyblue;
+  outline-color:rgba(0,191,255, 0.5);
   outline-width:6px;
   transition:outline-width 0.3s;
 }
