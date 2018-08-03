@@ -271,17 +271,17 @@ shinyUI(tagList(useShinyjs(),
                                 
                                 checkboxInput('formfilter', tags$b("Formula Presence Filter"), value = FALSE),
                             
-                                # checkboxInput('customfilterz', label = "Implement up to 3 custom filters", value = FALSE),
-                                # uiOutput("filter1UI"),
-                                # uiOutput("customfilter1UI"),
-                                #   conditionalPanel(condition = "input.custom1 !== 'Select item'",
-                                #                   uiOutput("filter2UI"),
-                                #                   uiOutput("customfilter2UI")
-                                #   ),
-                                #   conditionalPanel(condition = "input.custom2 !== 'Select item'",
-                                #                    uiOutput("filter3UI"),
-                                #                    uiOutput("customfilter3UI")
-                                #   ),
+                                checkboxInput('customfilterz', label = "Implement up to 3 custom filters", value = FALSE),
+                                uiOutput("filter1UI"),
+                                uiOutput("customfilter1UI"),
+                                  conditionalPanel(condition = "input.custom1 !== 'Select item'",
+                                                  uiOutput("filter2UI"),
+                                                  uiOutput("customfilter2UI")
+                                  ),
+                                  conditionalPanel(condition = "input.custom2 !== 'Select item'",
+                                                   uiOutput("filter3UI"),
+                                                   uiOutput("customfilter3UI")
+                                  ),
                                 shinyjs::disabled(
                                   fluidRow(
                                     column(

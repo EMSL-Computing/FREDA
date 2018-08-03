@@ -881,7 +881,7 @@ shinyServer(function(session, input, output) {
   output$filter3UI <- renderUI({
     req(input$customfilterz)
     if (input$customfilterz) {
-      return(selectInput("custom3", label = "Select first filter item", 
+      return(selectInput("custom3", label = "Select Third filter item", 
                          choices = c("Select item", setdiff(emeta_display_choices(), c(input$custom1, input$custom2)))))
     }
   })
@@ -891,7 +891,6 @@ shinyServer(function(session, input, output) {
   # Observer which creates the dynamic behavior for the custom filter dropdowns
   observe({
     #require checkbox and react to changes in any of the three custom filter dropdowns
-    req(input$customfilterz == TRUE)
     input$custom1
     input$custom2
     input$custom3
@@ -902,7 +901,7 @@ shinyServer(function(session, input, output) {
     lapply(1:3, function(i){
       output[[paste0("customfilter",i,"UI")]] <- renderUI({
         req(inputlist[[i]])
-        if (inputlist[[i]] != "Select item"){
+        if (inputlist[[i]] != "Select item" & input$customfilterz == TRUE){
           #check to see if the selected filter is numeric or categorical
           if (is.numeric(peakIcr2$e_meta[, inputlist[[i]]])) {
             # if the filter applies to numeric data, allow inputs for min, max, and keep NA
@@ -915,7 +914,7 @@ shinyServer(function(session, input, output) {
                         )
             )
             
-          } else if (!is.numeric(peakIcr2$e_meta[, inputlist[[i]]])) {
+          } else if (!is.numeric(peakIcr2$e_meta[, inputlist[[i]]]) & input$customfilterz == TRUE) {
             # if the filter applies to categorical data, populate a box of options along with a keep NA option
             splitLayout(cellWidths = c("40%", "40%", "20%"),
                         selectInput(inputId = paste0("categorical_custom",i), label = "Categories to Keep",
@@ -975,6 +974,49 @@ shinyServer(function(session, input, output) {
       peakIcr2 <<- applyFilt(filterForm, peakIcr2)
       
     }
+    
+    if(input$customfilterz){
+      cols <- c(input$custom1, input$custom2, input$custom3) %>% setdiff("Select item")
+      
+      
+      if(!is_empty(cols)){
+        
+        lapply(1:length(cols), function(i){
+          print(input[[paste0("custom",i)]])
+          print(peakIcr2$e_meta$HtoC_ratio)
+          filter <- emeta_filter(peakIcr2, input[[paste0("custom",i)]])
+          if(is.numeric(peakIcr2$e_meta[,input[[paste0("custom",i)]]])){
+            req(input[[paste0("minimum_custom",i)]], input[[paste0("maximum_custom", i)]])
+            peakIcr2 <<- applyFilt(filter, peakIcr2, input[[paste0("minimum_custom",i)]], input[[paste0("maximum_custom", i)]])
+          }
+          else if(!is.numeric(peakIcr2$e_meta[,input[[paste0("custom",i)]]])){
+            req(input[[paste0("categorical_custom",i)]])
+            peakIcr2 <<- applyFilt(filter, peakIcr2, cats = input[[paste0("categorical_custom",i)]])
+          }
+          
+          names(attributes(peakIcr2)$filters)[which(names(attributes(peakIcr2)$filters) == "emetaFilt")] <<- paste0("emetaFilt_", input[[paste0("custom",i)]])
+          
+        })
+      }
+
+      # if(input$custom1 != "Select item" & !is.null(input$custom1)){
+      # 
+      #   filt1 <- emeta_filter(peakIcr2, input$custom1)
+      # 
+      #   if(is.numeric(Emeta()[,input$custom1])){
+      #     req(input$minimum_custom1, input$maximum_custom1)
+      #     peakIcr2 <<- applyFilt(filt1, peakIcr2, input$minimum_custom1, input$maximum_custom2)
+      #   }
+      #   else if(!is.numeric(Emeta()[,input$custom1])){
+      #     req(input$categorical_custom1)
+      #     peakIcr2 <<- applyFilt(filt1, peakIcr2, cats = input$categorical_custom1)
+      #   }
+      # 
+      # 
+      # }
+
+    }
+
     
     exportTestValues(peakIcr2 = peakIcr2)
     
