@@ -60,59 +60,53 @@ renderDownloadPlots <- function(parmTable, peakIcr2){
   }
     #----------- Single sample plots ------------#
     #-------Kendrick Plot-----------# 
-    if (parmTable$PlotType == 'Kendrick Plot') {
-      if (parmTable$SampleType == "Multiple Samples") {
-        return({
-          kendrickPlot(plot_data, colorCName = parmTable$ColorBy)
-        })
-      } else if (parmTable$SampleType == "Single Sample") {
-        return({
-          if (parmTable$ColorBy %in% c('bs1', 'bs2')) {
-            return(kendrickPlot(plot_data, vkBoundarySet = parmTable$ColorBy))
-          } else {
-            # if color selection doesn't belong to a boundary, color by test
-            return(kendrickPlot(plot_data, colorCName = parmTable$ColorBy))
-          }
-        })
-      }
-    }
-    #-------VanKrevelen Plot--------#
-    if (parmTable$PlotType == 'Van Krevelen Plot') {
-      if (parmTable$SampleType == "Multiple Samples") {
-        if (is.na(parmTable$BoundarySet)) {
-          return({
-            vanKrevelenPlot(plot_data, colorCName = parmTable$ColorBy, showVKBounds = FALSE)
-          })
-        }
-        else return({
-          vanKrevelenPlot(plot_data, colorCName = parmTable$ColorBy, showVKBounds = TRUE)
-        })
-        
-      } else if (parmTable$SampleType == "Single Sample") {
-        return({
-          #-----boundary line logic------#
-          if (is.na(parmTable$BoundarySet)) { #no bounds
-            # if no boundary lines, leave the option to color by boundary
-            if (parmTable$ColorBy %in% c('bs1', 'bs2')) {
-              return(vanKrevelenPlot(plot_data, showVKBounds = FALSE, vkBoundarySet = parmTable$ColorBy))
-            } else {
-              # if no boundary lines and color selection doesn't belong to a boundary, color by test
-              return(vanKrevelenPlot(plot_data, showVKBounds = FALSE, colorCName = parmTable$ColorBy))
-            }
-          } else {
-            # if boundary lines, allow a color by boundary class 
-            if (parmTable$ColorBy %in% c('bs1', 'bs2')) {
-              return(vanKrevelenPlot(plot_data, vkBoundarySet = parmTable$BoundarySet, showVKBounds = TRUE))
-            } else {
-              # if boundary lines and color isn't a boundary class
-              return(vanKrevelenPlot(plot_data, vkBoundarySet = parmTable$BoundarySet, showVKBounds = TRUE, colorCName = parmTable$ColorBy))
-              
-            }
-          }
-        })
-      }
-    }
+  #-------Kendrick Plot-----------# 
+  if (parmTable$PlotType == 'Kendrick Plot') {
+    return( kendrickPlot(plot_data, colorCName = parmTable$ColorBy, colorPal = colorPal,
+                      xlabel = parmTable$XaxisTitle, ylabel = parmTable$YaxisTitle,
+                      title = parmTable$ChartTitle,legendTitle = parmTable$LegendTitle))
     
+    if (parmTable$ColorBy %in% c('bs1', 'bs2')) {
+      return( kendrickPlot(plot_data, vkBoundarySet = parmTable$BoundarySet,
+                        xlabel =parmTable$XaxisTitle, ylabel = parmTable$YaxisTitle,
+                        title = parmTable$ChartTitle,legendTitle = parmTable$LegendTitle))
+    } else {
+      # if color selection doesn't belong to a boundary, color by test
+      return( kendrickPlot(plot_data, colorCName = parmTable$ColorBy, colorPal = colorPal,
+                        xlabel = parmTable$XaxisTitle, ylabel = parmTable$YaxisTitle,
+                        title = parmTable$ChartTitle,legendTitle = parmTable$LegendTitle))
+    }
+  }
+    #-------VanKrevelen Plot--------#
+  if (parmTable$PlotType == 'Van Krevelen Plot') {
+    if (is.na(parmTable$BoundarySet)) { #no bounds
+      # if no boundary lines, leave the option to color by boundary
+      if (parmTable$ColorBy %in% c('bs1', 'bs2')) {
+        return( vanKrevelenPlot(plot_data, showVKBounds = FALSE, vkBoundarySet = parmTable$ColorBy,
+                             xlabel = parmTable$XaxisTitle, ylabel = parmTable$YaxisTitle,
+                             title = parmTable$ChartTitle,legendTitle = parmTable$LegendTitle))
+      } else {
+        # if no boundary lines and color selection doesn't belong to a boundary, color by test
+        return( vanKrevelenPlot(plot_data, showVKBounds = FALSE, colorCName = input$vk_colors, colorPal = colorPal,
+                             xlabel = parmTable$XaxisTitle, ylabel = parmTable$YaxisTitle,
+                             title = parmTable$ChartTitle,legendTitle = parmTable$LegendTitle))
+      }
+    } else {
+      # if boundary lines, allow a color by boundary class 
+      if (parmTable$ColorBy %in% c('bs1', 'bs2')) {
+        return( vanKrevelenPlot(plot_data, vkBoundarySet = parmTable$BoundarySet, showVKBounds = TRUE,
+                             xlabel = parmTable$XaxisTitle, ylabel = parmTable$YaxisTitle,
+                             title = parmTable$ChartTitle,legendTitle = parmTable$LegendTitle))
+      } else {
+        # if boundary lines and color isn't a boundary class
+        return( vanKrevelenPlot(plot_data, vkBoundarySet = parmTable$BoundarySet, showVKBounds = TRUE, 
+                             colorCName = parmTable$ColorBy, colorPal = colorPal,
+                             xlabel = parmTable$XaxisTitle, ylabel = parmTable$YaxisTitle,
+                             title = parmTable$ChartTitle,legendTitle = parmTable$LegendTitle))
+      }
+    }
+  }
+  
     #--------- Density Plot --------#
     if (parmTable$PlotType == 'Density Plot') {
       
