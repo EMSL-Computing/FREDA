@@ -6,6 +6,7 @@ renderDownloadPlots <- function(parmTable, peakIcr2){
     domain <- as.numeric(strsplit(splitpal[[1]][2], split = ",")[[1]])
     colorPal <- scales::col_numeric(pal, domain)
   }
+  else colorPal <- NA
   if (parmTable$SampleType == "Single Sample") { #single sample
     # Make sure at least one test has been calculated
     plot_data <- subset(peakIcr2, parmTable$G1)

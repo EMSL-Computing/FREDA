@@ -132,7 +132,7 @@ observeEvent(c(input$c_column, input$h_column, input$n_column,
   }else if(any(lapply(elcols, function(col){!is.numeric(Emeta()[,col])})) & input$select == 2){
     conditions[2] <- any(  lapply(elcols, function(col){!is.numeric(Emeta()[,col])})  %>%  unlist())
     if(input$select == 2){
-      content = "style = 'color:deepskyblue'>One or more elemental columns are non-numeric"
+      content = "style = 'color:red'>One or more elemental columns are non-numeric"
     }
     else content = NULL
     content_isoyn = NULL

@@ -1727,7 +1727,11 @@ shinyServer(function(session, input, output) {
           samples = FALSE
           groups = c("Group1", "Group2")
         }
-        else if(input$choose_single %in% c(1,2)){
+        else if(input$choose_single == 2){
+          samples = input$whichSamples
+          groups = "Group"
+        }
+        else if(input$choose_single == 1){
           samples = input$whichSamples
           groups = FALSE
         }
@@ -1915,8 +1919,11 @@ shinyServer(function(session, input, output) {
     newLine$LegendTitle <- ifelse((input$chooseplots == 'Density Plot') | is.null(input$legend_title_input), yes = "default", no = revals$legendTitle)
     newLine$x_var <- input$scatter_x
     newLine$y_var <- input$scatter_y
-    newLine$ColorPalette <- strsplit(revals$colorPal, split = ":")[[1]][1]
-    newLine$HiddenPalette <- revals$colorPal
+    if(!is.na(revals$colorPal)){
+      newLine$ColorPalette <- strsplit(revals$colorPal, split = ":")[[1]][1]
+      newLine$HiddenPalette <- revals$colorPal
+    }
+    else newLine$ColorPalette <- newLine$HiddenPalette <- NA
     
     if (input$add_plot == 1) {
       # replace the existing line on the first click
