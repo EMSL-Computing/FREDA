@@ -1,5 +1,11 @@
 renderDownloadPlots <- function(parmTable, peakIcr2){
-  
+  # first parse out the color palette if there is one
+  if (!is.na(parmTable$HiddenPalette)) {
+    splitpal <- strsplit(parmTable$HiddenPalette,split = ":")
+    pal <- strsplit(splitpal[[1]][1], split = ",")[[1]]
+    domain <- as.numeric(strsplit(splitpal[[1]][2], split = ",")[[1]])
+    colorPal <- scales::col_numeric(pal, domain)
+  }
   if (parmTable$SampleType == "Single Sample") { #single sample
     # Make sure at least one test has been calculated
     plot_data <- subset(peakIcr2, parmTable$G1)
