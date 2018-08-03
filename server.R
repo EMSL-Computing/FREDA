@@ -1403,7 +1403,6 @@ shinyServer(function(session, input, output) {
     }
     if (input$choose_single == 1) { # single sample -selected- but multiple samples present
       validate(need(!is.null(input$whichSamples), message = "Please select a sample to plot"))
-      inspect <<- subset(peakIcr2, input$whichSamples)
       return(subset(peakIcr2, input$whichSamples))
       #key_name <- paste(attributes(peakIcr2)$cnames$fdata_cname, "=", input$whichSamples, sep = "")
     }
