@@ -1684,23 +1684,6 @@ shinyServer(function(session, input, output) {
                             xlabel = isolate(input$x_axis_input), ylabel = isolate(input$y_axis_input),
                             title = isolate(input$title_input),legendTitle = revals$legendTitle)
         }
-        #else if (isolate(input$choose_single == 3)) { #group overlay plots
-        #   validate(need(!is.null(isolate(input$whichGroups1)), message = "Please select samples for first grouping"))
-        #   validate(need(length(input$whichGroups1) > 0, message = "Please select at least 1 sample"))
-        #   validate(need(!is.null(isolate(input$whichGroups2)), message = "Please select samples for second grouping"))
-        #   validate(need(length(input$whichGroups2) > 0, message = "Please select at least 1 sample"))
-        #   if (input$vk_colors %in% c('bs1', 'bs2')) {
-        #     p <- comparisonKendrickPlot(isolate(plot_data()), vkBoundarySet = input$vk_colors,
-        #                       xlabel = isolate(input$x_axis_input), ylabel = isolate(input$y_axis_input),
-        #                       title = isolate(input$title_input))
-        #   } else {
-        #     # if color selection doesn't belong to a boundary, color by test
-        #     p <- comparisonKendrickPlot(isolate(plot_data()), colorCName = input$vk_colors,
-        #                       xlabel = isolate(input$x_axis_input), ylabel = isolate(input$y_axis_input),
-        #                       title = isolate(input$title_input))
-        #   }
-        # }
-        
       }
       #-------VanKrevelen Plot--------#
       if (input$chooseplots == 'Van Krevelen Plot') {
