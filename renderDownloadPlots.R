@@ -129,7 +129,8 @@ renderDownloadPlots <- function(parmTable, peakIcr2){
       
       return({
         densityPlot(plot_data, variable = parmTable$ColorBy, samples = samples, groups = groups,
-                         plot_hist = ifelse(parmTable$SampleType == "Single Sample", TRUE, FALSE))
+                         plot_hist = ifelse(parmTable$SampleType == "Single Sample", TRUE, FALSE),
+                    title = parmTable$ChartTitle, ylabel = parmTable$YaxisTitle, xlabel = parmTable$XaxisTitle)
         
       })
     }
@@ -138,7 +139,11 @@ renderDownloadPlots <- function(parmTable, peakIcr2){
     if(parmTable$PlotType == 'Custom Scatter Plot'){
       return({
         scatterPlot(plot_data, parmTable$x_var, parmTable$y_var, colorCName = parmTable$ColorBy)
-      })
+        scatterPlot(plot_data, parmTable$x_var, parmTable$y_var, colorCName = parmTable$ColorBy, colorPal = colorPal,
+                    xlabel = parmTable$XaxisTitle, 
+                    ylabel = parmTable$YaxisTitle,
+                    title = parmTable$ChartTitle, legendTitle = parmTable$LegendTitle)    
+        })
       
     }   
 } 

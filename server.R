@@ -1893,7 +1893,16 @@ shinyServer(function(session, input, output) {
     newLine$ColorBy <- input$vk_colors
     newLine$UniqueCommon <- ifelse(input$choose_single == 3, yes = input$summary_fxn, no = "NA")
     newLine$ChartTitle <- input$title_input
-    newLine$XaxisTitle <- ifelse(is.na(input$x_axis_input), yes = "default", no = input$x_axis_input)
+    # special density plot treatment
+    if (input$chooseplots == 'Density Plot') {
+      # if x axis input field is empty, get the display name of the color_by_choices vector index that equals vk_colors, otherwise use what the user typed
+      xlab <- ifelse(isolate(is.null(input$x_axis_input) || input$x_axis_input == ""),
+                      yes = names(revals$color_by_choices[revals$color_by_choices == input$vk_colors]),
+                      no = isolate(input$x_axis_input))
+    } else {
+      xlab <- input$x_axis_input
+    }
+    newLine$XaxisTitle <- ifelse(is.na(xlab), yes = "default", no = xlab)
     newLine$YaxisTitle <- ifelse(is.na(input$y_axis_input), yes = "default", no = input$y_axis_input)
     newLine$LegendTitle <- ifelse((input$chooseplots == 'Density Plot') | is.null(input$legend_title_input), yes = "default", no = revals$legendTitle)
     newLine$x_var <- input$scatter_x
