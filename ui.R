@@ -10,23 +10,34 @@
 library(plotly)
 library(shiny)
 library(shinyBS)
+library(shinyjs)
 library(DT)
+library(shinycssloaders)
+
 
 # Define UI for application that draws a histogram
-shinyUI(navbarPage(title = (windowTitle = "FREDA"),
+shinyUI(tagList(useShinyjs(),
+                
+                # type = 'text/css',".disabled label.control-label {color:red}")
+                # ,
+                
+                navbarPage(title = (windowTitle = "FREDA"),
+                   id = "top_page",
                    theme = "yeti.css",
                    ############# Welcome Panel #########################
                    navbarMenu("Welcome",
-                              tabPanel(title = "Introduction",
-                                       includeMarkdown("./Welcome to FREDA.md")),
-                              tabPanel(title = "Data Requirements",
+                              # tabPanel(title = "Introduction",
+                              #             includeHTML("./intropage.html")),
+                              tabPanel(title = "Introduction", class = "background_FTICR",
+                                         includeMarkdown("./Welcome to FREDA.md")),
+                              tabPanel(title = "Data Requirements", class = "background_FTICR",
                                        includeMarkdown("./DataRequirements.md"),
                                        # DT::dataTableOutput("example_meta_table"), # in case we want a preview of the data
                                        # DT::dataTableOutput("example_data_table"),
                                        downloadButton('downloadData', 'Download')),
-                              tabPanel(title = "Resources",
+                              tabPanel(title = "Resources", class = "background_FTICR",
                                        HTML('<h4> Resources </h4>')),
-                              tabPanel(title = "Contact",
+                              tabPanel(title = "Contact", class = "background_FTICR",
                                        HTML('<h4> Contact </h4>'))
                    ),
                    ################## Upload Panel #######################################
@@ -38,21 +49,23 @@ shinyUI(navbarPage(title = (windowTitle = "FREDA"),
                                 width = 5,
                                 
                                 # Load e_data file
-                                fileInput("file_edata", "Upload CSV Data File",
-                                          multiple = TRUE,
-                                          accept = c("text/csv",
-                                                     "text/comma-separated-values,text/plain",
-                                                     ".csv")),
+                                div(id = "js_file_edata",
+                                    fileInput("file_edata", "Upload CSV Data File",
+                                              multiple = TRUE,
+                                              accept = c("text/csv",
+                                                         "text/comma-separated-values,text/plain",
+                                                         ".csv"))
+                                    ),
                                 
                                 ## Get unique identifier column from e_data ##
                                 uiOutput('edata_id'),
                                 
                                 # Load e_meta file
-                                fileInput("file_emeta", "Upload CSV Molecular Identification File",
-                                          multiple = TRUE,
-                                          accept = c("text/csv",
-                                                     "text/comma-separated-values,text/plain",
-                                                     ".csv")), 
+                                div(id = "js_file_emeta", fileInput("file_emeta", "Upload CSV Molecular Identification File",
+                                              multiple = TRUE,
+                                              accept = c("text/csv",
+                                                         "text/comma-separated-values,text/plain",
+                                                         ".csv"))), 
                                 
                                 # Horizontal rule #
                                 tags$hr(),
@@ -65,34 +78,16 @@ shinyUI(navbarPage(title = (windowTitle = "FREDA"),
                                             selected = 'Select an option'
                                 ), 
                                 
-                                # Create an option for Isotopic Analysis
-                                selectInput('isotope_yn',
-                                            label = 'Do you have information for isotopes?',
-                                            choices = list('Select an Option' = 0,
-                                                           'Yes' = 1,
-                                                           'No' = 2),
-                                            selected = 'Select an Option'
-                                ),
-                                # Condition on presence of isotope information
-                                conditionalPanel(
-                                  condition = "input.isotope_yn == 1",
-                                  uiOutput('iso_info_column'),
-                                  uiOutput('iso_symbol')
-                                ),
-                                # # Condition on absence of isotope information
-                                # conditionalPanel(
-                                #   condition = "input.isotope_yn == 2",
-                                #   uiOutput('c13_column')
-                                # ),
                                 # Get whether formulas or elemental columns are included #
-                                selectInput('select', 
-                                            label = 'Does this file have formulas 
-                                            or elemental columns?',
-                                            choices = list('Select an option' = 0, 
-                                                           'Formulas' = 1, 
-                                                           'Elemental Columns' = 2),
-                                            selected = 'Select an option' 
+                                div(id = "js_select", selectInput('select', 
+                                                                  label = 'Does this file have formulas 
+                                                                  or elemental columns?',
+                                                                  choices = list('Select an option' = 0, 
+                                                                                 'Formulas' = 1, 
+                                                                                 'Elemental Columns' = 2),
+                                                                  selected = 'Select an option') 
                                 ), 
+                                
                                 
                                 # (Conditional on the above selectInput) Formula: 
                                 ##  which column contains the formula? #
@@ -103,25 +98,47 @@ shinyUI(navbarPage(title = (windowTitle = "FREDA"),
                                 
                                 # (Conditional on the above selectInput) Elemental columns: 
                                 ##  which columns contain the elements?
-                                conditionalPanel(
+                                
+                                conditionalPanel(id = "element_select", style = "padding-left:6px;padding-right:6px",
                                   condition = "input.select == 2",
                                   fluidRow(
                                     column(width = 4,
-                                      uiOutput("c_column"), 
-                                      uiOutput("h_column")
+                                           uiOutput("c_column"), 
+                                           uiOutput("h_column")
                                     ),
                                     column(width = 4,
                                            uiOutput("n_column"),
                                            uiOutput("o_column") 
-                                           ),
+                                    ),
                                     column(width = 4,
                                            uiOutput("s_column"), 
                                            uiOutput("p_column")
                                     )
                                   )
                                 ), 
+                                # Create an option for Isotopic Analysis
+                                div(id = "js_isotope_yn", selectInput('isotope_yn',
+                                                                      label = 'Were isotopic peaks identified in the molecular assignments file?',
+                                                                      choices = list('Select an Option' = 0,
+                                                                                     'Yes' = 1,
+                                                                                     'No' = 2),
+                                                                      selected = 'Select an Option')
+                                ),
+                                # Condition on presence of isotope information
+                                conditionalPanel(
+                                  condition = "input.isotope_yn == 1",
+                                  uiOutput("iso_info_filter_out"),
+                                  div(id = "js_iso_info_column", uiOutput('iso_info_column_out')),
+                                  div(id = "js_iso_symbol", uiOutput('iso_symbol_out'))
+                                ),
+                                # # Condition on absence of isotope information
+                                # conditionalPanel(
+                                #   condition = "input.isotope_yn == 2",
+                                #   uiOutput('c13_column')
+                                # ),
+
+
                                 
-                                # HOrizontal rule
                                 tags$hr(),
                                 
                                 # Action button: pressing this creates the peakICR object
@@ -135,6 +152,8 @@ shinyUI(navbarPage(title = (windowTitle = "FREDA"),
                                 width = 7,
                                 
                                 # Show 'Success' message if peakICR created successfully
+                                
+                                div(id = "warnings", style = "overflow-y:scroll;max-height:250px", uiOutput("warnings")),
                                 uiOutput('success_upload'),
                                 
                                 # Summary panel
@@ -150,8 +169,7 @@ shinyUI(navbarPage(title = (windowTitle = "FREDA"),
                                 tags$hr(), 
                                 
                                 # Show preview of e_data
-                                htmlOutput('edata_text'),
-                                #dataTableOutput("head_edata"), 
+                                htmlOutput('edata_text'), 
                                 DTOutput("head_edata", width = "90%"),
                                 
                                 # Horizontal rule
@@ -159,64 +177,62 @@ shinyUI(navbarPage(title = (windowTitle = "FREDA"),
                                 
                                 # Show preview of e_meta
                                 htmlOutput('emeta_text'),
-                                #dataTableOutput('head_emeta'),
                                 DTOutput("head_emeta", width = "90%")
                                 
                               ) # End main panel
                               
                             )), # End Upload tab
                    ################## Preprocess Panel ###############################################
-                   tabPanel("Preprocess",
-                            
-                            bsButton("preprocess_help", "How do I use this page?", style = "info"),
-                            
-                            br(),
-                            br(),
-                            
-                            sidebarLayout(
+                     tabPanel("Preprocess",
                               
-                              # Sidebar panel
-                              sidebarPanel(
-                                
-                                uiOutput("which_calcs"),
-                            
-                                # Action button: add test columns with reasults to peakIcr2
-                                actionButton('preprocess_click', 'Process Data', icon = icon("cog"), lib = "glyphicon")
-                                
-                              ), # End sidebar panel
+                              bsButton("preprocess_help", "How do I use this page?", style = "info"),
                               
-                              mainPanel(
+                              br(),
+                              br(),
+                              
+                              sidebarLayout(
                                 
-                                # Set default main panel width 
-                                width = 8,
+                                # Sidebar panel
+                                sidebarPanel(
+                                  
+                                  uiOutput("which_calcs"),
+                              
+                                  # Action button: add test columns with reasults to peakIcr2
+                                  shinyjs::disabled(actionButton('preprocess_click', 'Process Data', icon = icon("cog"), lib = "glyphicon"))
+                                ), # End sidebar panel
+                                
+                                mainPanel(
+                                  
+                                  # Set default main panel width 
+                                  width = 8,
+  
+                                  # Include numeric and categorical summaries in a well panel
+                                  
+                                  wellPanel(
+                                    tags$div(class = "row",
+                                             tags$div(class = "col-sm-5",
+                                                      uiOutput("numeric_header"),
+                                                      dataTableOutput('numeric_summary')
+                                             ),
+                                             tags$div(class = "col-sm-7",
+                                                      uiOutput("cat_header"),
+                                                      uiOutput('categorical_summary')
+                                                      
+                                            )
+  
+                                    )
+                                  ),
+                                  
+                                  # Drop down list: which histogram should be displayed?
+                                  uiOutput('which_hist_out'),
+                                  
+                                  # Plot: histogram
+                                  plotlyOutput('preprocess_hist')
+                                  
+                                ) # End main panel on Preprocess tab #
+                                
+                              )), # End Preprocess tab #
 
-                                # Include numeric and categorical summaries in a well panel
-                                
-                                wellPanel(
-                                  tags$div(class = "row",
-                                           tags$div(class = "col-sm-5",
-                                                    uiOutput("numeric_header"),
-                                                    dataTableOutput('numeric_summary')
-                                           ),
-                                           tags$div(class = "col-sm-7",
-                                                    uiOutput("cat_header"),
-                                                    uiOutput('categorical_summary')
-                                                    
-                                          )
-
-                                  )
-                                ),
-                                
-                                # Drop down list: which histogram should be displayed?
-                                uiOutput('which_hist'),
-                                
-                                # Plot: histogram
-                                plotlyOutput('preprocess_hist')
-                                
-                              ) # End main panel on Preprocess tab #
-                              
-                            )), # End Preprocess tab #
-                   
                    
                    ################## Filter Panel ##############################################
                    tabPanel("Filter", 
@@ -235,9 +251,9 @@ shinyUI(navbarPage(title = (windowTitle = "FREDA"),
                                 # Checkbox: Mass filter yes/no
                                 #HTML('<h5><b>Mass Filter</b></h5>')
                                 
-                                
+                            
                                 checkboxInput('massfilter', tags$b("Mass Filter") ,value = FALSE),
-
+                                
                                 
                                 # Numeric: Min/max mass filter
                                 splitLayout(
@@ -245,13 +261,16 @@ shinyUI(navbarPage(title = (windowTitle = "FREDA"),
                                                min = 0, value = 200),
                                   numericInput('max_mass', "Maximum Mass value", 
                                                min = 0, value = 900)
-                                  ),
+                                ),
                                 
                                 # Checkbox: Mass filter yes/no
                                 checkboxInput('molfilter', tags$b("Molecule Filter"), value = FALSE),
                                 
                                 # Drop-down list: Min/max mass filter
                                 uiOutput('minobs'), 
+                                
+                                checkboxInput('formfilter', tags$b("Formula Presence Filter"), value = FALSE),
+                            
                                 # checkboxInput('customfilterz', label = "Implement up to 3 custom filters", value = FALSE),
                                 # uiOutput("filter1UI"),
                                 # uiOutput("customfilter1UI"),
@@ -263,16 +282,17 @@ shinyUI(navbarPage(title = (windowTitle = "FREDA"),
                                 #                    uiOutput("filter3UI"),
                                 #                    uiOutput("customfilter3UI")
                                 #   ),
-                                
-                                fluidRow(
-                                  column(
-                                    width = 6, actionButton('filter_click', "Filter Data", icon = icon("cog"), lib = "glyphicon")
-                                  ),
-                                  column(
-                                    width = 6, actionButton('reset_filters', "Reset Filters", icon = icon("trash"), lib = "glyphicon")
+                                shinyjs::disabled(
+                                  fluidRow(
+                                    column(
+                                      width = 6, actionButton('filter_click', "Filter Data", icon = icon("cog"), lib = "glyphicon")
+                                    ),
+                                    column(
+                                      width = 6, actionButton('reset_filters', "Reset Filters", icon = icon("trash"), lib = "glyphicon")
+                                    )
                                   )
                                 )
-                                
+                              
                               ), # End sidebar panel on Filter tab
                               
                               mainPanel(
@@ -308,29 +328,24 @@ shinyUI(navbarPage(title = (windowTitle = "FREDA"),
                               # Sidebar Panel
                               sidebarPanel(
                                 
-                                # Drop down list: Van Krevelen or Kendrick plot?
-                                selectInput('chooseplots', 'I want to plot a', 
-                                            choices = c('Van Krevelen Plot', 
-                                                        'Kendrick Plot',
-                                                        'Density Plot',
-                                                        'Select an Option' = 0),
-                                            selected = 0
-                                ),
-                                
+                                # Select Plot Type
+                                uiOutput('plot_type'),
                                 uiOutput("plotUI"),
                                 uiOutput("plotUI_cond"),
+                                # uiOutput("plotUI_2"),
                                 
-                                # conditionalPanel(condition = "(input.whichSample !== null && input.choose_single == 2)",
-                                #   uiOutput("plotUI_2")
-                                # ),
+                                # Label inputs
+                                uiOutput("title_out"),
+                                uiOutput("x_axis_out"),
+                                uiOutput("y_axis_out"),
+                                tags$div(id = "js_legend_title_input", uiOutput("legend_title_out")),
                                 
-                                uiOutput("title_input"),
-                                uiOutput("x_axis_input"),
-                                uiOutput("y_axis_input"),
-                                #uiOutput("legend_title_input"),
+                                # Seperate buttons to generate plot or simply update labels without recalculating data
                                 splitLayout(
-                                  actionButton("plot_submit", label = "Submit")
-                                  #actionButton("clear_plots", label = "Clear Plot")
+                                  shinyjs::disabled(
+                                    actionButton("plot_submit", label = "Generate Plot"),
+                                    actionButton("update_axes", label = "Update Labels")
+                                  )
                                 )
                               ),# End sidebar conditionals on Visualize tab #
                               
@@ -339,38 +354,42 @@ shinyUI(navbarPage(title = (windowTitle = "FREDA"),
 
 
                                 wellPanel(
-                                  plotlyOutput('FxnPlot', width = '700px', height = '600px')
+                                  plotlyOutput('FxnPlot', width = '700px', height = '600px') %>% 
+                                    withSpinner(color = "orange", type = 8)
                                 ),
                                 # width = 7,
 
-
-                                conditionalPanel(
-                                  condition = "input.chooseplots == 'Van Krevelen Plot'",
-                                  # Set default width to 7
-                                  
-                                  # Drop down list: Use boundary?
-                                  # selectInput('vkbounds', 'Use Van Krevelen boundary set:',
-                                  #             choices = c('BS1' = 'bs1', 'BS2' = 'bs2', 'None' = 0),
-                                  #             selected = 'bs1')
-                                  uiOutput("vkbounds")
-                                  
+                                # color and van-krevelen bounds dropdowns
+                                fluidRow(
+                                  column(width = 4, class = "grey_out", id = "js_vk_colors",
+                                         shinyjs::disabled(selectInput("vk_colors", "Color By:", choices = NULL, selected = NULL))
+                                         ),
+                                  column(width = 5, class = "grey_out", id = "js_vkbounds",
+                                         shinyjs::disabled(selectInput('vkbounds', 'Use Van Krevelen boundary set:',
+                                                     choices = c('BS1' = 'bs1', 'BS2' = 'bs2', 'None' = 0),
+                                                     selected = 'bs1'))
+                                         )
                                 ),
-                                conditionalPanel(
-                                  condition = "input.chooseplots !== null",
-                                  # Set default width to 7
-                                  
-                                  # Drop down list: Use boundary?
-                                  # selectInput('vkbounds', 'Use Van Krevelen boundary set:',
-                                  #             choices = c('BS1' = 'bs1', 'BS2' = 'bs2', 'None' = 0),
-                                  #             selected = 'bs1')
-                                  selectInput("vk_colors", "Color By:", choices = NULL, selected = NULL)
-                                  
+                                
+                                # x and y axis variable dropdowns for custom scatter plot
+                                fluidRow(
+                                  column(width = 4, class = "grey_out", id = "js_scatter_x",
+                                         shinyjs::disabled(selectInput("scatter_x", "Horizontal Axis Variable:", choices = NULL, selected = NULL))
+                                        ),
+                                  column(width = 4, class = "grey_out", id = "js_scatter_y",
+                                         shinyjs::disabled(selectInput("scatter_y", "Vertical Axis Variable:", choices = NULL, selected = NULL))
+                                        )
                                 ),
+                                
+                                # color pallete options and button to flip colorscale direction
+                                tags$div(id = "js_colorpal", uiOutput("colorpal_out"), style = "display:inline-block"),
+                                actionButton("flip_colors", "Invert color scale", style = "display:inline-block"),
+                                  
                                 br(),
                                 hr(),
-                                actionButton(inputId = "add_plot", label = "I want to download a hi-res version of this plot on the Download tab", icon = icon("download")),
-                              br(),
-                              br(),
+                                shinyjs::disabled(actionButton(inputId = "add_plot", label = "Store these plot parameters", icon = icon("save"))),
+                                br(),
+                                br(),
                                 dataTableOutput("parmsTable", width = "55%")
                                 )# End main panel on Visualize tab #
                               
@@ -378,19 +397,58 @@ shinyUI(navbarPage(title = (windowTitle = "FREDA"),
                    
                    ################## Download Panel ##############################################
                    tabPanel('Download',
-                            checkboxGroupInput("download_selection", label = "Select Processed Data to Download",
-                                               choices = c('Data File as one .csv and Molecular Identification File as another .csv' = "separate",
-                                                           'merged Data File and Molecular Identification File as a single .csv' = "merged"),
-                                                width = "40%"),
-                            hr(),
-                            checkboxInput("report_selection", label = "Report (Coming Soon)"),
-                            hr(),
-                            p("Figures"),
-                            p("Please select figures to download in the table below by clicking on the row. When clicked, the selection will highlight."),
-                            dataTableOutput("parmsTable2", width = "55%"),
-                            verbatimTextOutput('x4'),
-                            hr(),
-                            downloadButton('download_processed_data', 'Download Selected Items')
+                            fluidRow(
+                              column(width = 7,
+                                wellPanel(fluidRow(
+                                  column(width = 10,
+                                         tags$h4(icon("table", "fa-2x"), tags$b("Processed Data"))
+                                         )
+                                  ),
+                                          checkboxGroupInput("download_selection", label = "Check Download Selection",
+                                                             choices = c('Data File as one .csv and Molecular Identification File as another .csv' = "separate",
+                                                                         'merged Data File and Molecular Identification File as a single .csv' = "merged"),
+                                                             width = "80%")
+                                          )
+                              ),
+                              column(width = 5,
+                                     wellPanel(fluidRow(
+                                       column(width = 8,
+                                              tags$h4(icon("align-left", "fa-2x"), tags$b("Summary Report"))
+                                       )
+                                     ),
+                                     checkboxGroupInput("report_selection", label = "Check Download Selection", choices = "Coming Soon"),
+                                    br()
+                                     )
+                                     )
+                            ),
+                            fluidRow(
+                              column(width = 12,
+                                     wellPanel(
+                                       fluidRow(
+                                       column(width = 2,
+                                              tags$h4(icon("image", "fa-2x"), tags$b("Figures"))
+                                       )
+                                     ),
+                                     # tags$div(class = "row",
+                                     #          icon("image", "fa-4x"),
+                                     #          tags$h3(tags$b("Figures"))
+                                     # ),
+                                     tags$h5(tags$b("Select figures by row. When clicked, the download selection will highlight.")),
+                                     fluidRow(
+                                       column(width = 9,
+                                              dataTableOutput("parmsTable2", width = "90%")
+                                       ),
+                                       column(width = 3,
+                                              radioButtons(inputId = "image_format", label = "Select an image format",
+                                                           choices = c("svg", "pdf", "tiff", "png"), selected = "svg")
+                                       )
+                                     )
+                                     )
+                              )
+                            ),
+                            #verbatimTextOutput('x4'),
+                            downloadButton('download_processed_data', tags$b('Download Selected Items'), style = "width:100%"),
+                            tags$br()
                             
                    ), 
                    
@@ -402,6 +460,7 @@ shinyUI(navbarPage(title = (windowTitle = "FREDA"),
                             # )
                             
                    )
-)
+    )
+  )
 )
 
