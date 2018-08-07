@@ -7138,3 +7138,6 @@ input[type="checkbox"] {
   transition:outline-width 0.3s;
 }
 
+.adjustdown input{
+  top:5px;
+}

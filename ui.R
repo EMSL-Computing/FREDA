@@ -195,7 +195,7 @@ shinyUI(tagList(useShinyjs(),
                                 # Sidebar panel
                                 sidebarPanel(
                                   
-                                  uiOutput("which_calcs"),
+                                  div(class = "adjustdown",uiOutput("which_calcs")),
                               
                                   # Action button: add test columns with reasults to peakIcr2
                                   shinyjs::disabled(actionButton('preprocess_click', 'Process Data', icon = icon("cog"), lib = "glyphicon"))
@@ -252,7 +252,16 @@ shinyUI(tagList(useShinyjs(),
                                 #HTML('<h5><b>Mass Filter</b></h5>')
                                 
                             
-                                checkboxInput('massfilter', tags$b("Mass Filter") ,value = FALSE),
+                                div(class="adjustdown", checkboxInput('massfilter', 
+                                                                      tagList(tags$b("Mass Filter", style = "display:inline-block"),
+                                                                              div(style = "color:deepskyblue;display:inline-block",
+                                                                                  tipify(icon("question-sign", lib = "glyphicon"), 
+                                                                                        title = "Retain peaks within a mass range specified below", 
+                                                                                        placement = "top", trigger = 'hover')
+                                                                                  ) 
+                                                                            ), 
+                                                                     value = FALSE)
+                                ),
                                 
                                 
                                 # Numeric: Min/max mass filter
@@ -263,13 +272,34 @@ shinyUI(tagList(useShinyjs(),
                                                min = 0, value = 900)
                                 ),
                                 
-                                # Checkbox: Mass filter yes/no
-                                checkboxInput('molfilter', tags$b("Molecule Filter"), value = FALSE),
+                                tags$hr(),
                                 
+                                # Checkbox: Mass filter yes/no
+                                div(class = "adjustdown", checkboxInput('molfilter', 
+                                                                        tagList(tags$b("Molecule Filter", style = "display:inline-block"),
+                                                                                div(style = "color:deepskyblue;display:inline-block", 
+                                                                                    tipify(icon("question-sign", lib = "glyphicon"), 
+                                                                                            title = "Retain peaks that are observed in a minimum number of samples, specified below", 
+                                                                                            placement = "top", trigger = 'hover')
+                                                                                    )
+                                                                              ), 
+                                                                        value = FALSE)
+                                ),   
                                 # Drop-down list: Min/max mass filter
                                 uiOutput('minobs'), 
                                 
-                                checkboxInput('formfilter', tags$b("Formula Presence Filter"), value = FALSE),
+                                tags$hr(),
+                                
+                                div(class = "adjustdown", checkboxInput('formfilter', 
+                                                                        tagList(tags$b("Formula Presence Filter", style = "display:inline-block"),
+                                                                                div(style = "color:deepskyblue;display:inline-block",
+                                                                                    tipify(icon("question-sign", lib = "glyphicon"), 
+                                                                                            title = "Retain peaks that have a molecular formula identified", 
+                                                                                            placement = "top", trigger = 'hover')
+                                                                                    )
+                                                                                ), 
+                                                                        value = FALSE)
+                                ),
                             
                                 # checkboxInput('customfilterz', label = "Implement up to 3 custom filters", value = FALSE),
                                 # uiOutput("filter1UI"),
@@ -282,6 +312,9 @@ shinyUI(tagList(useShinyjs(),
                                 #                    uiOutput("filter3UI"),
                                 #                    uiOutput("customfilter3UI")
                                 #   ),
+                                
+                                tags$hr(),
+                                
                                 shinyjs::disabled(
                                   fluidRow(
                                     column(
@@ -330,9 +363,11 @@ shinyUI(tagList(useShinyjs(),
                                 
                                 # Select Plot Type
                                 uiOutput('plot_type'),
+                                
+                                # Select samples/groups
                                 uiOutput("plotUI"),
                                 uiOutput("plotUI_cond"),
-                                # uiOutput("plotUI_2"),
+                                conditionalPanel(condition = "input.choose_single == 3 && input.chooseplots !== '0'", uiOutput("summary_fxn_out")),
                                 
                                 # Label inputs
                                 uiOutput("title_out"),
