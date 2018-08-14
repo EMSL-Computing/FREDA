@@ -7102,17 +7102,32 @@ input[type="checkbox"] {
 
 
 .attention .selectize-input, .attention .form-control, .attention-upload .input-group{
-  outline-style:solid;
-  outline-color:red;
-  outline-width:3px;
-  transition:outline-width 0.3s;
+  animation: attention 0.2s linear;
+  animation-fill-mode: forwards;
 }
 
 .suggest .selectize-input, .suggest .form-control, .suggest-upload .input-group{
-  outline-style:solid;
-  outline-color:rgba(0,191,255, 0.5);
-  outline-width:6px;
-  transition:outline-width 0.3s;
+  animation: suggest 0.2s linear;
+  animation-fill-mode: forwards;
+}
+
+.redoutline {
+  animation: attention 0.2s linear;
+  animation-fill-mode: forwards;
+}
+
+.blueoutline {
+  animation: suggest 0.2s linear;
+  animation-fill-mode: forwards;
+}
+
+@keyframes attention{
+  from{box-shadow: 0 0 0 0 rgba(255,0,0,0);}
+  to{box-shadow: 0 0 1px 3px rgba(255,0,0,1);}
+}
+@keyframes suggest {
+  from{box-shadow: 0 0 0 0 rgba(0,191,255,0);}
+  to{box-shadow: 0 0 1px 3px rgba(0,191,255,1);}
 }
 
 .img-hor img{
@@ -7124,19 +7139,6 @@ input[type="checkbox"] {
         -ms-filter: "FlipH";
 }
 
-.redoutline {
-  outline-style:solid;
-  outline-color:red;
-  outline-width:3px;
-  transition:outline-width 0.3s;
-}
-
-.blueoutline {
-  outline-style:solid;
-  outline-color:rgba(0,191,255, 0.5);
-  outline-width:6px;
-  transition:outline-width 0.3s;
-}
 
 .adjustdown input{
   top:5px;

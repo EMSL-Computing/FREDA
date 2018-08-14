@@ -21,13 +21,13 @@ shinyServer(function(session, input, output) {
   
   Sys.setenv(R_ZIPCMD="/usr/bin/zip")
   # Source files for 'summaryFilt' and 'summaryPreprocess'
-  source('selection_addons.R')
-  source('summaryFilter.R') 
-  source('summaryPreprocess.R')
-  source("renderDownloadPlots.R")
+  source('helper_functions/selection_addons.R')
+  source('helper_functions/summaryFilter.R') 
+  source('helper_functions/summaryPreprocess.R')
+  source("helper_functions/renderDownloadPlots.R")
   
   revals <- reactiveValues(ntables = 0, makeplot = 1, color_by_choices = NULL, axes_choices = NULL,
-                           plot_data_export = NULL, peakICR_export = NULL, 
+                           plot_data_export = NULL, peakICR_export = NULL, redraw_filter_plot = TRUE, reac_filter_plot = TRUE, 
                            warningmessage = list(upload = "<p style = 'color:deepskyblue'>Upload data and molecular identification files described in 'Data Requirements' on the previous page."))
   
   exportTestValues(plot_data = revals$plot_data_export, peakICR = revals$peakICR_export, color_choices = revals$color_by_choices)
@@ -380,10 +380,8 @@ shinyServer(function(session, input, output) {
     #HTML(paste("<p,", paste(revals$warningmessage, collapse = "<br>"), "</p>"))
   })
   
-  source("upload_observers.R", local = TRUE)
-  
-  
-  
+  source("Observers/upload_observers.R", local = TRUE)
+
   #### Main Panel (Upload Tab) ####
   
   # Display success message OR display errors
@@ -780,6 +778,9 @@ shinyServer(function(session, input, output) {
   })
   
   ############## Filter tab ##############
+  
+  source("Observers/filter_observers.R", local = TRUE)
+  
   # ----- Filter Reset Setup -----# 
   # Keep a reactive copy of the pre-filtered data in case of a filter reset event
   uploaded_data <- reactive({
@@ -863,82 +864,6 @@ shinyServer(function(session, input, output) {
     
   }) # End minobs
   
-  # Create three UI's for custom filters
-  output$filter1UI <- renderUI({
-    req(input$customfilterz)
-    if (input$customfilterz) {
-      return(selectInput("custom1", label = "Select first filter item", 
-                         choices = c("Select item", setdiff(emeta_display_choices(), c(isolate(input$custom2), isolate(input$custom3))))))
-    }
-  })
-  
-  output$filter2UI <- renderUI({
-    req(input$customfilterz)
-    if (input$customfilterz) {
-      return(selectInput("custom2", label = "Select second filter item", 
-                         choices = c("Select item", setdiff(emeta_display_choices(), c(input$custom1, isolate(input$custom3))))))
-    }
-  })
-  
-  output$filter3UI <- renderUI({
-    req(input$customfilterz)
-    if (input$customfilterz) {
-      return(selectInput("custom3", label = "Select first filter item", 
-                         choices = c("Select item", setdiff(emeta_display_choices(), c(input$custom1, input$custom2)))))
-    }
-  })
-  
-  #
-  
-  # Observer which creates the dynamic behavior for the custom filter dropdowns
-  observe({
-    #require checkbox and react to changes in any of the three custom filter dropdowns
-    req(input$customfilterz == TRUE)
-    input$custom1
-    input$custom2
-    input$custom3
-    
-    # lapply block which assigns a render object to an output if it sees that something is selected
-    # conditional dropdown behavior is defined in ui.R
-    inputlist <- list(input[["custom1"]], input[["custom2"]], input[["custom3"]])
-    lapply(1:3, function(i){
-      output[[paste0("customfilter",i,"UI")]] <- renderUI({
-        req(inputlist[[i]])
-        if (inputlist[[i]] != "Select item"){
-          #check to see if the selected filter is numeric or categorical
-          if (is.numeric(peakIcr2$e_meta[, inputlist[[i]]])) {
-            # if the filter applies to numeric data, allow inputs for min, max, and keep NA
-            splitLayout(cellWidths = c("40%", "40%", "20%"),
-                        numericInput(inputId = paste0("minimum_custom",i), label = "Min", value = min(peakIcr2$e_meta[, inputlist[[i]]], na.rm = TRUE)),
-                        numericInput(inputId = paste0("maximum_custom",i), label = "Max", value = max(peakIcr2$e_meta[, inputlist[[i]]], na.rm = TRUE)),
-                        tagList(
-                          br(),
-                          checkboxInput(inputId = paste0("na_custom",i), label = "Keep NAs?", value = FALSE)
-                        )
-            )
-            
-          } else if (!is.numeric(peakIcr2$e_meta[, inputlist[[i]]])) {
-            # if the filter applies to categorical data, populate a box of options along with a keep NA option
-            splitLayout(cellWidths = c("40%", "40%", "20%"),
-                        selectInput(inputId = paste0("categorical_custom",i), label = "Categories to Keep",
-                                    multiple = TRUE, selected = unique(peakIcr2$e_meta[, inputlist[[i]]]), choices = unique(peakIcr2$e_meta[, inputlist[[i]]])),
-                        tagList(
-                          br(),
-                          checkboxInput(inputId = paste0("na_custom",i), label = "Keep NAs?", value = FALSE)
-                        )
-            )
-            
-            
-          }
-        } else {
-          return(NULL)
-        }
-      }) 
-    })
-    
-  })
-  
-  
   #### Action Button Reactions (Filter Tab) ####
   
   # Event: Create filtered nonreactive peakIcr2 when action button clicked
@@ -946,7 +871,7 @@ shinyServer(function(session, input, output) {
   observeEvent(input$filter_click, {
     
     # if the data is already filtered start over from the uploaded data
-    if(any(c("moleculeFilt", "massFilt") %in% names(attributes(peakIcr2)$filters))){
+    if(any(c("moleculeFilt", "massFilt", "formulaFilt") %in% names(attributes(peakIcr2)$filters)) | any(grepl("emetaFilt", names(attributes(peakIcr2)$filters)))){
       peakIcr2 <<- uploaded_data()
     }
     
@@ -978,6 +903,39 @@ shinyServer(function(session, input, output) {
       
     }
     
+    # custom filters
+    if(input$customfilterz){
+      
+        #apply the filter for each input
+        lapply(1:3, function(i){
+          
+          #require that a selection has been made for filter i
+          req(input[[paste0("custom",i)]] != "Select item")
+          
+          #make the filter based on selection
+          filter <- emeta_filter(peakIcr2, input[[paste0("custom",i)]])
+          
+          # if numeric, apply filter with specified max and min values
+          if(is.numeric(peakIcr2$e_meta[,input[[paste0("custom",i)]]])){
+            req(input[[paste0("minimum_custom",i)]], input[[paste0("maximum_custom", i)]])
+            peakIcr2 <<- applyFilt(filter, peakIcr2,
+                                   min_val = input[[paste0("minimum_custom",i)]], 
+                                   max_val = input[[paste0("maximum_custom", i)]], 
+                                   na.rm = input[[paste0("na_custom",i)]])
+            
+          }
+          # else apply with selected categories
+          else if(!is.numeric(peakIcr2$e_meta[,input[[paste0("custom",i)]]])){
+            req(input[[paste0("categorical_custom",i)]])
+            peakIcr2 <<- applyFilt(filter, peakIcr2, 
+                                   cats = input[[paste0("categorical_custom",i)]], 
+                                   na.rm = input[[paste0("na_custom",i)]])
+          }
+        })
+        
+      }
+
+    #__test-export__
     exportTestValues(peakIcr2 = peakIcr2)
     
     
@@ -1038,31 +996,56 @@ shinyServer(function(session, input, output) {
     
   })
   
+  # Reactive value for each filter:
+  massfilter_ids <- eventReactive(c(input$massfilter, input$min_mass, input$max_mass),{
+    if(input$massfilter){
+      mass_filter(uploaded_data()) %>% 
+        filter(Mass <= input$max_mass, Mass >= input$min_mass) %>%
+        pluck(1)
+    }
+    else NULL
+  })
+  
+  molfilter_ids <- eventReactive(c(input$minobs, input$molfilter), {
+    if(input$molfilter){
+      molecule_filter(uploaded_data()) %>%
+        filter(Num_Observations >= input$minobs) %>%
+        pluck(1)
+    }
+    else NULL
+  })
+  
+  formfilter_ids <- eventReactive(input$formfilter, {
+    if(input$formfilter){
+      formula_filter(uploaded_data()) %>%
+        filter(Formula_Assigned == TRUE) %>%
+        pluck(1)
+    }
+    else NULL
+  })
+  
   # Object: Get data frame from summaryFilt
   # Depends on: peakIcr2, checkboxes for filters, and inputs for filters
-  summaryFilterDataFrame <- reactive({
-    # TODO: Improve this logic so I don't have to hard code min_mass and max_mass defaults
-    min_mass <- 200
-    max_mass <- 900
+  summaryFilterDataFrame <- eventReactive(revals$reac_filter_plot, {
+    req(input$top_page == "Filter")
     
-    # If mass filter checked
-    if(input$massfilter) {
+      # determine which, if any, custom filters to apply
+      conds <- c(!is.null(revals$custom1_ids), !is.null(revals$custom2_ids), !is.null(revals$custom3_ids))
       
-      # Error handling: Require min_mass and max_mass to exist
-      req(input$min_mass)
-      req(input$max_mass)
-      req(input$min_mass < input$max_mass)
+      if(any(conds) & isolate(input$customfilterz)){
+        customids_to_keep <- data.frame(ids = c(revals$custom1_ids, revals$custom2_ids, revals$custom3_ids), stringsAsFactors = FALSE) %>%
+          group_by(ids) %>%
+          mutate(n = n()) %>%
+          filter(n == sum(conds)) %>%
+          pluck(1)
+      }
+      else customids_to_keep <- NULL
       
-      # Set min_mass and max_mass to actual entries
-      min_mass <- input$min_mass
-      max_mass <- input$max_mass
-    }
+      # Get summary table from sourced file 'summaryFilter.R'
+      summaryFilt(peakICR(), massfilter_ids(), molfilter_ids(), formfilter_ids(), customids_to_keep)
     
-    # Get summary table from sourced file 'summaryFilter.R'
-    summaryFilt(peakICR(), c(input$massfilter, input$molfilter, input$formfilter), min_mass, 
-                max_mass, input$minobs)
     
-  }) # End summaryFilterDataFrame
+  }, ignoreInit = TRUE) # End summaryFilterDataFrame
   
   
   # Show table from summaryFilt
@@ -1103,17 +1086,27 @@ shinyServer(function(session, input, output) {
                                                                 'min_mass', 'max_mass')])
     }
     
+    if (input$customfilterz) {
+      
+      # Get which row has the row name 'After Mass Filter'
+      rowNum <- which(summaryFilterDataFrame()$data_state == 'After Custom Filters')
+      
+      # Get relevant columns out of summaryFilterDataFrame
+      afterResults <- unlist(summaryFilterDataFrame()[rowNum, c('sum_peaks', 'assigned', 
+                                                                'min_mass', 'max_mass')])
+    }
+    
     # Find which row in summaryFilterDataFrame represents the Unfiltered information
     rowNum = which(summaryFilterDataFrame()$data_state == 'Unfiltered')
     
     # Create a dataframe out of Before and After results from summaryFilterDataFrame
-    summary_table <- data.frame('Before' = unlist(summaryFilterDataFrame()[rowNum, c('sum_peaks', 'assigned', 
-                                                                                     'min_mass', 'max_mass')]),
-                                'After' = afterResults,
+    summary_table <- data.frame('Before' = as.numeric(unlist(summaryFilterDataFrame()[rowNum, c('sum_peaks', 'assigned', 
+                                                                                     'min_mass', 'max_mass')])),
+                                'After' = as.numeric(afterResults),
                                 row.names = c('Number of peaks',
                                               'Number of peaks assigned a formula', 
                                               'Minimum mass observed', 
-                                              'Maximum Mass observed'))
+                                              'Maximum Mass observed'), stringsAsFactors = FALSE)
     
     # Format the last two rows of this table to have decimal places and the first two rows to have a comma
     # this requires converting the table to a string, keep two copies in case the string changes
@@ -1134,15 +1127,20 @@ shinyServer(function(session, input, output) {
   # Plot bar chart
   # Depends on: summaryFilterDataFrame
   output$barplot_filter <- renderPlot({
-    # Melt dataframe into 2 objects
-    which_filts <- c("Unfiltered", "After Mass Filter", "After Molecule Filter", "After Formula Filter")[c(TRUE, input$massfilter, input$molfilter, input$formfilter)]
     
+    req(isolate(revals$redraw_filter_plot) == TRUE)
+    
+    filter_inds <- c(TRUE, isolate(input$massfilter), isolate(input$molfilter), isolate(input$formfilter), 
+                     any(c(isolate(input$custom1), isolate(input$custom2), isolate(input$custom3)) != "Select item") & isolate(input$customfilterz))
+    
+    which_filts <- c("Unfiltered", "After Mass Filter", "After Molecule Filter", "After Formula Filter", "After Custom Filters")[filter_inds]
+    
+    # Melt dataframe into 2 objects
     ggdata_barplot <- melt(summaryFilterDataFrame()[,c('data_state', 'assigned', 'unassigned')]) %>% filter(data_state %in% which_filts)
     ggdata_text <- summaryFilterDataFrame()[, c('data_state', 'sum_peaks', 'dispText')] %>% filter(data_state %in% which_filts)
     
     # Aesthetic purposes: get max height, divide by 30, use as offset in geom_text
     num_displaced <- round(ggdata_text[1, 2] / 35, digits = -1)
-    
     
     # Plot using ggplot2
     ggplot() + geom_bar(aes(x = data_state, 
@@ -1194,6 +1192,7 @@ shinyServer(function(session, input, output) {
       updateCheckboxInput(session = session, inputId = "massfilter", value = FALSE)
       updateCheckboxInput(session = session, inputId = "molfilter", value = FALSE)
       updateCheckboxInput(session = session, inputId = "formfilter", value = FALSE)
+      updateCheckboxInput(session = session, inputId = "customfilterz", value = FALSE)
     }
     peakIcr2 <<- uploaded_data()
     removeModal()
@@ -1205,7 +1204,7 @@ shinyServer(function(session, input, output) {
   ## Sidebar Panel ##
   
   #### Viztab observers.  Help Button. Dropdown choices, plot clearing, and shinyjs helper functionality###
-  source("visualize_observers.R", local = TRUE)
+  source("Observers/visualize_observers.R", local = TRUE)
   #####
   
   # Plot options, with selections removed if the necessary columns in e_meta are not present.
@@ -1339,7 +1338,6 @@ shinyServer(function(session, input, output) {
     }
     if (input$choose_single == 1) { # single sample -selected- but multiple samples present
       validate(need(!is.null(input$whichSamples), message = "Please select a sample to plot"))
-      inspect <<- subset(peakIcr2, input$whichSamples)
       return(subset(peakIcr2, input$whichSamples))
       #key_name <- paste(attributes(peakIcr2)$cnames$fdata_cname, "=", input$whichSamples, sep = "")
     }
@@ -1390,7 +1388,7 @@ shinyServer(function(session, input, output) {
       }
       
       grpComparisonsObj <- divideByGroupComparisons(temp_data, comparisons = "all")[[1]]$value
-      summaryObj <<- summarizeComparisons(grpComparisonsObj, summary_functions = input$summary_fxn)
+      summaryObj <- summarizeComparisons(grpComparisonsObj, summary_functions = input$summary_fxn)
       return(summaryObj)
       
     }
@@ -1761,6 +1759,7 @@ shinyServer(function(session, input, output) {
                                 YaxisTitle = NA, LegendTitle = NA, ColorPalette = NA, HiddenPalette = NA)
   
   observeEvent(input$add_plot, {
+    
     # initialize a new line
     newLine <- data.frame(FileName = NA, PlotType = input$chooseplots, SampleType = NA, G1 = NA, G2 = NA, BoundarySet = NA,
                           ColorBy = NA, ContinuousVariable = NA, UniqueCommon = NA, x_var = NA, y_var = NA,
