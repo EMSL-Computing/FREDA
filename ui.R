@@ -271,17 +271,19 @@ shinyUI(tagList(useShinyjs(),
                                 
                                 checkboxInput('formfilter', tags$b("Formula Presence Filter"), value = FALSE),
                             
-                                checkboxInput('customfilterz', label = "Implement up to 3 custom filters", value = FALSE),
-                                uiOutput("filter1UI"),
-                                uiOutput("customfilter1UI"),
-                                  conditionalPanel(condition = "input.custom1 !== 'Select item'",
-                                                  uiOutput("filter2UI"),
-                                                  uiOutput("customfilter2UI")
-                                  ),
-                                  conditionalPanel(condition = "input.custom2 !== 'Select item'",
+                                checkboxInput('customfilterz', label = tags$b("Implement up to 3 custom filters"), value = FALSE),
+                                
+                                hr(),
+                                
+                                conditionalPanel("input.customfilterz == true",
+                                                   uiOutput("filter1UI"),
+                                                   uiOutput("customfilter1UI"),  
+                                                   uiOutput("filter2UI"),
+                                                   uiOutput("customfilter2UI"),
                                                    uiOutput("filter3UI"),
                                                    uiOutput("customfilter3UI")
-                                  ),
+                                                 ),
+                                
                                 shinyjs::disabled(
                                   fluidRow(
                                     column(
@@ -309,8 +311,8 @@ shinyUI(tagList(useShinyjs(),
                                 ),
                                 
                                 # Plot: Show number of peaks before/after filters applied
-                                plotOutput('barplot_filter')
-                                
+                                plotOutput('barplot_filter') %>% 
+                                  withSpinner(color = "orange", type = 8)
                               ) # End main panel on Filter tab
                               
                             )), # End Filter tab
