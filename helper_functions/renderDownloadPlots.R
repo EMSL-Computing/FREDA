@@ -54,7 +54,8 @@ renderDownloadPlots <- function(parmTable, peakIcr2){
         plot_data <- temp_data
       } else {
         grpComparisonsObj <- divideByGroupComparisons(temp_data, comparisons = "all")[[1]]$value
-        plot_data <- summarizeComparisons(grpComparisonsObj, summary_functions = parmTable$UniqueCommon)
+        plot_data <- summarizeGroupComparisons(grpComparisonsObj, summary_functions = parmTable$UniqueCommon, 
+                                                summary_function_params = list(uniqueness_gtest = list(pres_fn = "prop", pres_thresh = 0.2)))
       }
     }
     

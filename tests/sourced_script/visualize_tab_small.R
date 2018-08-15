@@ -88,6 +88,8 @@ app$setInputs(plot_submit = "click")
 #app$snapshot(list(output = "FxnPlot"))
 app$setInputs(add_plot = "click")
 
+app$takeScreenshot("screenshots/vk_groupcomparison.png")
+
 vals <- app$getAllValues()
 allcolnames <- c(vals$export$plot_data$e_data %>% colnames(), vals$export$plot_data$e_meta %>% colnames()) 
 

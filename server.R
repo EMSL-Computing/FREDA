@@ -998,6 +998,7 @@ shinyServer(function(session, input, output) {
   
   # Reactive value for each filter:
   massfilter_ids <- eventReactive(c(input$massfilter, input$min_mass, input$max_mass),{
+    revals$redraw_filter_plot <- FALSE
     if(input$massfilter){
       mass_filter(uploaded_data()) %>% 
         filter(Mass <= input$max_mass, Mass >= input$min_mass) %>%
@@ -1388,7 +1389,9 @@ shinyServer(function(session, input, output) {
       }
       
       grpComparisonsObj <- divideByGroupComparisons(temp_data, comparisons = "all")[[1]]$value
-      summaryObj <- summarizeComparisons(grpComparisonsObj, summary_functions = input$summary_fxn)
+      summaryObj <- summarizeGroupComparisons(grpComparisonsObj, summary_functions = input$summary_fxn, 
+                                              summary_function_params = list(uniqueness_gtest = list(pres_fn = "prop", pres_thresh = 0.2)))
+      
       return(summaryObj)
       
     }
@@ -1427,7 +1430,7 @@ shinyServer(function(session, input, output) {
       color_by_choices <- c(edata_colors[!(edata_colors %in% emeta_display_choices())], emeta_display_choices())
       
     } else if (input$choose_single == 3) {
-      color_by_choices <- c("Unique GTest" = "unique_gtest")
+      color_by_choices <- c("Unique GTest" = "uniqueness_gtest")
     }
     
     # Give default names to unnamed choices

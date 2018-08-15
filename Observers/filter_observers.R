@@ -7,7 +7,7 @@ lapply(1:3, function(i){
   # create a single observer
   observeEvent(input[[el]], {
     
-    revals[["redraw_filter_plot"]] <- FALSE
+    revals$redraw_filter_plot <- FALSE
     
     # observer first creates the range/category dropdowns
     output[[paste0("customfilter", i, "UI")]] <- renderUI({
@@ -148,7 +148,7 @@ observe({
   c(massfilter_ids(), molfilter_ids(), formfilter_ids(), revals$custom1_ids, revals$custom2_ids, revals$custom3_ids)
  
   if(isolate(revals$redraw_filter_plot == FALSE)){
-    invalidateLater(1200, session)
+    invalidateLater(1000, session)
     isolate(revals$redraw_filter_plot <- TRUE)
   }
   else{

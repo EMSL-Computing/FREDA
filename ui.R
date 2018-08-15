@@ -341,8 +341,7 @@ shinyUI(tagList(useShinyjs(),
                                 ),
                                 
                                 # Plot: Show number of peaks before/after filters applied
-                                plotOutput('barplot_filter') %>% 
-                                  withSpinner(color = "orange", type = 8)
+                                plotOutput('barplot_filter')
                               ) # End main panel on Filter tab
                               
                             )), # End Filter tab
