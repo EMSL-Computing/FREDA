@@ -368,16 +368,27 @@ shinyUI(tagList(useShinyjs(),
                                 conditionalPanel(condition = "input.choose_single == 3 && input.chooseplots !== '0'", uiOutput("summary_fxn_out")),
                                 
                                 # Label inputs
-                                uiOutput("title_out"),
-                                uiOutput("x_axis_out"),
-                                uiOutput("y_axis_out"),
-                                tags$div(id = "js_legend_title_input", uiOutput("legend_title_out")),
-                                
-                                # Seperate buttons to generate plot or simply update labels without recalculating data
+                                tags$hr(style = "thickness:5px"),
                                 splitLayout(
-                                  shinyjs::disabled(
-                                    actionButton("plot_submit", label = "Generate Plot"),
-                                    actionButton("update_axes", label = "Update Labels")
+                                  uiOutput("title_out"),
+                                  tags$div(id = "js_legend_title_input", uiOutput("legend_title_out"))
+                                  ),
+                                splitLayout(
+                                  uiOutput("x_axis_out"),
+                                  uiOutput("y_axis_out")
+                                ),
+                                
+                              
+                                # Seperate buttons to generate plot or simply update labels without recalculating data
+                                
+                                shinyjs::disabled(
+                                  fluidRow(
+                                    column(width = 6,
+                                           actionButton("plot_submit", label = "Generate Plot", icon = icon("plus"), lib = "glyphicon")
+                                    ),
+                                    column(width = 6,
+                                           actionButton("update_axes", label = "Update Labels", icon = icon("refresh"), lib = "glyphicon")
+                                    )
                                   )
                                 )
                               ),# End sidebar conditionals on Visualize tab #
@@ -415,6 +426,7 @@ shinyUI(tagList(useShinyjs(),
                                 ),
                                 
                                 # color pallete options and button to flip colorscale direction
+                                inlineCSS("#js_colorpal img{margin-top:-9px;}"),
                                 tags$div(id = "js_colorpal", uiOutput("colorpal_out"), style = "display:inline-block"),
                                 actionButton("flip_colors", "Invert color scale", style = "display:inline-block"),
                                   

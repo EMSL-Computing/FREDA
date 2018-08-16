@@ -829,7 +829,7 @@ shinyServer(function(session, input, output) {
     
     #columns included in calculation_options.csv get their prettified names, everything else gets the column name
     names(column_choices) <- lapply(column_choices, function(x){
-      if(x %in% calc_vars$ColumnName){
+      if (x %in% calc_vars$ColumnName){
         calc_vars %>% filter(ColumnName == x) %>% pluck("DisplayName")
       }
       else x
@@ -871,7 +871,7 @@ shinyServer(function(session, input, output) {
   observeEvent(input$filter_click, {
     
     # if the data is already filtered start over from the uploaded data
-    if(any(c("moleculeFilt", "massFilt", "formulaFilt") %in% names(attributes(peakIcr2)$filters)) | any(grepl("emetaFilt", names(attributes(peakIcr2)$filters)))){
+    if (any(c("moleculeFilt", "massFilt", "formulaFilt") %in% names(attributes(peakIcr2)$filters)) | any(grepl("emetaFilt", names(attributes(peakIcr2)$filters)))){
       peakIcr2 <<- uploaded_data()
     }
     
@@ -904,7 +904,7 @@ shinyServer(function(session, input, output) {
     }
     
     # custom filters
-    if(input$customfilterz){
+    if (input$customfilterz){
       
         #apply the filter for each input
         lapply(1:3, function(i){
@@ -916,7 +916,7 @@ shinyServer(function(session, input, output) {
           filter <- emeta_filter(peakIcr2, input[[paste0("custom",i)]])
           
           # if numeric, apply filter with specified max and min values
-          if(is.numeric(peakIcr2$e_meta[,input[[paste0("custom",i)]]])){
+          if (is.numeric(peakIcr2$e_meta[,input[[paste0("custom",i)]]])){
             req(input[[paste0("minimum_custom",i)]], input[[paste0("maximum_custom", i)]])
             peakIcr2 <<- applyFilt(filter, peakIcr2,
                                    min_val = input[[paste0("minimum_custom",i)]], 
@@ -925,7 +925,7 @@ shinyServer(function(session, input, output) {
             
           }
           # else apply with selected categories
-          else if(!is.numeric(peakIcr2$e_meta[,input[[paste0("custom",i)]]])){
+          else if (!is.numeric(peakIcr2$e_meta[,input[[paste0("custom",i)]]])){
             req(input[[paste0("categorical_custom",i)]])
             peakIcr2 <<- applyFilt(filter, peakIcr2, 
                                    cats = input[[paste0("categorical_custom",i)]], 
@@ -999,7 +999,7 @@ shinyServer(function(session, input, output) {
   # Reactive value for each filter:
   massfilter_ids <- eventReactive(c(input$massfilter, input$min_mass, input$max_mass),{
     revals$redraw_filter_plot <- FALSE
-    if(input$massfilter){
+    if (input$massfilter){
       mass_filter(uploaded_data()) %>% 
         filter(Mass <= input$max_mass, Mass >= input$min_mass) %>%
         pluck(1)
@@ -1008,7 +1008,7 @@ shinyServer(function(session, input, output) {
   })
   
   molfilter_ids <- eventReactive(c(input$minobs, input$molfilter), {
-    if(input$molfilter){
+    if (input$molfilter){
       molecule_filter(uploaded_data()) %>%
         filter(Num_Observations >= input$minobs) %>%
         pluck(1)
@@ -1017,7 +1017,7 @@ shinyServer(function(session, input, output) {
   })
   
   formfilter_ids <- eventReactive(input$formfilter, {
-    if(input$formfilter){
+    if (input$formfilter){
       formula_filter(uploaded_data()) %>%
         filter(Formula_Assigned == TRUE) %>%
         pluck(1)
@@ -1033,7 +1033,7 @@ shinyServer(function(session, input, output) {
       # determine which, if any, custom filters to apply
       conds <- c(!is.null(revals$custom1_ids), !is.null(revals$custom2_ids), !is.null(revals$custom3_ids))
       
-      if(any(conds) & isolate(input$customfilterz)){
+      if (any(conds) & isolate(input$customfilterz)){
         customids_to_keep <- data.frame(ids = c(revals$custom1_ids, revals$custom2_ids, revals$custom3_ids), stringsAsFactors = FALSE) %>%
           group_by(ids) %>%
           mutate(n = n()) %>%
@@ -1213,22 +1213,22 @@ shinyServer(function(session, input, output) {
     choices <- c('Van Krevelen Plot', 'Kendrick Plot', 'Density Plot', 'Custom Scatter Plot', 'Select an Option' = 0)
     
     #disallow kendrick plots if either kmass or kdefect not calculated/present in emeta
-    if(is.null(attr(peakIcr2, "cnames")$kmass_cname) | is.null(attr(peakIcr2, "cnames")$kdefect_cname)){
+    if (is.null(attr(peakIcr2, "cnames")$kmass_cname) | is.null(attr(peakIcr2, "cnames")$kdefect_cname)){
       choices <- choices[choices != "Kendrick Plot"]
     }
     
     #disallow vk plots if o:c or h:c ratios not calculated/present in emeta
-    if(is.null(attr(peakIcr2, "cnames")$o2c_cname) | is.null(attr(peakIcr2, "cnames")$h2c_cname)){
+    if (is.null(attr(peakIcr2, "cnames")$o2c_cname) | is.null(attr(peakIcr2, "cnames")$h2c_cname)){
       choices <- choices[choices != "Van Krevelen Plot"]
     }
     
     #disallow density plots if at least 1 
-    if(!any(sapply(peakIcr2$e_meta %>% dplyr::select(-one_of(getEDataColName(peakIcr2))), is.numeric))){
+    if (!any(sapply(peakIcr2$e_meta %>% dplyr::select(-one_of(getEDataColName(peakIcr2))), is.numeric))){
       choices <- choices[choices != c("Density Plot", "Custom Scatter Plot")]
     }
     
     #if everything is disallowed, give warning and silently stop execution.
-    if(all(choices == 0)) return(tags$p("There is not enough information in the molecular identification file to produce any plots.  Choose more variables to calculate in the preprocess tab or append some metadata to the molecular identification file prior to uploading", style = "color:gray"))
+    if (all(choices == 0)) return(tags$p("There is not enough information in the molecular identification file to produce any plots.  Choose more variables to calculate in the preprocess tab or append some metadata to the molecular identification file prior to uploading", style = "color:gray"))
     
     selectInput('chooseplots', 'I want to plot a', 
                   choices = choices,
@@ -1241,7 +1241,7 @@ shinyServer(function(session, input, output) {
     validate(
       need(input$chooseplots != 0, message = "Please select plotting criteria")
     )
-    if(nrow(peakIcr2$f_data) == 1 | input$chooseplots == "Custom Scatter Plot"){
+    if (nrow(peakIcr2$f_data) == 1 | input$chooseplots == "Custom Scatter Plot"){
       return(tagList(
         tags$div(class = "grey_out",
           disabled(selectInput('choose_single', 'I want to plot using:',
@@ -1256,7 +1256,7 @@ shinyServer(function(session, input, output) {
                          choices = c('Make a selection' = 0, 'A single sample' = 1, 'Multiple samples by group' = 2, 'A comparison of groups' = 3),
                          selected = 0))
     }
-    else{
+    else {
       return(selectInput('choose_single', 'I want to plot using:',
                          choices = c('Make a selection' = 0, 'A single sample' = 1, 'Multiple samples by group' = 2, 'A comparison of groups' = 3),
                          selected = 0))
@@ -1266,7 +1266,7 @@ shinyServer(function(session, input, output) {
   # Conditional dropdowns based on grouping criteria (choose_single)
   output$plotUI_cond <- renderUI({
     req(input$choose_single != 0, input$chooseplots != 0)
-    if(input$choose_single == 3){
+    if (input$choose_single == 3){
       return(tagList(
         div(id = "js_whichGroups1", 
             selectInput('whichGroups1', 'Group 1',
@@ -1278,7 +1278,7 @@ shinyServer(function(session, input, output) {
                     multiple = TRUE))
       ))
     }
-    else if(input$choose_single == 2){
+    else if (input$choose_single == 2){
       return(tagList(
         div(id = "js_whichSamples",
             selectInput('whichSamples', 'Grouped Samples',
@@ -1290,7 +1290,7 @@ shinyServer(function(session, input, output) {
         )# End conditional output multiple samples#
       ))
     }
-    else if(input$choose_single == 1){
+    else if (input$choose_single == 1){
       return(div(id = "js_whichSamples", selectInput('whichSamples', 'Sample', choices = sample_names())))
     }
     else return(NULL)
@@ -1298,16 +1298,56 @@ shinyServer(function(session, input, output) {
   
   # selector for summary funcion
   output$summary_fxn_out <- renderUI({
-    if(input$chooseplots == "Density Plot"){
+    if (input$chooseplots == "Density Plot"){
       summary_dropdown <- tags$div(class = "grey_out",
-                                   disabled(selectInput("summary_fxn", "Summary Function", choices = "uniqueness_gtest")),
+                                   disabled(radioButtons("pres_fn", "Determine presence/absence by:", 
+                                                          choices = c("No. of Samples Present" = "nsamps", "Proportion of Samples Present" = "prop"), inline = TRUE)),
+                                   disabled(selectInput("summary_fxn", "Determine uniqueness using:", 
+                                                        choices = NULL)),
+                                   splitLayout(
+                                     disabled(numericInput("pres_thresh", "Specify threshold", value = 1)),
+                                     disabled(numericInput("absn_thresh", "Absence threshold", value = 0)),
+                                     disabled(numericInput("pval", "p-value", min = 0, max = 1, value = 0.05))
+                                   ),
                                    tags$p("No summary functions for comparison density plots", style = "color:gray;font-size:small;margin-top:3px")
       )
       
-    }else summary_dropdown <- selectInput("summary_fxn", "Summary Function", choices = "uniqueness_gtest")
+    }else summary_dropdown <- tagList(
+      radioButtons("pres_fn", "Determine presence/absence by:", 
+                             choices = c("No. of Samples Present" = "nsamps", "Proportion of Samples Present" = "prop"), inline = TRUE, selected = "nsamps"),
+      selectInput("summary_fxn", "Determine uniqueness using:", 
+                  choices = c("Select one" = "select_none", "G test" = "uniqueness_gtest", "Presence/absence thresholds" = "uniqueness_nsamps")),
+      splitLayout(
+        numericInput("pres_thresh", "Presence threshold", value = 1),
+        div(id = "js_absn_thresh", numericInput("absn_thresh", "Absence threshold", value = 0)),
+        div(id ="js_pval", numericInput("pval", "p-value", min = 0, max = 1, value = 0.05))
+      )
+    )
     return(summary_dropdown)
   })
+  
+  #OBSERVERS FOR SUMMARY FUNCTIONS
 
+  observeEvent(input$pres_fn,{
+    if (input$pres_fn == "nsamps"){
+      choices = c("Select one" = "select_none", "G test" = "uniqueness_gtest", "Presence/absence thresholds" = "uniqueness_nsamps")
+      updateNumericInput(session, "thresh", min = 1, max = max(length(input$whichGroups1), length(input$whichGroups2)))
+    }
+    else if (input$pres_fn == "prop"){
+      choices = c("Select one" = "select_none", "G test" = "uniqueness_gtest", "Presence/absence thresholds" = "uniqueness_prop")
+      updateNumericInput(session, "thresh", min = 0, max = 1)
+    }
+    updateSelectInput(session, "summary_fxn", choices = choices, selected = NULL)
+  })
+  
+  observeEvent(input$summary_fxn,{
+    req(input$chooseplots != "Density Plot")
+                toggleState("pval", input$summary_fxn == "uniqueness_gtest")
+                toggleCssClass("js_pval", "grey_out", condition = input$summary_fxn != "uniqueness_gtest")
+                toggleState("absn_thresh", input$summary_fxn != "uniqueness_gtest")
+                toggleCssClass("js_absn_thresh", "grey_out", condition = input$summary_fxn == "uniqueness_gtest")
+              })
+  
   #### Main Panel (Visualize Tab) ####
   
   # color pallete selection
@@ -1318,11 +1358,11 @@ shinyServer(function(session, input, output) {
       tags$img(src = paste0(choice, ".png"), width = "100px", height = "25px")
     })
     
-    if(isTRUE(input$chooseplots == "Density Plot")){
+    if (isTRUE(input$chooseplots == "Density Plot")){
       addClass("js_colorpal", "grey_out")
       disabled(colored_radiobuttons(inputId = "colorpal", label = "Pick a coloring scheme", inline = TRUE,
                                          choices = choices, extensions = extensions))
-    }else{
+    }else {
       removeClass("js_colorpal", "grey_out")
       colored_radiobuttons(inputId = "colorpal", label = "Pick a coloring scheme", inline = TRUE,
                                choices = choices, extensions = extensions)
@@ -1334,7 +1374,7 @@ shinyServer(function(session, input, output) {
     
     req(calc_vars)
     validate(need(input$chooseplots != 0 & input$choose_single !=0, message = "Please select plotting criteria"))
-    if(is.null(input$choose_single)){ # corresponds to data with a single sample
+    if (is.null(input$choose_single)){ # corresponds to data with a single sample
       return(peakIcr2) # no need to subset
     }
     if (input$choose_single == 1) { # single sample -selected- but multiple samples present
@@ -1357,7 +1397,7 @@ shinyServer(function(session, input, output) {
       temp_data <- fticRanalysis:::setGroupDF(temp_data, temp_group_df)
       
       # no need to summarize for density plot function
-      if(input$chooseplots == "Density Plot"){
+      if (input$chooseplots == "Density Plot"){
         return(temp_data)
       }
 
@@ -1373,6 +1413,7 @@ shinyServer(function(session, input, output) {
       validate(need(!is.null(isolate(input$whichGroups2)), message = "Please select samples for second grouping"))
       validate(need(length(input$whichGroups2) > 0, message = "Please select at least 1 sample"))
       
+      # assign a group DF to the data with a level for each of the two groups
       group1_samples <- isolate(input$whichGroups1)
       group2_samples <- isolate(input$whichGroups2)
       temp_group_df <- data.frame(c(group1_samples, group2_samples), c(rep("Group1", times=length(group1_samples)), rep("Group2", length(group2_samples))))
@@ -1384,13 +1425,49 @@ shinyServer(function(session, input, output) {
       temp_data <- fticRanalysis:::setGroupDF(temp_data, temp_group_df)
       
       # no need to summarize for density plot function
-      if(input$chooseplots == "Density Plot"){
+      if (input$chooseplots == "Density Plot"){
         return(temp_data)
       }
       
+      # error checking after passing density plots
+      validate(need(input$summary_fxn != "select_none", "Please select a summary function"))
+      
+      # get the value of the single pairwise comparison         
       grpComparisonsObj <- divideByGroupComparisons(temp_data, comparisons = "all")[[1]]$value
+      
+      # paramaters specific to uniqueness_gtest()
+      if (input$summary_fxn == "uniqueness_gtest"){
+        validate(need(isTRUE(input$pval < 1 & input$pval > 0) & is.numeric(input$pval), message = "Specify a p-value between 0 and 1"))
+        gtest_parms <- list(pres_fn = input$pres_fn, pvalue_thresh = input$pval)
+      }
+      else {
+        gtest_parms <- list(absn_thresh = input$absn_thresh)
+      }
+      
+      # conditional error checking depending on nsamps and proportion
+      if (input$pres_fn == "nsamps"){
+        validate(need(input$pres_thresh <= max(length(input$whichGroups1), length(input$whichGroups2)), "Maximum threshold is above the maximum number of samples in a group"),
+                 need(is.numeric(input$pres_thresh), "Please enter a numeric value for threshold to determine presence"),
+                 need(input$absn_thresh < input$pres_thresh & input$absn_thresh >= 0, "absence threshold must be non-negative and lower than presence threshold"))
+      }
+      else if (input$pres_fn == "prop"){
+        validate(need(input$pres_thresh <= 1 & input$pres_thresh > 0, "Proportion threshold is not in the interval (0,1]"),
+                 need(is.numeric(input$pres_thresh), "Please enter a numeric proportion threshold to determine presence"),
+                 need(input$absn_thresh < input$pres_thresh & input$absn_thresh >= 0, "absence threshold must be non-negative and lower than presence threshold"))
+      }
+      
+      # populate a list of args to pass to summarizeGroupComparisons()
+      parms <- list()
+      parms[[input$summary_fxn]] <- c(list(pres_thresh = input$pres_thresh), gtest_parms)
+      
+      # create the group comparisons object, passing the user specified function and its (user specified) list of args.
       summaryObj <- summarizeGroupComparisons(grpComparisonsObj, summary_functions = input$summary_fxn, 
-                                              summary_function_params = list(uniqueness_gtest = list(pres_fn = "prop", pres_thresh = 0.2)))
+                                              summary_function_params = parms)
+      
+      #___TEST LINE___
+      if (isTRUE(getOption("shiny.testmode"))){
+        test_export_plot_data <<- summaryObj
+      }
       
       return(summaryObj)
       
@@ -1408,7 +1485,7 @@ shinyServer(function(session, input, output) {
     ## ifelse block determines how to populate vk_colors dropdown
     
     # Density plots care not for choose_single!!!!
-    if(input$chooseplots == "Density Plot"){
+    if (input$chooseplots == "Density Plot"){
       numeric_cols <- which(sapply(plot_data()$e_meta %>% 
                                      dplyr::select(one_of(emeta_display_choices())), is.numeric))
       color_by_choices <- emeta_display_choices()[numeric_cols]
@@ -1430,7 +1507,7 @@ shinyServer(function(session, input, output) {
       color_by_choices <- c(edata_colors[!(edata_colors %in% emeta_display_choices())], emeta_display_choices())
       
     } else if (input$choose_single == 3) {
-      color_by_choices <- c("Unique GTest" = "uniqueness_gtest")
+      color_by_choices <- c("Group membership" = input$summary_fxn)
     }
     
     # Give default names to unnamed choices
@@ -1499,7 +1576,7 @@ shinyServer(function(session, input, output) {
     revals$color_by_choices <- color_by_choices
     
     # The dropdown value will not be updated if this is true, force re-execution of plotting in this case with a reactive var
-    if(input$vk_colors %in% color_by_choices){
+    if (input$vk_colors %in% color_by_choices){
       revals$makeplot <- -revals$makeplot
     }
     
@@ -1530,15 +1607,15 @@ shinyServer(function(session, input, output) {
       )
       
       # Apply custom color scale if numeric is selected
-      if(isolate(numeric_selected()) & !(input$vk_colors %in% c("bs1", "bs2"))){
+      if (isolate(numeric_selected()) & !(input$vk_colors %in% c("bs1", "bs2"))){
         diverging_options = c("RdYlGn")
         pal <- RColorBrewer::brewer.pal(n = 9, input$colorpal)
         
-        if(!(input$colorpal %in% diverging_options)){
+        if (!(input$colorpal %in% diverging_options)){
           pal <- RColorBrewer::brewer.pal(n = 9, input$colorpal)[3:9]
         }
         
-        if(input$flip_colors%%2 != 0){
+        if (input$flip_colors%%2 != 0){
           pal <- rev(pal)
         }
         
@@ -1546,7 +1623,7 @@ shinyServer(function(session, input, output) {
         colorPal <- scales::col_numeric(pal, domain)
         revals$colorPal <- paste(paste(pal, collapse = ","), paste(domain, collapse = ","), sep = ":")
       }
-      else{
+      else {
         colorPal <- revals$colorPal <- NA
         
       }
@@ -1609,15 +1686,15 @@ shinyServer(function(session, input, output) {
         )
         
         # sample/group inputs depending on whether or not we are doing a comparison of groups
-        if(input$choose_single == 3){
+        if (input$choose_single == 3){
           samples = FALSE
           groups = c("Group1", "Group2")
         }
-        else if(input$choose_single == 2){
+        else if (input$choose_single == 2){
           samples = input$whichSamples
           groups = "Group"
         }
-        else if(input$choose_single == 1){
+        else if (input$choose_single == 1){
           samples = input$whichSamples
           groups = FALSE
         }
@@ -1642,7 +1719,7 @@ shinyServer(function(session, input, output) {
       }
       
       #---------- Custom Scatter Plot --------#
-      if(input$chooseplots == 'Custom Scatter Plot'){
+      if (input$chooseplots == 'Custom Scatter Plot'){
         validate(need(!is.null(input$whichSamples), message = "Please select at least 1 sample"),
                  need(!is.na(input$vk_colors), message = "Please select a variable to color by"))
         req(!is.null(input$scatter_x), !is.null(input$scatter_y), !("" %in% c(input$scatter_x, input$scatter_y)))
@@ -1686,7 +1763,7 @@ shinyServer(function(session, input, output) {
     if (input$chooseplots == 'Van Krevelen Plot') {
       defs <- formals(vanKrevelenPlot)
       #defs$legendTitle = names(emeta_display_choices())[emeta_display_choices() == input$vk_colors]
-    } else if(input$chooseplots == "Custom Scatter Plot"){
+    } else if (input$chooseplots == "Custom Scatter Plot"){
       defs <- formals(scatterPlot)
       defs$ylabel = NULL
       defs$xlabel = NULL
@@ -1727,11 +1804,11 @@ shinyServer(function(session, input, output) {
     validate(
       need(input$chooseplots != 0, message = "")
     )
-    if(input$chooseplots == "Density Plot"){
+    if (input$chooseplots == "Density Plot"){
       addCssClass("js_legend_title_input", "grey_out")
       disabled(textInput(inputId = "legend_title_input", label = "Legend Label", value = ""))
     }
-    else{
+    else {
       removeCssClass("js_legend_title_input", "grey_out")
       textInput(inputId = "legend_title_input", label = "Legend Label", value = "")
     }
@@ -1740,11 +1817,11 @@ shinyServer(function(session, input, output) {
   
   # reactive variable that keeps track of whether the selected column is numeric or categorical.
   numeric_selected <- eventReactive(c(input$vk_colors, plot_data()),{
-    if(input$vk_colors %in% (plot_data()$e_data %>% colnames())){
+    if (input$vk_colors %in% (plot_data()$e_data %>% colnames())){
       (is.numeric(plot_data()$e_data %>% pluck(input$vk_colors)) & !is_integer(plot_data()$e_data %>% pluck(input$vk_colors)))
-    }else if(input$vk_colors %in% (plot_data()$e_meta %>% colnames())){
+    }else if (input$vk_colors %in% (plot_data()$e_meta %>% colnames())){
       (is.numeric(plot_data()$e_meta %>% pluck(input$vk_colors)) & !is_integer(plot_data()$e_meta %>% pluck(input$vk_colors)))
-    }else if(input$vk_colors %in% c("bs1", "bs2")){
+    }else if (input$vk_colors %in% c("bs1", "bs2")){
       FALSE
     }else TRUE
   }, ignoreNULL = FALSE)
@@ -1806,7 +1883,7 @@ shinyServer(function(session, input, output) {
     newLine$LegendTitle <- ifelse((input$chooseplots == 'Density Plot') | is.null(input$legend_title_input), yes = "default", no = revals$legendTitle)
     newLine$x_var <- input$scatter_x
     newLine$y_var <- input$scatter_y
-    if(!is.na(revals$colorPal)){
+    if (!is.na(revals$colorPal)){
       newLine$ColorPalette <- strsplit(revals$colorPal, split = ":")[[1]][1]
       newLine$HiddenPalette <- revals$colorPal
     }
@@ -1862,7 +1939,7 @@ shinyServer(function(session, input, output) {
       
       # ____test functionality____
       # if in testmode just select all rows since shinytest doesn't recognize row selection for parmsTable2
-      if(isTRUE(getOption("shiny.testmode"))){
+      if (isTRUE(getOption("shiny.testmode"))){
         rows <- 1:nrow(parmTable$parms)
       }
       else rows <- input$parmsTable2_rows_selected
@@ -1889,7 +1966,7 @@ shinyServer(function(session, input, output) {
           #r <- brick(file.path(getwd(), paste("plot",i,".png", sep = ""))) # create a raster of the screenshot
           img <- magick::image_read(paste("plot",i,".png", sep = ""))#attr(r,"file")@name) #turn the raster into an image of selected format
           
-          if(isTRUE(getOption("shiny.testmode"))) bitmaps[[i]] <- as.raster(img)
+          if (isTRUE(getOption("shiny.testmode"))) bitmaps[[i]] <- as.raster(img)
           
           image_write(img, path = path, format = input$image_format) #write the image
           #rsvg::rsvg_svg(img, file = path)
@@ -1905,7 +1982,7 @@ shinyServer(function(session, input, output) {
       print(fs)
       
       zip(zipfile=fname, files=fs)
-      if(file.exists(paste0(fname,".zip"))){file.rename(paste0(fname,".zip"),fname)}
+      if (file.exists(paste0(fname,".zip"))){file.rename(paste0(fname,".zip"),fname)}
     },
     contentType = "application/zip"
   )
@@ -1922,7 +1999,7 @@ shinyServer(function(session, input, output) {
   # 
   #       print(fs) #print all the pdfs to file
   #       zip(zipfile=fname, files=fs) #zip  it up (this isn't working for some reason!)
-  #       if(file.exists(paste0(fname,".zip"))){file.rename(paste0(fname,".zip"),fname)} #bug workaround see https://groups.google.com/forum/?utm_medium=email&utm_source=footer#!msg/shiny-discuss/D5F2nqrIhiM/ZshRutFpiVQJ
+  #       if (file.exists(paste0(fname,".zip"))){file.rename(paste0(fname,".zip"),fname)} #bug workaround see https://groups.google.com/forum/?utm_medium=email&utm_source=footer#!msg/shiny-discuss/D5F2nqrIhiM/ZshRutFpiVQJ
   #     },
   #     contentType = "application/zip"
   #   )
