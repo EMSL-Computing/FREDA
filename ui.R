@@ -272,7 +272,7 @@ shinyUI(tagList(useShinyjs(),
                                                min = 0, value = 900)
                                 ),
                                 
-                                tags$hr(),
+                                tags$hr(style = "margin:6px"),
                                 
                                 # Checkbox: Mass filter yes/no
                                 div(class = "adjustdown", checkboxInput('molfilter', 
@@ -288,20 +288,31 @@ shinyUI(tagList(useShinyjs(),
                                 # Drop-down list: Min/max mass filter
                                 uiOutput('minobs'), 
                                 
-                                tags$hr(),
+                                tags$hr(style = "margin:6px"),
                                 
                                 div(class = "adjustdown", checkboxInput('formfilter', 
                                                                         tagList(tags$b("Formula Presence Filter", style = "display:inline-block"),
                                                                                 div(style = "color:deepskyblue;display:inline-block",
                                                                                     tipify(icon("question-sign", lib = "glyphicon"), 
-                                                                                            title = "Retain peaks that have a molecular formula identified", 
+                                                                                            title = "Retain peaks that have a molecular formula specified or calculated from elemental values", 
                                                                                             placement = "top", trigger = 'hover')
                                                                                     )
                                                                                 ), 
                                                                         value = FALSE)
                                 ),
-                            
-                                checkboxInput('customfilterz', label = tags$b("Implement up to 3 custom filters"), value = FALSE),
+                                
+                                tags$hr(style = "margin:6px"),
+                                
+                                div(class = "adjustdown", checkboxInput('customfilterz', 
+                                                                        tagList(tags$b("Implement up to 3 custom filters", style = "display:inline-block"),
+                                                                                div(style = "color:deepskyblue;display:inline-block",
+                                                                                    tipify(icon("question-sign", lib = "glyphicon"), 
+                                                                                           title = "Filter based on up to 3 variables in the post-processed molecular identification file", 
+                                                                                           placement = "top", trigger = 'hover')
+                                                                                )
+                                                                        ), 
+                                                                        value = FALSE)
+                                ),
                                 
                                 hr(),
                                 

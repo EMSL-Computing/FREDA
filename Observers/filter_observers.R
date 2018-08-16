@@ -1,3 +1,24 @@
+# Help text
+observeEvent(input$filter_help,{
+  showModal(
+    modalDialog("",
+                tags$p("This page allows you to filter the data by various metrics.\n 
+                         The default options are to:", style = "color:CornFlowerBlue"),
+                tags$ul(
+                  tags$li("Retain peaks within a mass range (Mass Filter)"),
+                  tags$li("Retain peaks that appear a minimum number of times across all samples (Molecule Filter)"),
+                  tags$li("Retain peaks that have elemental information - either elemental columns or a full formula column (Formula Filter)"),
+                  style = "color:CornFlowerBlue"
+                ),
+                tags$p("Additionally, one can filter by up to three variables contained in the molecular identification file.\n
+                         As you select options, a plot will update showing the remaining observations after the application of each filter.\n",
+                       style = "color:CornFlowerBlue"),
+                tags$p("Check boxes to select which filters to apply, specify filtering criteria by a range for numeric data or a selection of values for categorical data and then click 'Filter Data'",
+                       style = "color:CornFlowerBlue"))
+  )
+})
+
+
 # creates three observers, one for each custom filter column selection dropdown
 lapply(1:3, function(i){
   
@@ -201,6 +222,48 @@ lapply(1:3, function(i){
     
   })
   
+})
+
+
+#-------- Reset Activity -------#
+# Allow a 'reset' that restores the uploaded object and unchecks the filter
+# boxes.  Will display a popup that warns the user of plot erasure and gives 
+# the option to reset or to go back without clearing filters.
+observeEvent(input$reset_filters,{
+  showModal(modalDialog(
+    
+    ##### There is probably a better way to code the display behavior of this dialog -DC
+    
+    fluidPage(
+      fluidRow(
+        column(10, align = "center", offset = 1,
+               tags$p("Caution:  If you reset filters all plots made using filtered data will be lost.", style = "color:red;font:bold", align = "center"),
+               actionButton("clear_filters_yes", "Yes, clear filters without saving plots.", width = '100%'),
+               br(),
+               br(),
+               br(),
+               actionButton("clear_filters_no", "No, take me back.", width = '100%')
+        ))),
+    footer = NULL
+  )
+  )
+})
+
+# if they click no, just exit the modal dialog
+observeEvent(input$clear_filters_no,{
+  removeModal()
+})
+
+# if they click yes, reset data and exit modal dialog
+observeEvent(input$clear_filters_yes, {
+  if (f$clearFilters) {
+    updateCheckboxInput(session = session, inputId = "massfilter", value = FALSE)
+    updateCheckboxInput(session = session, inputId = "molfilter", value = FALSE)
+    updateCheckboxInput(session = session, inputId = "formfilter", value = FALSE)
+    updateCheckboxInput(session = session, inputId = "customfilterz", value = FALSE)
+  }
+  peakIcr2 <<- uploaded_data()
+  removeModal()
 })
 
 

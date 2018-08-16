@@ -1,0 +1,93 @@
+# Help Button
+observeEvent(input$preprocess_help,{
+  showModal(
+    modalDialog("",
+                tags$p("Here you can tell FREDA to compute certain values based on your input data.  The result of these calculations will be appended
+                         to your molecular identification file and can be used as filtering variables in the next tab.\n",
+                       style = "color:CornFlowerBlue"),
+                br(),
+                HTML("<p style = color:CornFlowerBlue> Check boxes to select which values you want calculated and then hit 'Process Data'.  
+                       <span style = font-weight:bold>Element ratios are selected by default as they are required to produce Van-Krevelen
+                       and Kendrick plots.</span>  \n Table summaries and an interactive histogram/bar chart of the values you selected will be generated.<p>")
+    )
+  )
+})
+
+# Summary Panel: Display table summaries of numeric and categorical columns in e_meta
+
+# For numeric columns:
+observe({
+  
+  req(nrow(revals$numeric_cols) > 0)
+  
+  # Create Table Output
+  output$numeric_summary <- DT::renderDataTable({
+    columns <- summaryPreprocess(peakIcr2, revals$numeric_cols) %>% colnames()
+    
+    summaryPreprocess(peakIcr2, revals$numeric_cols) %>%
+      datatable(options = list(dom = "t", pageLength = nrow(.))) %>% 
+      formatRound(columns, digits = 2)
+  }) 
+  
+  # Summary Header
+  output$numeric_header <- renderUI(tags$p("Summary Statistics for Numeric Variables"))
+  
+})
+
+# For Categorical Columns
+
+# This observer assigns renderTable calls to various output ID's and passes them to the renderUI call immediately below
+observe({
+  req(nrow(revals$categorical_cols) > 0) 
+  
+  # List of tables which will be passed to renderTable()
+  table_list <- summaryPreprocess(peakIcr2, revals$categorical_cols, categorical = TRUE)
+  
+  # Reactive variable which lets lapply know how many output ID's to generate depending on number of categorical variables selected
+  revals$ntables <- length(table_list)
+  
+  # Call renderTable on each table and assign it to an output ID
+  lapply(1:length(table_list), function(i){
+    output[[paste0('Table_',i)]] <- DT::renderDataTable({table_list[[i]]}, options = list(scrollX = TRUE, dom = "t"))
+  })
+  
+  # Summary Header
+  output$cat_header <- renderUI(tags$p("Mode and Counts for Categorical Variables"))
+})
+
+# The renderUI call that takes input from the above observer
+output$categorical_summary <- renderUI({
+  tagList(lapply(1:revals$ntables, function(i){
+    DT::dataTableOutput(paste0('Table_',i))
+  })
+  )
+})
+
+## END TABLE SUMMARY SECTION ##
+
+
+# Success dialogs
+observeEvent(input$preprocess_click,{
+  req(peakIcr2)
+  
+  showModal(
+    modalDialog(title = "Preprocess Success",
+                fluidRow(
+                  column(10, align = "center", offset = 1,
+                         HTML('<h4 style= "color:#1A5276">Your data has been preprocessed.  Calculated variables have been added to the molecular identification file and can be used in subsequent filtering and visualization.</h4>'),
+                         hr(),
+                         actionButton("preprocess_dismiss", "Review results.", width = '75%'),
+                         br(),
+                         br(),
+                         actionButton("goto_filter", "Continue to filtering", width = '75%')
+                  )
+                )
+                ,footer = NULL)
+  ) 
+}) # End successMessage
+
+observeEvent(input$preprocess_dismiss,{removeModal()})
+observeEvent(input$goto_filter,{
+  updateTabsetPanel(session, "top_page", selected = "Filter")
+  removeModal()
+})

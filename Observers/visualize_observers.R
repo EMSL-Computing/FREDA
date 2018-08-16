@@ -65,7 +65,6 @@ observeEvent(input$chooseplots, {
   updateSelectInput(session, 'scatter_x', choices = emeta_display_choices(), selected = emeta_display_choices()[2])
   updateSelectInput(session, 'scatter_y', choices = emeta_display_choices(), selected = emeta_display_choices()[3])
   
-  
   # Rest of this observer controls shinyjs disable/enable behavior for reactive plot dropdowns
   dropdown_ids <- c("vkbounds", "vk_colors", "scatter_x", "scatter_y", "colorpal", "legend_title_input")
   choices = list('Van Krevelen Plot' = c("vk_colors", "vkbounds", "colorpal", "legend_title_input"), 
@@ -134,3 +133,25 @@ observeEvent(numeric_selected(),{
   
   
 })
+
+### Summary comparison plot selection control ###
+observeEvent(input$pres_fn,{
+  if (input$pres_fn == "nsamps"){
+    choices = c("Select one" = "select_none", "G test" = "uniqueness_gtest", "Presence/absence thresholds" = "uniqueness_nsamps")
+    updateNumericInput(session, "thresh", min = 1, max = max(length(input$whichGroups1), length(input$whichGroups2)))
+  }
+  else if (input$pres_fn == "prop"){
+    choices = c("Select one" = "select_none", "G test" = "uniqueness_gtest", "Presence/absence thresholds" = "uniqueness_prop")
+    updateNumericInput(session, "thresh", min = 0, max = 1)
+  }
+  updateSelectInput(session, "summary_fxn", choices = choices, selected = NULL)
+})
+
+observeEvent(input$summary_fxn,{
+  req(input$chooseplots != "Density Plot")
+  toggleState("pval", input$summary_fxn == "uniqueness_gtest")
+  toggleCssClass("js_pval", "grey_out", condition = input$summary_fxn != "uniqueness_gtest")
+  toggleState("absn_thresh", input$summary_fxn != "uniqueness_gtest")
+  toggleCssClass("js_absn_thresh", "grey_out", condition = input$summary_fxn == "uniqueness_gtest")
+})
+####                                 ###
