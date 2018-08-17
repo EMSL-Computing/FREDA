@@ -680,7 +680,7 @@ shinyServer(function(session, input, output) {
     p$elementId <- NULL
     
     #____test export_____
-    exportTestValues(preprocess_hist = p, hist_attrs = p$x$attrs[[p$x$cur_data]])
+    exportTestValues(preprocess_hist = p, hist_attrs = p$x$attrs[[p$x$cur_data]], hist_layout = p$x$layout, hist_visdat = p$x$visdat[[p$x$cur_data]]())
     
     return(p)
     
@@ -829,8 +829,7 @@ shinyServer(function(session, input, output) {
 
     #__test-export__
     exportTestValues(peakIcr2 = peakIcr2)
-    
-    
+   
   }) # End creating peakIcr2
   
   #### Main Panel (Filter Tab) ####
@@ -888,7 +887,7 @@ shinyServer(function(session, input, output) {
     
   })
   
-  # Reactive value for each filter:
+  # Reactive value for each filter which store a list of retained ID's
   massfilter_ids <- eventReactive(c(input$massfilter, input$min_mass, input$max_mass),{
     revals$redraw_filter_plot <- FALSE
     if (input$massfilter){
@@ -1155,8 +1154,8 @@ shinyServer(function(session, input, output) {
                                                           choices = c("No. of Samples Present" = "nsamps", "Proportion of Samples Present" = "prop"), inline = TRUE)),
                                    disabled(selectInput("summary_fxn", "Determine uniqueness using:", 
                                                         choices = NULL)),
-                                   splitLayout(
-                                     disabled(numericInput("pres_thresh", "Specify threshold", value = 1)),
+                                   splitLayout(cellWidths = c("30%", "30%", "30%"),
+                                     disabled(numericInput("pres_thresh", "Presence threshold", value = 1)),
                                      disabled(numericInput("absn_thresh", "Absence threshold", value = 0)),
                                      disabled(numericInput("pval", "p-value", min = 0, max = 1, value = 0.05))
                                    ),
@@ -1166,10 +1165,10 @@ shinyServer(function(session, input, output) {
     }else summary_dropdown <- tagList(
       radioButtons("pres_fn", "Determine presence/absence by:", 
                              choices = c("No. of Samples Present" = "nsamps", "Proportion of Samples Present" = "prop"), inline = TRUE, selected = "nsamps"),
-      selectInput("summary_fxn", "Determine uniqueness using:", 
-                  choices = c("Select one" = "select_none", "G test" = "uniqueness_gtest", "Presence/absence thresholds" = "uniqueness_nsamps")),
-      splitLayout(
-        numericInput("pres_thresh", "Presence threshold", value = 1),
+      div(id = "js_summary_fxn", selectInput("summary_fxn", "Determine uniqueness using:", 
+                  choices = c("Select one" = "select_none", "G test" = "uniqueness_gtest", "Presence/absence thresholds" = "uniqueness_nsamps"))),
+      splitLayout(class = "squeezesplitlayout", 
+        div(id = "js_pres_thresh", numericInput("pres_thresh", "Presence threshold", value = 1)),
         div(id = "js_absn_thresh", numericInput("absn_thresh", "Absence threshold", value = 0)),
         div(id ="js_pval", numericInput("pval", "p-value", min = 0, max = 1, value = 0.05))
       )
@@ -1292,11 +1291,6 @@ shinyServer(function(session, input, output) {
       # create the group comparisons object, passing the user specified function and its (user specified) list of args.
       summaryObj <- summarizeGroupComparisons(grpComparisonsObj, summary_functions = input$summary_fxn, 
                                               summary_function_params = parms)
-      
-      #___TEST LINE___
-      if (isTRUE(getOption("shiny.testmode"))){
-        test_export_plot_data <<- summaryObj
-      }
       
       return(summaryObj)
       
@@ -1561,14 +1555,19 @@ shinyServer(function(session, input, output) {
     
     x <- y <- list(titlefont = f)
     
-    # ___test-export___
-    exportTestValues(plot = p, plot_attrs = p$x$attrs[[p$x$cur_data]])
-    
     p <- p %>% layout(xaxis = x, yaxis = y, titlefont = f, margin = list(t = 50))
     
     # Null assignment bypasses plotly bug
     p$elementId <- NULL
+    
+    # Enable adding plot params
     enable("add_plot")
+    
+    # ___test-export___
+    exportTestValues(plot = p, plot_attrs = p$x$attrs[[p$x$cur_data]], plot_layout = p$x$layout, plot_visdat = p$x$visdat[[p$x$cur_data]]())
+    
+    inspect <<- p
+    
     return(p)
     
   })

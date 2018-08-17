@@ -376,7 +376,7 @@ shinyUI(tagList(useShinyjs(),
                                 # Select samples/groups
                                 uiOutput("plotUI"),
                                 uiOutput("plotUI_cond"),
-                                conditionalPanel(condition = "input.choose_single == 3 && input.chooseplots !== '0'", uiOutput("summary_fxn_out")),
+                                conditionalPanel(condition = "input.choose_single == 3 && input.chooseplots !== '0'", uiOutput("summary_fxn_out", class = "adjustdown")),
                                 
                                 # Label inputs
                                 tags$hr(style = "thickness:5px"),

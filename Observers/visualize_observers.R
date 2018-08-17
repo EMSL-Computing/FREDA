@@ -20,19 +20,52 @@ observeEvent(input$visualize_help,{
                 tags$p("Certain menu options may 'grey_out' during navigation, indicating disabled functionality for a plot type, 
                        or because certain values were not calculated during preprocessing")
                 )
-                )
+            )
 })
 
 # shinyjs helpers
-observeEvent(c(input$top_page, input$chooseplots, input$choose_single, input$whichSamples, input$whichGroups1, input$whichGroups2),{
+observeEvent(c(input$top_page, input$chooseplots, input$choose_single, input$whichSamples, input$whichGroups1, input$whichGroups2,
+               input$summary_fxn, input$pres_thresh, input$pres_fn, input$absn_thresh, input$pval),{
   req(input$top_page == "Visualize")
+  
   toggleCssClass("plot_type", "suggest", input$chooseplots == 0)
   toggleCssClass("plotUI", "suggest", input$chooseplots != 0 & input$choose_single == 0)
   toggleCssClass("js_whichSamples", "suggest", input$choose_single %in% c(1,2) & is.null(input$whichSamples))
   toggleCssClass("js_whichGroups1", "suggest", input$choose_single == 3 & is.null(input$whichGroups1))
   toggleCssClass("js_whichGroups2", "suggest", input$choose_single == 3 & is.null(input$whichGroups2))
   toggleCssClass("plotUI_cond", "suggest", input$choose_single == 3 & all(is.null(input$whichGroups1), is.null(input$whichGroups2)))
+  toggleCssClass("js_summary_fxn", "suggest", input$choose_single == 3 & all(!is.null(input$whichGroups1), !is.null(input$whichGroups2)) & input$summary_fxn == "select_none")
   
+  if (isTRUE(input$pres_fn == "nsamps")){
+    if(isTRUE(input$summary_fxn == "uniqueness_gtest")){
+      toggleCssClass("js_pval", "attention", any(input$pval <= 0, input$pval >= 1))
+      toggleCssClass("js_pres_thresh", "attention", any(input$pres_thresh > max(length(input$whichGroups1), length(input$whichGroups2)), 
+                                              input$pres_thresh < 1, 
+                                              !is.numeric(input$pres_thresh)))
+    }
+    else if(isTRUE(input$summary_fxn == "uniqueness_nsamps")){
+      toggleCssClass("js_pres_thresh", "attention", 
+                     any(input$pres_thresh > max(length(input$whichGroups1), length(input$whichGroups2)), input$pres_thresh < 1,
+                         !is.numeric(input$pres_thresh), input$absn_thresh >= input$pres_thresh))
+      toggleCssClass("js_absn_thresh", "attention", 
+                     any(input$absn_thresh > max(length(input$whichGroups1), length(input$whichGroups2)) - 1, input$absn_thresh < 0, 
+                         !is.numeric(input$absn_thresh), input$absn_thresh >= input$pres_thresh))
+    }
+  }
+  else if (isTRUE(input$pres_fn == "prop")){
+    if(isTRUE(input$summary_fxn == "uniqueness_gtest")){
+      toggleCssClass("js_pval", "attention", any(input$pval <= 0, input$pval >= 1))
+      toggleCssClass("js_pres_thresh", "attention", any(input$pres_thresh > 1, input$pres_thresh <= 0, !is.numeric(input$pres_thresh)))
+    }
+    else if(isTRUE(input$summary_fxn == "uniqueness_prop")){
+      toggleCssClass("js_pres_thresh", "attention", 
+                     any(input$pres_thresh > 1, input$pres_thresh <= 0,
+                         !is.numeric(input$pres_thresh), input$absn_thresh >= input$pres_thresh))
+      toggleCssClass("js_absn_thresh", "attention", 
+                     any(input$absn_thresh >= 1, input$absn_thresh < 0, 
+                         !is.numeric(input$absn_thresh), input$absn_thresh >= input$pres_thresh))
+    }
+  }
 })
 
 # logical reactive value that clears the plot if a new type is selected
@@ -144,7 +177,8 @@ observeEvent(input$pres_fn,{
     choices = c("Select one" = "select_none", "G test" = "uniqueness_gtest", "Presence/absence thresholds" = "uniqueness_prop")
     updateNumericInput(session, "thresh", min = 0, max = 1)
   }
-  updateSelectInput(session, "summary_fxn", choices = choices, selected = NULL)
+  selected = ifelse(input$summary_fxn %in% c("uniqueness_nsamps", "uniqueness_prop"), choices["Presence/absence thresholds"], input$summary_fxn)
+  updateSelectInput(session, "summary_fxn", choices = choices, selected = selected)
 })
 
 observeEvent(input$summary_fxn,{

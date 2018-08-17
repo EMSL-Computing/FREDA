@@ -2,7 +2,7 @@ print("Performing more detailed test of group comparison plots, must pass filter
 source("sourced_script/filter_tab_large.R", local = TRUE )
 
 ##### Group Comparison VK Plots
-print("VK plots.  Testing using G-test")
+print("Beginning with VK plots.  Testing using G-test")
 app$setInputs(top_page = "Visualize")
 app$setInputs(chooseplots = "Van Krevelen Plot")
 Sys.sleep(0.5)
@@ -24,15 +24,20 @@ app$setInputs(plot_submit = "click")
 app$setInputs(add_plot = "click")
 
 vals <- app$getAllValues()
+
 allcolnames <- c(vals$export$plot_data$e_data %>% colnames(), vals$export$plot_data$e_meta %>% colnames()) 
 
-test_that("Make sure color by options are valid (columns exist)",{
+test_that("check plotting dataframe",{
   expect_true(all(vals$export$color_choices %in% c('bs1', 'bs2', allcolnames)))
+  expect_true(inherits(vals$export$plot_data, "comparisonSummary"))
+  expect_true(!is.null(vals$export$plot_data %>% attr("group_DF")))
 })
 
 test_that("Group comparison plot produced", {
   expect_true(inherits(vals$export$plot, "plotly"))
 })
+
+app$snapshot(items = list(export = c("plot_attrs", "plot_layout", "plot_visdat")))
 
 # New Parameters (proportion)
 print("Testing uniqueness_prop....")
@@ -45,14 +50,17 @@ app$setInputs(plot_submit = "click")
 vals <- app$getAllValues()
 allcolnames <- c(vals$export$plot_data$e_data %>% colnames(), vals$export$plot_data$e_meta %>% colnames()) 
 
-test_that("Make sure color by options are valid (columns exist)",{
+test_that("check plotting dataframe",{
   expect_true(all(vals$export$color_choices %in% c('bs1', 'bs2', allcolnames)))
+  expect_true(inherits(vals$export$plot_data, "comparisonSummary"))
+  expect_true(!is.null(vals$export$plot_data %>% attr("group_DF")))
 })
+
 test_that("Group comparison plot produced", {
   expect_true(inherits(vals$export$plot, "plotly"))
 })
 
-app$snapshot(items = list(export = "plot_attrs"))
+app$snapshot(items = list(export = c("plot_attrs", "plot_layout", "plot_visdat")))
 
 # New Parameters (number of samples)
 print("Testing uniqueness_nsamps....")
@@ -65,14 +73,17 @@ app$setInputs(plot_submit = "click")
 vals <- app$getAllValues()
 allcolnames <- c(vals$export$plot_data$e_data %>% colnames(), vals$export$plot_data$e_meta %>% colnames()) 
 
-test_that("Make sure color by options are valid (columns exist)",{
+test_that("check plotting dataframe",{
   expect_true(all(vals$export$color_choices %in% c('bs1', 'bs2', allcolnames)))
+  expect_true(inherits(vals$export$plot_data, "comparisonSummary"))
+  expect_true(!is.null(vals$export$plot_data %>% attr("group_DF")))
 })
+
 test_that("Group comparison plot produced", {
   expect_true(inherits(vals$export$plot, "plotly"))
 })
 
-app$snapshot(items = list(export = "plot_attrs"))
+app$snapshot(items = list(export = c("plot_attrs", "plot_layout", "plot_visdat")))
 app$takeScreenshot("screenshots/vk_groupcomparison.png")
 
 print("VK groupcomparison tests passed, moving to Kendrick Plots")
@@ -107,7 +118,7 @@ test_that("Group kendrick plots produced", {
   expect_true(inherits(vals$export$plot, "plotly"))
 })
 
-app$snapshot(items = list(export = "plot_attrs"))
+app$snapshot(items = list(export = c("plot_attrs", "plot_layout", "plot_visdat")))
 
 # New Parameters (proportion)
 print("Testing uniqueness_prop....")
@@ -127,7 +138,7 @@ test_that("Group comparison plot produced", {
   expect_true(inherits(vals$export$plot, "plotly"))
 })
 
-app$snapshot(items = list(export = "plot_attrs"))
+app$snapshot(items = list(export = c("plot_attrs", "plot_layout", "plot_visdat")))
 
 # New Parameters (number of samples)
 print("Testing uniqueness_nsamps....")
@@ -147,7 +158,7 @@ test_that("Group comparison plot produced", {
   expect_true(inherits(vals$export$plot, "plotly"))
 })
 
-app$snapshot(items = list(export = "plot_attrs"))
+app$snapshot(items = list(export = c("plot_attrs", "plot_layout", "plot_visdat")))
 app$takeScreenshot("screenshots/kendrick_groupcomparison.png")
 
 print("Kendrick plot tests passed, moving to group density plots")
@@ -169,14 +180,20 @@ app$setInputs(update_axes = "click")
 app$setInputs(add_plot = "click")
 
 vals <- app$getAllValues()
-test_that("Group density plot produced", {
-  
-  samp_names <- vals$export$plot_data$e_data %>% dplyr::select(-tidyselect::one_of(getEDataColName(vals$export$peakIcr2))) %>% names()
-  
-  expect_true(inherits(vals$export$plot, "plotly"))
-  expect_true(c(vals$input$whichGroups1, vals$input$whichGroups2) %in% samp_names)
-  
+print(vals$export$plot_visdat)
+allcolnames <- c(vals$export$plot_data$e_data %>% colnames(), vals$export$plot_data$e_meta %>% colnames()) 
+
+test_that("check plotting dataframe",{
+  expect_true(all(vals$export$color_choices %in% c('bs1', 'bs2', allcolnames)))
+  expect_true(inherits(vals$export$plot_data, "peakIcrData"))
+  expect_true(!is.null(vals$export$plot_data %>% attr("group_DF")))
 })
+
+test_that("Group comparison plot produced", {
+  expect_true(inherits(vals$export$plot, "plotly"))
+})
+
+app$snapshot(items = list(output = "parmsTable", export = c("plot_attrs", "plot_layout", "plot_visdat")))
+
 app$takeScreenshot("screenshots/density_groupcomparisons.png")
-app$snapshot(items = list(output = "parmsTable", export = "plot_attrs"))
 print("Group comparison density plot tests passed, Moving to custom scatter plots....")

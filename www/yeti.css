@@ -7143,3 +7143,8 @@ input[type="checkbox"] {
 .adjustdown input{
   top:5px;
 }
+
+.squeezesplitlayout .form-control{
+  margin-left:3px;
+  width:95%;
+}
