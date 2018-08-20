@@ -40,10 +40,13 @@ test_that("filtered peakICR object tests",{
   if(vals$input$massfilter){
     expect_false(is.null(attr(vals$export$peakIcr2, "filters")$massFilt))
   }
-  if(vals$input$molfilter){
-    expect_false(is.null(attr(vals$export$peakIcr2, "filters")$moleculeFilt))
+  if(vals$input$customfilterz){
+    expect_false(is.null(attr(vals$export$peakIcr2, "filters")[["emetaFilt_HtoC_ratio"]]))
+    expect_false(is.null(attr(vals$export$peakIcr2, "filters")[["emetaFilt_ElComposition"]]))
   }
+
   expect_true(inherits(vals$export$peakIcr2, "icrData"))
+  expect_equal(nrow(vals$export$peakIcr2$e_meta), vals$export$rem_peaks)
   
 })
 app$takeScreenshot("screenshots/filter_end.png")

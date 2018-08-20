@@ -761,7 +761,6 @@ shinyServer(function(session, input, output) {
   # Event: Create filtered nonreactive peakIcr2 when action button clicked
   # Depends on action button 'filter_click'
   observeEvent(input$filter_click, {
-    
     # if the data is already filtered start over from the uploaded data
     if (any(c("moleculeFilt", "massFilt", "formulaFilt") %in% names(attributes(peakIcr2)$filters)) | any(grepl("emetaFilt", names(attributes(peakIcr2)$filters)))){
       peakIcr2 <<- uploaded_data()
@@ -892,7 +891,7 @@ shinyServer(function(session, input, output) {
     revals$redraw_filter_plot <- FALSE
     if (input$massfilter){
       mass_filter(uploaded_data()) %>% 
-        filter(Mass <= input$max_mass, Mass >= input$min_mass) %>%
+        dplyr::filter(Mass <= input$max_mass, Mass >= input$min_mass) %>%
         pluck(1)
     }
     else NULL
@@ -900,8 +899,8 @@ shinyServer(function(session, input, output) {
   
   molfilter_ids <- eventReactive(c(input$minobs, input$molfilter), {
     if (input$molfilter){
-      molecule_filter(uploaded_data()) %>%
-        filter(Num_Observations >= input$minobs) %>%
+     molecule_filter(uploaded_data()) %>%
+        dplyr::filter(Num_Observations >= as.integer(input$minobs)) %>%
         pluck(1)
     }
     else NULL
@@ -910,7 +909,7 @@ shinyServer(function(session, input, output) {
   formfilter_ids <- eventReactive(input$formfilter, {
     if (input$formfilter){
       formula_filter(uploaded_data()) %>%
-        filter(Formula_Assigned == TRUE) %>%
+        dplyr::filter(Formula_Assigned == TRUE) %>%
         pluck(1)
     }
     else NULL
@@ -1008,6 +1007,9 @@ shinyServer(function(session, input, output) {
     display_table[1:2, 2] <- formatC(round(summary_table[1:2,2]), big.mark = ",", format = "d")
     display_table[3:4, 1] <- formatC(round(summary_table[3:4, 1], digits = 4), format = "f", big.mark = ",")
     display_table[3:4, 2] <- formatC(round(summary_table[3:4, 2], digits = 4), format = "f", big.mark = ",")
+    
+    #___test-export___
+    exportTestValues(rem_peaks = as.numeric(afterResults["sum_peaks"]))
     
     return(display_table)
   }, # End code portion of summary_filter
@@ -1566,7 +1568,7 @@ shinyServer(function(session, input, output) {
     # ___test-export___
     exportTestValues(plot = p, plot_attrs = p$x$attrs[[p$x$cur_data]], plot_layout = p$x$layout, plot_visdat = p$x$visdat[[p$x$cur_data]]())
     
-    inspect <<- p
+    # inspect <<- p
     
     return(p)
     

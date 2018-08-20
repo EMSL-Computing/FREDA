@@ -517,6 +517,7 @@ shinyUI(tagList(useShinyjs(),
                             
                    )
     )
+    # div(style = "position:absolute;top:3px;right:5px;z-index:1000", bsButton("visualize_help", "How do I use this page?", style = "info"))
   )
 )
 

@@ -53,7 +53,7 @@ lapply(1:3, function(i){
                 })
                 
                 # create range and keepNA? inputs
-                splitLayout(style = "position:relative;top:-15px;padding-left:5px", class = "squeezesplitlayout", cellWidths = c("40%", "40%", "20%"),
+                splitLayout(id = paste0("js_range_custom", i), style = "position:relative;top:-15px;padding-left:5px", class = "squeezesplitlayout", cellWidths = c("40%", "40%", "20%"),
                             numericInput(inputId = paste0("minimum_custom",i), label = "Min", value = min, min = min, max = cond_max, step = 0.01),
                             numericInput(inputId = paste0("maximum_custom",i), label = "Max", value = max, min = cond_min, max = max, step = 0.01),
                             tagList(
@@ -67,7 +67,7 @@ lapply(1:3, function(i){
   
                   cats <- unique(uploaded_data()$e_meta[, isolate(input[[el]])]) %>% setdiff(NA)
                   
-                  splitLayout(cellWidths = c("40%", "40%", "20%"),
+                  splitLayout(id = paste0("js_range_custom", i),
                               selectInput(inputId = paste0("categorical_custom",i), label = "Categories to Keep", choices = cats,
                                           multiple = TRUE, selected = cats),
                               tagList(
@@ -217,8 +217,7 @@ lapply(1:3, function(i){
     condition = cond_min >= cond_max
     
     # put up warning and disable filter button
-    toggleCssClass(paste0("minimum_custom", i), "redoutline", condition = condition)
-    toggleCssClass(paste0("maximum_custom", i), "redoutline", condition = condition)
+    toggleCssClass(paste0("js_range_custom", i), "attention", condition = condition)
     toggleState(paste0("filter_click"), condition = !condition)
     
   })
