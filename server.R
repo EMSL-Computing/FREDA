@@ -25,10 +25,12 @@ shinyServer(function(session, input, output) {
   source('helper_functions/summaryFilter.R') 
   source('helper_functions/summaryPreprocess.R')
   source("helper_functions/renderDownloadPlots.R")
+  source("Observers/misc_observers.R", local = TRUE)
   
   revals <- reactiveValues(ntables = 0, makeplot = 1, color_by_choices = NULL, axes_choices = NULL,
                            plot_data_export = NULL, peakICR_export = NULL, redraw_filter_plot = TRUE, reac_filter_plot = TRUE, 
-                           warningmessage = list(upload = "<p style = 'color:deepskyblue'>Upload data and molecular identification files described in 'Data Requirements' on the previous page."))
+                           warningmessage = list(upload = "<p style = 'color:deepskyblue'>Upload data and molecular identification files described in 'Data Requirements' on the previous page."),
+                           warningmessage_visualize = list())
   
   exportTestValues(plot_data = revals$plot_data_export, peakICR = revals$peakICR_export, color_choices = revals$color_by_choices)
   ######## Welcome Tab #############
@@ -1150,31 +1152,48 @@ shinyServer(function(session, input, output) {
   
   # selector for summary funcion
   output$summary_fxn_out <- renderUI({
+    text_pres_fn <- "For a given peak, should the count or proportion of nonmissing values across samples in a group be used to determine whether or not that peak is present/absent within the group"
+    text_test <- HTML("<p>Should a G-test or presence absence thresholds be used to determine whether a sample is unique to a particular group?</p><p>Depending on your selection, you will be asked for a presence threshold and a p-value (G-test) or a presence AND absence threshold<p/>") 
+    
+    # density plot has group summary options disabled
     if (input$chooseplots == "Density Plot"){
       summary_dropdown <- tags$div(class = "grey_out",
-                                   disabled(radioButtons("pres_fn", "Determine presence/absence by:", 
-                                                          choices = c("No. of Samples Present" = "nsamps", "Proportion of Samples Present" = "prop"), inline = TRUE)),
-                                   disabled(selectInput("summary_fxn", "Determine uniqueness using:", 
-                                                        choices = NULL)),
-                                   splitLayout(cellWidths = c("30%", "30%", "30%"),
-                                     disabled(numericInput("pres_thresh", "Presence threshold", value = 1)),
-                                     disabled(numericInput("absn_thresh", "Absence threshold", value = 0)),
-                                     disabled(numericInput("pval", "p-value", min = 0, max = 1, value = 0.05))
+                                   
+                                   disabled(
+                                     radioButtons("pres_fn", 
+                                                  div("Determine presence/absence by:", div(style = "display:inline-block", tipify(icon("question-sign", lib = "glyphicon"), title = text_pres_fn, placement = "top", trigger = 'hover'))), 
+                                                  choices = c("No. of Samples Present" = "nsamps", "Proportion of Samples Present" = "prop"), inline = TRUE, selected = "nsamps")
+                                    ),
+                                   
+                                   disabled(selectInput("summary_fxn", 
+                                                        div("Determine uniqueness using:", div(style = "display:inline-block", tipify(icon("question-sign", lib = "glyphicon"), title = text_test, placement = "top", trigger = 'hover'))), 
+                                                        choices = c("Select one" = "select_none", "G test" = "uniqueness_gtest", "Presence/absence thresholds" = "uniqueness_nsamps"))),
+                                   
+                                   splitLayout(class = "squeezesplitlayout",
+                                               disabled(numericInput("pres_thresh", "Presence threshold", value = 1, step = 0.1)),
+                                               disabled(numericInput("absn_thresh", "Absence threshold", value = 0, step = 0.1)),
+                                               disabled(numericInput("pval", "p-value", min = 0, max = 1, value = 0.05, step = 0.1))
                                    ),
+                                   
                                    tags$p("No summary functions for comparison density plots", style = "color:gray;font-size:small;margin-top:3px")
       )
-      
-    }else summary_dropdown <- tagList(
-      radioButtons("pres_fn", "Determine presence/absence by:", 
-                             choices = c("No. of Samples Present" = "nsamps", "Proportion of Samples Present" = "prop"), inline = TRUE, selected = "nsamps"),
-      div(id = "js_summary_fxn", selectInput("summary_fxn", "Determine uniqueness using:", 
-                  choices = c("Select one" = "select_none", "G test" = "uniqueness_gtest", "Presence/absence thresholds" = "uniqueness_nsamps"))),
-      splitLayout(class = "squeezesplitlayout", 
-        div(id = "js_pres_thresh", numericInput("pres_thresh", "Presence threshold", value = 1)),
-        div(id = "js_absn_thresh", numericInput("absn_thresh", "Absence threshold", value = 0)),
-        div(id ="js_pval", numericInput("pval", "p-value", min = 0, max = 1, value = 0.05))
-      )
-    )
+     # non-density plots 
+    }else{ 
+      summary_dropdown <- tagList(
+        radioButtons("pres_fn", 
+                     div("Determine presence/absence by:", div(style = "color:deepskyblue;display:inline-block", tipify(icon("question-sign", lib = "glyphicon"), title = text_pres_fn, placement = "top", trigger = 'hover'))), 
+                     choices = c("No. of Samples Present" = "nsamps", "Proportion of Samples Present" = "prop"), inline = TRUE, selected = "nsamps"),
+        
+        div(id = "js_summary_fxn", selectInput("summary_fxn", 
+                                              div("Determine uniqueness using:", div(style = "color:deepskyblue;display:inline-block", tipify(icon("question-sign", lib = "glyphicon"), title = text_test, placement = "top", trigger = 'hover'))), 
+                                              choices = c("Select one" = "select_none", "G test" = "uniqueness_gtest", "Presence/absence thresholds" = "uniqueness_nsamps"))),
+        
+        splitLayout(class = "squeezesplitlayout", 
+          div(id = "js_pres_thresh", numericInput("pres_thresh", "Presence threshold", value = 1, step = 0.1)),
+          div(id = "js_absn_thresh", numericInput("absn_thresh", "Absence threshold", value = 0, step = 0.1)),
+          div(id ="js_pval", numericInput("pval", "p-value", min = 0, max = 1, value = 0.05, step = 0.1))
+        )
+      )}
     return(summary_dropdown)
   })
   
@@ -1276,7 +1295,7 @@ shinyServer(function(session, input, output) {
       
       # conditional error checking depending on nsamps and proportion
       if (input$pres_fn == "nsamps"){
-        validate(need(input$pres_thresh <= max(length(input$whichGroups1), length(input$whichGroups2)), "Maximum threshold is above the maximum number of samples in a group"),
+        validate(need(input$pres_thresh <= min(length(input$whichGroups1), length(input$whichGroups2)), "Maximum threshold is above the maximum number of samples in a group"),
                  need(is.numeric(input$pres_thresh), "Please enter a numeric value for threshold to determine presence"),
                  need(input$absn_thresh < input$pres_thresh & input$absn_thresh >= 0, "absence threshold must be non-negative and lower than presence threshold"))
       }
@@ -1725,6 +1744,15 @@ shinyServer(function(session, input, output) {
   
   output$parmsTable <- renderDataTable(parmTable$parms[,-18],
                                        options = list(scrollX = TRUE))
+  
+  # warning messages for viztab
+  output$warnings_visualize <- renderUI({
+    HTML(lapply(revals$warningmessage_visualize, function(el){
+      paste0("<p ", el, "</p>")
+    }) %>%
+      paste(collapse = "")
+    )
+  })
   
   # End Visualize tab #
   

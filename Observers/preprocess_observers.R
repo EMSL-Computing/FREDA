@@ -1,18 +1,3 @@
-# Help Button
-observeEvent(input$preprocess_help,{
-  showModal(
-    modalDialog("",
-                tags$p("Here you can tell FREDA to compute certain values based on your input data.  The result of these calculations will be appended
-                         to your molecular identification file and can be used as filtering variables in the next tab.\n",
-                       style = "color:CornFlowerBlue"),
-                br(),
-                HTML("<p style = color:CornFlowerBlue> Check boxes to select which values you want calculated and then hit 'Process Data'.  
-                       <span style = font-weight:bold>Element ratios are selected by default as they are required to produce Van-Krevelen
-                       and Kendrick plots.</span>  \n Table summaries and an interactive histogram/bar chart of the values you selected will be generated.<p>")
-    )
-  )
-})
-
 # Summary Panel: Display table summaries of numeric and categorical columns in e_meta
 
 # For numeric columns:

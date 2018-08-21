@@ -1,28 +1,3 @@
-# Help Button
-observeEvent(input$visualize_help,{
-  showModal(
-    modalDialog("",
-                tags$p("This page is used to generate plots from your processed data.  In order from top to bottom on the left panel, do the following:\n",
-                       style = "color:CornFlowerBlue"),
-                tags$ul(
-                  tags$li("Select the type of plot you want to generate."),
-                  tags$li("Choose whether you would like to plot a single sample, multiple samples, or a comparison of groups"),
-                  tags$li("If you selected a single sample, specify which one.  If you selected multiple samples by group, select samples that 
-                          should be grouped. If you selected a comparison of groups, two group dropdowns will appear; select samples that
-                          you want included in each of the two groups"),
-                  tags$li("If desired, specify axis and title labels and hit 'Generate Plot'\n"),
-                  
-                  style = "color:CornFlowerBlue"),
-                tags$p("A plot will appear and can be customized to color by certain calculated values.  
-                       Van Krevelen boundaries can be displayed for VK-plots.
-                       Custom scatterplots will allow for selection of arbitrary x and y axes.", style = "color:CornFlowerBlue"),
-                hr(),
-                tags$p("Certain menu options may 'grey_out' during navigation, indicating disabled functionality for a plot type, 
-                       or because certain values were not calculated during preprocessing")
-                )
-            )
-})
-
 # shinyjs helpers
 observeEvent(c(input$top_page, input$chooseplots, input$choose_single, input$whichSamples, input$whichGroups1, input$whichGroups2,
                input$summary_fxn, input$pres_thresh, input$pres_fn, input$absn_thresh, input$pval),{
@@ -38,34 +13,61 @@ observeEvent(c(input$top_page, input$chooseplots, input$choose_single, input$whi
   
   if (isTRUE(input$pres_fn == "nsamps")){
     if(isTRUE(input$summary_fxn == "uniqueness_gtest")){
-      toggleCssClass("js_pval", "attention", any(input$pval <= 0, input$pval >= 1))
-      toggleCssClass("js_pres_thresh", "attention", any(input$pres_thresh > max(length(input$whichGroups1), length(input$whichGroups2)), 
-                                              input$pres_thresh < 1, 
-                                              !is.numeric(input$pres_thresh)))
+      cond_pval <- any(input$pval <= 0, input$pval >= 1)
+      cond_pres <- any(input$pres_thresh > min(length(input$whichGroups1), length(input$whichGroups2)), 
+                         input$pres_thresh < 1, 
+                         !is.numeric(input$pres_thresh))
+      toggleCssClass("js_pval", "attention", cond_pval)
+      toggleCssClass("js_pres_thresh", "attention", cond_pres)
+      content_pval <- if(isTRUE(cond_pval)) "style = 'color:red'>P-value must be between 0 and 1" else NULL
+      content_pres <- if(isTRUE(cond_pres)) "style = 'color:red'>Presence threshold must be a numeric value of at least 1 and no more than the minimum number of samples in a group" else NULL
+      content_absn <- NULL
     }
     else if(isTRUE(input$summary_fxn == "uniqueness_nsamps")){
-      toggleCssClass("js_pres_thresh", "attention", 
-                     any(input$pres_thresh > max(length(input$whichGroups1), length(input$whichGroups2)), input$pres_thresh < 1,
-                         !is.numeric(input$pres_thresh), input$absn_thresh >= input$pres_thresh))
-      toggleCssClass("js_absn_thresh", "attention", 
-                     any(input$absn_thresh > max(length(input$whichGroups1), length(input$whichGroups2)) - 1, input$absn_thresh < 0, 
-                         !is.numeric(input$absn_thresh), input$absn_thresh >= input$pres_thresh))
+      cond_pres <- any(input$pres_thresh > min(length(input$whichGroups1), length(input$whichGroups2)), input$pres_thresh < 1,
+                       !is.numeric(input$pres_thresh), input$absn_thresh >= input$pres_thresh)
+      cond_absn <- any(input$absn_thresh > min(length(input$whichGroups1), length(input$whichGroups2)) - 1, input$absn_thresh < 0, 
+                       !is.numeric(input$absn_thresh), input$absn_thresh >= input$pres_thresh)
+      
+      toggleCssClass("js_pres_thresh", "attention", cond_pres)
+      toggleCssClass("js_absn_thresh", "attention", cond_absn)
+      
+      content_pval <- NULL
+      content_pres <- if(isTRUE(cond_pres)) "style = 'color:red'>Presence threshold must be a numeric value of at least 1, no more than the minimum number of samples in a group, and greater than the absence threshold." else NULL
+      content_absn <- if(isTRUE(cond_absn)) "style = 'color:red'>Absence threshold must be a numeric value less than the minimum group size and less than the presence threshold." else NULL
     }
+    else content_pval <- content_pres <- content_absn <- NULL
   }
   else if (isTRUE(input$pres_fn == "prop")){
     if(isTRUE(input$summary_fxn == "uniqueness_gtest")){
-      toggleCssClass("js_pval", "attention", any(input$pval <= 0, input$pval >= 1))
-      toggleCssClass("js_pres_thresh", "attention", any(input$pres_thresh > 1, input$pres_thresh <= 0, !is.numeric(input$pres_thresh)))
+      cond_pval <- any(input$pval <= 0, input$pval >= 1)
+      cond_pres <- any(input$pres_thresh > 1, input$pres_thresh <= 0, !is.numeric(input$pres_thresh))
+      toggleCssClass("js_pval", "attention", cond_pval)
+      toggleCssClass("js_pres_thresh", "attention", cond_pres)
+      
+      content_pval <- if(isTRUE(cond_pval)) "style = 'color:red'>P-value must be between 0 and 1" else NULL
+      content_pres <- if(isTRUE(cond_pres)) "style = 'color:red'>Presence threshold must be a numeric value greater than 0 and at most 1" else NULL
+      content_absn <- NULL
     }
     else if(isTRUE(input$summary_fxn == "uniqueness_prop")){
-      toggleCssClass("js_pres_thresh", "attention", 
-                     any(input$pres_thresh > 1, input$pres_thresh <= 0,
-                         !is.numeric(input$pres_thresh), input$absn_thresh >= input$pres_thresh))
-      toggleCssClass("js_absn_thresh", "attention", 
-                     any(input$absn_thresh >= 1, input$absn_thresh < 0, 
-                         !is.numeric(input$absn_thresh), input$absn_thresh >= input$pres_thresh))
+      cond_pres <- any(input$pres_thresh > 1, input$pres_thresh <= 0, !is.numeric(input$pres_thresh), input$absn_thresh >= input$pres_thresh)
+      cond_absn <- any(input$absn_thresh >= 1, input$absn_thresh < 0, !is.numeric(input$absn_thresh), input$absn_thresh >= input$pres_thresh)
+      
+      toggleCssClass("js_pres_thresh", "attention", cond_pres)
+      toggleCssClass("js_absn_thresh", "attention", cond_absn)
+      
+      content_pval <- NULL
+      content_pres <- if(isTRUE(cond_pres)) "style = 'color:red'>Presence threshold must be a numeric value greater than 0, at most 1, and greater than the absence threshold" else NULL
+      content_absn <- if(isTRUE(cond_absn)) "style = 'color:red'>Absence threshold must be a non-negative numeric value less than the presence threshold." else NULL
+
     }
+    else content_pval <- content_pres <- content_absn <- NULL
   }
+  else content_pval <- content_pres <- content_absn <- NULL
+  
+  revals$warningmessage_visualize$content_pval <- content_pval
+  revals$warningmessage_visualize$content_pres <- content_pres
+  revals$warningmessage_visualize$content_absn <- content_absn
 })
 
 # logical reactive value that clears the plot if a new type is selected
@@ -171,7 +173,7 @@ observeEvent(numeric_selected(),{
 observeEvent(input$pres_fn,{
   if (input$pres_fn == "nsamps"){
     choices = c("Select one" = "select_none", "G test" = "uniqueness_gtest", "Presence/absence thresholds" = "uniqueness_nsamps")
-    updateNumericInput(session, "thresh", min = 1, max = max(length(input$whichGroups1), length(input$whichGroups2)))
+    updateNumericInput(session, "thresh", min = 1, max = min(length(input$whichGroups1), length(input$whichGroups2)))
   }
   else if (input$pres_fn == "prop"){
     choices = c("Select one" = "select_none", "G test" = "uniqueness_gtest", "Presence/absence thresholds" = "uniqueness_prop")

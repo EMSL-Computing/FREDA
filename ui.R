@@ -185,11 +185,6 @@ shinyUI(tagList(useShinyjs(),
                    ################## Preprocess Panel ###############################################
                      tabPanel("Preprocess",
                               
-                              bsButton("preprocess_help", "How do I use this page?", style = "info"),
-                              
-                              br(),
-                              br(),
-                              
                               sidebarLayout(
                                 
                                 # Sidebar panel
@@ -235,12 +230,7 @@ shinyUI(tagList(useShinyjs(),
 
                    
                    ################## Filter Panel ##############################################
-                   tabPanel("Filter", 
-                            
-                            bsButton("filter_help", "How do I use this page?", style = "info"),
-                            
-                            br(),
-                            br(),
+                   tabPanel("Filter",
                             
                             sidebarLayout(
                               sidebarPanel(
@@ -358,12 +348,7 @@ shinyUI(tagList(useShinyjs(),
                             )), # End Filter tab
                    
                    ################## Visualize Panel ###############################################
-                   tabPanel("Visualize", 
-                            
-                            bsButton("visualize_help", "How do I use this page?", style = "info"),
-                            
-                            br(),
-                            br(),
+                   tabPanel("Visualize",
                             
                             sidebarLayout(
                               
@@ -401,7 +386,12 @@ shinyUI(tagList(useShinyjs(),
                                            actionButton("update_axes", label = "Update Labels", icon = icon("refresh"), lib = "glyphicon")
                                     )
                                   )
-                                )
+                                ),
+                                
+                                br(),
+                                br(),
+                                
+                                div(id = "warnings_visualize", style = "overflow-y:scroll;max-height:150px", uiOutput("warnings_visualize"))
                               ),# End sidebar conditionals on Visualize tab #
                               
                               mainPanel(
@@ -516,8 +506,8 @@ shinyUI(tagList(useShinyjs(),
                             # )
                             
                    )
-    )
-    # div(style = "position:absolute;top:3px;right:5px;z-index:1000", bsButton("visualize_help", "How do I use this page?", style = "info"))
+    ),
+    div(id = "js_helpbutton", style = "position:absolute;top:3px;right:16px;z-index:1000", hidden(bsButton("helpbutton", "How do I use this page?", style = "info")))
   )
 )
 
