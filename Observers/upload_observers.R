@@ -193,6 +193,46 @@ observeEvent(c(input$f_column,input$select, input$isotope_yn),{
   
 })
 
+# Show success message when peakICR() is sucessfully created 
+observeEvent(peakICR(),{
+  #Error handling: peakICR() must exist
+  req(peakICR())
+  
+  #___test-export___
+  if (isTRUE(getOption("shiny.testmode"))) {
+    revals$peakICR_export <- peakICR()
+  }
+  
+  showModal(
+    modalDialog(
+      title = "Upload Success",
+      fluidRow(
+        column(10, align = "center", offset = 1,
+               HTML('<h4 style= "color:#1A5276">Your data has been successfully uploaded. 
+                    You may proceed to the subsequent tabs for analysis.</h4>'),
+               hr(),
+               actionButton("upload_dismiss", "Review results.", width = '75%'),
+               br(),
+               br(),
+               actionButton("goto_preprocess", "Continue to preprocessing", width = '75%')
+               )
+      )
+      ,footer = NULL)
+  )
+  
+  # enable inputs that should only be available if data is sucessfully uploaded
+  disabled_inputs <- c("preprocess_click", "filter_click", "reset_filters", "plot_submit", "update_axes")
+  lapply(disabled_inputs, enable)
+  
+})
+
+# modal dialog behavior
+observeEvent(input$upload_dismiss,{removeModal()})
+observeEvent(input$goto_preprocess, {
+  updateTabsetPanel(session, "top_page", selected = "Preprocess")
+  removeModal()
+})
+
 
 
 

@@ -396,46 +396,6 @@ shinyServer(function(session, input, output) {
     
   }) # End success #
   
-  # create 
-  observeEvent(peakICR(),{
-    #Error handling: peakICR() must exist
-    req(peakICR())
-    
-    #___test-export___
-    if (isTRUE(getOption("shiny.testmode"))) {
-      revals$peakICR_export <- peakICR()
-    }
-    
-    showModal(
-      modalDialog(
-        title = "Upload Success",
-        fluidRow(
-          column(10, align = "center", offset = 1,
-                 HTML('<h4 style= "color:#1A5276">Your data has been successfully uploaded. 
-                      You may proceed to the subsequent tabs for analysis.</h4>'),
-                 hr(),
-                 actionButton("upload_dismiss", "Review results.", width = '75%'),
-                 br(),
-                 br(),
-                 actionButton("goto_preprocess", "Continue to preprocessing", width = '75%')
-                 )
-        )
-        ,footer = NULL)
-    )
-    
-    # enable inputs that should only be available if data is sucessfully uploaded
-    disabled_inputs <- c("preprocess_click", "filter_click", "reset_filters", "plot_submit", "update_axes")
-    lapply(disabled_inputs, enable)
-    
-  })
-  
-  # modal dialog behavior
-  observeEvent(input$upload_dismiss,{removeModal()})
-  observeEvent(input$goto_preprocess, {
-    updateTabsetPanel(session, "top_page", selected = "Preprocess")
-    removeModal()
-  })
-  
   # Summary: Display number of peaks and samples
   output$num_peaks <- renderText({
     peakICR()
@@ -591,9 +551,10 @@ shinyServer(function(session, input, output) {
   observeEvent(input$preprocess_click, {
     validate(need(input$tests, message = "Please choose at least one test to calculate"))
     
-    ## Include functionality to possibly reset 
-    
-    # peakIcr2$e_meta <<- peakIcr2$e_meta %>% dplyr::select(-one_of(calc_vars$ColumnName))
+    # If columns have already been calculated, start over from uploaded data
+    if(any(attr(peakIcr2, "cnames") %in% calc_vars$ColumnName)){
+      peakIcr2 <<- peakICR()
+    }
     
     # Apply all relevant functions
     for(el in input$tests){
@@ -651,8 +612,7 @@ shinyServer(function(session, input, output) {
     req(calc_vars, revals$numeric_cols, revals$categorical_cols)
     
     tagList(
-      br(),
-      br(),
+      hr(),
       tags$p('I would like to see a histogram/bar-chart across all values of:'),
       selectInput('which_hist', NULL,
                   choices = isolate(emeta_display_choices()))
@@ -874,11 +834,6 @@ shinyServer(function(session, input, output) {
     HTML('<h4 style= "color:#1A5276">You may now proceed to preprocessing and visualization</h4>')
     
   }) # End successMessage
-  observeEvent(input$filter_dismiss,{removeModal()})
-  observeEvent(input$goto_viz,{
-    updateTabsetPanel(session, "top_page", selected = "Visualize")
-    removeModal()
-  })
   
   # Display successMessage
   # Depends on: successMessage
@@ -1158,12 +1113,14 @@ shinyServer(function(session, input, output) {
     # density plot has group summary options disabled
     if (input$chooseplots == "Density Plot"){
       summary_dropdown <- tags$div(class = "grey_out",
-                                   
+                                   tags$p("No summary functions for comparison density plots", style = "color:gray;font-size:small;margin-top:3px;font-weight:bold"),
                                    disabled(
                                      radioButtons("pres_fn", 
-                                                  div("Determine presence/absence by:", div(style = "display:inline-block", tipify(icon("question-sign", lib = "glyphicon"), title = text_pres_fn, placement = "top", trigger = 'hover'))), 
+                                                  div("Determine presence/absence by:", div(style = "display:inline-block;right:5px", tipify(icon("question-sign", lib = "glyphicon"), title = text_pres_fn, placement = "top", trigger = 'hover'))), 
                                                   choices = c("No. of Samples Present" = "nsamps", "Proportion of Samples Present" = "prop"), inline = TRUE, selected = "nsamps")
                                     ),
+                                   
+                                   hr(style = "margin-top:2px"),
                                    
                                    disabled(selectInput("summary_fxn", 
                                                         div("Determine uniqueness using:", div(style = "display:inline-block", tipify(icon("question-sign", lib = "glyphicon"), title = text_test, placement = "top", trigger = 'hover'))), 
@@ -1173,9 +1130,7 @@ shinyServer(function(session, input, output) {
                                                disabled(numericInput("pres_thresh", "Presence threshold", value = 1, step = 0.1)),
                                                disabled(numericInput("absn_thresh", "Absence threshold", value = 0, step = 0.1)),
                                                disabled(numericInput("pval", "p-value", min = 0, max = 1, value = 0.05, step = 0.1))
-                                   ),
-                                   
-                                   tags$p("No summary functions for comparison density plots", style = "color:gray;font-size:small;margin-top:3px")
+                                   )
       )
      # non-density plots 
     }else{ 
@@ -1183,6 +1138,8 @@ shinyServer(function(session, input, output) {
         radioButtons("pres_fn", 
                      div("Determine presence/absence by:", div(style = "color:deepskyblue;display:inline-block", tipify(icon("question-sign", lib = "glyphicon"), title = text_pres_fn, placement = "top", trigger = 'hover'))), 
                      choices = c("No. of Samples Present" = "nsamps", "Proportion of Samples Present" = "prop"), inline = TRUE, selected = "nsamps"),
+        
+        hr(style = "margin-top:2px"),
         
         div(id = "js_summary_fxn", selectInput("summary_fxn", 
                                               div("Determine uniqueness using:", div(style = "color:deepskyblue;display:inline-block", tipify(icon("question-sign", lib = "glyphicon"), title = text_test, placement = "top", trigger = 'hover'))), 

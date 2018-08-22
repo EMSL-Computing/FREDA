@@ -205,11 +205,11 @@ shinyUI(tagList(useShinyjs(),
                                   
                                   wellPanel(
                                     tags$div(class = "row",
-                                             tags$div(class = "col-sm-5",
+                                             tags$div(class = "col-sm-5", style = "height:350px;overflow-y:scroll;",
                                                       uiOutput("numeric_header"),
                                                       dataTableOutput('numeric_summary')
                                              ),
-                                             tags$div(class = "col-sm-7",
+                                             tags$div(class = "col-sm-7", style = "height:350px;overflow-y:scroll;",
                                                       uiOutput("cat_header"),
                                                       uiOutput('categorical_summary')
                                                       

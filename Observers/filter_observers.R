@@ -245,6 +245,13 @@ observeEvent(input$clear_filters_yes, {
   removeModal()
 })
 
+# Dismiss success message or move to next page?
+observeEvent(input$filter_dismiss,{removeModal()})
+observeEvent(input$goto_viz,{
+  updateTabsetPanel(session, "top_page", selected = "Visualize")
+  removeModal()
+})
+
 
 
 

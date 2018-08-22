@@ -42,10 +42,15 @@ observe({
 
 # The renderUI call that takes input from the above observer
 output$categorical_summary <- renderUI({
-  tagList(lapply(1:revals$ntables, function(i){
-    DT::dataTableOutput(paste0('Table_',i))
-  })
-  )
+  req(revals$categorical_cols)
+  
+  if(isTRUE(nrow(revals$categorical_cols) == 0)) NULL
+  else{
+    tagList(lapply(1:revals$ntables, function(i){
+      DT::dataTableOutput(paste0('Table_',i))
+                })
+    )
+  }
 })
 
 ## END TABLE SUMMARY SECTION ##

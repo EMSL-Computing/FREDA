@@ -1,10 +1,33 @@
 # show/hide button for certain pages
 observeEvent(input$top_page,{
-  toggleElement("helpbutton", condition = input$top_page %in% c("Preprocess", "Filter", "Visualize"))
+  toggleElement("helpbutton", condition = input$top_page %in% c("Upload", "Preprocess", "Filter", "Visualize"))
 })
 
 # Help Button
 observeEvent(input$helpbutton,{
+  if(input$top_page == "Upload"){
+    showModal(
+      modalDialog("",
+                  tags$p("The purpose of this page is to upload your data and specify its structure, which at mininum must adhere to the description 
+                         in the 'Data Requirements' section of the Welcome dropdown"),
+                  br(),
+                  tags$p("Generally, the steps involved are:"),
+                  HTML("<ul>
+                          <li>Browse to and select your data file and molecular identification file in the first and second upload prompts respectively.</li>
+                          <li>Indicate the column, contained in both files, which contains the ID's for each peak.</li>
+                          <li>Indicate whether your molecular identification file contains elemental or full formula columns.</li>
+                              <ul>
+                                  <li>If you select Elemental Columns, 6 dropdowns will appear asking for which columns contain elemental information; FREDA will attempt to auto-populate them</li>
+                                  <li>If you select Formulas, one dropdown will appear asking which column contains formula information</li>
+                              </ul>
+                          <li>Indicate whether or not there is isotopic information contained in the molecular identification file. (If you select no, proceed to click 'Process Data'.</li>
+                          <li>If you selected yes, identify whether you would like to filter isotopic peaks, which column contains this information, and the symbol which identifies presence.  Then hit 'Process Data'</li>
+                       </ul>")
+                  )
+    )
+    
+  }
+  
   if(input$top_page == "Preprocess"){
       showModal(
         modalDialog("",
