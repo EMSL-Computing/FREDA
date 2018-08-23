@@ -12,6 +12,7 @@ observeEvent(c(input$top_page, input$chooseplots, input$choose_single, input$whi
                  toggleCssClass("plotUI_cond", "suggest", input$choose_single == 3 & all(is.null(input$whichGroups1), is.null(input$whichGroups2)))
                  toggleCssClass("js_summary_fxn", "suggest", input$choose_single == 3 & all(!is.null(input$whichGroups1), !is.null(input$whichGroups2)) & input$summary_fxn == "select_none")
                  
+                 # simple state toggling
                  ### warning visuals for summary comparison plots
                  ### displays warning message and error box if user does something like selects a p-value not in (0,1)
                  
@@ -128,14 +129,8 @@ observeEvent(input$chooseplots, {
   # }
   
   lapply(dropdown_ids, function(inputid){
-    if(inputid %in% choices[[input$chooseplots]]){
-      enable(inputid)
-      removeCssClass(paste0("js_",inputid), "grey_out")
-    }
-    else{
-      disable(inputid)
-      addCssClass(paste0("js_",inputid), "grey_out")
-    }
+    toggleState(inputid, condition = inputid %in% choices[[input$chooseplots]])
+    toggleCssClass(paste0("js_", inputid), "grey_out", condition = !(inputid %in% choices[[input$chooseplots]]))
   })
 })
 
@@ -175,22 +170,30 @@ observeEvent(numeric_selected(),{
     disable("legend_title_input")
     addCssClass("js_legend_title_input", "grey_out")
   }
-  
-  
 })
 
 ### Summary comparison plot selection control ###
-observeEvent(input$pres_fn,{
+observeEvent(c(input$pres_fn, input$whichGroups1, input$whichGroups2),{
+  cond_smallgrp <- any(length(input$whichGroups1) < 3, length(input$whichGroups2) < 3)
+  content <- if(cond_smallgrp) "style = 'color:grey'>G-test disabled for groups smaller than size 3" else NULL
+  
   if (input$pres_fn == "nsamps"){
-    choices = c("Select one" = "select_none", "G test" = "uniqueness_gtest", "Presence/absence thresholds" = "uniqueness_nsamps")
+    if(cond_smallgrp){
+      choices = c("Presence/absence thresholds" = "uniqueness_nsamps")
+    }
+    else choices = c("Select one" = "select_none", "G test" = "uniqueness_gtest", "Presence/absence thresholds" = "uniqueness_nsamps")
     updateNumericInput(session, "thresh", min = 1, max = min(length(input$whichGroups1), length(input$whichGroups2)))
   }
   else if (input$pres_fn == "prop"){
+    if(cond_smallgrp){
+      choices = c("Presence/absence thresholds" = "uniqueness_prop")
+    }
     choices = c("Select one" = "select_none", "G test" = "uniqueness_gtest", "Presence/absence thresholds" = "uniqueness_prop")
     updateNumericInput(session, "thresh", min = 0, max = 1)
   }
   selected = ifelse(input$summary_fxn %in% c("uniqueness_nsamps", "uniqueness_prop"), choices["Presence/absence thresholds"], input$summary_fxn)
   updateSelectInput(session, "summary_fxn", choices = choices, selected = selected)
+  revals$warningmessage_visualize$small_groups <- content
 })
 
 # Control state for presence/absence threshold and p-value inputs

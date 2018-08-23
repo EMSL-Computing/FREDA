@@ -825,7 +825,7 @@ shinyServer(function(session, input, output) {
                            HTML('<h4 style= "color:#1A5276">Your data has been filtered using mass and/or minimum observations. 
                                 You may proceed to the next tabs for subsequnt analysis.</h4>'),
                            hr(),
-                           actionButton("filter_dismiss", "Review results.", width = '75%'),
+                           actionButton("filter_dismiss", "Review results", width = '75%'),
                            br(),
                            br(),
                            actionButton("goto_viz", "Continue to Visualization", width = '75%')
@@ -1081,11 +1081,11 @@ shinyServer(function(session, input, output) {
     if (input$choose_single == 3){
       return(tagList(
         div(id = "js_whichGroups1", 
-            selectInput('whichGroups1', 'Group 1',
+            selectInput('whichGroups1', HTML("<input type = 'text' id = 'group1_name' placeholder = 'Group 1' style = 'border-style:unset;'/>"),
                     choices = setdiff(sample_names(), isolate(input$whichGroups2)),
                     multiple = TRUE)),
         div(id = "js_whichGroups2",
-            selectInput("whichGroups2", "Group 2", 
+            selectInput("whichGroups2", HTML("<input type = 'text' id = 'group2_name' placeholder = 'Group 2' style = 'border-style:unset;'/>"), 
                     choices = setdiff(sample_names(), isolate(input$whichGroups1)), 
                     multiple = TRUE))
       ))
@@ -1222,10 +1222,13 @@ shinyServer(function(session, input, output) {
       validate(need(!is.null(isolate(input$whichGroups2)), message = "Please select samples for second grouping"))
       validate(need(length(input$whichGroups2) > 0, message = "Please select at least 1 sample"))
       
+      group1 <- ifelse(is.null(input$group1_name) | isTRUE(input$group1_name == ""), "Group 1", input$group1_name)
+      group2 <- ifelse(is.null(input$group2_name) | isTRUE(input$group2_name == ""), "Group 2", input$group2_name)
+      
       # assign a group DF to the data with a level for each of the two groups
       group1_samples <- isolate(input$whichGroups1)
       group2_samples <- isolate(input$whichGroups2)
-      temp_group_df <- data.frame(c(group1_samples, group2_samples), c(rep("Group1", times=length(group1_samples)), rep("Group2", length(group2_samples))))
+      temp_group_df <- data.frame(c(group1_samples, group2_samples), c(rep(group1, times=length(group1_samples)), rep(group2, length(group2_samples))))
       colnames(temp_group_df) <- c(getFDataColName(peakIcr2), "Group")
       
       temp_data <- peakIcr2 %>%
@@ -1255,7 +1258,7 @@ shinyServer(function(session, input, output) {
       
       # conditional error checking depending on nsamps and proportion
       if (input$pres_fn == "nsamps"){
-        validate(need(input$pres_thresh <= min(length(input$whichGroups1), length(input$whichGroups2)), "Maximum threshold is above the maximum number of samples in a group"),
+        validate(need(input$pres_thresh <= min(length(input$whichGroups1), length(input$whichGroups2)), "Maximum threshold is above the minimum number of samples in a group"),
                  need(is.numeric(input$pres_thresh), "Please enter a numeric value for threshold to determine presence"),
                  need(input$absn_thresh < input$pres_thresh & input$absn_thresh >= 0, "absence threshold must be non-negative and lower than presence threshold"))
       }
@@ -1492,7 +1495,7 @@ shinyServer(function(session, input, output) {
         # sample/group inputs depending on whether or not we are doing a comparison of groups
         if (input$choose_single == 3){
           samples = FALSE
-          groups = c("Group1", "Group2")
+          groups = unique(isolate(attr(plot_data(), "group_DF")$Group))
         }
         else if (input$choose_single == 2){
           samples = input$whichSamples
@@ -1536,7 +1539,7 @@ shinyServer(function(session, input, output) {
     
     x <- y <- list(titlefont = f)
     
-    p <- p %>% layout(xaxis = x, yaxis = y, titlefont = f, margin = list(t = 50))
+    p <- p %>% layout(xaxis = x, yaxis = y, titlefont = f)
     
     # Null assignment bypasses plotly bug
     p$elementId <- NULL

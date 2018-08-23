@@ -7080,10 +7080,16 @@ input[type="checkbox"] {
 .grey_out {
   color:grey;
 }
+.grey_out .item {
+  opacity:0.1;
+}
+.grey_out .selectize-control .selectize-input {
+  background-color:rgba(0,0,0,0.1);
+}
 
 .background_FTICR h1{
   margin:-15px;
-  background-color:rgba(0.1,0.1,0.1,0.1);
+  background-color:rgba(0,0,0,0.1);
   text-indent: 15px;
 }
 

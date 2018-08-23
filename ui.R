@@ -365,6 +365,7 @@ shinyUI(tagList(useShinyjs(),
                                 
                                 # Label inputs
                                 tags$hr(style = "thickness:5px"),
+                                
                                 splitLayout(
                                   uiOutput("title_out"),
                                   tags$div(id = "js_legend_title_input", uiOutput("legend_title_out"))
