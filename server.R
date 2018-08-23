@@ -574,6 +574,7 @@ shinyServer(function(session, input, output) {
   observeEvent(input$preprocess_click, {
     # Error handling: peakIcr2 must have a non-NULL Kendrick Mass column name
     #req(!is.null(attr(peakIcr2, 'cnames')$kmass_cname))
+    req(input$tests)
     
     # Get csv file of all possible calculation column names
     possible_calc_cnames <- read.csv("calculation_variables.csv", header = TRUE, stringsAsFactors = FALSE)
@@ -615,7 +616,8 @@ shinyServer(function(session, input, output) {
       hr(),
       tags$p('I would like to see a histogram/bar-chart across all values of:'),
       selectInput('which_hist', NULL,
-                  choices = isolate(emeta_display_choices()))
+                  choices = isolate(emeta_display_choices()),
+                  selected = isolate(colnames(peakIcr2$e_meta)[ncol(peakICR()$e_meta) + 1]))
     )
   }) # End which_hist
   
@@ -672,6 +674,7 @@ shinyServer(function(session, input, output) {
   
   #get display name choices for dropdown
   emeta_display_choices <- reactive({
+    input$preprocess_click
     drop_cols <- c(input$f_column, input$o_column, input$h_column, input$n_column,
                    input$s_column, input$p_column, input$c_column, attr(peakIcr2, "cnames")$mass_cname,
                    input$iso_info_column)
@@ -763,7 +766,7 @@ shinyServer(function(session, input, output) {
         lapply(1:3, function(i){
           
           #require that a selection has been made for filter i
-          req(input[[paste0("custom",i)]] != "Select item")
+          if(input[[paste0("custom",i)]] == "Select item") return(NULL)
           
           #make the filter based on selection
           filter <- emeta_filter(peakIcr2, input[[paste0("custom",i)]])
@@ -774,7 +777,7 @@ shinyServer(function(session, input, output) {
             peakIcr2 <<- applyFilt(filter, peakIcr2,
                                    min_val = input[[paste0("minimum_custom",i)]], 
                                    max_val = input[[paste0("maximum_custom", i)]], 
-                                   na.rm = input[[paste0("na_custom",i)]])
+                                   na.rm = !input[[paste0("na_custom",i)]])
             
           }
           # else apply with selected categories
@@ -782,7 +785,7 @@ shinyServer(function(session, input, output) {
             req(input[[paste0("categorical_custom",i)]])
             peakIcr2 <<- applyFilt(filter, peakIcr2, 
                                    cats = input[[paste0("categorical_custom",i)]], 
-                                   na.rm = input[[paste0("na_custom",i)]])
+                                   na.rm = !input[[paste0("na_custom",i)]])
           }
         })
         

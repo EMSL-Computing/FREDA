@@ -59,6 +59,7 @@ output$categorical_summary <- renderUI({
 # Success dialogs
 observeEvent(input$preprocess_click,{
   req(peakIcr2)
+  validate(need(input$tests, message = "Please choose at least one test to calculate"))
   
   showModal(
     modalDialog(title = "Preprocess Success",

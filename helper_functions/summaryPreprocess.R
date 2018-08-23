@@ -12,7 +12,7 @@
 #'  @return A table of information
 
 summaryPreprocess <- function(icRobject, testsSelected, categorical = FALSE, split_chars = ";") {
-  
+
   ## Categorical variable handling block
   if(categorical){
     
@@ -57,8 +57,8 @@ summaryPreprocess <- function(icRobject, testsSelected, categorical = FALSE, spl
     row.names(summaryTable) <- rowNames
     
     # Call summary and extract info
-    allCols <- icRobject$e_meta[,testsSelected[,1]]
-    
+    allCols <- icRobject$e_meta %>% dplyr::select(testsSelected[,1])
+
     # NOT YET WORKING: Sapply the summary
     # summaryTable <- t(sapply(allCols, function(x) unname(summary(x)[c('Min.', 'Mean', 'Median', 'Max.')])))
     
