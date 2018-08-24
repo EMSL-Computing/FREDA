@@ -179,14 +179,14 @@ observeEvent(c(input$pres_fn, input$whichGroups1, input$whichGroups2),{
   
   if (input$pres_fn == "nsamps"){
     if(cond_smallgrp){
-      choices = c("Presence/absence thresholds" = "uniqueness_nsamps")
+      choices = c("Select one" = "select_none", "Presence/absence thresholds" = "uniqueness_nsamps")
     }
     else choices = c("Select one" = "select_none", "G test" = "uniqueness_gtest", "Presence/absence thresholds" = "uniqueness_nsamps")
     updateNumericInput(session, "thresh", min = 1, max = min(length(input$whichGroups1), length(input$whichGroups2)))
   }
   else if (input$pres_fn == "prop"){
     if(cond_smallgrp){
-      choices = c("Presence/absence thresholds" = "uniqueness_prop")
+      choices = c("Select one" = "select_none", "Presence/absence thresholds" = "uniqueness_prop")
     }
     choices = c("Select one" = "select_none", "G test" = "uniqueness_gtest", "Presence/absence thresholds" = "uniqueness_prop")
     updateNumericInput(session, "thresh", min = 0, max = 1)

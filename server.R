@@ -1,6 +1,10 @@
 
 # Modify maximum file size (currently 250 mb)
 options(shiny.maxRequestSize=250*1024^2, ch.dir = TRUE) 
+
+# Uncomment for error checking on server
+#options(shiny.sanitize.errors = FALSE)
+
 library(shiny)
 library(fticRanalysis)
 library(ggplot2)
