@@ -7080,10 +7080,16 @@ input[type="checkbox"] {
 .grey_out {
   color:grey;
 }
+.grey_out .item {
+  opacity:0.1;
+}
+.grey_out .selectize-control .selectize-input {
+  background-color:rgba(0,0,0,0.1);
+}
 
 .background_FTICR h1{
   margin:-15px;
-  background-color:rgba(0.1,0.1,0.1,0.1);
+  background-color:rgba(0,0,0,0.1);
   text-indent: 15px;
 }
 
@@ -7102,17 +7108,32 @@ input[type="checkbox"] {
 
 
 .attention .selectize-input, .attention .form-control, .attention-upload .input-group{
-  outline-style:solid;
-  outline-color:red;
-  outline-width:3px;
-  transition:outline-width 0.3s;
+  animation: attention 0.2s linear;
+  animation-fill-mode: forwards;
 }
 
 .suggest .selectize-input, .suggest .form-control, .suggest-upload .input-group{
-  outline-style:solid;
-  outline-color:rgba(0,191,255, 0.5);
-  outline-width:6px;
-  transition:outline-width 0.3s;
+  animation: suggest 0.2s linear;
+  animation-fill-mode: forwards;
+}
+
+.redoutline {
+  animation: attention 0.2s linear;
+  animation-fill-mode: forwards;
+}
+
+.blueoutline {
+  animation: suggest 0.2s linear;
+  animation-fill-mode: forwards;
+}
+
+@keyframes attention{
+  from{box-shadow: 0 0 0 0 rgba(255,0,0,0);}
+  to{box-shadow: 0 0 1px 3px rgba(255,0,0,1);}
+}
+@keyframes suggest {
+  from{box-shadow: 0 0 0 0 rgba(0,191,255,0);}
+  to{box-shadow: 0 0 1px 3px rgba(0,191,255,1);}
 }
 
 .img-hor img{
@@ -7124,17 +7145,17 @@ input[type="checkbox"] {
         -ms-filter: "FlipH";
 }
 
-.redoutline {
-  outline-style:solid;
-  outline-color:red;
-  outline-width:3px;
-  transition:outline-width 0.3s;
+
+.adjustdown input{
+  top:5px;
 }
 
-.blueoutline {
-  outline-style:solid;
-  outline-color:rgba(0,191,255, 0.5);
-  outline-width:6px;
-  transition:outline-width 0.3s;
+.squeezesplitlayout .form-control{
+  margin-left:3px;
+  width:95%;
+}
+
+#FxnPlot .main-svg:nth-of-type(2){
+  margin-top:3px;
 }
 

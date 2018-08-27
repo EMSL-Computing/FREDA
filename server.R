@@ -1,6 +1,10 @@
 
 # Modify maximum file size (currently 250 mb)
 options(shiny.maxRequestSize=250*1024^2, ch.dir = TRUE) 
+
+# Uncomment for error checking on server
+#options(shiny.sanitize.errors = FALSE)
+
 library(shiny)
 library(fticRanalysis)
 library(ggplot2)
@@ -21,14 +25,16 @@ shinyServer(function(session, input, output) {
   
   Sys.setenv(R_ZIPCMD="/usr/bin/zip")
   # Source files for 'summaryFilt' and 'summaryPreprocess'
-  source('selection_addons.R')
-  source('summaryFilter.R') 
-  source('summaryPreprocess.R')
-  source("renderDownloadPlots.R")
+  source('helper_functions/selection_addons.R')
+  source('helper_functions/summaryFilter.R') 
+  source('helper_functions/summaryPreprocess.R')
+  source("helper_functions/renderDownloadPlots.R")
+  source("Observers/misc_observers.R", local = TRUE)
   
   revals <- reactiveValues(ntables = 0, makeplot = 1, color_by_choices = NULL, axes_choices = NULL,
-                           plot_data_export = NULL, peakICR_export = NULL, 
-                           warningmessage = list(upload = "<p style = 'color:deepskyblue'>Upload data and molecular identification files described in 'Data Requirements' on the previous page."))
+                           plot_data_export = NULL, peakICR_export = NULL, redraw_filter_plot = TRUE, reac_filter_plot = TRUE, 
+                           warningmessage = list(upload = "<p style = 'color:deepskyblue'>Upload data and molecular identification files described in 'Data Requirements' on the previous page."),
+                           warningmessage_visualize = list(), current_plot = NULL, plot_list = list())
   
   exportTestValues(plot_data = revals$plot_data_export, peakICR = revals$peakICR_export, color_choices = revals$color_by_choices)
   ######## Welcome Tab #############
@@ -63,6 +69,10 @@ shinyServer(function(session, input, output) {
     contentType = "application/zip"
   )
   ######## Upload Tab ##############
+  
+  ### Upload Observers:  Contains conditional dropdown behavior, shinyjs functionality.
+  source("Observers/upload_observers.R", local = TRUE)
+  ###
   
   #### Sidebar Panel (Upload Tab) ####
   
@@ -367,9 +377,7 @@ shinyServer(function(session, input, output) {
     return(res)
     
   }) # End peakICR creation
-  
-  #### shinyjs observers ####
-  
+
   # display list of warnings pasted on separate lines
   output$warnings <- renderUI({
     HTML(lapply(revals$warningmessage, function(el){
@@ -377,13 +385,8 @@ shinyServer(function(session, input, output) {
       }) %>%
       paste(collapse = "")
       )
-    #HTML(paste("<p,", paste(revals$warningmessage, collapse = "<br>"), "</p>"))
   })
-  
-  source("upload_observers.R", local = TRUE)
-  
-  
-  
+
   #### Main Panel (Upload Tab) ####
   
   # Display success message OR display errors
@@ -396,46 +399,6 @@ shinyServer(function(session, input, output) {
     HTML('<h4 style= "color:#1A5276">You may proceed to data filtering</h4>')
     
   }) # End success #
-  
-  # create 
-  observeEvent(peakICR(),{
-    #Error handling: peakICR() must exist
-    req(peakICR())
-    
-    #___test-export___
-    if (isTRUE(getOption("shiny.testmode"))) {
-      revals$peakICR_export <- peakICR()
-    }
-    
-    showModal(
-      modalDialog(
-        title = "Upload Success",
-        fluidRow(
-          column(10, align = "center", offset = 1,
-                 HTML('<h4 style= "color:#1A5276">Your data has been successfully uploaded. 
-                      You may proceed to the subsequent tabs for analysis.</h4>'),
-                 hr(),
-                 actionButton("upload_dismiss", "Review results.", width = '75%'),
-                 br(),
-                 br(),
-                 actionButton("goto_preprocess", "Continue to preprocessing", width = '75%')
-                 )
-        )
-        ,footer = NULL)
-    )
-    
-    # enable inputs that should only be available if data is sucessfully uploaded
-    disabled_inputs <- c("preprocess_click", "filter_click", "reset_filters", "plot_submit", "update_axes")
-    lapply(disabled_inputs, enable)
-    
-  })
-  
-  # modal dialog behavior
-  observeEvent(input$upload_dismiss,{removeModal()})
-  observeEvent(input$goto_preprocess, {
-    updateTabsetPanel(session, "top_page", selected = "Preprocess")
-    removeModal()
-  })
   
   # Summary: Display number of peaks and samples
   output$num_peaks <- renderText({
@@ -571,26 +534,16 @@ shinyServer(function(session, input, output) {
   
   #### Populate List from CSV File ####
   
-  observeEvent(input$preprocess_help,{
-    showModal(
-      modalDialog("",
-                  tags$p("Here you can tell FREDA to compute certain values based on your input data.  The result of these calculations will be appended
-                         to your molecular identification file and can be used as filtering variables in the next tab.\n",
-                         style = "color:CornFlowerBlue"),
-                  br(),
-                  HTML("<p style = color:CornFlowerBlue> Check boxes to select which values you want calculated and then hit 'Process Data'.  
-                       <span style = font-weight:bold>Element ratios are selected by default as they are required to produce Van-Krevelen
-                       and Kendrick plots.</span>  \n Table summaries and an interactive histogram/bar chart of the values you selected will be generated.<p>")
-                  )
-                  )
-  })
+  source("Observers/preprocess_observers.R", local = TRUE)
   
   output$which_calcs <- renderUI({
     choices <- calc_opts$Function
     names(choices) <- calc_opts$DisplayName
       tooltip_checkbox("tests", "What Values Should be Calculated?", choices, selected = c("calc_element_ratios", "calc_kendrick"),
-                       extensions = lapply(1:length(choices), function(i){  
-                         tipify(icon("question-sign", lib = "glyphicon"), title = calc_opts$Info[i], placement = "top", trigger = 'hover')
+                       extensions = lapply(1:length(choices), function(i){
+                         div(style = "color:deepskyblue;display:inline-block",
+                          tipify(icon("question-sign", lib = "glyphicon"), title = calc_opts$Info[i], placement = "top", trigger = 'hover')
+                         )
                        })
     )
   })
@@ -602,9 +555,10 @@ shinyServer(function(session, input, output) {
   observeEvent(input$preprocess_click, {
     validate(need(input$tests, message = "Please choose at least one test to calculate"))
     
-    ## Include functionality to possibly reset 
-    
-    # peakIcr2$e_meta <<- peakIcr2$e_meta %>% dplyr::select(-one_of(calc_vars$ColumnName))
+    # If columns have already been calculated, start over from uploaded data
+    if(any(attr(peakIcr2, "cnames") %in% calc_vars$ColumnName)){
+      peakIcr2 <<- peakICR()
+    }
     
     # Apply all relevant functions
     for(el in input$tests){
@@ -624,6 +578,7 @@ shinyServer(function(session, input, output) {
   observeEvent(input$preprocess_click, {
     # Error handling: peakIcr2 must have a non-NULL Kendrick Mass column name
     #req(!is.null(attr(peakIcr2, 'cnames')$kmass_cname))
+    req(input$tests)
     
     # Get csv file of all possible calculation column names
     possible_calc_cnames <- read.csv("calculation_variables.csv", header = TRUE, stringsAsFactors = FALSE)
@@ -650,64 +605,10 @@ shinyServer(function(session, input, output) {
     #set reactive variables for observers
     revals$numeric_cols <- intersect %>% filter(ColumnName %in% numeric_cols)
     revals$categorical_cols <- intersect %>% filter(ColumnName %in% categorical_cols)
-    
-    
-    
+
   }) 
   
   #### Main Panel ####
-  
-  # Summary Panel: Display table summaries of numeric and categorical columns in e_meta
-  
-  # For numeric columns:
-  observe({
-    
-    req(nrow(revals$numeric_cols) > 0)
-    
-    # Create Table Output
-    output$numeric_summary <- DT::renderDataTable({
-      columns <- summaryPreprocess(peakIcr2, revals$numeric_cols) %>% colnames()
-      
-      summaryPreprocess(peakIcr2, revals$numeric_cols) %>%
-        datatable(options = list(dom = "t", pageLength = nrow(.))) %>% 
-        formatRound(columns, digits = 2)
-    }) 
-    
-    # Summary Header
-    output$numeric_header <- renderUI(tags$p("Summary Statistics for Numeric Variables"))
-    
-  })
-  
-  # For Categorical Columns
-  
-  # This observer assigns renderTable calls to various output ID's and passes them to the renderUI call immediately below
-  observe({
-    req(nrow(revals$categorical_cols) > 0) 
-    
-    # List of tables which will be passed to renderTable()
-    table_list <- summaryPreprocess(peakIcr2, revals$categorical_cols, categorical = TRUE)
-    
-    # Reactive variable which lets lapply know how many output ID's to generate depending on number of categorical variables selected
-    revals$ntables <- length(table_list)
-    
-    # Call renderTable on each table and assign it to an output ID
-    lapply(1:length(table_list), function(i){
-      output[[paste0('Table_',i)]] <- DT::renderDataTable({table_list[[i]]}, options = list(scrollX = TRUE, dom = "t"))
-    })
-    
-    # Summary Header
-    output$cat_header <- renderUI(tags$p("Mode and Counts for Categorical Variables"))
-  })
-  
-  # The renderUI call that takes input from the above observer
-  output$categorical_summary <- renderUI({
-    tagList(lapply(1:revals$ntables, function(i){
-      DT::dataTableOutput(paste0('Table_',i))
-    })
-    )
-  })
-  
-  ## END TABLE SUMMARY SECTION ##
   
   # Drop down list: potential histogram options
   output$which_hist_out <- renderUI({
@@ -716,11 +617,11 @@ shinyServer(function(session, input, output) {
     req(calc_vars, revals$numeric_cols, revals$categorical_cols)
     
     tagList(
-      br(),
-      br(),
+      hr(),
       tags$p('I would like to see a histogram/bar-chart across all values of:'),
       selectInput('which_hist', NULL,
-                  choices = isolate(emeta_display_choices()))
+                  choices = isolate(emeta_display_choices()),
+                  selected = isolate(colnames(peakIcr2$e_meta)[ncol(peakICR()$e_meta) + 1]))
     )
   }) # End which_hist
   
@@ -747,37 +648,18 @@ shinyServer(function(session, input, output) {
     p$elementId <- NULL
     
     #____test export_____
-    exportTestValues(preprocess_hist = p, hist_attrs = p$x$attrs[[p$x$cur_data]])
+    exportTestValues(preprocess_hist = p, hist_attrs = p$x$attrs[[p$x$cur_data]], hist_layout = p$x$layout, hist_visdat = p$x$visdat[[p$x$cur_data]]())
     
     return(p)
     
   }) # End process_hist
   
-  observeEvent(input$preprocess_click,{
-    req(peakIcr2)
-    
-    showModal(
-      modalDialog(title = "Preprocess Success",
-                  fluidRow(
-                    column(10, align = "center", offset = 1,
-                           HTML('<h4 style= "color:#1A5276">Your data has been preprocessed.  Calculated variables have been added to the molecular identification file and can be used in subsequent filtering and visualization.</h4>'),
-                           hr(),
-                           actionButton("preprocess_dismiss", "Review results.", width = '75%'),
-                           br(),
-                           br(),
-                           actionButton("goto_filter", "Continue to filtering", width = '75%')
-                    )
-                  )
-                  ,footer = NULL)
-    ) 
-  }) # End successMessage
-  observeEvent(input$preprocess_dismiss,{removeModal()})
-  observeEvent(input$goto_filter,{
-    updateTabsetPanel(session, "top_page", selected = "Filter")
-    removeModal()
-  })
-  
   ############## Filter tab ##############
+  
+  ### Filter Observers.  Contains much of the dropdown behavior and helper button functionality.
+  source("Observers/filter_observers.R", local = TRUE)
+  ###
+  
   # ----- Filter Reset Setup -----# 
   # Keep a reactive copy of the pre-filtered data in case of a filter reset event
   uploaded_data <- reactive({
@@ -794,27 +676,9 @@ shinyServer(function(session, input, output) {
     return(temp)
   })
   
-  observeEvent(input$filter_help,{
-    showModal(
-      modalDialog("",
-                  tags$p("This page allows you to filter the data by various metrics.\n 
-                         The default options are to:", style = "color:CornFlowerBlue"),
-                  tags$ul(
-                    tags$li("Retain peaks within a mass range (Mass Filter)"),
-                    tags$li("Retain peaks that appear a minimum number of times across all samples (Molecule Filter)"),
-                    tags$li("Retain peaks that have elemental information - either elemental columns or a full formula column (Formula Filter)"),
-                    style = "color:CornFlowerBlue"
-                  ),
-                  tags$p("Additionally, one can filter by up to three variables contained in the molecular identification file.\n
-                         As you select options, a plot will update showing the remaining observations after the application of each filter.\n",
-                         style = "color:CornFlowerBlue"),
-                  tags$p("Check boxes to select which filters to apply, specify filtering criteria by a range for numeric data or a selection of values for categorical data and then click 'Filter Data'",
-                         style = "color:CornFlowerBlue"))
-      )
-  })
-  
   #get display name choices for dropdown
   emeta_display_choices <- reactive({
+    input$preprocess_click
     drop_cols <- c(input$f_column, input$o_column, input$h_column, input$n_column,
                    input$s_column, input$p_column, input$c_column, attr(peakIcr2, "cnames")$mass_cname,
                    input$iso_info_column)
@@ -826,7 +690,7 @@ shinyServer(function(session, input, output) {
     
     #columns included in calculation_options.csv get their prettified names, everything else gets the column name
     names(column_choices) <- lapply(column_choices, function(x){
-      if(x %in% calc_vars$ColumnName){
+      if (x %in% calc_vars$ColumnName){
         calc_vars %>% filter(ColumnName == x) %>% pluck("DisplayName")
       }
       else x
@@ -861,90 +725,13 @@ shinyServer(function(session, input, output) {
     
   }) # End minobs
   
-  # Create three UI's for custom filters
-  output$filter1UI <- renderUI({
-    req(input$customfilterz)
-    if (input$customfilterz) {
-      return(selectInput("custom1", label = "Select first filter item", 
-                         choices = c("Select item", setdiff(emeta_display_choices(), c(isolate(input$custom2), isolate(input$custom3))))))
-    }
-  })
-  
-  output$filter2UI <- renderUI({
-    req(input$customfilterz)
-    if (input$customfilterz) {
-      return(selectInput("custom2", label = "Select second filter item", 
-                         choices = c("Select item", setdiff(emeta_display_choices(), c(input$custom1, isolate(input$custom3))))))
-    }
-  })
-  
-  output$filter3UI <- renderUI({
-    req(input$customfilterz)
-    if (input$customfilterz) {
-      return(selectInput("custom3", label = "Select first filter item", 
-                         choices = c("Select item", setdiff(emeta_display_choices(), c(input$custom1, input$custom2)))))
-    }
-  })
-  
-  #
-  
-  # Observer which creates the dynamic behavior for the custom filter dropdowns
-  observe({
-    #require checkbox and react to changes in any of the three custom filter dropdowns
-    req(input$customfilterz == TRUE)
-    input$custom1
-    input$custom2
-    input$custom3
-    
-    # lapply block which assigns a render object to an output if it sees that something is selected
-    # conditional dropdown behavior is defined in ui.R
-    inputlist <- list(input[["custom1"]], input[["custom2"]], input[["custom3"]])
-    lapply(1:3, function(i){
-      output[[paste0("customfilter",i,"UI")]] <- renderUI({
-        req(inputlist[[i]])
-        if (inputlist[[i]] != "Select item"){
-          #check to see if the selected filter is numeric or categorical
-          if (is.numeric(peakIcr2$e_meta[, inputlist[[i]]])) {
-            # if the filter applies to numeric data, allow inputs for min, max, and keep NA
-            splitLayout(cellWidths = c("40%", "40%", "20%"),
-                        numericInput(inputId = paste0("minimum_custom",i), label = "Min", value = min(peakIcr2$e_meta[, inputlist[[i]]], na.rm = TRUE)),
-                        numericInput(inputId = paste0("maximum_custom",i), label = "Max", value = max(peakIcr2$e_meta[, inputlist[[i]]], na.rm = TRUE)),
-                        tagList(
-                          br(),
-                          checkboxInput(inputId = paste0("na_custom",i), label = "Keep NAs?", value = FALSE)
-                        )
-            )
-            
-          } else if (!is.numeric(peakIcr2$e_meta[, inputlist[[i]]])) {
-            # if the filter applies to categorical data, populate a box of options along with a keep NA option
-            splitLayout(cellWidths = c("40%", "40%", "20%"),
-                        selectInput(inputId = paste0("categorical_custom",i), label = "Categories to Keep",
-                                    multiple = TRUE, selected = unique(peakIcr2$e_meta[, inputlist[[i]]]), choices = unique(peakIcr2$e_meta[, inputlist[[i]]])),
-                        tagList(
-                          br(),
-                          checkboxInput(inputId = paste0("na_custom",i), label = "Keep NAs?", value = FALSE)
-                        )
-            )
-            
-            
-          }
-        } else {
-          return(NULL)
-        }
-      }) 
-    })
-    
-  })
-  
-  
   #### Action Button Reactions (Filter Tab) ####
   
   # Event: Create filtered nonreactive peakIcr2 when action button clicked
   # Depends on action button 'filter_click'
   observeEvent(input$filter_click, {
-    
     # if the data is already filtered start over from the uploaded data
-    if(any(c("moleculeFilt", "massFilt") %in% names(attributes(peakIcr2)$filters))){
+    if (any(c("moleculeFilt", "massFilt", "formulaFilt") %in% names(attributes(peakIcr2)$filters)) | any(grepl("emetaFilt", names(attributes(peakIcr2)$filters)))){
       peakIcr2 <<- uploaded_data()
     }
     
@@ -976,9 +763,41 @@ shinyServer(function(session, input, output) {
       
     }
     
+    # custom filters
+    if (input$customfilterz){
+      
+        #apply the filter for each input
+        lapply(1:3, function(i){
+          
+          #require that a selection has been made for filter i
+          if(input[[paste0("custom",i)]] == "Select item") return(NULL)
+          
+          #make the filter based on selection
+          filter <- emeta_filter(peakIcr2, input[[paste0("custom",i)]])
+          
+          # if numeric, apply filter with specified max and min values
+          if (is.numeric(peakIcr2$e_meta[,input[[paste0("custom",i)]]])){
+            req(input[[paste0("minimum_custom",i)]], input[[paste0("maximum_custom", i)]])
+            peakIcr2 <<- applyFilt(filter, peakIcr2,
+                                   min_val = input[[paste0("minimum_custom",i)]], 
+                                   max_val = input[[paste0("maximum_custom", i)]], 
+                                   na.rm = !input[[paste0("na_custom",i)]])
+            
+          }
+          # else apply with selected categories
+          else if (!is.numeric(peakIcr2$e_meta[,input[[paste0("custom",i)]]])){
+            req(input[[paste0("categorical_custom",i)]])
+            peakIcr2 <<- applyFilt(filter, peakIcr2, 
+                                   cats = input[[paste0("categorical_custom",i)]], 
+                                   na.rm = !input[[paste0("na_custom",i)]])
+          }
+        })
+        
+      }
+
+    #__test-export__
     exportTestValues(peakIcr2 = peakIcr2)
-    
-    
+   
   }) # End creating peakIcr2
   
   #### Main Panel (Filter Tab) ####
@@ -1010,7 +829,7 @@ shinyServer(function(session, input, output) {
                            HTML('<h4 style= "color:#1A5276">Your data has been filtered using mass and/or minimum observations. 
                                 You may proceed to the next tabs for subsequnt analysis.</h4>'),
                            hr(),
-                           actionButton("filter_dismiss", "Review results.", width = '75%'),
+                           actionButton("filter_dismiss", "Review results", width = '75%'),
                            br(),
                            br(),
                            actionButton("goto_viz", "Continue to Visualization", width = '75%')
@@ -1022,11 +841,6 @@ shinyServer(function(session, input, output) {
     HTML('<h4 style= "color:#1A5276">You may now proceed to preprocessing and visualization</h4>')
     
   }) # End successMessage
-  observeEvent(input$filter_dismiss,{removeModal()})
-  observeEvent(input$goto_viz,{
-    updateTabsetPanel(session, "top_page", selected = "Visualize")
-    removeModal()
-  })
   
   # Display successMessage
   # Depends on: successMessage
@@ -1036,31 +850,57 @@ shinyServer(function(session, input, output) {
     
   })
   
-  # Object: Get data frame from summaryFilt
-  # Depends on: peakIcr2, checkboxes for filters, and inputs for filters
-  summaryFilterDataFrame <- reactive({
-    # TODO: Improve this logic so I don't have to hard code min_mass and max_mass defaults
-    min_mass <- 200
-    max_mass <- 900
-    
-    # If mass filter checked
-    if(input$massfilter) {
-      
-      # Error handling: Require min_mass and max_mass to exist
-      req(input$min_mass)
-      req(input$max_mass)
-      req(input$min_mass < input$max_mass)
-      
-      # Set min_mass and max_mass to actual entries
-      min_mass <- input$min_mass
-      max_mass <- input$max_mass
+  # Reactive value for each filter which store a list of retained ID's
+  massfilter_ids <- eventReactive(c(input$massfilter, input$min_mass, input$max_mass),{
+    revals$redraw_filter_plot <- FALSE
+    if (input$massfilter){
+      mass_filter(uploaded_data()) %>% 
+        dplyr::filter(Mass <= input$max_mass, Mass >= input$min_mass) %>%
+        pluck(1)
     }
+    else NULL
+  })
+  
+  molfilter_ids <- eventReactive(c(input$minobs, input$molfilter), {
+    if (input$molfilter){
+     molecule_filter(uploaded_data()) %>%
+        dplyr::filter(Num_Observations >= as.integer(input$minobs)) %>%
+        pluck(1)
+    }
+    else NULL
+  })
+  
+  formfilter_ids <- eventReactive(input$formfilter, {
+    if (input$formfilter){
+      formula_filter(uploaded_data()) %>%
+        dplyr::filter(Formula_Assigned == TRUE) %>%
+        pluck(1)
+    }
+    else NULL
+  })
+  
+  # Object: Get data frame from summaryFilt
+  # Depends on a reactive variable that has delayed invalidation
+  summaryFilterDataFrame <- eventReactive(revals$reac_filter_plot, {
+    req(input$top_page == "Filter")
     
-    # Get summary table from sourced file 'summaryFilter.R'
-    summaryFilt(peakICR(), c(input$massfilter, input$molfilter, input$formfilter), min_mass, 
-                max_mass, input$minobs)
+      # determine which, if any, custom filters to apply
+      conds <- c(!is.null(revals$custom1_ids), !is.null(revals$custom2_ids), !is.null(revals$custom3_ids))
+      
+      if (any(conds) & isolate(input$customfilterz)){
+        customids_to_keep <- data.frame(ids = c(revals$custom1_ids, revals$custom2_ids, revals$custom3_ids), stringsAsFactors = FALSE) %>%
+          group_by(ids) %>%
+          mutate(n = n()) %>%
+          filter(n == sum(conds)) %>%
+          pluck(1)
+      }
+      else customids_to_keep <- NULL
+      
+      # Get summary table from sourced file 'summaryFilter.R'
+      summaryFilt(peakICR(), massfilter_ids(), molfilter_ids(), formfilter_ids(), customids_to_keep)
     
-  }) # End summaryFilterDataFrame
+    
+  }, ignoreInit = TRUE) # End summaryFilterDataFrame
   
   
   # Show table from summaryFilt
@@ -1101,17 +941,27 @@ shinyServer(function(session, input, output) {
                                                                 'min_mass', 'max_mass')])
     }
     
+    if (input$customfilterz) {
+      
+      # Get which row has the row name 'After Mass Filter'
+      rowNum <- which(summaryFilterDataFrame()$data_state == 'After Custom Filters')
+      
+      # Get relevant columns out of summaryFilterDataFrame
+      afterResults <- unlist(summaryFilterDataFrame()[rowNum, c('sum_peaks', 'assigned', 
+                                                                'min_mass', 'max_mass')])
+    }
+    
     # Find which row in summaryFilterDataFrame represents the Unfiltered information
     rowNum = which(summaryFilterDataFrame()$data_state == 'Unfiltered')
     
     # Create a dataframe out of Before and After results from summaryFilterDataFrame
-    summary_table <- data.frame('Before' = unlist(summaryFilterDataFrame()[rowNum, c('sum_peaks', 'assigned', 
-                                                                                     'min_mass', 'max_mass')]),
-                                'After' = afterResults,
+    summary_table <- data.frame('Before' = as.numeric(unlist(summaryFilterDataFrame()[rowNum, c('sum_peaks', 'assigned', 
+                                                                                     'min_mass', 'max_mass')])),
+                                'After' = as.numeric(afterResults),
                                 row.names = c('Number of peaks',
                                               'Number of peaks assigned a formula', 
                                               'Minimum mass observed', 
-                                              'Maximum Mass observed'))
+                                              'Maximum Mass observed'), stringsAsFactors = FALSE)
     
     # Format the last two rows of this table to have decimal places and the first two rows to have a comma
     # this requires converting the table to a string, keep two copies in case the string changes
@@ -1121,6 +971,9 @@ shinyServer(function(session, input, output) {
     display_table[1:2, 2] <- formatC(round(summary_table[1:2,2]), big.mark = ",", format = "d")
     display_table[3:4, 1] <- formatC(round(summary_table[3:4, 1], digits = 4), format = "f", big.mark = ",")
     display_table[3:4, 2] <- formatC(round(summary_table[3:4, 2], digits = 4), format = "f", big.mark = ",")
+    
+    #___test-export___
+    exportTestValues(rem_peaks = as.numeric(afterResults["sum_peaks"]))
     
     return(display_table)
   }, # End code portion of summary_filter
@@ -1132,15 +985,20 @@ shinyServer(function(session, input, output) {
   # Plot bar chart
   # Depends on: summaryFilterDataFrame
   output$barplot_filter <- renderPlot({
-    # Melt dataframe into 2 objects
-    which_filts <- c("Unfiltered", "After Mass Filter", "After Molecule Filter", "After Formula Filter")[c(TRUE, input$massfilter, input$molfilter, input$formfilter)]
     
+    req(isolate(revals$redraw_filter_plot) == TRUE)
+    
+    filter_inds <- c(TRUE, isolate(input$massfilter), isolate(input$molfilter), isolate(input$formfilter), 
+                     any(c(isolate(input$custom1), isolate(input$custom2), isolate(input$custom3)) != "Select item") & isolate(input$customfilterz))
+    
+    which_filts <- c("Unfiltered", "After Mass Filter", "After Molecule Filter", "After Formula Filter", "After Custom Filters")[filter_inds]
+    
+    # Melt dataframe into 2 objects
     ggdata_barplot <- melt(summaryFilterDataFrame()[,c('data_state', 'assigned', 'unassigned')]) %>% filter(data_state %in% which_filts)
     ggdata_text <- summaryFilterDataFrame()[, c('data_state', 'sum_peaks', 'dispText')] %>% filter(data_state %in% which_filts)
     
     # Aesthetic purposes: get max height, divide by 30, use as offset in geom_text
     num_displaced <- round(ggdata_text[1, 2] / 35, digits = -1)
-    
     
     # Plot using ggplot2
     ggplot() + geom_bar(aes(x = data_state, 
@@ -1156,135 +1014,37 @@ shinyServer(function(session, input, output) {
     
   }) # End barplot_filter #
   
-  #-------- Reset Activity -------#
-  # Allow a 'reset' that restores the uploaded object and unchecks the filter
-  # boxes.  Will display a popup that warns the user of plot erasure and gives 
-  # the option to reset or to go back without clearing filters.
-  
-  observeEvent(input$reset_filters,{
-    showModal(modalDialog(
-      
-      ##### There is probably a better way to code the display behavior of this dialog -DC
-      
-      fluidPage(
-        fluidRow(
-          column(10, align = "center", offset = 1,
-                 tags$p("Caution:  If you reset filters all plots made using filtered data will be lost.", style = "color:red;font:bold", align = "center"),
-                 actionButton("clear_filters_yes", "Yes, clear filters without saving plots.", width = '100%'),
-                 br(),
-                 br(),
-                 br(),
-                 actionButton("clear_filters_no", "No, take me back.", width = '100%')
-          ))),
-      footer = NULL
-    )
-    )
-  })
-  
-  # if they click no, just exit the modal dialog
-  observeEvent(input$clear_filters_no,{
-    removeModal()
-  })
-  
-  # if they click yes, reset data and exit modal dialog
-  observeEvent(input$clear_filters_yes, {
-    if (f$clearFilters) {
-      updateCheckboxInput(session = session, inputId = "massfilter", value = FALSE)
-      updateCheckboxInput(session = session, inputId = "molfilter", value = FALSE)
-      updateCheckboxInput(session = session, inputId = "formfilter", value = FALSE)
-    }
-    peakIcr2 <<- uploaded_data()
-    removeModal()
-  })
   
   
   ####### Visualize Tab #######
   
-  # Help Button
-  observeEvent(input$visualize_help,{
-    showModal(
-      modalDialog("",
-                  tags$p("This page is used to generate plots from your processed data.  In order from top to bottom on the left panel, do the following:\n",
-                         style = "color:CornFlowerBlue"),
-                  tags$ul(
-                    tags$li("Select the type of plot you want to generate."),
-                    tags$li("Choose whether you would like to plot a single sample, multiple samples, or a comparison of groups"),
-                    tags$li("If you selected a single sample, specify which one.  If you selected multiple samples by group, select samples that 
-                            should be grouped. If you selected a comparison of groups, two group dropdowns will appear; select samples that
-                            you want included in each of the two groups"),
-                    tags$li("If desired, specify axis and title labels and hit 'Generate Plot'\n"),
-                    
-                    style = "color:CornFlowerBlue"),
-                  tags$p("A plot will appear and can be customized to color by certain calculated values.  
-                       Van Krevelen boundaries can be displayed for VK-plots.
-                       Custom scatterplots will allow for selection of arbitrary x and y axes.", style = "color:CornFlowerBlue"),
-                  hr(),
-                  tags$p("Certain menu options may 'grey_out' during navigation, indicating disabled functionality for a plot type, 
-                         or because certain values were not calculated during preprocessing")
-                  )
-              )
-  })
-  
-  # Multi purpose observer on input$chooseplots
-  observeEvent(input$chooseplots, {
-    # Pre-populate dropdowns so users can select colors and custom scatterplot axes before submitting plot.
-    updateSelectInput(session, 'vk_colors', choices = emeta_display_choices(), selected = emeta_display_choices()[1])
-    updateSelectInput(session, 'scatter_x', choices = emeta_display_choices(), selected = emeta_display_choices()[2])
-    updateSelectInput(session, 'scatter_y', choices = emeta_display_choices(), selected = emeta_display_choices()[3])
-    
-    
-    # Rest of this observer controls shinyjs disable/enable behavior for reactive plot dropdowns
-    dropdown_ids <- c("vkbounds", "vk_colors", "scatter_x", "scatter_y", "colorpal", "legend_title_input")
-    choices = list('Van Krevelen Plot' = c("vk_colors", "vkbounds", "colorpal", "legend_title_input"), 
-                   'Kendrick Plot' = c("vk_colors", "colorpal", "legend_title_input"),
-                   'Density Plot' = "vk_colors", 
-                   'Custom Scatter Plot' = c("vk_colors", "scatter_x", "scatter_y", "colorpal", "legend_title_input"), 
-                   'Select an Option' = "0")
-    
-    # if(input$chooseplots %in% c("Custom Scatter Plot") | nrow(peakIcr2$f_data) == 1){
-    #   disable("choose_single")
-    #   addCssClass("choose_single", "grey_out")
-    # }
-    # else{
-    #   enable("choose_single")
-    #   removeCssClass("choose_single", "grey_out")
-    # }
-    
-    lapply(dropdown_ids, function(inputid){
-      if(inputid %in% choices[[input$chooseplots]]){
-        enable(inputid)
-        removeCssClass(paste0("js_",inputid), "grey_out")
-      }
-      else{
-        disable(inputid)
-        addCssClass(paste0("js_",inputid), "grey_out")
-      }
-    })
-  })
-  
   ## Sidebar Panel ##
+  
+  #### Viztab observers.  Help Button. Dropdown choices, plot clearing, and shinyjs helper functionality###
+  source("Observers/visualize_observers.R", local = TRUE)
+  #####
   
   # Plot options, with selections removed if the necessary columns in e_meta are not present.
   output$plot_type <- renderUI({
     choices <- c('Van Krevelen Plot', 'Kendrick Plot', 'Density Plot', 'Custom Scatter Plot', 'Select an Option' = 0)
     
     #disallow kendrick plots if either kmass or kdefect not calculated/present in emeta
-    if(is.null(attr(peakIcr2, "cnames")$kmass_cname) | is.null(attr(peakIcr2, "cnames")$kdefect_cname)){
+    if (is.null(attr(peakIcr2, "cnames")$kmass_cname) | is.null(attr(peakIcr2, "cnames")$kdefect_cname)){
       choices <- choices[choices != "Kendrick Plot"]
     }
     
     #disallow vk plots if o:c or h:c ratios not calculated/present in emeta
-    if(is.null(attr(peakIcr2, "cnames")$o2c_cname) | is.null(attr(peakIcr2, "cnames")$h2c_cname)){
+    if (is.null(attr(peakIcr2, "cnames")$o2c_cname) | is.null(attr(peakIcr2, "cnames")$h2c_cname)){
       choices <- choices[choices != "Van Krevelen Plot"]
     }
     
     #disallow density plots if at least 1 
-    if(!any(sapply(peakIcr2$e_meta %>% dplyr::select(-one_of(getEDataColName(peakIcr2))), is.numeric))){
+    if (!any(sapply(peakIcr2$e_meta %>% dplyr::select(-one_of(getEDataColName(peakIcr2))), is.numeric))){
       choices <- choices[choices != c("Density Plot", "Custom Scatter Plot")]
     }
     
     #if everything is disallowed, give warning and silently stop execution.
-    if(all(choices == 0)) return(tags$p("There is not enough information in the molecular identification file to produce any plots.  Choose more variables to calculate in the preprocess tab or append some metadata to the molecular identification file prior to uploading", style = "color:gray"))
+    if (all(choices == 0)) return(tags$p("There is not enough information in the molecular identification file to produce any plots.  Choose more variables to calculate in the preprocess tab or append some metadata to the molecular identification file prior to uploading", style = "color:gray"))
     
     selectInput('chooseplots', 'I want to plot a', 
                   choices = choices,
@@ -1297,7 +1057,7 @@ shinyServer(function(session, input, output) {
     validate(
       need(input$chooseplots != 0, message = "Please select plotting criteria")
     )
-    if(nrow(peakIcr2$f_data) == 1 | input$chooseplots == "Custom Scatter Plot"){
+    if (nrow(peakIcr2$f_data) == 1 | input$chooseplots == "Custom Scatter Plot"){
       return(tagList(
         tags$div(class = "grey_out",
           disabled(selectInput('choose_single', 'I want to plot using:',
@@ -1312,7 +1072,7 @@ shinyServer(function(session, input, output) {
                          choices = c('Make a selection' = 0, 'A single sample' = 1, 'Multiple samples by group' = 2, 'A comparison of groups' = 3),
                          selected = 0))
     }
-    else{
+    else {
       return(selectInput('choose_single', 'I want to plot using:',
                          choices = c('Make a selection' = 0, 'A single sample' = 1, 'Multiple samples by group' = 2, 'A comparison of groups' = 3),
                          selected = 0))
@@ -1322,54 +1082,88 @@ shinyServer(function(session, input, output) {
   # Conditional dropdowns based on grouping criteria (choose_single)
   output$plotUI_cond <- renderUI({
     req(input$choose_single != 0, input$chooseplots != 0)
-    if(input$choose_single == 3){
-      if(input$chooseplots == "Density Plot"){
-        summary_dropdown <- tags$div(class = "grey_out",
-                                     disabled(selectInput("summary_fxn", "Summary Function", choices = "uniqueness_gtest")),
-                                     tags$p("No summary functions for comparison density plots", style = "color:gray;font-size:small;margin-top:3px")
-        )
-        
-      }else summary_dropdown <- selectInput("summary_fxn", "Summary Function", choices = "uniqueness_gtest")
-      
+    if (input$choose_single == 3){
       return(tagList(
-        selectInput('whichGroups1', 'Group 1',
+        div(id = "js_whichGroups1", 
+            selectInput('whichGroups1', HTML("<input type = 'text' id = 'group1_name' placeholder = 'Group 1' style = 'border-style:unset;'/>"),
                     choices = setdiff(sample_names(), isolate(input$whichGroups2)),
-                    multiple = TRUE),
-        selectInput("whichGroups2", "Group 2", 
+                    multiple = TRUE)),
+        div(id = "js_whichGroups2",
+            selectInput("whichGroups2", HTML("<input type = 'text' id = 'group2_name' placeholder = 'Group 2' style = 'border-style:unset;'/>"), 
                     choices = setdiff(sample_names(), isolate(input$whichGroups1)), 
-                    multiple = TRUE),
-        summary_dropdown
+                    multiple = TRUE))
       ))
     }
-    else if(input$choose_single == 2){
+    else if (input$choose_single == 2){
       return(tagList(
-        selectInput('whichSamples', 'Grouped Samples',
+        div(id = "js_whichSamples",
+            selectInput('whichSamples', 'Grouped Samples',
                     choices = sample_names(),
-                    multiple = TRUE),
+                    multiple = TRUE)),
         conditionalPanel(
           condition = 'input.whichSamples.length < 2',
           tags$p("Please select at least 2 samples", style = "color:gray")
         )# End conditional output multiple samples#
       ))
     }
-    else if(input$choose_single == 1){
-      return(selectInput('whichSamples', 'Sample', choices = sample_names()))
+    else if (input$choose_single == 1){
+      return(div(id = "js_whichSamples", selectInput('whichSamples', 'Sample', choices = sample_names())))
     }
     else return(NULL)
   })
   
-  # observers which make the options mutually exclusive when doing a comparison of two groups
-  observeEvent(input$whichGroups2,{
-    updateSelectInput(session, "whichGroups1", choices = setdiff(sample_names(), input$whichGroups2), selected = input$whichGroups1)
+  # selector for summary funcion
+  output$summary_fxn_out <- renderUI({
+    text_pres_fn <- "For a given peak, should the count or proportion of nonmissing values across samples in a group be used to determine whether or not that peak is present/absent within the group"
+    text_test <- HTML("<p>Should a G-test or presence absence thresholds be used to determine whether a sample is unique to a particular group?</p><p>Depending on your selection, you will be asked for a presence threshold and a p-value (G-test) or a presence AND absence threshold<p/>") 
+    
+    # density plot has group summary options disabled
+    if (input$chooseplots == "Density Plot"){
+      summary_dropdown <- tags$div(class = "grey_out",
+                                   tags$p("No summary functions for comparison density plots", style = "color:gray;font-size:small;margin-top:3px;font-weight:bold"),
+                                   disabled(
+                                     radioButtons("pres_fn", 
+                                                  div("Determine presence/absence by:", div(style = "display:inline-block;right:5px", tipify(icon("question-sign", lib = "glyphicon"), title = text_pres_fn, placement = "top", trigger = 'hover'))), 
+                                                  choices = c("No. of Samples Present" = "nsamps", "Proportion of Samples Present" = "prop"), inline = TRUE, selected = "nsamps")
+                                    ),
+                                   
+                                   hr(style = "margin-top:2px"),
+                                   
+                                   disabled(selectInput("summary_fxn", 
+                                                        div("Determine uniqueness using:", div(style = "display:inline-block", tipify(icon("question-sign", lib = "glyphicon"), title = text_test, placement = "top", trigger = 'hover'))), 
+                                                        choices = c("Select one" = "select_none", "G test" = "uniqueness_gtest", "Presence/absence thresholds" = "uniqueness_nsamps"), selected = "select_none")),
+                                   
+                                   splitLayout(class = "squeezesplitlayout",
+                                               disabled(numericInput("pres_thresh", "Presence threshold", value = 1, step = 0.1)),
+                                               disabled(numericInput("absn_thresh", "Absence threshold", value = 0, step = 0.1)),
+                                               disabled(numericInput("pval", "p-value", min = 0, max = 1, value = 0.05, step = 0.1))
+                                   )
+      )
+     # non-density plots 
+    }else{ 
+      summary_dropdown <- tagList(
+        radioButtons("pres_fn", 
+                     div("Determine presence/absence by:", div(style = "color:deepskyblue;display:inline-block", tipify(icon("question-sign", lib = "glyphicon"), title = text_pres_fn, placement = "top", trigger = 'hover'))), 
+                     choices = c("No. of Samples Present" = "nsamps", "Proportion of Samples Present" = "prop"), inline = TRUE, selected = "nsamps"),
+        
+        hr(style = "margin-top:2px"),
+        
+        div(id = "js_summary_fxn", selectInput("summary_fxn", 
+                                              div("Determine uniqueness using:", div(style = "color:deepskyblue;display:inline-block", tipify(icon("question-sign", lib = "glyphicon"), title = text_test, placement = "top", trigger = 'hover'))), 
+                                              choices = c("Select one" = "select_none", "G test" = "uniqueness_gtest", "Presence/absence thresholds" = "uniqueness_nsamps"))),
+        
+        splitLayout(class = "squeezesplitlayout", 
+          div(id = "js_pres_thresh", numericInput("pres_thresh", "Presence threshold", value = 1, step = 0.1)),
+          div(id = "js_absn_thresh", numericInput("absn_thresh", "Absence threshold", value = 0, step = 0.1)),
+          div(id ="js_pval", numericInput("pval", "p-value", min = 0, max = 1, value = 0.05, step = 0.1))
+        )
+      )}
+    return(summary_dropdown)
   })
-  observeEvent(input$whichGroups1,{
-    updateSelectInput(session, "whichGroups2", choices = setdiff(sample_names(), input$whichGroups1), selected = input$whichGroups2)
-  })
-  
   
   #### Main Panel (Visualize Tab) ####
   
-  # color pallete selection
+  # color palette selection
   output$colorpal_out <- renderUI({
     choices = c("YlOrRd", "YlGnBu", "YlGn", "RdYlGn")
     
@@ -1377,20 +1171,15 @@ shinyServer(function(session, input, output) {
       tags$img(src = paste0(choice, ".png"), width = "100px", height = "25px")
     })
     
-    if(isTRUE(input$chooseplots == "Density Plot")){
+    if (isTRUE(input$chooseplots == "Density Plot")){
       addClass("js_colorpal", "grey_out")
       disabled(colored_radiobuttons(inputId = "colorpal", label = "Pick a coloring scheme", inline = TRUE,
                                          choices = choices, extensions = extensions))
-    }else{
+    }else {
       removeClass("js_colorpal", "grey_out")
       colored_radiobuttons(inputId = "colorpal", label = "Pick a coloring scheme", inline = TRUE,
                                choices = choices, extensions = extensions)
     }
-  })
-  
-  # color scale inversion observer
-  observeEvent(input$flip_colors, {
-    toggleCssClass("js_colorpal", "img-hor")
   })
   
   # Create plotting dataframe to be passed to FxnPlot
@@ -1398,7 +1187,7 @@ shinyServer(function(session, input, output) {
     
     req(calc_vars)
     validate(need(input$chooseplots != 0 & input$choose_single !=0, message = "Please select plotting criteria"))
-    if(is.null(input$choose_single)){ # corresponds to data with a single sample
+    if (is.null(input$choose_single)){ # corresponds to data with a single sample
       return(peakIcr2) # no need to subset
     }
     if (input$choose_single == 1) { # single sample -selected- but multiple samples present
@@ -1421,7 +1210,7 @@ shinyServer(function(session, input, output) {
       temp_data <- fticRanalysis:::setGroupDF(temp_data, temp_group_df)
       
       # no need to summarize for density plot function
-      if(input$chooseplots == "Density Plot"){
+      if (input$chooseplots == "Density Plot"){
         return(temp_data)
       }
 
@@ -1437,9 +1226,13 @@ shinyServer(function(session, input, output) {
       validate(need(!is.null(isolate(input$whichGroups2)), message = "Please select samples for second grouping"))
       validate(need(length(input$whichGroups2) > 0, message = "Please select at least 1 sample"))
       
+      group1 <- ifelse(is.null(input$group1_name) | isTRUE(input$group1_name == ""), "Group 1", input$group1_name)
+      group2 <- ifelse(is.null(input$group2_name) | isTRUE(input$group2_name == ""), "Group 2", input$group2_name)
+      
+      # assign a group DF to the data with a level for each of the two groups
       group1_samples <- isolate(input$whichGroups1)
       group2_samples <- isolate(input$whichGroups2)
-      temp_group_df <- data.frame(c(group1_samples, group2_samples), c(rep("Group1", times=length(group1_samples)), rep("Group2", length(group2_samples))))
+      temp_group_df <- data.frame(c(group1_samples, group2_samples), c(rep(group1, times=length(group1_samples)), rep(group2, length(group2_samples))))
       colnames(temp_group_df) <- c(getFDataColName(peakIcr2), "Group")
       
       temp_data <- peakIcr2 %>%
@@ -1448,12 +1241,45 @@ shinyServer(function(session, input, output) {
       temp_data <- fticRanalysis:::setGroupDF(temp_data, temp_group_df)
       
       # no need to summarize for density plot function
-      if(input$chooseplots == "Density Plot"){
+      if (input$chooseplots == "Density Plot"){
         return(temp_data)
       }
       
+      # error checking after passing density plots
+      validate(need(input$summary_fxn %in% fticRanalysis::getGroupComparisonSummaryFunctionNames(), "Please select a summary function"))
+      
+      # get the value of the single pairwise comparison         
       grpComparisonsObj <- divideByGroupComparisons(temp_data, comparisons = "all")[[1]]$value
-      summaryObj <<- summarizeComparisons(grpComparisonsObj, summary_functions = input$summary_fxn)
+      
+      # paramaters specific to uniqueness_gtest()
+      if (input$summary_fxn == "uniqueness_gtest"){
+        validate(need(isTRUE(input$pval < 1 & input$pval > 0) & is.numeric(input$pval), message = "Specify a p-value between 0 and 1"))
+        gtest_parms <- list(pres_fn = input$pres_fn, pvalue_thresh = input$pval)
+      }
+      else {
+        gtest_parms <- list(absn_thresh = input$absn_thresh)
+      }
+      
+      # conditional error checking depending on nsamps and proportion
+      if (input$pres_fn == "nsamps"){
+        validate(need(input$pres_thresh <= min(length(input$whichGroups1), length(input$whichGroups2)), "Maximum threshold is above the minimum number of samples in a group"),
+                 need(is.numeric(input$pres_thresh), "Please enter a numeric value for threshold to determine presence"),
+                 need(input$absn_thresh < input$pres_thresh & input$absn_thresh >= 0, "absence threshold must be non-negative and lower than presence threshold"))
+      }
+      else if (input$pres_fn == "prop"){
+        validate(need(input$pres_thresh <= 1 & input$pres_thresh > 0, "Proportion threshold is not in the interval (0,1]"),
+                 need(is.numeric(input$pres_thresh), "Please enter a numeric proportion threshold to determine presence"),
+                 need(input$absn_thresh < input$pres_thresh & input$absn_thresh >= 0, "absence threshold must be non-negative and lower than presence threshold"))
+      }
+      
+      # populate a list of args to pass to summarizeGroupComparisons()
+      parms <- list()
+      parms[[input$summary_fxn]] <- c(list(pres_thresh = input$pres_thresh), gtest_parms)
+      
+      # create the group comparisons object, passing the user specified function and its (user specified) list of args.
+      summaryObj <- summarizeGroupComparisons(grpComparisonsObj, summary_functions = input$summary_fxn, 
+                                              summary_function_params = parms)
+      
       return(summaryObj)
       
     }
@@ -1470,7 +1296,7 @@ shinyServer(function(session, input, output) {
     ## ifelse block determines how to populate vk_colors dropdown
     
     # Density plots care not for choose_single!!!!
-    if(input$chooseplots == "Density Plot"){
+    if (input$chooseplots == "Density Plot"){
       numeric_cols <- which(sapply(plot_data()$e_meta %>% 
                                      dplyr::select(one_of(emeta_display_choices())), is.numeric))
       color_by_choices <- emeta_display_choices()[numeric_cols]
@@ -1480,8 +1306,8 @@ shinyServer(function(session, input, output) {
       
       if (input$chooseplots == "Van Krevelen Plot"){
         color_by_choices <- switch(input$vkbounds,
-                                   'bs1' = c('Van Krevelen Boundary Set 1' = 'bs1', color_by_choices),
-                                   'bs2' = c('Van Krevelen Boundary Set 2' = 'bs2', color_by_choices),
+                                   'bs1' = c('Van Krevelen Boundary Set' = 'bs1', color_by_choices),
+                                   'bs2' = c('Van Krevelen Boundary Set' = 'bs2', color_by_choices),
                                    "0" = c('Van Krevelen Boundary Set 1' = 'bs1', 'Van Krevelen Boundary Set 2' = 'bs2', color_by_choices))
       }
     }
@@ -1492,7 +1318,7 @@ shinyServer(function(session, input, output) {
       color_by_choices <- c(edata_colors[!(edata_colors %in% emeta_display_choices())], emeta_display_choices())
       
     } else if (input$choose_single == 3) {
-      color_by_choices <- c("Unique GTest" = "unique_gtest")
+      color_by_choices <- c("Group membership" = input$summary_fxn)
     }
     
     # Give default names to unnamed choices
@@ -1560,63 +1386,12 @@ shinyServer(function(session, input, output) {
     
     revals$color_by_choices <- color_by_choices
     
-    # The dropdown value will not be updated if this is true, force re-execution of plotting in this case with a reactive var
-    if(input$vk_colors %in% color_by_choices){
+    # The dropdown value will not be updated if this if statement's condition is true, force re-execution of plotting in this case with a reactive var
+    if (input$vk_colors %in% color_by_choices){
       revals$makeplot <- -revals$makeplot
     }
     
   }, priority = 9)
-  
-  # observers to maintain mutual exclusivity of scatterplot axes and colors
-  observeEvent(c(input$scatter_x, input$vk_colors),{
-    updateSelectInput(session, "scatter_y", 
-                      choices = revals$axes_choices[!(revals$axes_choices %in% c(input$scatter_x, input$vk_colors))], 
-                      selected = input$scatter_y)
-  })
-  
-  observeEvent(c(input$scatter_y, input$vk_colors),{
-    updateSelectInput(session, "scatter_x", 
-                      choices = revals$axes_choices[!(revals$axes_choices %in% c(input$scatter_y, input$vk_colors))], 
-                      selected = input$scatter_x)
-  })
-  
-  observeEvent(c(input$scatter_x, input$scatter_y),{
-    updateSelectInput(session, "vk_colors", 
-                      choices = revals$color_by_choices[!(revals$color_by_choices %in% c(input$scatter_y, input$scatter_x))], 
-                      selected = input$vk_colors)
-  })
-  
-  # logical reactive value that clears the plot if a new type is selected
-  v <- reactiveValues(clearPlot = TRUE)
-  observeEvent(c(input$chooseplots, input$choose_single, input$whichSamples), {
-    v$clearPlot <- TRUE
-    disable("add_plot")
-    disable("")
-  }, priority = 10)
-  observeEvent(input$plot_submit, {
-    v$clearPlot <- FALSE
-  }, priority = 10)
-  
-  # Observer which greys-out colorscale selection if we have not selected a numeric column to color by
-  observeEvent(numeric_selected(),{
-    req(input$chooseplots != "Density Plot")
-    if(numeric_selected()){
-      enable("colorpal")
-      removeCssClass("js_colorpal", "grey_out")
-      
-      enable("legend_title_input")
-      removeCssClass("js_legend_title_input", "grey_out")
-    }
-    else if(!numeric_selected()){
-      disable("colorpal")
-      addCssClass("js_colorpal", "grey_out")
-      
-      disable("legend_title_input")
-      addCssClass("js_legend_title_input", "grey_out")
-    }
-    
-    
-  })
   
   # Main plotting output #
   output$FxnPlot <- renderPlotly({
@@ -1643,15 +1418,15 @@ shinyServer(function(session, input, output) {
       )
       
       # Apply custom color scale if numeric is selected
-      if(isolate(numeric_selected()) & !(input$vk_colors %in% c("bs1", "bs2"))){
+      if (isolate(numeric_selected()) & !(input$vk_colors %in% c("bs1", "bs2"))){
         diverging_options = c("RdYlGn")
         pal <- RColorBrewer::brewer.pal(n = 9, input$colorpal)
         
-        if(!(input$colorpal %in% diverging_options)){
+        if (!(input$colorpal %in% diverging_options)){
           pal <- RColorBrewer::brewer.pal(n = 9, input$colorpal)[3:9]
         }
         
-        if(input$flip_colors%%2 != 0){
+        if (input$flip_colors%%2 != 0){
           pal <- rev(pal)
         }
         
@@ -1659,7 +1434,7 @@ shinyServer(function(session, input, output) {
         colorPal <- scales::col_numeric(pal, domain)
         revals$colorPal <- paste(paste(pal, collapse = ","), paste(domain, collapse = ","), sep = ":")
       }
-      else{
+      else {
         colorPal <- revals$colorPal <- NA
         
       }
@@ -1722,15 +1497,15 @@ shinyServer(function(session, input, output) {
         )
         
         # sample/group inputs depending on whether or not we are doing a comparison of groups
-        if(input$choose_single == 3){
+        if (input$choose_single == 3){
           samples = FALSE
-          groups = c("Group1", "Group2")
+          groups = unique(isolate(attr(plot_data(), "group_DF")$Group))
         }
-        else if(input$choose_single == 2){
+        else if (input$choose_single == 2){
           samples = input$whichSamples
           groups = "Group"
         }
-        else if(input$choose_single == 1){
+        else if (input$choose_single == 1){
           samples = input$whichSamples
           groups = FALSE
         }
@@ -1743,19 +1518,10 @@ shinyServer(function(session, input, output) {
         p <- densityPlot(isolate(plot_data()),variable = input$vk_colors, samples = samples, groups = groups,
                          plot_hist = ifelse(input$choose_single == 1, TRUE, FALSE), 
                          xlabel = xlabel, ylabel = isolate(input$y_axis_input), title = isolate(input$title_input))
-        
-        
-        # p <- densityPlot(isolate(plot_data()), variable = input$vk_colors,
-        #                  xlabel = ifelse(isolate(is.null(input$x_axis_input) || input$x_axis_input == ""),
-        #                                  yes = names(revals$color_by_choices[revals$color_by_choices == input$vk_colors]),
-        #                                  no = isolate(input$x_axis_input)),
-        #                  ylabel = isolate(input$y_axis_input),
-        #                  title = isolate(input$title_input))
-        
       }
       
       #---------- Custom Scatter Plot --------#
-      if(input$chooseplots == 'Custom Scatter Plot'){
+      if (input$chooseplots == 'Custom Scatter Plot'){
         validate(need(!is.null(input$whichSamples), message = "Please select at least 1 sample"),
                  need(!is.na(input$vk_colors), message = "Please select a variable to color by"))
         req(!is.null(input$scatter_x), !is.null(input$scatter_y), !("" %in% c(input$scatter_x, input$scatter_y)))
@@ -1777,14 +1543,21 @@ shinyServer(function(session, input, output) {
     
     x <- y <- list(titlefont = f)
     
-    # ___test-export___
-    exportTestValues(plot = p, plot_attrs = p$x$attrs[[p$x$cur_data]])
-    
-    p <- p %>% layout(xaxis = x, yaxis = y, titlefont = f, margin = list(t = 50))
+    p <- p %>% layout(xaxis = x, yaxis = y, titlefont = f)
     
     # Null assignment bypasses plotly bug
     p$elementId <- NULL
+    
+    # Enable adding plot params
     enable("add_plot")
+    
+    # ___test-export___
+    exportTestValues(plot = p, plot_attrs = p$x$attrs[[p$x$cur_data]], plot_layout = p$x$layout, plot_visdat = p$x$visdat[[p$x$cur_data]]())
+    
+    # inspect <<- p
+    
+    revals$current_plot <- p
+    
     return(p)
     
   })
@@ -1799,7 +1572,7 @@ shinyServer(function(session, input, output) {
     if (input$chooseplots == 'Van Krevelen Plot') {
       defs <- formals(vanKrevelenPlot)
       #defs$legendTitle = names(emeta_display_choices())[emeta_display_choices() == input$vk_colors]
-    } else if(input$chooseplots == "Custom Scatter Plot"){
+    } else if (input$chooseplots == "Custom Scatter Plot"){
       defs <- formals(scatterPlot)
       defs$ylabel = NULL
       defs$xlabel = NULL
@@ -1840,11 +1613,11 @@ shinyServer(function(session, input, output) {
     validate(
       need(input$chooseplots != 0, message = "")
     )
-    if(input$chooseplots == "Density Plot"){
+    if (input$chooseplots == "Density Plot"){
       addCssClass("js_legend_title_input", "grey_out")
       disabled(textInput(inputId = "legend_title_input", label = "Legend Label", value = ""))
     }
-    else{
+    else {
       removeCssClass("js_legend_title_input", "grey_out")
       textInput(inputId = "legend_title_input", label = "Legend Label", value = "")
     }
@@ -1853,76 +1626,70 @@ shinyServer(function(session, input, output) {
   
   # reactive variable that keeps track of whether the selected column is numeric or categorical.
   numeric_selected <- eventReactive(c(input$vk_colors, plot_data()),{
-    if(input$vk_colors %in% (plot_data()$e_data %>% colnames())){
+    if (input$vk_colors %in% (plot_data()$e_data %>% colnames())){
       (is.numeric(plot_data()$e_data %>% pluck(input$vk_colors)) & !is_integer(plot_data()$e_data %>% pluck(input$vk_colors)))
-    }else if(input$vk_colors %in% (plot_data()$e_meta %>% colnames())){
+    }else if (input$vk_colors %in% (plot_data()$e_meta %>% colnames())){
       (is.numeric(plot_data()$e_meta %>% pluck(input$vk_colors)) & !is_integer(plot_data()$e_meta %>% pluck(input$vk_colors)))
-    }else if(input$vk_colors %in% c("bs1", "bs2")){
+    }else if (input$vk_colors %in% c("bs1", "bs2")){
       FALSE
     }else TRUE
   }, ignoreNULL = FALSE)
-  
- 
-  
   
   #-------- create a table that stores plotting information -------#
   # the table needs to grow with each click of the download button
   parmTable <- reactiveValues()
   # need to initialize the table and fill in values
-  parmTable$parms <- data.frame(FileName = NA, PlotType = NA, SampleType = NA, G1 = NA, G2 = NA, BoundarySet = NA,
-                                ColorBy = NA, ContinuousVariable = NA, UniqueCommon = NA, x_var = NA, y_var = NA,
-                                UniqueCommonParameters = NA, ChartTitle = NA, XaxisTitle = NA,
-                                YaxisTitle = NA, LegendTitle = NA, ColorPalette = NA, HiddenPalette = NA)
+  parmTable$parms <- data.frame("File Name" = NA, "Plot Type" = NA, "Sample Type" = NA, "Group 1 Samples" = NA, "Group 2 Samples" = NA, "Boundary Set" = NA,
+                                "Color By Variable" = NA, "X Variable" = NA, "Y Variable" = NA, "Presence Threshold" = NA, "Absence Threshold" = NA, "P-Value" = NA,
+                                "Comparisons Method" = NA, check.names = FALSE)
   
   observeEvent(input$add_plot, {
+    
     # initialize a new line
-    newLine <- data.frame(FileName = NA, PlotType = input$chooseplots, SampleType = NA, G1 = NA, G2 = NA, BoundarySet = NA,
-                          ColorBy = NA, ContinuousVariable = NA, UniqueCommon = NA, x_var = NA, y_var = NA,
-                          UniqueCommonParameters = NA, ChartTitle = NA, XaxisTitle = NA,
-                          YaxisTitle = NA, LegendTitle = NA, ColorPalette = NA, HiddenPalette = NA)
+    newLine <- data.frame(FileName = NA, PlotType = NA, SampleType = NA, Group_1_Samples = NA,  Group_2_Samples = NA, BoundarySet = NA,
+                          ColorBy = NA, x_var = NA, y_var = NA, pres_thresh = NA, absn_thresh = NA, pval = NA, compfn = NA)
+                          
     # fill values to a position depending on input$add_plot
+    
     # which type of plot
-    newLine$FileName <- paste("Plot", input$add_plot, sep = "")
+    newLine$FileName <- ifelse(is.na(input$title_input) | input$title_input == "", paste0("Plot_", input$add_plot), paste0("Plot_", input$add_plot, "_", input$title_input))
     newLine$PlotType <- input$chooseplots
     # Single or Multiple Samples
-    newLine$SampleType <- ifelse(input$choose_single == 1, yes = "Single Sample", no = "Multiple Samples")
+    newLine$SampleType <- switch(as.character(input$choose_single), "1" = "Single Sample", "2" = "Single Group of Samples", "3" = "Comparison of Two Groups")
     # Sample(s) in The first group (depends on input$choose_single to decide if this is a single or multiple sample list)
-    newLine$G1 <- ifelse(input$choose_single %in% c(1,2), yes = paste(input$whichSamples, collapse = ","), no = paste(input$whichGroups1, collapse = ","))
+    newLine$Group_1_Samples <- ifelse(input$choose_single %in% c(1,2), yes = paste(input$whichSamples, collapse = ","), no = paste(input$whichGroups1, collapse = ","))
     # Sample(s) in the second group. Automatically NA if input$choose_single is single sample or single group
-    newLine$G2 <- ifelse(input$choose_single == 3, yes =  paste(input$whichGroups2, collapse = ","), no = NA)
+    newLine$Group_2_Samples <- ifelse(input$choose_single == 3, yes =  paste(input$whichGroups2, collapse = ","), no = "None")
     # Boundary set borders to use (NA for non-Van Krevelen plots)
-    newLine$BoundarySet <- ifelse(input$chooseplots == "Van Krevelen Plot", yes = ifelse(input$vkbounds == 0, NA, input$vkbounds), no = "NA")
+    newLine$BoundarySet <- ifelse(input$chooseplots == "Van Krevelen Plot", yes = ifelse(input$vkbounds == 0, "None", input$vkbounds), no = "None")
     # Color By
     newLine$ColorBy <- input$vk_colors
-    newLine$UniqueCommon <- ifelse(input$choose_single == 3, yes = input$summary_fxn, no = "NA")
-    newLine$ChartTitle <- input$title_input
-    # special density plot treatment
-    ylab <- input$y_axis_input
-    if (input$chooseplots == 'Density Plot') {
-      # if x axis input field is empty, get the display name of the color_by_choices vector index that equals vk_colors, otherwise use what the user typed
-      xlab <- ifelse(isolate(is.null(input$x_axis_input) || input$x_axis_input == ""),
-                      yes = names(revals$color_by_choices[revals$color_by_choices == input$vk_colors]),
-                      no = isolate(input$x_axis_input))
-    } else if (input$chooseplots == 'Custom Scatter Plot') {
-      xlab <- isolate(ifelse(is.null(input$x_axis_input) | (input$x_axis_input == ""), 
-                     yes = names(revals$color_by_choices[revals$color_by_choices == input$scatter_x]), 
-                     no = input$x_axis_input))
-      ylab <- isolate(ifelse(is.null(input$y_axis_input) | (input$y_axis_input == ""), 
-                              yes = names(revals$color_by_choices[revals$color_by_choices == input$scatter_y]), 
-                              no = input$y_axis_input))
-      } else {
-      xlab <- input$x_axis_input
-    }
-    newLine$XaxisTitle <- ifelse(is.na(xlab), yes = "default", no = xlab)
-    newLine$YaxisTitle <- ifelse(is.na(ylab), yes = "default", no = ylab)
-    newLine$LegendTitle <- ifelse((input$chooseplots == 'Density Plot') | is.null(input$legend_title_input), yes = "default", no = revals$legendTitle)
     newLine$x_var <- input$scatter_x
     newLine$y_var <- input$scatter_y
-    if(!is.na(revals$colorPal)){
-      newLine$ColorPalette <- strsplit(revals$colorPal, split = ":")[[1]][1]
-      newLine$HiddenPalette <- revals$colorPal
+    
+    newLine$x_var <- switch(input$chooseplots, "Van Krevelen Plot" = "O:C Ratio", "Kendrick Plot" = "Kendrick Mass", 
+                                               "Density Plot" = input$vk_colors, "Custom Scatter Plot" = input$scatter_x)
+    newLine$y_var <- switch(input$chooseplots, "Van Krevelen Plot" = "H:C Ratio", "Kendrick Plot" = "Kendrick Defect", 
+                            "Density Plot" = "Density", "Custom Scatter Plot" = input$scatter_y)
+    
+    
+    newLine$compfn <- ifelse(isTRUE(input$choose_single == 3) & isTRUE(input$summary_fxn != ""), 
+                             switch(input$summary_fxn,
+                                    "select_none" = "None", 
+                                    "uniqueness_gtest" = "G test", 
+                                    "uniqueness_nsamps" = "Presence/absence thresholds",
+                                    "uniqueness_prop" = "Presence/absence thresholds"),
+                             no = "None")
+    
+    if (input$choose_single == 3){
+      newLine$pres_thresh <- input$pres_thresh
+      newLine$absn_thresh <- input$absn_thresh
+      newLine$pval <- input$pval
     }
-    else newLine$ColorPalette <- newLine$HiddenPalette <- NA
+    
+    # Prettified colnames
+    colnames(newLine) <- c("File Name", "Plot Type", "Sample Type", "Group 1 Samples", "Group 2 Samples", "Boundary Set",
+    "Color By Variable", "X Variable", "Y Variable", "Presence Threshold", "Absence Threshold", "P-Value", "Comparisons Method")
     
     if (input$add_plot == 1) {
       # replace the existing line on the first click
@@ -1934,14 +1701,22 @@ shinyServer(function(session, input, output) {
       exportTestValues(parmTable_1 = parmTable$parms)
     }
     
-    
-    #}
+    revals$plot_list[[input$add_plot]] <- revals$current_plot
     
   }, priority = 7)
   
   
-  output$parmsTable <- renderDataTable(parmTable$parms[,-18],
+  output$parmsTable <- renderDataTable(parmTable$parms,
                                        options = list(scrollX = TRUE))
+  
+  # warning messages for viztab
+  output$warnings_visualize <- renderUI({
+    HTML(lapply(revals$warningmessage_visualize, function(el){
+      paste0("<p ", el, "</p>")
+    }) %>%
+      paste(collapse = "")
+    )
+  })
   
   # End Visualize tab #
   
@@ -1949,7 +1724,7 @@ shinyServer(function(session, input, output) {
   ####### Download Tab #######
   
   # copy the table from the visualize tab so as not to confuse javascript
-  output$parmsTable2 <- DT::renderDataTable(parmTable$parms[,-18],
+  output$parmsTable2 <- DT::renderDataTable(parmTable$parms,
                                             options = list(scrollX = TRUE),
                                             server = TRUE)
   
@@ -1974,7 +1749,7 @@ shinyServer(function(session, input, output) {
       
       # ____test functionality____
       # if in testmode just select all rows since shinytest doesn't recognize row selection for parmsTable2
-      if(isTRUE(getOption("shiny.testmode"))){
+      if (isTRUE(getOption("shiny.testmode"))){
         rows <- 1:nrow(parmTable$parms)
       }
       else rows <- input$parmsTable2_rows_selected
@@ -1994,14 +1769,14 @@ shinyServer(function(session, input, output) {
       if (length(rows) > 0) {
         bitmaps <- list()
         for (i in rows) {
-          path <- paste(parmTable$parms$FileName[i],".", input$image_format, sep = "") #create a plot name
+          path <- paste(parmTable$parms[["File Name"]][i],".", input$image_format, sep = "") #create a plot name
           fs <- c(fs, path) # append the new plot to the old plots
-          export(renderDownloadPlots(parmTable = parmTable$parms[i,], peakIcr2),
+          export(revals$plot_list[[i]],
                  file = paste("plot",i,".png", sep = ""), zoom = 2) # use webshot to export a screenshot to the opened pdf
           #r <- brick(file.path(getwd(), paste("plot",i,".png", sep = ""))) # create a raster of the screenshot
           img <- magick::image_read(paste("plot",i,".png", sep = ""))#attr(r,"file")@name) #turn the raster into an image of selected format
           
-          if(isTRUE(getOption("shiny.testmode"))) bitmaps[[i]] <- as.raster(img)
+          if (isTRUE(getOption("shiny.testmode"))) bitmaps[[i]] <- as.raster(img)
           
           image_write(img, path = path, format = input$image_format) #write the image
           #rsvg::rsvg_svg(img, file = path)
@@ -2011,13 +1786,13 @@ shinyServer(function(session, input, output) {
         exportTestValues(images_out = digest::digest(bitmaps))
         
         fs <- c(fs, "Plot_key.csv")
-        outtable <- parmTable$parms[rows, -18]
+        outtable <- parmTable$parms[rows,]
         write.csv( outtable, row.names = FALSE, file = "Plot_key.csv")
       }
       print(fs)
       
       zip(zipfile=fname, files=fs)
-      if(file.exists(paste0(fname,".zip"))){file.rename(paste0(fname,".zip"),fname)}
+      if (file.exists(paste0(fname,".zip"))){file.rename(paste0(fname,".zip"),fname)}
     },
     contentType = "application/zip"
   )
@@ -2034,7 +1809,7 @@ shinyServer(function(session, input, output) {
   # 
   #       print(fs) #print all the pdfs to file
   #       zip(zipfile=fname, files=fs) #zip  it up (this isn't working for some reason!)
-  #       if(file.exists(paste0(fname,".zip"))){file.rename(paste0(fname,".zip"),fname)} #bug workaround see https://groups.google.com/forum/?utm_medium=email&utm_source=footer#!msg/shiny-discuss/D5F2nqrIhiM/ZshRutFpiVQJ
+  #       if (file.exists(paste0(fname,".zip"))){file.rename(paste0(fname,".zip"),fname)} #bug workaround see https://groups.google.com/forum/?utm_medium=email&utm_source=footer#!msg/shiny-discuss/D5F2nqrIhiM/ZshRutFpiVQJ
   #     },
   #     contentType = "application/zip"
   #   )

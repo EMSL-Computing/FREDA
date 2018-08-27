@@ -33,6 +33,10 @@ vignettes/*.pdf
 *.knit.md
 .Rproj.user
 
-# Test screenshots
+# Tests
 tests/screenshots/*
 !tests/screenshots/info.txt
+tests/test_*/
+
+# Docker
+Dockerfile

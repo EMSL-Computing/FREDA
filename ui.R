@@ -185,17 +185,12 @@ shinyUI(tagList(useShinyjs(),
                    ################## Preprocess Panel ###############################################
                      tabPanel("Preprocess",
                               
-                              bsButton("preprocess_help", "How do I use this page?", style = "info"),
-                              
-                              br(),
-                              br(),
-                              
                               sidebarLayout(
                                 
                                 # Sidebar panel
                                 sidebarPanel(
                                   
-                                  uiOutput("which_calcs"),
+                                  div(class = "adjustdown",uiOutput("which_calcs")),
                               
                                   # Action button: add test columns with reasults to peakIcr2
                                   shinyjs::disabled(actionButton('preprocess_click', 'Process Data', icon = icon("cog"), lib = "glyphicon"))
@@ -210,11 +205,11 @@ shinyUI(tagList(useShinyjs(),
                                   
                                   wellPanel(
                                     tags$div(class = "row",
-                                             tags$div(class = "col-sm-5",
+                                             tags$div(class = "col-sm-5", style = "height:350px;overflow-y:scroll;",
                                                       uiOutput("numeric_header"),
                                                       dataTableOutput('numeric_summary')
                                              ),
-                                             tags$div(class = "col-sm-7",
+                                             tags$div(class = "col-sm-7", style = "height:350px;overflow-y:scroll;",
                                                       uiOutput("cat_header"),
                                                       uiOutput('categorical_summary')
                                                       
@@ -235,12 +230,7 @@ shinyUI(tagList(useShinyjs(),
 
                    
                    ################## Filter Panel ##############################################
-                   tabPanel("Filter", 
-                            
-                            bsButton("filter_help", "How do I use this page?", style = "info"),
-                            
-                            br(),
-                            br(),
+                   tabPanel("Filter",
                             
                             sidebarLayout(
                               sidebarPanel(
@@ -252,7 +242,16 @@ shinyUI(tagList(useShinyjs(),
                                 #HTML('<h5><b>Mass Filter</b></h5>')
                                 
                             
-                                checkboxInput('massfilter', tags$b("Mass Filter") ,value = FALSE),
+                                div(class="adjustdown", checkboxInput('massfilter', 
+                                                                      tagList(tags$b("Mass Filter", style = "display:inline-block"),
+                                                                              div(style = "color:deepskyblue;display:inline-block",
+                                                                                  tipify(icon("question-sign", lib = "glyphicon"), 
+                                                                                        title = "Retain peaks within a mass range specified below", 
+                                                                                        placement = "top", trigger = 'hover')
+                                                                                  ) 
+                                                                            ), 
+                                                                     value = FALSE)
+                                ),
                                 
                                 
                                 # Numeric: Min/max mass filter
@@ -263,25 +262,59 @@ shinyUI(tagList(useShinyjs(),
                                                min = 0, value = 900)
                                 ),
                                 
-                                # Checkbox: Mass filter yes/no
-                                checkboxInput('molfilter', tags$b("Molecule Filter"), value = FALSE),
+                                tags$hr(style = "margin:6px"),
                                 
+                                # Checkbox: Mass filter yes/no
+                                div(class = "adjustdown", checkboxInput('molfilter', 
+                                                                        tagList(tags$b("Molecule Filter", style = "display:inline-block"),
+                                                                                div(style = "color:deepskyblue;display:inline-block", 
+                                                                                    tipify(icon("question-sign", lib = "glyphicon"), 
+                                                                                            title = "Retain peaks that are observed in a minimum number of samples, specified below", 
+                                                                                            placement = "top", trigger = 'hover')
+                                                                                    )
+                                                                              ), 
+                                                                        value = FALSE)
+                                ),   
                                 # Drop-down list: Min/max mass filter
                                 uiOutput('minobs'), 
                                 
-                                checkboxInput('formfilter', tags$b("Formula Presence Filter"), value = FALSE),
-                            
-                                # checkboxInput('customfilterz', label = "Implement up to 3 custom filters", value = FALSE),
-                                # uiOutput("filter1UI"),
-                                # uiOutput("customfilter1UI"),
-                                #   conditionalPanel(condition = "input.custom1 !== 'Select item'",
-                                #                   uiOutput("filter2UI"),
-                                #                   uiOutput("customfilter2UI")
-                                #   ),
-                                #   conditionalPanel(condition = "input.custom2 !== 'Select item'",
-                                #                    uiOutput("filter3UI"),
-                                #                    uiOutput("customfilter3UI")
-                                #   ),
+                                tags$hr(style = "margin:6px"),
+                                
+                                div(class = "adjustdown", checkboxInput('formfilter', 
+                                                                        tagList(tags$b("Formula Presence Filter", style = "display:inline-block"),
+                                                                                div(style = "color:deepskyblue;display:inline-block",
+                                                                                    tipify(icon("question-sign", lib = "glyphicon"), 
+                                                                                            title = "Retain peaks that have a molecular formula specified or calculated from elemental values", 
+                                                                                            placement = "top", trigger = 'hover')
+                                                                                    )
+                                                                                ), 
+                                                                        value = FALSE)
+                                ),
+                                
+                                tags$hr(style = "margin:6px"),
+                                
+                                div(class = "adjustdown", checkboxInput('customfilterz', 
+                                                                        tagList(tags$b("Implement up to 3 custom filters", style = "display:inline-block"),
+                                                                                div(style = "color:deepskyblue;display:inline-block",
+                                                                                    tipify(icon("question-sign", lib = "glyphicon"), 
+                                                                                           title = "Filter based on up to 3 variables in the post-processed molecular identification file", 
+                                                                                           placement = "top", trigger = 'hover')
+                                                                                )
+                                                                        ), 
+                                                                        value = FALSE)
+                                ),
+                                
+                                hr(),
+                                
+                                conditionalPanel("input.customfilterz == true",
+                                                   uiOutput("filter1UI"),
+                                                   uiOutput("customfilter1UI"),  
+                                                   uiOutput("filter2UI"),
+                                                   uiOutput("customfilter2UI"),
+                                                   uiOutput("filter3UI"),
+                                                   uiOutput("customfilter3UI")
+                                                 ),
+                                
                                 shinyjs::disabled(
                                   fluidRow(
                                     column(
@@ -310,18 +343,12 @@ shinyUI(tagList(useShinyjs(),
                                 
                                 # Plot: Show number of peaks before/after filters applied
                                 plotOutput('barplot_filter')
-                                
                               ) # End main panel on Filter tab
                               
                             )), # End Filter tab
                    
                    ################## Visualize Panel ###############################################
-                   tabPanel("Visualize", 
-                            
-                            bsButton("visualize_help", "How do I use this page?", style = "info"),
-                            
-                            br(),
-                            br(),
+                   tabPanel("Visualize",
                             
                             sidebarLayout(
                               
@@ -330,23 +357,42 @@ shinyUI(tagList(useShinyjs(),
                                 
                                 # Select Plot Type
                                 uiOutput('plot_type'),
+                                
+                                # Select samples/groups
                                 uiOutput("plotUI"),
                                 uiOutput("plotUI_cond"),
-                                # uiOutput("plotUI_2"),
+                                conditionalPanel(condition = "input.choose_single == 3 && input.chooseplots !== '0'", uiOutput("summary_fxn_out", class = "adjustdown")),
                                 
                                 # Label inputs
-                                uiOutput("title_out"),
-                                uiOutput("x_axis_out"),
-                                uiOutput("y_axis_out"),
-                                tags$div(id = "js_legend_title_input", uiOutput("legend_title_out")),
+                                tags$hr(style = "thickness:5px"),
                                 
-                                # Seperate buttons to generate plot or simply update labels without recalculating data
                                 splitLayout(
-                                  shinyjs::disabled(
-                                    actionButton("plot_submit", label = "Generate Plot"),
-                                    actionButton("update_axes", label = "Update Labels")
+                                  uiOutput("title_out"),
+                                  tags$div(id = "js_legend_title_input", uiOutput("legend_title_out"))
+                                  ),
+                                splitLayout(
+                                  uiOutput("x_axis_out"),
+                                  uiOutput("y_axis_out")
+                                ),
+                                
+                              
+                                # Seperate buttons to generate plot or simply update labels without recalculating data
+                                
+                                shinyjs::disabled(
+                                  fluidRow(
+                                    column(width = 6,
+                                           actionButton("plot_submit", label = "Generate Plot", icon = icon("plus"), lib = "glyphicon")
+                                    ),
+                                    column(width = 6,
+                                           actionButton("update_axes", label = "Update Labels", icon = icon("refresh"), lib = "glyphicon")
+                                    )
                                   )
-                                )
+                                ),
+                                
+                                br(),
+                                br(),
+                                
+                                div(id = "warnings_visualize", style = "overflow-y:scroll;max-height:150px", uiOutput("warnings_visualize"))
                               ),# End sidebar conditionals on Visualize tab #
                               
                               mainPanel(
@@ -382,6 +428,7 @@ shinyUI(tagList(useShinyjs(),
                                 ),
                                 
                                 # color pallete options and button to flip colorscale direction
+                                inlineCSS("#js_colorpal img{margin-top:-9px;}"),
                                 tags$div(id = "js_colorpal", uiOutput("colorpal_out"), style = "display:inline-block"),
                                 actionButton("flip_colors", "Invert color scale", style = "display:inline-block"),
                                   
@@ -460,7 +507,8 @@ shinyUI(tagList(useShinyjs(),
                             # )
                             
                    )
-    )
+    ),
+    div(id = "js_helpbutton", style = "position:absolute;top:3px;right:16px;z-index:1000", hidden(bsButton("helpbutton", "How do I use this page?", style = "info")))
   )
 )
 
