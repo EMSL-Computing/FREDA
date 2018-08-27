@@ -7154,3 +7154,8 @@ input[type="checkbox"] {
   margin-left:3px;
   width:95%;
 }
+
+#FxnPlot .main-svg:nth-of-type(2){
+  margin-top:3px;
+}
+

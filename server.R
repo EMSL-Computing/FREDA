@@ -34,7 +34,7 @@ shinyServer(function(session, input, output) {
   revals <- reactiveValues(ntables = 0, makeplot = 1, color_by_choices = NULL, axes_choices = NULL,
                            plot_data_export = NULL, peakICR_export = NULL, redraw_filter_plot = TRUE, reac_filter_plot = TRUE, 
                            warningmessage = list(upload = "<p style = 'color:deepskyblue'>Upload data and molecular identification files described in 'Data Requirements' on the previous page."),
-                           warningmessage_visualize = list())
+                           warningmessage_visualize = list(), current_plot = NULL, plot_list = list())
   
   exportTestValues(plot_data = revals$plot_data_export, peakICR = revals$peakICR_export, color_choices = revals$color_by_choices)
   ######## Welcome Tab #############
@@ -1131,7 +1131,7 @@ shinyServer(function(session, input, output) {
                                    
                                    disabled(selectInput("summary_fxn", 
                                                         div("Determine uniqueness using:", div(style = "display:inline-block", tipify(icon("question-sign", lib = "glyphicon"), title = text_test, placement = "top", trigger = 'hover'))), 
-                                                        choices = c("Select one" = "select_none", "G test" = "uniqueness_gtest", "Presence/absence thresholds" = "uniqueness_nsamps"))),
+                                                        choices = c("Select one" = "select_none", "G test" = "uniqueness_gtest", "Presence/absence thresholds" = "uniqueness_nsamps"), selected = "select_none")),
                                    
                                    splitLayout(class = "squeezesplitlayout",
                                                disabled(numericInput("pres_thresh", "Presence threshold", value = 1, step = 0.1)),
@@ -1246,7 +1246,7 @@ shinyServer(function(session, input, output) {
       }
       
       # error checking after passing density plots
-      validate(need(input$summary_fxn != "select_none", "Please select a summary function"))
+      validate(need(input$summary_fxn %in% fticRanalysis::getGroupComparisonSummaryFunctionNames(), "Please select a summary function"))
       
       # get the value of the single pairwise comparison         
       grpComparisonsObj <- divideByGroupComparisons(temp_data, comparisons = "all")[[1]]$value
@@ -1306,8 +1306,8 @@ shinyServer(function(session, input, output) {
       
       if (input$chooseplots == "Van Krevelen Plot"){
         color_by_choices <- switch(input$vkbounds,
-                                   'bs1' = c('Van Krevelen Boundary Set 1' = 'bs1', color_by_choices),
-                                   'bs2' = c('Van Krevelen Boundary Set 2' = 'bs2', color_by_choices),
+                                   'bs1' = c('Van Krevelen Boundary Set' = 'bs1', color_by_choices),
+                                   'bs2' = c('Van Krevelen Boundary Set' = 'bs2', color_by_choices),
                                    "0" = c('Van Krevelen Boundary Set 1' = 'bs1', 'Van Krevelen Boundary Set 2' = 'bs2', color_by_choices))
       }
     }
@@ -1556,6 +1556,8 @@ shinyServer(function(session, input, output) {
     
     # inspect <<- p
     
+    revals$current_plot <- p
+    
     return(p)
     
   })
@@ -1637,61 +1639,57 @@ shinyServer(function(session, input, output) {
   # the table needs to grow with each click of the download button
   parmTable <- reactiveValues()
   # need to initialize the table and fill in values
-  parmTable$parms <- data.frame(FileName = NA, PlotType = NA, SampleType = NA, G1 = NA, G2 = NA, BoundarySet = NA,
-                                ColorBy = NA, ContinuousVariable = NA, UniqueCommon = NA, x_var = NA, y_var = NA,
-                                UniqueCommonParameters = NA, ChartTitle = NA, XaxisTitle = NA,
-                                YaxisTitle = NA, LegendTitle = NA, ColorPalette = NA, HiddenPalette = NA)
+  parmTable$parms <- data.frame("File Name" = NA, "Plot Type" = NA, "Sample Type" = NA, "Group 1 Samples" = NA, "Group 2 Samples" = NA, "Boundary Set" = NA,
+                                "Color By Variable" = NA, "X Variable" = NA, "Y Variable" = NA, "Presence Threshold" = NA, "Absence Threshold" = NA, "P-Value" = NA,
+                                "Comparisons Method" = NA, check.names = FALSE)
   
   observeEvent(input$add_plot, {
     
     # initialize a new line
-    newLine <- data.frame(FileName = NA, PlotType = input$chooseplots, SampleType = NA, G1 = NA, G2 = NA, BoundarySet = NA,
-                          ColorBy = NA, ContinuousVariable = NA, UniqueCommon = NA, x_var = NA, y_var = NA,
-                          UniqueCommonParameters = NA, ChartTitle = NA, XaxisTitle = NA,
-                          YaxisTitle = NA, LegendTitle = NA, ColorPalette = NA, HiddenPalette = NA)
+    newLine <- data.frame(FileName = NA, PlotType = NA, SampleType = NA, Group_1_Samples = NA,  Group_2_Samples = NA, BoundarySet = NA,
+                          ColorBy = NA, x_var = NA, y_var = NA, pres_thresh = NA, absn_thresh = NA, pval = NA, compfn = NA)
+                          
     # fill values to a position depending on input$add_plot
+    
     # which type of plot
-    newLine$FileName <- paste("Plot", input$add_plot, sep = "")
+    newLine$FileName <- ifelse(is.na(input$title_input) | input$title_input == "", paste0("Plot_", input$add_plot), paste0("Plot_", input$add_plot, "_", input$title_input))
     newLine$PlotType <- input$chooseplots
     # Single or Multiple Samples
-    newLine$SampleType <- ifelse(input$choose_single == 1, yes = "Single Sample", no = "Multiple Samples")
+    newLine$SampleType <- switch(as.character(input$choose_single), "1" = "Single Sample", "2" = "Single Group of Samples", "3" = "Comparison of Two Groups")
     # Sample(s) in The first group (depends on input$choose_single to decide if this is a single or multiple sample list)
-    newLine$G1 <- ifelse(input$choose_single %in% c(1,2), yes = paste(input$whichSamples, collapse = ","), no = paste(input$whichGroups1, collapse = ","))
+    newLine$Group_1_Samples <- ifelse(input$choose_single %in% c(1,2), yes = paste(input$whichSamples, collapse = ","), no = paste(input$whichGroups1, collapse = ","))
     # Sample(s) in the second group. Automatically NA if input$choose_single is single sample or single group
-    newLine$G2 <- ifelse(input$choose_single == 3, yes =  paste(input$whichGroups2, collapse = ","), no = NA)
+    newLine$Group_2_Samples <- ifelse(input$choose_single == 3, yes =  paste(input$whichGroups2, collapse = ","), no = "None")
     # Boundary set borders to use (NA for non-Van Krevelen plots)
-    newLine$BoundarySet <- ifelse(input$chooseplots == "Van Krevelen Plot", yes = ifelse(input$vkbounds == 0, NA, input$vkbounds), no = "NA")
+    newLine$BoundarySet <- ifelse(input$chooseplots == "Van Krevelen Plot", yes = ifelse(input$vkbounds == 0, "None", input$vkbounds), no = "None")
     # Color By
     newLine$ColorBy <- input$vk_colors
-    newLine$UniqueCommon <- ifelse(input$choose_single == 3, yes = input$summary_fxn, no = "NA")
-    newLine$ChartTitle <- input$title_input
-    # special density plot treatment
-    ylab <- input$y_axis_input
-    if (input$chooseplots == 'Density Plot') {
-      # if x axis input field is empty, get the display name of the color_by_choices vector index that equals vk_colors, otherwise use what the user typed
-      xlab <- ifelse(isolate(is.null(input$x_axis_input) || input$x_axis_input == ""),
-                      yes = names(revals$color_by_choices[revals$color_by_choices == input$vk_colors]),
-                      no = isolate(input$x_axis_input))
-    } else if (input$chooseplots == 'Custom Scatter Plot') {
-      xlab <- isolate(ifelse(is.null(input$x_axis_input) | (input$x_axis_input == ""), 
-                     yes = names(revals$color_by_choices[revals$color_by_choices == input$scatter_x]), 
-                     no = input$x_axis_input))
-      ylab <- isolate(ifelse(is.null(input$y_axis_input) | (input$y_axis_input == ""), 
-                              yes = names(revals$color_by_choices[revals$color_by_choices == input$scatter_y]), 
-                              no = input$y_axis_input))
-      } else {
-      xlab <- input$x_axis_input
-    }
-    newLine$XaxisTitle <- ifelse(is.na(xlab), yes = "default", no = xlab)
-    newLine$YaxisTitle <- ifelse(is.na(ylab), yes = "default", no = ylab)
-    newLine$LegendTitle <- ifelse((input$chooseplots == 'Density Plot') | is.null(input$legend_title_input), yes = "default", no = revals$legendTitle)
     newLine$x_var <- input$scatter_x
     newLine$y_var <- input$scatter_y
-    if (!is.na(revals$colorPal)){
-      newLine$ColorPalette <- strsplit(revals$colorPal, split = ":")[[1]][1]
-      newLine$HiddenPalette <- revals$colorPal
+    
+    newLine$x_var <- switch(input$chooseplots, "Van Krevelen Plot" = "O:C Ratio", "Kendrick Plot" = "Kendrick Mass", 
+                                               "Density Plot" = input$vk_colors, "Custom Scatter Plot" = input$scatter_x)
+    newLine$y_var <- switch(input$chooseplots, "Van Krevelen Plot" = "H:C Ratio", "Kendrick Plot" = "Kendrick Defect", 
+                            "Density Plot" = "Density", "Custom Scatter Plot" = input$scatter_y)
+    
+    
+    newLine$compfn <- ifelse(input$choose_single == 3 & input$summary_fxn != "", 
+                             switch(input$summary_fxn,
+                                    "select_none" = "None", 
+                                    "uniqueness_gtest" = "G test", 
+                                    "uniqueness_nsamps" = "Presence/absence thresholds",
+                                    "uniqueness_prop" = "Presence/absence thresholds"),
+                             no = "None")
+    
+    if (input$choose_single == 3){
+      newLine$pres_thresh <- input$pres_thresh
+      newLine$absn_thresh <- input$absn_thresh
+      newLine$pval <- input$pval
     }
-    else newLine$ColorPalette <- newLine$HiddenPalette <- NA
+    
+    # Prettified colnames
+    colnames(newLine) <- c("File Name", "Plot Type", "Sample Type", "Group 1 Samples", "Group 2 Samples", "Boundary Set",
+    "Color By Variable", "X Variable", "Y Variable", "Presence Threshold", "Absence Threshold", "P-Value", "Comparisons Method")
     
     if (input$add_plot == 1) {
       # replace the existing line on the first click
@@ -1703,13 +1701,12 @@ shinyServer(function(session, input, output) {
       exportTestValues(parmTable_1 = parmTable$parms)
     }
     
-    
-    #}
+    revals$plot_list[[input$add_plot]] <- revals$current_plot
     
   }, priority = 7)
   
   
-  output$parmsTable <- renderDataTable(parmTable$parms[,-18],
+  output$parmsTable <- renderDataTable(parmTable$parms,
                                        options = list(scrollX = TRUE))
   
   # warning messages for viztab
@@ -1727,7 +1724,7 @@ shinyServer(function(session, input, output) {
   ####### Download Tab #######
   
   # copy the table from the visualize tab so as not to confuse javascript
-  output$parmsTable2 <- DT::renderDataTable(parmTable$parms[,-18],
+  output$parmsTable2 <- DT::renderDataTable(parmTable$parms,
                                             options = list(scrollX = TRUE),
                                             server = TRUE)
   
@@ -1772,9 +1769,9 @@ shinyServer(function(session, input, output) {
       if (length(rows) > 0) {
         bitmaps <- list()
         for (i in rows) {
-          path <- paste(parmTable$parms$FileName[i],".", input$image_format, sep = "") #create a plot name
+          path <- paste(parmTable$parms[["File Name"]][i],".", input$image_format, sep = "") #create a plot name
           fs <- c(fs, path) # append the new plot to the old plots
-          export(renderDownloadPlots(parmTable = parmTable$parms[i,], peakIcr2),
+          export(revals$plot_list[[i]],
                  file = paste("plot",i,".png", sep = ""), zoom = 2) # use webshot to export a screenshot to the opened pdf
           #r <- brick(file.path(getwd(), paste("plot",i,".png", sep = ""))) # create a raster of the screenshot
           img <- magick::image_read(paste("plot",i,".png", sep = ""))#attr(r,"file")@name) #turn the raster into an image of selected format
@@ -1789,7 +1786,7 @@ shinyServer(function(session, input, output) {
         exportTestValues(images_out = digest::digest(bitmaps))
         
         fs <- c(fs, "Plot_key.csv")
-        outtable <- parmTable$parms[rows, -18]
+        outtable <- parmTable$parms[rows,]
         write.csv( outtable, row.names = FALSE, file = "Plot_key.csv")
       }
       print(fs)

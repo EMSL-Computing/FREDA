@@ -10,7 +10,7 @@ observeEvent(c(input$top_page, input$chooseplots, input$choose_single, input$whi
                  toggleCssClass("js_whichGroups1", "suggest", input$choose_single == 3 & is.null(input$whichGroups1))
                  toggleCssClass("js_whichGroups2", "suggest", input$choose_single == 3 & is.null(input$whichGroups2))
                  toggleCssClass("plotUI_cond", "suggest", input$choose_single == 3 & all(is.null(input$whichGroups1), is.null(input$whichGroups2)))
-                 toggleCssClass("js_summary_fxn", "suggest", input$choose_single == 3 & all(!is.null(input$whichGroups1), !is.null(input$whichGroups2)) & input$summary_fxn == "select_none")
+                 toggleCssClass("js_summary_fxn", "suggest", input$choose_single == 3 & all(!is.null(input$whichGroups1), !is.null(input$whichGroups2)) & !(input$summary_fxn %in% fticRanalysis::getGroupComparisonSummaryFunctionNames()))
                  
                  # simple state toggling
                  ### warning visuals for summary comparison plots
@@ -188,12 +188,12 @@ observeEvent(c(input$pres_fn, input$whichGroups1, input$whichGroups2),{
     if(cond_smallgrp){
       choices = c("Select one" = "select_none", "Presence/absence thresholds" = "uniqueness_prop")
     }
-    choices = c("Select one" = "select_none", "G test" = "uniqueness_gtest", "Presence/absence thresholds" = "uniqueness_prop")
+    else choices = c("Select one" = "select_none", "G test" = "uniqueness_gtest", "Presence/absence thresholds" = "uniqueness_prop")
     updateNumericInput(session, "thresh", min = 0, max = 1)
   }
   selected = ifelse(input$summary_fxn %in% c("uniqueness_nsamps", "uniqueness_prop"), choices["Presence/absence thresholds"], input$summary_fxn)
   updateSelectInput(session, "summary_fxn", choices = choices, selected = selected)
-  revals$warningmessage_visualize$small_groups <- content
+  revals$warningmessage_visualize$small_groups <- if(input$choose_single == 3) content else NULL
 })
 
 # Control state for presence/absence threshold and p-value inputs
@@ -203,5 +203,13 @@ observeEvent(input$summary_fxn,{
   toggleCssClass("js_pval", "grey_out", condition = input$summary_fxn != "uniqueness_gtest")
   toggleState("absn_thresh", input$summary_fxn != "uniqueness_gtest")
   toggleCssClass("js_absn_thresh", "grey_out", condition = input$summary_fxn == "uniqueness_gtest")
+})
+
+observeEvent(input$vkbounds, {
+  req(isTRUE(input$choose_single == 1) & isTRUE(input$chooseplots == "Van Krevelen Plot"))
+  if(input$vkbounds == 0){
+    updateSelectInput(session, "vk_colors", choices = c('Van Krevelen Boundary Set 1' = 'bs1','Van Krevelen Boundary Set 2' = 'bs2', revals$color_by_choices[!(revals$color_by_choices %in% c("bs1", "bs2"))]))
+  }
+  
 })
 ####                                 ###
