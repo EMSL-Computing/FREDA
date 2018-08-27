@@ -1673,7 +1673,7 @@ shinyServer(function(session, input, output) {
                             "Density Plot" = "Density", "Custom Scatter Plot" = input$scatter_y)
     
     
-    newLine$compfn <- ifelse(input$choose_single == 3 & input$summary_fxn != "", 
+    newLine$compfn <- ifelse(isTRUE(input$choose_single == 3) & isTRUE(input$summary_fxn != ""), 
                              switch(input$summary_fxn,
                                     "select_none" = "None", 
                                     "uniqueness_gtest" = "G test", 

@@ -11,7 +11,7 @@ observeEvent(c(input$top_page, input$chooseplots, input$choose_single, input$whi
                  toggleCssClass("js_whichGroups2", "suggest", input$choose_single == 3 & is.null(input$whichGroups2))
                  toggleCssClass("plotUI_cond", "suggest", input$choose_single == 3 & all(is.null(input$whichGroups1), is.null(input$whichGroups2)))
                  toggleCssClass("js_summary_fxn", "suggest", input$choose_single == 3 & all(!is.null(input$whichGroups1), !is.null(input$whichGroups2)) & !(input$summary_fxn %in% fticRanalysis::getGroupComparisonSummaryFunctionNames()))
-                 
+                 toggleElement("warnings_visualize", condition = isTRUE(input$choose_single == 3))
                  # simple state toggling
                  ### warning visuals for summary comparison plots
                  ### displays warning message and error box if user does something like selects a p-value not in (0,1)
@@ -174,8 +174,9 @@ observeEvent(numeric_selected(),{
 
 ### Summary comparison plot selection control ###
 observeEvent(c(input$pres_fn, input$whichGroups1, input$whichGroups2),{
+  req(input$choose_single == 3)
   cond_smallgrp <- any(length(input$whichGroups1) < 3, length(input$whichGroups2) < 3)
-  content <- if(cond_smallgrp) "style = 'color:grey'>G-test disabled for groups smaller than size 3" else NULL
+  content <- if(cond_smallgrp) "style = 'color:deepskyblue'>G-test disabled for groups with less than 3 samples" else NULL
   
   if (input$pres_fn == "nsamps"){
     if(cond_smallgrp){
@@ -207,9 +208,23 @@ observeEvent(input$summary_fxn,{
 
 observeEvent(input$vkbounds, {
   req(isTRUE(input$choose_single == 1) & isTRUE(input$chooseplots == "Van Krevelen Plot"))
+
   if(input$vkbounds == 0){
-    updateSelectInput(session, "vk_colors", choices = c('Van Krevelen Boundary Set 1' = 'bs1','Van Krevelen Boundary Set 2' = 'bs2', revals$color_by_choices[!(revals$color_by_choices %in% c("bs1", "bs2"))]))
+    updateSelectInput(session, "vk_colors", 
+                      choices = c('Van Krevelen Boundary Set 1' = 'bs1','Van Krevelen Boundary Set 2' = 'bs2', revals$color_by_choices[!(revals$color_by_choices %in% c("bs1", "bs2"))]),
+                      selected = input$vk_colors)
   }
-  
+  else if(input$vkbounds == 'bs1'){
+    selected <- if(input$vk_colors == "bs2") NULL else input$vk_colors
+    updateSelectInput(session, "vk_colors", 
+                      choices = c('Van Krevelen Boundary Set' = 'bs1', revals$color_by_choices[!(revals$color_by_choices %in% c("bs1", "bs2"))]),
+                      selected = selected)
+  }
+  else if(input$vkbounds == "bs2"){
+    selected <- if(input$vk_colors == "bs1") NULL else input$vk_colors
+    updateSelectInput(session, "vk_colors", 
+                      choices = c('Van Krevelen Boundary Set' = 'bs2', revals$color_by_choices[!(revals$color_by_choices %in% c("bs1", "bs2"))]),
+                      selected = selected)
+  }
 })
 ####                                 ###
