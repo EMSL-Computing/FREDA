@@ -19,7 +19,7 @@ library(shinyBS)
 library(shinyjs)
 
 
-peakIcr2 <- NULL #when finished developing, uncomment this to clear the workspace on exit
+#peakIcr2 <- NULL #when finished developing, uncomment this to clear the workspace on exit
 
 shinyServer(function(session, input, output) {
   
