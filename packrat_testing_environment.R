@@ -10,9 +10,9 @@
 # SET THE FOLLOWING IN YOUR R CONSOLE #
 
 ## path to folder (That doesn't exist) that R should create ##
-#vdbDir <- "/Users/clab683/Documents/testenv"
+vdbDir <- "/Users/clab683/Documents/git_repos/FREDA_packrat"
 ## path to local repositories (where fticRanalysis folder is located ##
-#localDir="/Users/clab683/Documents/"
+localDir="/Users/clab683/Documents/git_repos"
 ############################################################
 
 dir.create(vdbDir)
@@ -44,7 +44,7 @@ install.packages(c("shiny", "shinyBS", "ggplot2", "reshape2","webshot","htmlwidg
 webshot::install_phantomjs()
 
 # Can also install from local source if necessary (make sure to list the parent directory of this in "local.repos" above)
-devtools::install_local("/Users/clab683/Documents/fticRanalysis/")
+devtools::install_local("/Users/clab683/Documents/git_repos/fticRanalysis/")
 
 
 ##############################################################################################

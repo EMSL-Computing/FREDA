@@ -19,7 +19,7 @@ library(shinyBS)
 library(shinyjs)
 
 
-#peakIcr2 <- NULL #when finished developing, uncomment this to clear the workspace on exit
+peakIcr2 <- NULL #when finished developing, uncomment this to clear the workspace on exit
 
 shinyServer(function(session, input, output) {
   
@@ -1026,6 +1026,10 @@ shinyServer(function(session, input, output) {
   
   # Plot options, with selections removed if the necessary columns in e_meta are not present.
   output$plot_type <- renderUI({
+    input$top_page
+    validate(need(exists("peakIcr2", where = 1), "A peakIcr object was not found, please check that you have successfully uploaded data"))
+    req(input$top_page == "Visualize")
+    
     choices <- c('Van Krevelen Plot', 'Kendrick Plot', 'Density Plot', 'Custom Scatter Plot', 'Select an Option' = 0)
     
     #disallow kendrick plots if either kmass or kdefect not calculated/present in emeta
@@ -1422,21 +1426,24 @@ shinyServer(function(session, input, output) {
         diverging_options = c("RdYlGn")
         pal <- RColorBrewer::brewer.pal(n = 9, input$colorpal)
         
+        # diverging_options specify color palletes that look weird if they are truncated: [3:9], only truncate the 'normal' ones
         if (!(input$colorpal %in% diverging_options)){
           pal <- RColorBrewer::brewer.pal(n = 9, input$colorpal)[3:9]
         }
         
-        if (input$flip_colors%%2 != 0){
+        # flip the color scale on button click
+        if (input$flip_colors %% 2 != 0){
           pal <- rev(pal)
         }
         
+        # get domain and obtain color pallette function
         domain = range(plot_data()$e_meta[,input$vk_colors], na.rm = TRUE)
         colorPal <- scales::col_numeric(pal, domain)
-        revals$colorPal <- paste(paste(pal, collapse = ","), paste(domain, collapse = ","), sep = ":")
+        #revals$colorPal <- paste(paste(pal, collapse = ","), paste(domain, collapse = ","), sep = ":")
       }
       else {
-        colorPal <- revals$colorPal <- NA
-        
+        colorPal <- NA
+        #revals$colorPal <- NA
       }
       
       
@@ -1742,8 +1749,8 @@ shinyServer(function(session, input, output) {
   output$download_processed_data <- downloadHandler(
     filename = paste("FREDA_Output_",proc.time(),".zip", sep = ""),
     content = function(fname){
-      tmpdir <- tempdir()
-      setwd(tempdir())
+      # orig_wd <- getwd()
+      # setwd(tempdir())
       print(tempdir())
       fs <- vector()
       
@@ -1757,19 +1764,19 @@ shinyServer(function(session, input, output) {
       
       if ("separate" %in% input$download_selection){
         fs <- c(fs, "FREDA_processed_e_data.csv", "FREDA_processed_e_meta.csv")
-        write.csv(peakIcr2$e_data, file = "FREDA_processed_e_data.csv", row.names = FALSE)
-        write.csv(peakIcr2$e_meta, file = "FREDA_processed_e_meta.csv", row.names = FALSE)
+        write.csv(peakIcr2$e_data, file = paste0(tempdir(), "/FREDA_processed_e_data.csv"), row.names = FALSE)
+        write.csv(peakIcr2$e_meta, file = paste0(tempdir(), "/FREDA_processed_e_meta.csv"), row.names = FALSE)
       }
       if ("merged" %in% input$download_selection){
         fs <- c(fs, "FREDA_processed_merged_data.csv")
         merged_data <- merge(peakIcr2$e_data, peakIcr2$e_meta)
-        write.csv(merged_data, file = "FREDA_processed_merged_data.csv", row.names = FALSE)
+        write.csv(merged_data, file = paste0(tempdir(), "FREDA_processed_merged_data.csv"), row.names = FALSE)
       }
       
       if (length(rows) > 0) {
         bitmaps <- list()
         for (i in rows) {
-          path <- paste(parmTable$parms[["File Name"]][i],".", input$image_format, sep = "") #create a plot name
+          path <- paste(tempdir(), "/",gsub("/", "-", parmTable$parms[["File Name"]][i]), ".", input$image_format, sep = "") #create a plot name
           fs <- c(fs, path) # append the new plot to the old plots
           export(revals$plot_list[[i]],
                  file = paste("plot",i,".png", sep = ""), zoom = 2) # use webshot to export a screenshot to the opened pdf
@@ -1785,14 +1792,15 @@ shinyServer(function(session, input, output) {
         # ___test-export___
         exportTestValues(images_out = digest::digest(bitmaps))
         
-        fs <- c(fs, "Plot_key.csv")
+        fs <- c(fs, paste0(tempdir(), "/Plot_key.csv"))
         outtable <- parmTable$parms[rows,]
         write.csv( outtable, row.names = FALSE, file = "Plot_key.csv")
       }
       print(fs)
       
-      zip(zipfile=fname, files=fs)
+      zip(zipfile=fname, files=fs, flags = "-j")
       if (file.exists(paste0(fname,".zip"))){file.rename(paste0(fname,".zip"),fname)}
+      # setwd(orig_wd)
     },
     contentType = "application/zip"
   )
