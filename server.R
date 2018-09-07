@@ -1763,14 +1763,14 @@ shinyServer(function(session, input, output) {
       #
       
       if ("separate" %in% input$download_selection){
-        fs <- c(fs, "FREDA_processed_e_data.csv", "FREDA_processed_e_meta.csv")
+        fs <- c(fs, paste0(tempdir(), "/FREDA_processed_e_data.csv"), paste0(tempdir(), "/FREDA_processed_e_meta.csv"))
         write.csv(peakIcr2$e_data, file = paste0(tempdir(), "/FREDA_processed_e_data.csv"), row.names = FALSE)
         write.csv(peakIcr2$e_meta, file = paste0(tempdir(), "/FREDA_processed_e_meta.csv"), row.names = FALSE)
       }
       if ("merged" %in% input$download_selection){
-        fs <- c(fs, "FREDA_processed_merged_data.csv")
+        fs <- c(fs, paste0(tempdir(), "/FREDA_processed_merged_data.csv"))
         merged_data <- merge(peakIcr2$e_data, peakIcr2$e_meta)
-        write.csv(merged_data, file = paste0(tempdir(), "FREDA_processed_merged_data.csv"), row.names = FALSE)
+        write.csv(merged_data, file = paste0(tempdir(), "/FREDA_processed_merged_data.csv"), row.names = FALSE)
       }
       
       if (length(rows) > 0) {
@@ -1779,9 +1779,9 @@ shinyServer(function(session, input, output) {
           path <- paste(tempdir(), "/",gsub("/", "-", parmTable$parms[["File Name"]][i]), ".", input$image_format, sep = "") #create a plot name
           fs <- c(fs, path) # append the new plot to the old plots
           export(revals$plot_list[[i]],
-                 file = paste("plot",i,".png", sep = ""), zoom = 2) # use webshot to export a screenshot to the opened pdf
+                 file = paste(tempdir(), "plot",i,".png", sep = ""), zoom = 2) # use webshot to export a screenshot to the opened pdf
           #r <- brick(file.path(getwd(), paste("plot",i,".png", sep = ""))) # create a raster of the screenshot
-          img <- magick::image_read(paste("plot",i,".png", sep = ""))#attr(r,"file")@name) #turn the raster into an image of selected format
+          img <- magick::image_read(paste(tempdir(), "plot",i,".png", sep = ""))#attr(r,"file")@name) #turn the raster into an image of selected format
           
           if (isTRUE(getOption("shiny.testmode"))) bitmaps[[i]] <- as.raster(img)
           
@@ -1794,7 +1794,7 @@ shinyServer(function(session, input, output) {
         
         fs <- c(fs, paste0(tempdir(), "/Plot_key.csv"))
         outtable <- parmTable$parms[rows,]
-        write.csv( outtable, row.names = FALSE, file = "Plot_key.csv")
+        write.csv( outtable, row.names = FALSE, file = paste0(tempdir(), "/Plot_key.csv"))
       }
       print(fs)
       
