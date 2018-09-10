@@ -1730,6 +1730,8 @@ shinyServer(function(session, input, output) {
   
   ####### Download Tab #######
   
+  source("Observers/download_observers.R", local = TRUE)
+  
   # copy the table from the visualize tab so as not to confuse javascript
   output$parmsTable2 <- DT::renderDataTable(parmTable$parms,
                                             options = list(scrollX = TRUE),

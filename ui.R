@@ -487,14 +487,14 @@ shinyUI(tagList(useShinyjs(),
                                        ),
                                        column(width = 3,
                                               radioButtons(inputId = "image_format", label = "Select an image format",
-                                                           choices = c("svg", "pdf", "tiff", "png"), selected = "svg")
+                                                           choices = c( "png", "pdf", "tiff", "svg"), selected = "png")
                                        )
                                      )
                                      )
                               )
                             ),
                             #verbatimTextOutput('x4'),
-                            downloadButton('download_processed_data', tags$b('Download Selected Items'), style = "width:100%"),
+                            disabled(downloadButton('download_processed_data', tags$b('Download Selected Items'), style = "width:100%")),
                             tags$br()
                             
                    ), 
