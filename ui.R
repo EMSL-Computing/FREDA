@@ -487,7 +487,7 @@ shinyUI(tagList(useShinyjs(),
                                        ),
                                        column(width = 3,
                                               radioButtons(inputId = "image_format", label = "Select an image format",
-                                                           choices = c( "png", "pdf", "tiff", "svg"), selected = "png")
+                                                           choices = c( "png", "pdf", "tiff"), selected = "png")
                                        )
                                      )
                                      )

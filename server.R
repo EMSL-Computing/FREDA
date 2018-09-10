@@ -855,7 +855,7 @@ shinyServer(function(session, input, output) {
     revals$redraw_filter_plot <- FALSE
     if (input$massfilter){
       mass_filter(uploaded_data()) %>% 
-        dplyr::filter(Mass <= input$max_mass, Mass >= input$min_mass) %>%
+        dplyr::filter(!!sym(getMassColName(peakIcr2)) <= input$max_mass, !!sym(getMassColName(peakIcr2)) >= input$min_mass) %>%
         pluck(1)
     }
     else NULL
