@@ -513,12 +513,24 @@ shinyServer(function(session, input, output) {
   #   options = list(dom = 't', searching = FALSE)
   #   
   #   ) # End head_edata
-  output$head_edata <- DT::renderDT(Edata(),
-                                    options = list(scrollX = TRUE))
+  output$head_edata <- DT::renderDT({
+    tmp <- Edata()
+    
+    # coerce logical to character for display purposes.
+    tmp[, which(sapply(tmp, is.logical))] <- as.character(tmp[, which(sapply(tmp, is.logical))])
+    tmp
+  },
+  options = list(scrollX = TRUE))
   
   # e_meta display
-  output$head_emeta <- DT::renderDataTable(expr = Emeta(),
-                                           options = list(scrollX = TRUE))
+  output$head_emeta <- DT::renderDataTable({
+    tmp <- Emeta()
+    
+    # coerce logical to character for display purposes.
+    tmp[, which(sapply(tmp, is.logical))] <- as.character(tmp[, which(sapply(tmp, is.logical))])
+    tmp
+  },
+  options = list(scrollX = TRUE))
   
   # Display explanation for e_meta
   output$emeta_text <- renderUI({
