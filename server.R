@@ -34,7 +34,7 @@ shinyServer(function(session, input, output) {
   revals <- reactiveValues(ntables = 0, makeplot = 1, color_by_choices = NULL, axes_choices = NULL,
                            plot_data_export = NULL, peakICR_export = NULL, redraw_filter_plot = TRUE, reac_filter_plot = TRUE, 
                            warningmessage = list(upload = "<p style = 'color:deepskyblue'>Upload data and molecular identification files described in 'Data Requirements' on the previous page."),
-                           warningmessage_visualize = list(), current_plot = NULL, plot_list = list())
+                           warningmessage_visualize = list(), current_plot = NULL, plot_list = list(), reset_counter = 0)
   
   exportTestValues(plot_data = revals$plot_data_export, peakICR = revals$peakICR_export, color_choices = revals$color_by_choices)
   ######## Welcome Tab #############
@@ -1664,6 +1664,9 @@ shinyServer(function(session, input, output) {
   
   observeEvent(input$add_plot, {
     
+    # counter which begins at 1 even if a filter reset has occurred.
+    ind <- input$add_plot - revals$reset_counter
+    
     # initialize a new line
     newLine <- data.frame(FileName = NA, PlotType = NA, SampleType = NA, Group_1_Samples = NA,  Group_2_Samples = NA, BoundarySet = NA,
                           ColorBy = NA, x_var = NA, y_var = NA, pres_thresh = NA, absn_thresh = NA, pval = NA, compfn = NA)
@@ -1671,7 +1674,7 @@ shinyServer(function(session, input, output) {
     # fill values to a position depending on input$add_plot
     
     # which type of plot
-    newLine$FileName <- ifelse(is.na(input$title_input) | input$title_input == "", paste0("Plot_", input$add_plot), paste0("Plot_", input$add_plot, "_", input$title_input))
+    newLine$FileName <- ifelse(is.na(input$title_input) | input$title_input == "", paste0("Plot_", ind), paste0("Plot_", ind, "_", input$title_input))
     newLine$PlotType <- input$chooseplots
     # Single or Multiple Samples
     newLine$SampleType <- switch(as.character(input$choose_single), "1" = "Single Sample", "2" = "Single Group of Samples", "3" = "Comparison of Two Groups")
@@ -1681,7 +1684,6 @@ shinyServer(function(session, input, output) {
     newLine$Group_2_Samples <- ifelse(input$choose_single == 3, yes =  paste(input$whichGroups2, collapse = ","), no = "None")
     # Boundary set borders to use (NA for non-Van Krevelen plots)
     newLine$BoundarySet <- ifelse(input$chooseplots == "Van Krevelen Plot", yes = ifelse(input$vkbounds == 0, "None", input$vkbounds), no = "None")
-    # Color By
     newLine$ColorBy <- input$vk_colors
     newLine$x_var <- input$scatter_x
     newLine$y_var <- input$scatter_y
@@ -1710,9 +1712,9 @@ shinyServer(function(session, input, output) {
     colnames(newLine) <- c("File Name", "Plot Type", "Sample Type", "Group 1 Samples", "Group 2 Samples", "Boundary Set",
     "Color By Variable", "X Variable", "Y Variable", "Presence Threshold", "Absence Threshold", "P-Value", "Comparisons Method")
     
-    if (input$add_plot == 1) {
+    if (ind == 1) {
       # replace the existing line on the first click
-      parmTable$parms[input$add_plot, ] <- newLine
+      parmTable$parms[ind, ] <- newLine
       exportTestValues(parmTable_1 = parmTable$parms)
     } else {
       # concat every new line after
@@ -1720,7 +1722,7 @@ shinyServer(function(session, input, output) {
       exportTestValues(parmTable_1 = parmTable$parms)
     }
     
-    revals$plot_list[[input$add_plot]] <- revals$current_plot
+    revals$plot_list[[ind]] <- revals$current_plot
     
   }, priority = 7)
   

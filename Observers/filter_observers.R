@@ -216,7 +216,7 @@ observeEvent(input$reset_filters,{
     fluidPage(
       fluidRow(
         column(10, align = "center", offset = 1,
-               tags$p("Caution:  If you reset filters all plots made using filtered data will be lost.", style = "color:red;font:bold", align = "center"),
+               tags$p("Caution:  If you reset filters, plots you have currently stored for download will be ERASED.  If you want to keep the plots you have already created, download them now.  A summary of the data with the current filter settings will be included in your download.", style = "color:red;font:bold", align = "center"),
                actionButton("clear_filters_yes", "Yes, clear filters without saving plots.", width = '100%'),
                br(),
                br(),
@@ -241,7 +241,18 @@ observeEvent(input$clear_filters_yes, {
     updateCheckboxInput(session = session, inputId = "formfilter", value = FALSE)
     updateCheckboxInput(session = session, inputId = "customfilterz", value = FALSE)
   }
+  
+  # reset parameter table/plot_list and revert to pre-filtered ata
+  parmTable$parms <- data.frame("File Name" = NA, "Plot Type" = NA, "Sample Type" = NA, "Group 1 Samples" = NA, "Group 2 Samples" = NA, "Boundary Set" = NA,
+                                "Color By Variable" = NA, "X Variable" = NA, "Y Variable" = NA, "Presence Threshold" = NA, "Absence Threshold" = NA, "P-Value" = NA,
+                                "Comparisons Method" = NA, check.names = FALSE)
+  revals$plot_list <- list()
   peakIcr2 <<- uploaded_data()
+  #
+  
+  # counter to control plot storage indices in case of reset
+  revals$reset_counter <- input$add_plot
+  
   removeModal()
 })
 
