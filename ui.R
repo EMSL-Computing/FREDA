@@ -463,7 +463,7 @@ shinyUI(tagList(useShinyjs(),
                                               tags$h4(icon("align-left", "fa-2x"), tags$b("Summary Report"))
                                        )
                                      ),
-                                     checkboxGroupInput("report_selection", label = "Check Download Selection", choices = "Coming Soon"),
+                                     checkboxInput("report_selection", label = "Download a summary of preprocessing and filtering"),
                                     br()
                                      )
                                      )

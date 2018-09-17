@@ -1,0 +1,145 @@
+---
+title: "Summary of Data Processing"
+output: 
+  word_document: default
+  html_document: default
+params:
+  upload: NA
+  processed: NA
+  C13_ID: NA
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+upload <- params$upload
+processed <- params$processed
+c13 <- params$C13_ID
+library(dplyr)
+library(kableExtra)
+library(readr)
+panderOptions('knitr.auto.asis', FALSE)
+calc_funs <- read.csv("calculation_options.csv", stringsAsFactors = FALSE)
+calc_cols <- read.csv("calculation_variables.csv", stringsAsFactors = FALSE)
+```
+
+###**Input Data Summary**###
+
+Your data started with **`r nrow(upload$f_data)` samples** and measurements for **`r nrow(upload$e_data)` peaks**.
+
+```{r}
+scale <- switch(attributes(upload)$data_info$data_scale,
+                "abundance" = "Raw Abundance",
+                "log2" = "log-2 Abundance",
+                "log10" = "log-10 Abundance",
+                "log" = "log-e Abundance",
+                "pres" = "Presence-Absence")
+
+pct_mis <- mean(upload$e_data[-which(colnames(upload$e_data) == getEDataColName(upload))] == 0)
+```
+
+**`r pct_mis*100`**% of the observations in the data file were missing.
+
+Measurements were of the form:  **`r scale`**. 
+
+Metadata columns before processing included the following: 
+
+```{r}
+temp <- attributes(upload)$cnames[which(!sapply(attributes(upload)$cnames, is.null))]
+temp <- temp[which(!(names(temp) %in% c("edata_cname", "fdata_cname", "mass_cname")))]
+```
+
+**`r temp`**
+
+****
+
+The following column selections were made for mass, isotopic notation/symbol , molecule form and/or elemental counts:
+
+```{r}
+selection_names <- c("Mass", "Isotopic Notation/Symbol", "Molecule Formula", "Carbon", "Hydrogen", "Oxygen", "Nitrogen", "Phosphorus")
+
+selection_values <- list("mass_cname", "isotopic_cname", "mf_cname", "c_cname", "h_cname", "o_cname", "n_cname", "p_cname")
+
+selection_values <- lapply(selection_values, function(name){
+  res <- ifelse(is.null(attributes(processed)$cnames[[name]]), "No Selection", attributes(processed)$cnames[[name]])
+  if(name == "isotopic_cname") res <- paste0(res, " : ", c13)
+  
+  res
+  }) %>% unlist()
+
+kable(data.frame("Value" = selection_names, "Column Selected" = selection_values))
+```
+
+****
+
+###**Processed Variables**###
+
+```{r}
+proc_cols <- processed$e_meta %>% 
+  dplyr::select(which(colnames(processed$e_meta) %in% calc_cols$ColumnName)) %>% 
+  colnames() %>% setdiff(temp)
+
+equations <- list("$\\qquad\\frac{O}{C}$", "$\\qquad\\frac{H}{C}$", "$\\qquad\\frac{N}{C}$", "$\\qquad\\frac{P}{C}$", "$\\qquad\\frac{N}{P}$",
+                  "$\\qquad IUPAC mass*(14/14.01565)$", "$\\qquad$Nominal Kendrick Mass - Kendrick Mass", "$\\qquad -(\\frac{4C + H - 3N - 2O + 5P - 2S}{C})$",
+                  "$\\qquad60.3 - 28.5*NOSC$", "$\\qquad\\frac{1 + C - O - S - 0.5*(N + P + H)}{C - O - S - N - P}$", 
+                  "$\\qquad\\frac{1 + C - 0.5O - S - 0.5*(N + P + H)}{C - 0.5*O - S - N - P}$",
+                  "$\\qquad 1 + C - O - S - 0.5*(N + P + H)$", "$\\qquad 1 + C - O - S - 0.5*(N + P + H) - O$", "$\\qquad$Combination of C,H,N,O,S,P")
+```
+
+The following variables were added in the "Preprocessing" tab:
+
+```{r, results = 'asis', message = FALSE}
+cols_for_display <- calc_cols %>% filter(ColumnName %in% proc_cols) %>% purrr::pluck("DisplayName")
+
+if(all(calc_cols[1:5,]$DisplayName %in% cols_for_display)){
+  pander(paste(cols_for_display[1:5]), collapse = ", ")
+  pander(" \n\n ")
+  pander(paste(unlist(equations)[1:5], collapse = " "))
+  pander(" \n\n ")
+  }
+
+dontoutput <-lapply(6:length(equations), function(i){
+  if(calc_cols$ColumnName[i] %in% proc_cols){
+    pander(paste(cols_for_display[which(cols_for_display == calc_cols$DisplayName[i])], " | "))
+    pander(equations[[i]])
+    # pander(paste(equations[[i]], "\n"))
+    pander("\n\n")
+  }
+})
+
+
+
+```
+
+****
+
+###**Filters**###
+
+```{r}
+filters <- attributes(processed)$filters %>% names()
+filters_names <- sapply(filters, function(x){ switch(x, "massFilt" = "Mass Filter", 
+                                                     "moleculeFilt" = "Molecule Filter", 
+                                                     "formulaFilt" = "Elemental Formula Filter", 
+                                                     paste0("Custom Filter on column: ", gsub("emetaFilt_", "", x)))})
+```
+
+The following filters were applied to the data:
+
+**`r filters_names`** 
+
+The following table shows the number of peaks removed by each filter.
+Filters are applied *in order* from top to bottom, i.e. 'Peaks Removed' for any given filter is the peaks removed after previous filters have already been applied.
+
+```{r}
+num_filtered <- sapply(attributes(processed)$filters, function(x){
+  length(x$filtered)
+})
+
+filt_df <- data.frame("Filter" = filters_names, "Peaks Removed" = num_filtered, row.names = NULL, check.names = FALSE)
+
+```
+
+`r kable(filt_df, format = "markdown")`
+
+After filters were applied **`r nrow(processed$f_data)` samples** and measurements for **`r nrow(processed$e_data)` peaks** remained.
+
+
