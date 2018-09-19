@@ -17,6 +17,7 @@ library(magick)
 library(purrr)
 library(shinyBS)
 library(shinyjs)
+library(pander)
 
 
 #peakIcr2 <- NULL #when finished developing, uncomment this to clear the workspace on exit
@@ -34,7 +35,7 @@ shinyServer(function(session, input, output) {
   revals <- reactiveValues(ntables = 0, makeplot = 1, color_by_choices = NULL, axes_choices = NULL,
                            plot_data_export = NULL, peakICR_export = NULL, redraw_filter_plot = TRUE, reac_filter_plot = TRUE, 
                            warningmessage = list(upload = "<p style = 'color:deepskyblue'>Upload data and molecular identification files described in 'Data Requirements' on the previous page."),
-                           warningmessage_visualize = list(), current_plot = NULL, plot_list = list(), reset_counter = 0)
+                           warningmessage_visualize = list(), current_plot = NULL, plot_list = list(), plot_data = list(), reset_counter = 0)
   
   exportTestValues(plot_data = revals$plot_data_export, peakICR = revals$peakICR_export, color_choices = revals$color_by_choices)
   ######## Welcome Tab #############
@@ -568,7 +569,7 @@ shinyServer(function(session, input, output) {
     validate(need(input$tests, message = "Please choose at least one test to calculate"))
     
     # If columns have already been calculated, start over from uploaded data
-    if(any(attr(peakIcr2, "cnames") %in% calc_vars$ColumnName)){
+    if (any(attr(peakIcr2, "cnames") %in% calc_vars$ColumnName)){
       peakIcr2 <<- peakICR()
     }
     
@@ -782,7 +783,7 @@ shinyServer(function(session, input, output) {
         lapply(1:3, function(i){
           
           #require that a selection has been made for filter i
-          if(input[[paste0("custom",i)]] == "Select item") return(NULL)
+          if (input[[paste0("custom",i)]] == "Select item") return(NULL)
           
           #make the filter based on selection
           filter <- emeta_filter(peakIcr2, input[[paste0("custom",i)]])
@@ -1702,7 +1703,17 @@ shinyServer(function(session, input, output) {
                                     "uniqueness_prop" = "Presence/absence thresholds"),
                              no = "None")
     
+    # special storage options for single and two-group plots
+    if (input$choose_single == 2){
+      # store edata_result of summarizeGroups()
+      revals$plot_data[[ind]] <- plot_data()$e_data 
+    }
+    
     if (input$choose_single == 3){
+      # store edata result of summarizeGroupComparisons()
+      revals$plot_data[[ind]] <- plot_data()$e_data 
+      
+      # parameters specific to group comparison plots
       newLine$pres_thresh <- input$pres_thresh
       newLine$absn_thresh <- input$absn_thresh
       newLine$pval <- input$pval
@@ -1722,6 +1733,7 @@ shinyServer(function(session, input, output) {
       exportTestValues(parmTable_1 = parmTable$parms)
     }
     
+    # store the current plot in a reactiveValue for later download
     revals$plot_list[[ind]] <- revals$current_plot
     
   }, priority = 7)
@@ -1778,7 +1790,7 @@ shinyServer(function(session, input, output) {
       else rows <- input$parmsTable2_rows_selected
       #
       
-      if(input$report_selection == TRUE){
+      if (input$report_selection == TRUE){
         fs <- c(fs, paste0(tempdir(), "/report.docx"))
         report(peakICR(), peakIcr2, output_file = paste0(tempdir(), "/report.docx"), output_format = "word_document", C13_ID = input$iso_symbol)
       }
@@ -1792,6 +1804,15 @@ shinyServer(function(session, input, output) {
         fs <- c(fs, paste0(tempdir(), "/FREDA_processed_merged_data.csv"))
         merged_data <- merge(peakIcr2$e_data, peakIcr2$e_meta)
         write.csv(merged_data, file = paste0(tempdir(), "/FREDA_processed_merged_data.csv"), row.names = FALSE)
+      }
+      if ("group_data" %in% input$download_selection){
+        for(i in 1:length(revals$plot_data)){
+          if (!is.null(revals$plot_data[[i]])){
+            path <- paste0(tempdir(), "/FREDA_group_data_summary_", gsub("/", "-", parmTable$parms[["File Name"]][i]),".csv")
+            fs <- c(fs, path)
+            write.csv(revals$plot_data[[i]], file = path, row.names = FALSE) 
+          }
+        }
       }
       
       if (length(rows) > 0) {

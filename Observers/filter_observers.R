@@ -242,11 +242,12 @@ observeEvent(input$clear_filters_yes, {
     updateCheckboxInput(session = session, inputId = "customfilterz", value = FALSE)
   }
   
-  # reset parameter table/plot_list and revert to pre-filtered ata
+  # reset parameter table, plot_list, and group plot data.  revert to pre-filtered data
   parmTable$parms <- data.frame("File Name" = NA, "Plot Type" = NA, "Sample Type" = NA, "Group 1 Samples" = NA, "Group 2 Samples" = NA, "Boundary Set" = NA,
                                 "Color By Variable" = NA, "X Variable" = NA, "Y Variable" = NA, "Presence Threshold" = NA, "Absence Threshold" = NA, "P-Value" = NA,
                                 "Comparisons Method" = NA, check.names = FALSE)
   revals$plot_list <- list()
+  revals$plot_data <- list()
   peakIcr2 <<- uploaded_data()
   #
   

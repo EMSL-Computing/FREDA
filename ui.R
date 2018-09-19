@@ -453,7 +453,8 @@ shinyUI(tagList(useShinyjs(),
                                   ),
                                           checkboxGroupInput("download_selection", label = "Check Download Selection",
                                                              choices = c('Data File as one .csv and Molecular Identification File as another .csv' = "separate",
-                                                                         'merged Data File and Molecular Identification File as a single .csv' = "merged"),
+                                                                         'merged Data File and Molecular Identification File as a single .csv' = "merged",
+                                                                         'Data summaries for grouped plots' = "group_data"),
                                                              width = "80%")
                                           )
                               ),
