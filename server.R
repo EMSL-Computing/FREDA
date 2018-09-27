@@ -1806,11 +1806,13 @@ shinyServer(function(session, input, output) {
         write.csv(merged_data, file = paste0(tempdir(), "/FREDA_processed_merged_data.csv"), row.names = FALSE)
       }
       if ("group_data" %in% input$download_selection){
-        for(i in 1:length(revals$plot_data)){
-          if (!is.null(revals$plot_data[[i]])){
-            path <- paste0(tempdir(), "/FREDA_group_data_summary_", gsub("/", "-", parmTable$parms[["File Name"]][i]),".csv")
-            fs <- c(fs, path)
-            write.csv(revals$plot_data[[i]], file = path, row.names = FALSE) 
+        if(length(revals$plot_data) != 0){
+          for(i in 1:length(revals$plot_data)){
+            if (!is.null(revals$plot_data[[i]])){
+              path <- paste0(tempdir(), "/FREDA_group_data_summary_", gsub("/", "-", parmTable$parms[["File Name"]][i]),".csv")
+              fs <- c(fs, path)
+              write.csv(revals$plot_data[[i]], file = path, row.names = FALSE) 
+            }
           }
         }
       }
