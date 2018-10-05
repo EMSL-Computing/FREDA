@@ -1790,9 +1790,10 @@ shinyServer(function(session, input, output) {
       else rows <- input$parmsTable2_rows_selected
       #
       
+      # option to choose report output format?  need to change inputs in report.R.
       if (input$report_selection == TRUE){
-        fs <- c(fs, paste0(tempdir(), "/report.docx"))
-        report(peakICR(), peakIcr2, output_file = paste0(tempdir(), "/report.docx"), output_format = "word_document", C13_ID = input$iso_symbol)
+        fs <- c(fs, paste0(tempdir(), "/report.html"))
+        report(peakICR(), peakIcr2, output_file = paste0(tempdir(), "/report.html"), output_format = "html_document", C13_ID = input$iso_symbol)
       }
       
       if ("separate" %in% input$download_selection){

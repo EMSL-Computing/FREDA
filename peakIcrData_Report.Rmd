@@ -1,7 +1,6 @@
 ---
 title: "Summary of Data Processing"
 output: 
-  word_document: default
   html_document: default
 params:
   upload: NA
@@ -82,7 +81,7 @@ equations <- list("$\\qquad\\frac{O}{C}$", "$\\qquad\\frac{H}{C}$", "$\\qquad\\f
                   "$\\qquad IUPAC mass*(14/14.01565)$", "$\\qquad$Nominal Kendrick Mass - Kendrick Mass", "$\\qquad -(\\frac{4C + H - 3N - 2O + 5P - 2S}{C})$",
                   "$\\qquad60.3 - 28.5*NOSC$", "$\\qquad\\frac{1 + C - O - S - 0.5*(N + P + H)}{C - O - S - N - P}$", 
                   "$\\qquad\\frac{1 + C - 0.5O - S - 0.5*(N + P + H)}{C - 0.5*O - S - N - P}$",
-                  "$\\qquad 1 + C - O - S - 0.5*(N + P + H)$", "$\\qquad 1 + C - O - S - 0.5*(N + P + H) - O$", "$\\qquad$Combination of C,H,N,O,S,P")
+                  "$\\qquad 1 + C - O - S - 0.5*(N + P + H)$", "$\\qquad 1 + C - O - S - 0.5*(N + P + H) - O$", "$\\qquad$Composition of C,H,N,O,S,P")
 ```
 
 The following variables were added in the "Preprocessing" tab:
@@ -99,7 +98,7 @@ if(all(calc_cols[1:5,]$DisplayName %in% cols_for_display)){
 
 dontoutput <-lapply(6:length(equations), function(i){
   if(calc_cols$ColumnName[i] %in% proc_cols){
-    pander(paste(cols_for_display[which(cols_for_display == calc_cols$DisplayName[i])], " | "))
+    pander(paste(cols_for_display[which(cols_for_display == calc_cols$DisplayName[i])], "$\\qquad$| "))
     pander(equations[[i]])
     # pander(paste(equations[[i]], "\n"))
     pander("\n\n")

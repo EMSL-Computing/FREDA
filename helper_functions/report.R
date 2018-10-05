@@ -21,7 +21,7 @@
 #' @author Allison Thompson
 #'
 #' @export
-report <- function(uploaded_data, processed_data, output_file=NULL, output_format = 'word_document', ...){
+report <- function(uploaded_data, processed_data, output_file=NULL, output_format = 'html_document', ...){
   library(rmarkdown)
 
   if(!is.list(peakIcrData)){
