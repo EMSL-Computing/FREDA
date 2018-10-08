@@ -10,7 +10,7 @@ observeEvent(c(input$top_page, input$chooseplots, input$choose_single, input$whi
                  toggleCssClass("js_whichGroups1", "suggest", input$choose_single == 3 & is.null(input$whichGroups1))
                  toggleCssClass("js_whichGroups2", "suggest", input$choose_single == 3 & is.null(input$whichGroups2))
                  toggleCssClass("plotUI_cond", "suggest", input$choose_single == 3 & all(is.null(input$whichGroups1), is.null(input$whichGroups2)))
-                 toggleCssClass("js_summary_fxn", "suggest", input$choose_single == 3 & all(!is.null(input$whichGroups1), !is.null(input$whichGroups2)) & !(input$summary_fxn %in% fticRanalysis::getGroupComparisonSummaryFunctionNames()))
+                 toggleCssClass("js_summary_fxn", "suggest", input$choose_single == 3 & all(!is.null(input$whichGroups1), !is.null(input$whichGroups2)) & !(input$summary_fxn %in% fticRanalysis:::getGroupComparisonSummaryFunctionNames()))
                  toggleElement("warnings_visualize", condition = isTRUE(input$choose_single == 3))
                  # simple state toggling
                  ### warning visuals for summary comparison plots
@@ -210,6 +210,7 @@ observeEvent(input$vkbounds, {
   req(isTRUE(input$choose_single == 1) & isTRUE(input$chooseplots == "Van Krevelen Plot"))
 
   if(input$vkbounds == 0){
+    selected <- if(input$vk_colors %in% c("bs1", "bs2")) NULL else input$vk_colors
     updateSelectInput(session, "vk_colors", 
                       choices = c('Van Krevelen Boundary Set 1' = 'bs1','Van Krevelen Boundary Set 2' = 'bs2', revals$color_by_choices[!(revals$color_by_choices %in% c("bs1", "bs2"))]),
                       selected = input$vk_colors)

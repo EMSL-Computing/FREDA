@@ -10,9 +10,9 @@
 # SET THE FOLLOWING IN YOUR R CONSOLE #
 
 ## path to folder (That doesn't exist) that R should create ##
-vdbDir <- "/Users/clab683/Documents/git_repos/FREDA_packrat_1002"
+vdbDir <- "/Users/clab683/Documents/git_repos/packrat_folders/FREDA_packrat_1004"
 ## path to local repositories (where fticRanalysis folder is located ##
-localDir="/Users/clab683/Documents/git_repos"
+localDir=c("/Users/clab683/Documents/git_repos", "/anaconda3/lib/R/library")
 ############################################################
 
 dir.create(vdbDir)

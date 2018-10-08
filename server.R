@@ -577,7 +577,14 @@ shinyServer(function(session, input, output) {
     for(el in input$tests){
       # set f to the function that is named in the ith element of compound_calcs # 
       f <- get(el, envir=asNamespace("fticRanalysis"), mode="function")
-      peakIcr2 <<- f(peakIcr2)
+      
+      if(el == "assign_class"){
+        for(bs in list("bs1", "bs2", "bs3")){
+          peakIcr2 <<- f(peakIcr2, bs)
+        }
+      }
+      else peakIcr2 <<- f(peakIcr2)
+      
     }
     
     if (isTRUE(getOption("shiny.testmode"))) {
@@ -1263,7 +1270,7 @@ shinyServer(function(session, input, output) {
       }
       
       # error checking after passing density plots
-      validate(need(input$summary_fxn %in% fticRanalysis::getGroupComparisonSummaryFunctionNames(), "Please select a summary function"))
+      validate(need(input$summary_fxn %in% fticRanalysis:::getGroupComparisonSummaryFunctionNames(), "Please select a summary function"))
       
       # get the value of the single pairwise comparison         
       grpComparisonsObj <- divideByGroupComparisons(temp_data, comparisons = "all")[[1]]$value
@@ -1454,10 +1461,17 @@ shinyServer(function(session, input, output) {
         colorPal <- scales::col_numeric(pal, domain)
         #revals$colorPal <- paste(paste(pal, collapse = ","), paste(domain, collapse = ","), sep = ":")
       }
-      else {
-        colorPal <- NA
+      else if(input$choose_single != 3 & !(input$vk_colors %in% c("bs1", "bs2"))){
+        # if there are too many categories, warn user and provide color palette
+        if(length(unique(plot_data()$e_meta[, input$vk_colors])) > 12){
+          ramp <- colorRampPalette(RColorBrewer::brewer.pal(12, "Set3"))
+          pal <- ramp(length(unique(plot_data()$e_meta[, input$vk_colors])))
+          colorPal <- scales::col_factor(pal, domain = unique(plot_data()$e_meta[, input$vk_colors]))
+        }
+        else colorPal <- NA
         #revals$colorPal <- NA
       }
+      else if(input$choose_single == 3 | !(input$vk_colors %in% c("bs1", "bs2"))) colorPal <- NA
       
       
       #----------- Single sample plots ------------#
