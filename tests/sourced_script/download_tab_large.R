@@ -2,5 +2,7 @@ print("Testing the DOWNLOAD TAB, all tests through the visualize tab must pass f
 source("sourced_script/visualize_tab_large.R", local = TRUE)
 
 app$setInputs(top_page = "Download")
+
+app$setInputs(download_selection = c("separate", "merged", "group_data"))
 app$snapshotDownload("download_processed_data", filename = "images.zip")
 app$snapshot(items = list(export = "images_out"))
