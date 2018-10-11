@@ -683,7 +683,7 @@ shinyServer(function(session, input, output) {
   
   # ----- Filter Reset Setup -----# 
   # Keep a reactive copy of the pre-filtered data in case of a filter reset event
-  uploaded_data <- reactive({
+  uploaded_data <- eventReactive(input$preprocess_click, {
     req(peakICR(), input$tests)
     
     temp <- peakICR()

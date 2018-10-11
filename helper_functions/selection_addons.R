@@ -16,7 +16,7 @@ tooltip_checkbox <- function(..., extensions){
   output
 }
 
-##Function which creates info hover icons for preprocessing checkboxes.
+##Function which creates info hover icons for viztab radio buttons
 
 colored_radiobuttons <- function(..., extensions){
   output <- radioButtons(...)
