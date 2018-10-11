@@ -6,4 +6,6 @@
 "Aromaticity & Modified Aromaticity","calc_aroma","Aromaticity & Modified Aromaticity"
 "DBE & DBE - O","calc_dbe","DBE & DBE - O"
 "Elemental Composition","assign_elemental_composition","Elemental Composition"
-"Van Krevelen Boundary Classes","assign_class","Van Krevelen Boundary Classes"
+"Compound Classes 1","assign_class;bs1","Compound Classes Using Boundary Set 1 <a href = 'https://pubs.acs.org/doi/abs/10.1021/ac034415p'> [Kim et al., 2003]</a>
+"Compound Classes 2","assign_class;bs2","Compound Classes Using Boundary Set 2 <a href = 'https://www.sciencedirect.com/science/article/pii/S0038071716306447'> [Bailey et al., 2017]</a>"
+"Compound Classes 3","assign_class;bs3","Compound Classes Using Boundary Set 3 <a href = 'https://pubs.acs.org/doi/abs/10.1021/acs.analchem.8b00529'> [Rivas-Ubach et al., 2018]</a>"

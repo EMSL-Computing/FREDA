@@ -411,7 +411,7 @@ shinyUI(tagList(useShinyjs(),
                                          shinyjs::disabled(selectInput("vk_colors", "Color By:", choices = NULL, selected = NULL))
                                          ),
                                   column(width = 5, class = "grey_out", id = "js_vkbounds",
-                                         shinyjs::disabled(selectInput('vkbounds', 'Use Van Krevelen boundary set:',
+                                         shinyjs::disabled(selectInput('vkbounds', 'Display Van Krevelen boundary set:',
                                                      choices = c('BS1' = 'bs1', 'BS2' = 'bs2', 'None' = 0),
                                                      selected = 'bs1'))
                                          )

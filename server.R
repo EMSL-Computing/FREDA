@@ -575,16 +575,17 @@ shinyServer(function(session, input, output) {
     
     # Apply all relevant functions
     for(el in input$tests){
-      # set f to the function that is named in the ith element of compound_calcs # 
-      f <- get(el, envir=asNamespace("fticRanalysis"), mode="function")
-      
-      if(el == "assign_class"){
-        for(bs in list("bs1", "bs2", "bs3")){
-          peakIcr2 <<- f(peakIcr2, bs)
-        }
+      if(grepl("assign_class", el)){
+        foo <- strsplit(el, ";")[[1]]
+        f <- get(foo[1], envir=asNamespace("fticRanalysis"), mode="function")
+        peakIcr2 <<- f(peakIcr2, foo[2])
+        peakIcr2$e_meta[paste0(foo[2], "_class")] <<- gsub(";.*", "", peakIcr2$e_meta[,paste0(foo[2], "_class")])
+        
       }
-      else peakIcr2 <<- f(peakIcr2)
-      
+      else{
+        f <- get(el, envir=asNamespace("fticRanalysis"), mode="function")
+        peakIcr2 <<- f(peakIcr2)
+      }
     }
     
     if (isTRUE(getOption("shiny.testmode"))) {
@@ -688,9 +689,17 @@ shinyServer(function(session, input, output) {
     temp <- peakICR()
     
     for(el in input$tests){
-      # set f to the function that is named in the ith element of compound_calcs # 
-      f <- get(el, envir=asNamespace("fticRanalysis"), mode="function")
-      temp <- f(temp)
+      if(grepl("assign_class", el)){
+        foo <- strsplit(el, ";")[[1]]
+        f <- get(foo[1], envir=asNamespace("fticRanalysis"), mode="function")
+        temp <- f(temp, foo[2])
+        temp$e_meta[paste0(foo[2], "_class")] <- gsub(";.*", "", temp$e_meta[,paste0(foo[2], "_class")])
+        
+      }
+      else{
+        f <- get(el, envir=asNamespace("fticRanalysis"), mode="function")
+        temp <- f(temp)
+      }
     }
     
     return(temp)

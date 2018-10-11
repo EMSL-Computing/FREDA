@@ -26,7 +26,7 @@ library(readr)
 panderOptions('knitr.auto.asis', FALSE)
 
 # tables of calculation options, column names, and display names
-calc_funs <- read.csv("calculation_options.csv", stringsAsFactors = FALSE)
+# calc_funs <- read.csv("calculation_options.csv", stringsAsFactors = FALSE)
 calc_cols <- read.csv("calculation_variables.csv", stringsAsFactors = FALSE)
 ```
 
@@ -97,7 +97,7 @@ proc_cols <- processed$e_meta %>%
 
 href1 <- "<a href = 'https://pubs.acs.org/doi/pdf/10.1021/ac010560w'> [Hughey et al., 2001]</a>"
 href2 <- "<a href = 'https://onlinelibrary.wiley.com/doi/abs/10.1002/rcm.2386'> [Koch & Dittmar, 2006]</a><a href = 'https://onlinelibrary.wiley.com/doi/full/10.1002/rcm.7433'> | [Erratum]</a>"
-href3 <- "<a href = 'https://www.sciencedirect.com/science/article/pii/S0016703711000378'>[LaRowe & Van Cappellen, 2011]</a>"
+href3 <- "<a href = 'https://www.sciencedirect.com/science/article/pii/S0016703711000378'> [LaRowe & Van Cappellen, 2011]</a>"
 href4 <- "<a href = 'https://pubs.acs.org/doi/abs/10.1021/ac034415p'> [Kim et al., 2003]</a>"
 href5 <- "<a href = 'https://www.sciencedirect.com/science/article/pii/S0038071716306447'> [Bailey et al., 2017]</a>"
 href6 <- "<a href = 'https://pubs.acs.org/doi/abs/10.1021/acs.analchem.8b00529'> [Rivas-Ubach et al., 2018]</a>"
