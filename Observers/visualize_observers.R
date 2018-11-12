@@ -176,7 +176,9 @@ observeEvent(numeric_selected(),{
 observeEvent(c(input$pres_fn, input$whichGroups1, input$whichGroups2),{
   req(input$choose_single == 3)
   cond_smallgrp <- any(length(input$whichGroups1) < 3, length(input$whichGroups2) < 3)
+  cond_onesample <- any(length(input$whichGroups1) < 2, length(input$whichGroups2) < 2)
   content <- if(cond_smallgrp) "style = 'color:deepskyblue'>G-test disabled for groups with less than 3 samples" else NULL
+  content_onesample <- if(cond_onesample) "style = 'color:deepskyblue'>Input at least 2 samples per group for group comparison." else NULL
   
   if (input$pres_fn == "nsamps"){
     if(cond_smallgrp){
@@ -192,9 +194,12 @@ observeEvent(c(input$pres_fn, input$whichGroups1, input$whichGroups2),{
     else choices = c("Select one" = "select_none", "G test" = "uniqueness_gtest", "Presence/absence thresholds" = "uniqueness_prop")
     updateNumericInput(session, "thresh", min = 0, max = 1)
   }
+  
   selected = ifelse(input$summary_fxn %in% c("uniqueness_nsamps", "uniqueness_prop"), choices["Presence/absence thresholds"], input$summary_fxn)
   updateSelectInput(session, "summary_fxn", choices = choices, selected = selected)
+  toggleState("plot_submit", !cond_onesample)
   revals$warningmessage_visualize$small_groups <- if(input$choose_single == 3) content else NULL
+  revals$warningmessage_visualize$one_sample <- content_onesample 
 })
 
 # Control state for presence/absence threshold and p-value inputs
