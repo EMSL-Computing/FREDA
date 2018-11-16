@@ -33,7 +33,8 @@ shinyServer(function(session, input, output) {
   source("Observers/misc_observers.R", local = TRUE)
   
   revals <- reactiveValues(ntables = 0, makeplot = 1, color_by_choices = NULL, axes_choices = NULL,
-                           plot_data_export = NULL, peakICR_export = NULL, redraw_filter_plot = TRUE, reac_filter_plot = TRUE, 
+                           plot_data_export = NULL, peakICR_export = NULL, redraw_filter_plot = TRUE, reac_filter_plot = TRUE,
+                           group_1 = NULL, group_2 = NULL, single_sample = NULL, 
                            warningmessage = list(upload = "<p style = 'color:deepskyblue'>Upload data and molecular identification files described in 'Data Requirements' on the previous page."),
                            warningmessage_visualize = list(), current_plot = NULL, plot_list = list(), plot_data = list(), reset_counter = 0)
   
@@ -1120,11 +1121,11 @@ shinyServer(function(session, input, output) {
         div(id = "js_whichGroups1", 
             selectInput('whichGroups1', HTML("<input type = 'text' id = 'group1_name' placeholder = 'Group 1' style = 'border-style:unset;'/>"),
                     choices = setdiff(sample_names(), isolate(input$whichGroups2)),
-                    multiple = TRUE)),
+                    multiple = TRUE, selected = isolate(revals$group_1))),
         div(id = "js_whichGroups2",
             selectInput("whichGroups2", HTML("<input type = 'text' id = 'group2_name' placeholder = 'Group 2' style = 'border-style:unset;'/>"), 
                     choices = setdiff(sample_names(), isolate(input$whichGroups1)), 
-                    multiple = TRUE))
+                    multiple = TRUE, selected = isolate(revals$group_2)))
       ))
     }
     else if (input$choose_single == 2){
@@ -1132,7 +1133,7 @@ shinyServer(function(session, input, output) {
         div(id = "js_whichSamples",
             selectInput('whichSamples', 'Grouped Samples',
                     choices = sample_names(),
-                    multiple = TRUE)),
+                    multiple = TRUE, selected = isolate(revals$group_1))),
         conditionalPanel(
           condition = 'input.whichSamples.length < 2',
           tags$p("Please select at least 2 samples", style = "color:gray")
@@ -1142,7 +1143,6 @@ shinyServer(function(session, input, output) {
     else if (input$choose_single == 1){
       return(div(id = "js_whichSamples", selectInput('whichSamples', 'Sample', choices = sample_names())))
     }
-    else return(NULL)
   })
   
   # selector for summary funcion
@@ -1151,7 +1151,7 @@ shinyServer(function(session, input, output) {
     text_test <- HTML("<p>Should a G-test or presence absence thresholds be used to determine whether a sample is unique to a particular group?</p><p>Depending on your selection, you will be asked for a presence threshold and a p-value (G-test) or a presence AND absence threshold<p/>") 
     
     # density plot has group summary options disabled
-    if (input$chooseplots == "Density Plot"){
+    if (isTRUE(input$chooseplots == "Density Plot")){
       summary_dropdown <- tags$div(class = "grey_out",
                                    tags$p("No summary functions for comparison density plots", style = "color:gray;font-size:small;margin-top:3px;font-weight:bold"),
                                    disabled(
@@ -1255,9 +1255,9 @@ shinyServer(function(session, input, output) {
     } else if (isolate(input$choose_single) == 3) {# two groups 
       # Make sure at least one test has been calculated
       validate(need(!is.null(isolate(input$whichGroups1)), message = "Please select samples for first grouping"))
-      validate(need(length(input$whichGroups1) > 0, message = "Please select at least 1 sample"))
+      validate(need(length(input$whichGroups1) > 1, message = "Please select at least 1 sample"))
       validate(need(!is.null(isolate(input$whichGroups2)), message = "Please select samples for second grouping"))
-      validate(need(length(input$whichGroups2) > 0, message = "Please select at least 1 sample"))
+      validate(need(length(input$whichGroups2) > 1, message = "Please select at least 1 sample"))
       
       group1 <- ifelse(is.null(input$group1_name) | isTRUE(input$group1_name == ""), "Group 1", input$group1_name)
       group2 <- ifelse(is.null(input$group2_name) | isTRUE(input$group2_name == ""), "Group 2", input$group2_name)

@@ -7,17 +7,15 @@ observeEvent(c(input$top_page, input$chooseplots, input$choose_single, input$whi
                  toggleCssClass("plot_type", "suggest", input$chooseplots == 0)
                  toggleCssClass("plotUI", "suggest", input$chooseplots != 0 & input$choose_single == 0)
                  toggleCssClass("js_whichSamples", "suggest", any(input$choose_single %in% c(1,2) & is.null(input$whichSamples), input$choose_single == 2 & isTRUE(length(input$whichSamples) < 2)))
-                 toggleCssClass("js_whichGroups1", "suggest", input$choose_single == 3 & is.null(input$whichGroups1))
-                 toggleCssClass("js_whichGroups2", "suggest", input$choose_single == 3 & is.null(input$whichGroups2))
+                 toggleCssClass("js_whichGroups1", "suggest", input$choose_single == 3 & any(is.null(input$whichGroups1), length(input$whichGroups1) < 2))
+                 toggleCssClass("js_whichGroups2", "suggest", input$choose_single == 3 & any(is.null(input$whichGroups2), length(input$whichGroups2) < 2))
                  toggleCssClass("plotUI_cond", "suggest", input$choose_single == 3 & all(is.null(input$whichGroups1), is.null(input$whichGroups2)))
                  toggleCssClass("js_summary_fxn", "suggest", input$choose_single == 3 & all(!is.null(input$whichGroups1), !is.null(input$whichGroups2)) & !(input$summary_fxn %in% fticRanalysis:::getGroupComparisonSummaryFunctionNames()))
-                 toggleElement("warnings_visualize", condition = isTRUE(input$choose_single == 3))
-                 # simple state toggling
-                 ### warning visuals for summary comparison plots
-                 ### displays warning message and error box if user does something like selects a p-value not in (0,1)
+                 
+                 # toggleElement("warnings_visualize", condition = isTRUE(input$choose_single == 3))
                  
                  # conditions different between counts and proportion 
-                 if (isTRUE(input$pres_fn == "nsamps")){
+                 if (isTRUE(input$pres_fn == "nsamps") & isTRUE(input$choose_single == 3)){
                    # g test warning conditions different from pres/absn conditions
                    if(isTRUE(input$summary_fxn == "uniqueness_gtest")){
                      # logical conditions that are TRUE if the user did something wrong
@@ -33,7 +31,7 @@ observeEvent(c(input$top_page, input$chooseplots, input$choose_single, input$whi
                      content_pres <- if(isTRUE(cond_pres)) "style = 'color:red'>Presence threshold must be a numeric value of at least 1 and no more than the minimum number of samples in a group" else NULL
                      content_absn <- NULL
                    }
-                   else if(isTRUE(input$summary_fxn == "uniqueness_nsamps")){
+                   else if(isTRUE(input$summary_fxn == "uniqueness_nsamps") & isTRUE(input$choose_single == 3)){
                      cond_pres <- any(input$pres_thresh > min(length(input$whichGroups1), length(input$whichGroups2)), input$pres_thresh < 1,
                                       !is.numeric(input$pres_thresh), input$absn_thresh >= input$pres_thresh)
                      cond_absn <- any(input$absn_thresh > min(length(input$whichGroups1), length(input$whichGroups2)) - 1, input$absn_thresh < 0, 
@@ -48,7 +46,7 @@ observeEvent(c(input$top_page, input$chooseplots, input$choose_single, input$whi
                    }
                    else content_pval <- content_pres <- content_absn <- NULL
                  }
-                 else if (isTRUE(input$pres_fn == "prop")){
+                 else if (isTRUE(input$pres_fn == "prop") & isTRUE(input$choose_single == 3)){
                    if(isTRUE(input$summary_fxn == "uniqueness_gtest")){
                      cond_pval <- any(input$pval <= 0, input$pval >= 1)
                      cond_pres <- any(input$pres_thresh > 1, input$pres_thresh <= 0, !is.numeric(input$pres_thresh))
@@ -59,7 +57,7 @@ observeEvent(c(input$top_page, input$chooseplots, input$choose_single, input$whi
                      content_pres <- if(isTRUE(cond_pres)) "style = 'color:red'>Presence threshold must be a numeric value greater than 0 and at most 1" else NULL
                      content_absn <- NULL
                    }
-                   else if(isTRUE(input$summary_fxn == "uniqueness_prop")){
+                   else if(isTRUE(input$summary_fxn == "uniqueness_prop") & isTRUE(input$choose_single == 3)){
                      cond_pres <- any(input$pres_thresh > 1, input$pres_thresh <= 0, !is.numeric(input$pres_thresh), input$absn_thresh >= input$pres_thresh)
                      cond_absn <- any(input$absn_thresh >= 1, input$absn_thresh < 0, !is.numeric(input$absn_thresh), input$absn_thresh >= input$pres_thresh)
                      
@@ -173,32 +171,31 @@ observeEvent(numeric_selected(),{
 })
 
 ### Summary comparison plot selection control ###
-observeEvent(c(input$pres_fn, input$whichGroups1, input$whichGroups2),{
-  req(input$choose_single == 3)
-  cond_smallgrp <- any(length(input$whichGroups1) < 3, length(input$whichGroups2) < 3)
-  cond_onesample <- any(length(input$whichGroups1) < 2, length(input$whichGroups2) < 2)
+observeEvent(c(input$pres_fn, input$whichGroups1, input$whichGroups2, input$choose_single),{
+  cond_smallgrp <- any(length(input$whichGroups1) < 3, length(input$whichGroups2) < 3) & isTRUE(input$choose_single == 3)
+  cond_onesample <- any(length(input$whichGroups1) < 2, length(input$whichGroups2) < 2) & isTRUE(input$choose_single == 3)
   content <- if(cond_smallgrp) "style = 'color:deepskyblue'>G-test disabled for groups with less than 3 samples" else NULL
   content_onesample <- if(cond_onesample) "style = 'color:deepskyblue'>Input at least 2 samples per group for group comparison." else NULL
   
-  if (input$pres_fn == "nsamps"){
+  if (isTRUE(input$pres_fn == "nsamps")){
     if(cond_smallgrp){
       choices = c("Select one" = "select_none", "Presence/absence thresholds" = "uniqueness_nsamps")
     }
     else choices = c("Select one" = "select_none", "G test" = "uniqueness_gtest", "Presence/absence thresholds" = "uniqueness_nsamps")
     updateNumericInput(session, "thresh", min = 1, max = min(length(input$whichGroups1), length(input$whichGroups2)))
   }
-  else if (input$pres_fn == "prop"){
+  else if (isTRUE(input$pres_fn == "prop")){
     if(cond_smallgrp){
       choices = c("Select one" = "select_none", "Presence/absence thresholds" = "uniqueness_prop")
     }
     else choices = c("Select one" = "select_none", "G test" = "uniqueness_gtest", "Presence/absence thresholds" = "uniqueness_prop")
     updateNumericInput(session, "thresh", min = 0, max = 1)
   }
+  else choices = NULL
   
   selected = ifelse(input$summary_fxn %in% c("uniqueness_nsamps", "uniqueness_prop"), choices["Presence/absence thresholds"], input$summary_fxn)
   updateSelectInput(session, "summary_fxn", choices = choices, selected = selected)
-  toggleState("plot_submit", !cond_onesample)
-  revals$warningmessage_visualize$small_groups <- if(input$choose_single == 3) content else NULL
+  revals$warningmessage_visualize$small_groups <- if(isTRUE(input$choose_single == 3)) content else NULL
   revals$warningmessage_visualize$one_sample <- content_onesample 
 })
 
@@ -233,4 +230,11 @@ observeEvent(input$vkbounds, {
                       selected = selected)
   }
 })
+
+# Observer which stores sample selections so user doesn't have to re-input
+observeEvent(c(input$whichGroups1, input$whichGroups2, input$whichSamples),{
+  revals$group_1 <- input$whichGroups1
+  revals$group_2 <- input$whichGroups2
+  revals$single_sample <- input$whichSamples
+}, ignoreNULL = TRUE)
 ####                                 ###
