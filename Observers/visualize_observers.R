@@ -1,18 +1,27 @@
 # shinyjs helpers
-observeEvent(c(input$top_page, input$chooseplots, input$choose_single, input$whichSamples, input$whichGroups1, input$whichGroups2,
+observeEvent(c(input$top_page, input$chooseplots, input$choose_single, input$whichSamples, input$whichGroups1, input$whichGroups2),{
+                 req(input$top_page == "Visualize")
+                 
+                 # show/hide dropdowns for sample selection depending on single sample/single group/group comparison
+                 toggle("js_toggle_groups", condition = input$choose_single == 3)
+                 toggle("js_toggle_single", condition = input$choose_single %in% c(1,2))
+
+                 # conditionally apply blue outlines to help user along sample selection process
+                 toggleCssClass("plot_type", "suggest", input$chooseplots == 0)
+                 toggleCssClass("plotUI", "suggest", input$chooseplots != 0 & input$choose_single == 0)
+                 toggleCssClass("js_whichSamples", "suggest", any(input$choose_single %in% c(1,2) & is.null(input$whichSamples), input$choose_single == 2 & any(length(input$whichSamples) < 2, is.null(input$whichSamples))))
+                 toggleCssClass("js_whichGroups1", "suggest", input$choose_single == 3 & any(is.null(input$whichGroups1), length(input$whichGroups1) < 2))
+                 toggleCssClass("js_whichGroups2", "suggest", input$choose_single == 3 & any(is.null(input$whichGroups2), length(input$whichGroups2) < 2))
+      
+                 toggleElement("warnings_visualize", condition = isTRUE(input$choose_single != 0 & input$chooseplots != "0"))
+  })
+
+# helpers for summary functions
+observeEvent(c(input$top_page, input$choose_single, input$whichGroups1, input$whichGroups2,
                input$summary_fxn, input$pres_thresh, input$pres_fn, input$absn_thresh, input$pval),{
                  req(input$top_page == "Visualize")
                  
-                 # conditionally apply blue outlines to help user along
-                 toggleCssClass("plot_type", "suggest", input$chooseplots == 0)
-                 toggleCssClass("plotUI", "suggest", input$chooseplots != 0 & input$choose_single == 0)
-                 toggleCssClass("js_whichSamples", "suggest", any(input$choose_single %in% c(1,2) & is.null(input$whichSamples), input$choose_single == 2 & isTRUE(length(input$whichSamples) < 2)))
-                 toggleCssClass("js_whichGroups1", "suggest", input$choose_single == 3 & any(is.null(input$whichGroups1), length(input$whichGroups1) < 2))
-                 toggleCssClass("js_whichGroups2", "suggest", input$choose_single == 3 & any(is.null(input$whichGroups2), length(input$whichGroups2) < 2))
-                 toggleCssClass("plotUI_cond", "suggest", input$choose_single == 3 & all(is.null(input$whichGroups1), is.null(input$whichGroups2)))
                  toggleCssClass("js_summary_fxn", "suggest", input$choose_single == 3 & all(!is.null(input$whichGroups1), !is.null(input$whichGroups2)) & !(input$summary_fxn %in% fticRanalysis:::getGroupComparisonSummaryFunctionNames()))
-                 
-                 # toggleElement("warnings_visualize", condition = isTRUE(input$choose_single == 3))
                  
                  # conditions different between counts and proportion 
                  if (isTRUE(input$pres_fn == "nsamps") & isTRUE(input$choose_single == 3)){
@@ -76,7 +85,7 @@ observeEvent(c(input$top_page, input$chooseplots, input$choose_single, input$whi
                  # store warning messages in reactive list.  this list is split and rendered in output$warningmessage_visualize
                  revals$warningmessage_visualize$content_pval <- content_pval
                  revals$warningmessage_visualize$content_pres <- content_pres
-                 revals$warningmessage_visualize$content_absn <- content_absn
+                 revals$warningmessage_visualize$content_absn <- content_absn 
                })
 
 # logical reactive value that clears the plot if a new type is selected
@@ -195,7 +204,7 @@ observeEvent(c(input$pres_fn, input$whichGroups1, input$whichGroups2, input$choo
   
   selected = ifelse(input$summary_fxn %in% c("uniqueness_nsamps", "uniqueness_prop"), choices["Presence/absence thresholds"], input$summary_fxn)
   updateSelectInput(session, "summary_fxn", choices = choices, selected = selected)
-  revals$warningmessage_visualize$small_groups <- if(isTRUE(input$choose_single == 3)) content else NULL
+  revals$warningmessage_visualize$small_groups <-  content 
   revals$warningmessage_visualize$one_sample <- content_onesample 
 })
 
@@ -235,6 +244,7 @@ observeEvent(input$vkbounds, {
 observeEvent(c(input$whichGroups1, input$whichGroups2, input$whichSamples),{
   revals$group_1 <- input$whichGroups1
   revals$group_2 <- input$whichGroups2
-  revals$single_sample <- input$whichSamples
-}, ignoreNULL = TRUE)
+  if(isTRUE(input$choose_single == 1)) revals$single_sample <- input$whichSamples
+  if(isTRUE(input$choose_single == 2)) revals$single_group <- input$whichSamples
+})
 ####                                 ###

@@ -34,7 +34,7 @@ shinyServer(function(session, input, output) {
   
   revals <- reactiveValues(ntables = 0, makeplot = 1, color_by_choices = NULL, axes_choices = NULL,
                            plot_data_export = NULL, peakICR_export = NULL, redraw_filter_plot = TRUE, reac_filter_plot = TRUE,
-                           group_1 = NULL, group_2 = NULL, single_sample = NULL, 
+                           group_1 = NULL, group_2 = NULL, single_group = NULL, single_sample = NULL, 
                            warningmessage = list(upload = "<p style = 'color:deepskyblue'>Upload data and molecular identification files described in 'Data Requirements' on the previous page."),
                            warningmessage_visualize = list(), current_plot = NULL, plot_list = list(), plot_data = list(), reset_counter = 0)
   
@@ -1113,11 +1113,10 @@ shinyServer(function(session, input, output) {
     }
   })
   
-  # Conditional dropdowns based on grouping criteria (choose_single)
-  output$plotUI_cond <- renderUI({
+  # UI output for group comparison
+  output$plotUI_comparison <- renderUI({
     req(input$choose_single != 0, input$chooseplots != 0)
-    if (input$choose_single == 3){
-      return(tagList(
+    tagList(
         div(id = "js_whichGroups1", 
             selectInput('whichGroups1', HTML("<input type = 'text' id = 'group1_name' placeholder = 'Group 1' style = 'border-style:unset;'/>"),
                     choices = setdiff(sample_names(), isolate(input$whichGroups2)),
@@ -1126,23 +1125,26 @@ shinyServer(function(session, input, output) {
             selectInput("whichGroups2", HTML("<input type = 'text' id = 'group2_name' placeholder = 'Group 2' style = 'border-style:unset;'/>"), 
                     choices = setdiff(sample_names(), isolate(input$whichGroups1)), 
                     multiple = TRUE, selected = isolate(revals$group_2)))
-      ))
+      )
+    
+  })
+  
+  # UI output for single sample or single group
+  output$plotUI_single <- renderUI({
+    req(input$choose_single != 0, input$chooseplots != 0)
+    if(input$choose_single == 2){
+      tagList(
+          div(id = "js_whichSamples",
+              selectInput('whichSamples', 'Grouped Samples',
+                      choices = sample_names(),
+                      multiple = TRUE, selected = isolate(revals$single_group))),
+          conditionalPanel(
+            condition = 'input.whichSamples.length < 2',
+            tags$p("Please select at least 2 samples", style = "color:gray")
+          )# End conditional output multiple samples#
+        )
     }
-    else if (input$choose_single == 2){
-      return(tagList(
-        div(id = "js_whichSamples",
-            selectInput('whichSamples', 'Grouped Samples',
-                    choices = sample_names(),
-                    multiple = TRUE, selected = isolate(revals$group_1))),
-        conditionalPanel(
-          condition = 'input.whichSamples.length < 2',
-          tags$p("Please select at least 2 samples", style = "color:gray")
-        )# End conditional output multiple samples#
-      ))
-    }
-    else if (input$choose_single == 1){
-      return(div(id = "js_whichSamples", selectInput('whichSamples', 'Sample', choices = sample_names())))
-    }
+    else return(div(id = "js_whichSamples", selectInput('whichSamples', 'Sample', choices = sample_names(), selected = revals$single_sample)))
   })
   
   # selector for summary funcion

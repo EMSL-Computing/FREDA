@@ -360,7 +360,12 @@ shinyUI(tagList(useShinyjs(),
                                 
                                 # Select samples/groups
                                 uiOutput("plotUI"),
-                                uiOutput("plotUI_cond"),
+                                
+                                # Single dropdown for 1 sample/group or....
+                                shinyjs::hidden(div(id = "js_toggle_single", uiOutput("plotUI_single"))),
+                                
+                                # ...two dropdowns and extra options for group comparison
+                                shinyjs::hidden(div(id = "js_toggle_groups", uiOutput("plotUI_comparison"))),
                                 conditionalPanel(condition = "input.choose_single == 3 && input.chooseplots !== '0'", uiOutput("summary_fxn_out", class = "adjustdown")),
                                 
                                 # Label inputs
