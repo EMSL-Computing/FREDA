@@ -4,26 +4,20 @@ source("sourced_script/preprocess_tab_small.R", local = TRUE)
 
 app$setInputs(top_page = "Filter")
 app$setInputs(massfilter = TRUE)
-Sys.sleep(0.5)
 app$snapshot(list(output = c("summary_filter", "barplot_filter")))
-
 app$setInputs(molfilter = TRUE)
-Sys.sleep(0.5)
 app$snapshot(list(output = c("summary_filter", "barplot_filter")))
-
 app$setInputs(formfilter= TRUE)
-Sys.sleep(0.5)
-
 app$snapshot(list(output = c("summary_filter", "barplot_filter")))
 
 app$setInputs(customfilterz = TRUE)
+Sys.sleep(0.25)
 app$setInputs(custom1 = "HtoC_ratio")
-app$setInputs(minimum_custom1 = 0.4)
-app$setInputs(maximum_custom1 = 2.88)
+app$setInputs(minimum_custom1 = 0.4,
+              maximum_custom1 = 2.88)
 
 app$setInputs(custom2 = "ElComposition")
 app$setInputs(categorical_custom2 = c("CHOS", "CHO", "CHOP", "CHNOS", "CHNOSP", "CHOSP"))
-
 app$setInputs(filter_click = "click")
 app$setInputs(filter_dismiss = "click")
 

@@ -23,6 +23,6 @@ It should be noted that this process is cascading.  The app always starts at the
 
 Image screenshots are always saved to the tests/screenshots folder and screenshots are overridden every time a test is run to reduce folder clutter.  Additionally, if you test the download tab, it will include a zip file of the downloaded images in its results (if the app worked correctly).
 
-I’ve tried to add print messages to give the tester so.e idea of what is happening during testing…
+I’ve tried to add print messages to give the tester some idea of what is happening during testing…
 
 ***under construction***

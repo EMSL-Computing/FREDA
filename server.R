@@ -868,7 +868,7 @@ shinyServer(function(session, input, output) {
                   ,footer = NULL)
     )
     
-    HTML('<h4 style= "color:#1A5276">You may now proceed to preprocessing and visualization</h4>')
+    HTML('<h4 style= "color:#1A5276">You may now proceed to visualization</h4>')
     
   }) # End successMessage
   

@@ -5,11 +5,9 @@ source("sourced_script/upload_tab_large.R", local = TRUE)
 app$setInputs(top_page = "Preprocess")
 
 # select everything but NOSC and click(arbitrarily excluded)
-app$setInputs(tests = c("calc_element_ratios", "calc_kendrick", "calc_gibbs"))
-app$setInputs(tests = c("calc_element_ratios", "calc_kendrick", "calc_gibbs", "calc_aroma"))
-app$setInputs(tests = c("calc_element_ratios", "calc_kendrick", "calc_gibbs", "calc_aroma", "calc_dbe"))
-app$setInputs(tests = c("calc_element_ratios", "calc_kendrick", "calc_gibbs", "calc_aroma", "calc_dbe", "assign_elemental_composition"))
-app$setInputs(preprocess_click = "click")
+
+app$setInputs(tests = c("calc_element_ratios", "calc_kendrick", "calc_gibbs", "calc_aroma", "calc_dbe", "assign_elemental_composition"),
+              preprocess_click = "click")
 
 # snapshot table values
 app$setInputs(which_hist = "NtoC_ratio")

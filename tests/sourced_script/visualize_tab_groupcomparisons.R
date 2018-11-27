@@ -5,22 +5,19 @@ source("sourced_script/filter_tab_large.R", local = TRUE )
 print("Beginning with VK plots.  Testing using G-test")
 app$setInputs(top_page = "Visualize")
 app$setInputs(chooseplots = "Van Krevelen Plot")
-Sys.sleep(0.5)
 app$setInputs(choose_single = "3")
-Sys.sleep(0.5)
-app$setInputs(whichGroups1 = c("EM0011_sample", "EM0013_sample", "EM0015_sample"))
-app$setInputs(whichGroups2 = c("EM0017_sample", "EM0019_sample", "EM0061_sample"))
+app$setInputs(whichGroups1 = c("EM0011_sample", "EM0013_sample", "EM0015_sample"),
+              whichGroups2 = c("EM0017_sample", "EM0019_sample", "EM0061_sample"))
 app$setInputs(summary_fxn = "uniqueness_gtest")
-app$setInputs(pval = 0.1)
-app$setInputs(pres_thresh = 1)
-app$setInputs(plot_submit = "click")
-app$setInputs(vkbounds = "bs2")
-app$setInputs(vkbounds = "0")
-#app$snapshot(list(output = "FxnPlot"))
-app$setInputs(x_axis_input = "2")
-app$setInputs(y_axis_input = "3")
-app$setInputs(plot_submit = "click")
-#app$snapshot(list(output = "FxnPlot"))
+app$setInputs(pval = 0.1,
+              pres_thresh = 1,
+              plot_submit = "click")
+app$setInputs(vkbounds = "bs2", wait_ = FALSE, values_ = FALSE)
+app$setInputs(vkbounds = "0",
+              x_axis_input = "2",
+              y_axis_input = "3",
+              plot_submit = "click")
+
 app$setInputs(add_plot = "click")
 
 vals <- app$getAllValues()
@@ -41,11 +38,11 @@ app$snapshot(items = list(export = c("plot_attrs", "plot_layout", "plot_visdat")
 
 # New Parameters (proportion)
 print("Testing uniqueness_prop....")
-app$setInputs(pres_fn = "prop")
-app$setInputs(summary_fxn = "uniqueness_prop")
-app$setInputs(pres_thresh = 0.8)
-app$setInputs(absn_thresh = 0.1)
-app$setInputs(plot_submit = "click")
+app$setInputs(pres_fn = "prop",
+              summary_fxn = "uniqueness_prop",
+              pres_thresh = 0.8,
+              absn_thresh = 0.1,
+              plot_submit = "click")
 
 vals <- app$getAllValues()
 allcolnames <- c(vals$export$plot_data$e_data %>% colnames(), vals$export$plot_data$e_meta %>% colnames()) 
@@ -64,11 +61,11 @@ app$snapshot(items = list(export = c("plot_attrs", "plot_layout", "plot_visdat")
 
 # New Parameters (number of samples)
 print("Testing uniqueness_nsamps....")
-app$setInputs(pres_fn = "nsamps")
-app$setInputs(summary_fxn = "uniqueness_nsamps")
-app$setInputs(pres_thresh = 2)
-app$setInputs(absn_thresh = 1)
-app$setInputs(plot_submit = "click")
+app$setInputs(pres_fn = "nsamps",
+              summary_fxn = "uniqueness_nsamps",
+              pres_thresh = 2,
+              absn_thresh = 1,
+              plot_submit = "click")
 
 vals <- app$getAllValues()
 allcolnames <- c(vals$export$plot_data$e_data %>% colnames(), vals$export$plot_data$e_meta %>% colnames()) 
@@ -91,20 +88,18 @@ print("VK groupcomparison tests passed, moving to Kendrick Plots")
 # Group comparison kendrick plots
 app$setInputs(chooseplots = "Kendrick Plot")
 print("Testing using G-test")
-Sys.sleep(0.5)
-app$setInputs(choose_single = "3")
-Sys.sleep(0.5)
-app$setInputs(whichGroups1 = c("EM0011_sample", "EM0013_sample", "EM0015_sample"))
-app$setInputs(whichGroups2 = c("EM0017_sample", "EM0019_sample", "EM0061_sample"))
-app$setInputs(summary_fxn = "uniqueness_gtest")
-app$setInputs(pval = 0.1)
-app$setInputs(pres_thresh = 1)
-app$setInputs(plot_submit = "click")
-#app$snapshot(list(output = "FxnPlot"))
-app$setInputs(x_axis_input = "2")
-app$setInputs(y_axis_input = "3")
-app$setInputs(update_axes = "click")
-#app$snapshot(list(output = "FxnPlot"))
+app$setInputs(choose_single = "3",
+              whichGroups1 = c("EM0011_sample", "EM0013_sample", "EM0015_sample"),
+              whichGroups2 = c("EM0017_sample", "EM0019_sample", "EM0061_sample"))
+app$setInputs(summary_fxn = "uniqueness_gtest",
+              pval = 0.1,
+              pres_thresh = 1,
+              plot_submit = "click")
+
+app$setInputs(x_axis_input = "2",
+              y_axis_input = "3",
+              update_axes = "click")
+
 app$setInputs(add_plot = "click")
 
 vals <- app$getAllValues()
@@ -122,11 +117,11 @@ app$snapshot(items = list(export = c("plot_attrs", "plot_layout", "plot_visdat")
 
 # New Parameters (proportion)
 print("Testing uniqueness_prop....")
-app$setInputs(pres_fn = "prop")
-app$setInputs(summary_fxn = "uniqueness_prop")
-app$setInputs(pres_thresh = 0.8)
-app$setInputs(absn_thresh = 0.1)
-app$setInputs(plot_submit = "click")
+app$setInputs(pres_fn = "prop",
+              summary_fxn = "uniqueness_prop",
+              pres_thresh = 0.8,
+              absn_thresh = 0.1,
+              plot_submit = "click")
 
 vals <- app$getAllValues()
 allcolnames <- c(vals$export$plot_data$e_data %>% colnames(), vals$export$plot_data$e_meta %>% colnames()) 
@@ -142,11 +137,11 @@ app$snapshot(items = list(export = c("plot_attrs", "plot_layout", "plot_visdat")
 
 # New Parameters (number of samples)
 print("Testing uniqueness_nsamps....")
-app$setInputs(pres_fn = "nsamps")
-app$setInputs(summary_fxn = "uniqueness_nsamps")
-app$setInputs(pres_thresh = 2)
-app$setInputs(absn_thresh = 1)
-app$setInputs(plot_submit = "click")
+app$setInputs(pres_fn = "nsamps",
+              summary_fxn = "uniqueness_nsamps",
+              pres_thresh = 2,
+              absn_thresh = 1,
+              plot_submit = "click")
 
 vals <- app$getAllValues()
 allcolnames <- c(vals$export$plot_data$e_data %>% colnames(), vals$export$plot_data$e_meta %>% colnames()) 
@@ -165,22 +160,18 @@ print("Kendrick plot tests passed, moving to group density plots")
 
 # Group Comparison Density Plots
 app$setInputs(chooseplots = "Density Plot")
-Sys.sleep(0.5)
 app$setInputs(choose_single = "3")
-Sys.sleep(0.5)
-app$setInputs(whichGroups1 = c("EM0011_sample", "EM0013_sample", "EM0015_sample"))
-app$setInputs(whichGroups2 = c("EM0017_sample", "EM0019_sample", "EM0061_sample"))
-app$setInputs(plot_submit = "click")
-app$setInputs(vk_colors = "kmass")
-app$setInputs(title_input = "1")
-app$setInputs(x_axis_input = "2")
-app$setInputs(y_axis_input = "3")
-app$setInputs(update_axes = "click")
-#app$snapshot(list(output = "FxnPlot"))
+app$setInputs(whichGroups1 = c("EM0011_sample", "EM0013_sample", "EM0015_sample"),
+              whichGroups2 = c("EM0017_sample", "EM0019_sample", "EM0061_sample"),
+              plot_submit = "click")
+app$setInputs(vk_colors = "kmass",
+              title_input = "1",
+              x_axis_input = "2",
+              y_axis_input = "3",
+              update_axes = "click")
 app$setInputs(add_plot = "click")
 
 vals <- app$getAllValues()
-print(vals$export$plot_visdat)
 allcolnames <- c(vals$export$plot_data$e_data %>% colnames(), vals$export$plot_data$e_meta %>% colnames()) 
 
 test_that("check plotting dataframe",{
