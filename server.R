@@ -60,13 +60,12 @@ shinyServer(function(session, input, output) {
     # the argument 'file'.
     content = function(fname) {
       tmpdir <- tempdir()
-      setwd(tempdir())
       print(tempdir())
       fs <- c("example12T_edata.csv", "example12T_emeta.csv")
-      write.csv(example_edata, row.names = FALSE, file = "example12T_edata.csv")
-      write.csv(example_emeta, row.names = FALSE, file = "example12T_emeta.csv")      
+      write.csv(example_edata, row.names = FALSE, file = file.path(tmpdir, "example12T_edata.csv"))
+      write.csv(example_emeta, row.names = FALSE, file = file.path(tmpdir, "example12T_emeta.csv"))      
       print(fs)
-      zip(zipfile=fname, files=fs)
+      zip(zipfile=fname, files=file.path(tmpdir, fs), flags = "-j")
     },
     contentType = "application/zip"
   )
