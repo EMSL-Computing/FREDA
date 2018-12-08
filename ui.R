@@ -34,7 +34,7 @@ shinyUI(tagList(useShinyjs(),
                                        includeMarkdown("./DataRequirements.md"),
                                        # DT::dataTableOutput("example_meta_table"), # in case we want a preview of the data
                                        # DT::dataTableOutput("example_data_table"),
-                                       downloadButton('downloadData', 'Download')),
+                                       div(downloadButton('downloadData', 'Download'), style = "z-index:1000;position:absolute")),
                               tabPanel(title = "Resources", class = "background_FTICR",
                                        HTML('<h4> Resources </h4>')),
                               tabPanel(title = "Contact", class = "background_FTICR",
