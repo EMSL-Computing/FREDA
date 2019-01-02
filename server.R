@@ -574,19 +574,24 @@ shinyServer(function(session, input, output) {
     }
     
     # Apply all relevant functions
-    for(el in input$tests){
-      if(grepl("assign_class", el)){
-        foo <- strsplit(el, ";")[[1]]
-        f <- get(foo[1], envir=asNamespace("fticRanalysis"), mode="function")
-        peakIcr2 <<- f(peakIcr2, foo[2])
-        peakIcr2$e_meta[paste0(foo[2], "_class")] <<- gsub(";.*", "", peakIcr2$e_meta[,paste0(foo[2], "_class")])
+    
+    withProgress(message = "Calculating Values....",{
+      for(el in input$tests){
+        if(grepl("assign_class", el)){
+          foo <- strsplit(el, ";")[[1]]
+          f <- get(foo[1], envir=asNamespace("fticRanalysis"), mode="function")
+          peakIcr2 <<- f(peakIcr2, foo[2])
+          peakIcr2$e_meta[paste0(foo[2], "_class")] <<- gsub(";.*", "", peakIcr2$e_meta[,paste0(foo[2], "_class")])
+          
+        }
+        else{
+          f <- get(el, envir=asNamespace("fticRanalysis"), mode="function")
+          peakIcr2 <<- f(peakIcr2)
+        }
         
+        incProgress(1/length(input$tests))
       }
-      else{
-        f <- get(el, envir=asNamespace("fticRanalysis"), mode="function")
-        peakIcr2 <<- f(peakIcr2)
-      }
-    }
+    })
     
     if (isTRUE(getOption("shiny.testmode"))) {
       exportTestValues(peakIcr2 = peakIcr2)

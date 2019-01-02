@@ -37,7 +37,7 @@ observe({
   })
   
   # Summary Header
-  output$cat_header <- renderUI(tags$p("Mode and Counts for Categorical Variables"))
+  output$cat_header <- renderUI(tags$p("Counts for Categorical Variables"))
 })
 
 # The renderUI call that takes input from the above observer

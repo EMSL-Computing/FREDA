@@ -30,11 +30,10 @@ summaryPreprocess <- function(icRobject, testsSelected, categorical = FALSE, spl
       N_cats <- length(cats)
       
       # make a dummy dataframe that will contain a column for the mode and counts of each category
-      df <- data.frame(matrix(ncol = N_cats + 1, nrow = 0)) %>%
-        {`colnames<-`(., c("Mode", cats))}
+      df <- data.frame(matrix(ncol = N_cats, nrow = 0)) %>%
+        {`colnames<-`(., cats)}
       
-      df[1,-1] <- tab_na #store counts
-      df[1,1] <- tab[which(tab == max(tab))] %>% {paste(names(.), collapse = ";")} #store mode (with handler for ties)
+      df[1,] <- tab_na # store counts
       rownames(df) <- testsSelected %>% filter(ColumnName == colname) %>% pluck(2) # set rowname for display purposes
     
       return(df)
