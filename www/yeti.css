@@ -7077,6 +7077,10 @@ input[type="checkbox"] {
     color: #fff;
 }
 
+.shiny-input-container label{
+  font-weight:bold;
+}
+
 .grey_out {
   color:grey;
 }

@@ -227,7 +227,7 @@ shinyServer(function(session, input, output) {
     req(input$iso_info_filter )
     if (input$iso_info_filter == 1) {
       selectInput("iso_info_column", "Which column contains isotopic information?",
-                  choices  = c('Select a column' = 0, emeta_cnames()))
+                  choices  = c('Select a column' = '0', emeta_cnames()))
     } else (return(NULL))
   })
   

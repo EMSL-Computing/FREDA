@@ -129,8 +129,8 @@ observeEvent(c(input$c_column, input$h_column, input$n_column,
     }
     else content = NULL
     content_isoyn = NULL
-  }else if(any(lapply(elcols, function(col){!is.numeric(Emeta()[,col])})) & input$select == 2){
-    conditions[2] <- any(  lapply(elcols, function(col){!is.numeric(Emeta()[,col])})  %>%  unlist())
+  }else if(any(sapply(elcols, function(col){!is.numeric(Emeta()[,col])})) & input$select == 2){
+    conditions[2] <- any(sapply(elcols, function(col){!is.numeric(Emeta()[,col])}))
     if(input$select == 2){
       content = "style = 'color:red'>One or more elemental columns are non-numeric"
     }
@@ -160,7 +160,6 @@ observeEvent(c(input$f_column,input$select, input$isotope_yn),{
   
   conditions <- FALSE
   conditions[2] <- input$f_column == "Select one"
-  print(conditions[2])
   
   if(conditions[2]){
     if(input$select == 1){

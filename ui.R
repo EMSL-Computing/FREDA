@@ -68,7 +68,7 @@ shinyUI(tagList(useShinyjs(),
                                                          ".csv"))), 
                                 
                                 # Horizontal rule #
-                                tags$hr(),
+                                tags$hr(style = "margin:6px"),
                                 
                                 # Get which instrument generated the data #
                                 selectInput('instrument', 
@@ -77,6 +77,8 @@ shinyUI(tagList(useShinyjs(),
                                               '12T or 15T' = '12T', '21T'), 
                                             selected = 'Select an option'
                                 ), 
+                                
+                                tags$hr(style = "margin:6px"),
                                 
                                 # Get whether formulas or elemental columns are included #
                                 div(id = "js_select", selectInput('select', 
@@ -87,7 +89,6 @@ shinyUI(tagList(useShinyjs(),
                                                                                  'Elemental Columns' = 2),
                                                                   selected = 'Select an option') 
                                 ), 
-                                
                                 
                                 # (Conditional on the above selectInput) Formula: 
                                 ##  which column contains the formula? #
@@ -116,6 +117,9 @@ shinyUI(tagList(useShinyjs(),
                                     )
                                   )
                                 ), 
+                                
+                                tags$hr(style = "margin:6px"),
+                                
                                 # Create an option for Isotopic Analysis
                                 div(id = "js_isotope_yn", selectInput('isotope_yn',
                                                                       label = 'Were isotopic peaks identified in the molecular assignments file?',
@@ -152,7 +156,6 @@ shinyUI(tagList(useShinyjs(),
                                 width = 7,
                                 
                                 # Show 'Success' message if peakICR created successfully
-                                
                                 div(id = "warnings", style = "overflow-y:scroll;max-height:250px", uiOutput("warnings")),
                                 uiOutput('success_upload'),
                                 
