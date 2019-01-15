@@ -1,4 +1,11 @@
-# shinyjs helpers
+# plot selection update on page change
+observeEvent(input$top_page, {
+  req(input$top_page == "Visualize")
+  updateRadioGroupButtons(session, inputId = "chooseplots", selected = revals$chooseplots)
+  revals$chooseplots <- input$chooseplots
+}, priority = 10)
+
+# shinyjs helpers and reactive value storage for selection inputs
 observeEvent(c(input$top_page, input$chooseplots, input$choose_single, input$whichSamples, input$whichGroups1, input$whichGroups2),{
                  req(input$top_page == "Visualize")
                  
@@ -7,14 +14,18 @@ observeEvent(c(input$top_page, input$chooseplots, input$choose_single, input$whi
                  toggle("js_toggle_single", condition = input$choose_single %in% c(1,2))
 
                  # conditionally apply blue outlines to help user along sample selection process
-                 toggleCssClass("plot_type", "suggest", input$chooseplots == 0)
-                 toggleCssClass("plotUI", "suggest", input$chooseplots != 0 & input$choose_single == 0)
+                 toggleCssClass("plot_type", "suggest", is.null(input$chooseplots))
+                 toggleCssClass("plotUI", "suggest", !is.null(input$chooseplots) & input$choose_single == 0)
                  toggleCssClass("js_whichSamples", "suggest", any(input$choose_single %in% c(1,2) & is.null(input$whichSamples), input$choose_single == 2 & any(length(input$whichSamples) < 2, is.null(input$whichSamples))))
                  toggleCssClass("js_whichGroups1", "suggest", input$choose_single == 3 & any(is.null(input$whichGroups1), length(input$whichGroups1) < 2))
                  toggleCssClass("js_whichGroups2", "suggest", input$choose_single == 3 & any(is.null(input$whichGroups2), length(input$whichGroups2) < 2))
       
-                 toggleElement("warnings_visualize", condition = isTRUE(input$choose_single != 0 & input$chooseplots != "0"))
+                 toggleElement("warnings_visualize", condition = isTRUE(input$choose_single != 0 & !is.null(input$chooseplots)))
+                 
+                 revals$chooseplots <- input$chooseplots
   })
+
+
 
 # helpers for summary functions
 observeEvent(c(input$top_page, input$choose_single, input$whichGroups1, input$whichGroups2,
@@ -181,8 +192,8 @@ observeEvent(numeric_selected(),{
 
 ### Summary comparison plot selection control ###
 observeEvent(c(input$pres_fn, input$whichGroups1, input$whichGroups2, input$choose_single),{
-  cond_smallgrp <- any(length(input$whichGroups1) < 3, length(input$whichGroups2) < 3) & isTRUE(input$choose_single == 3)
-  cond_onesample <- any(length(input$whichGroups1) < 2, length(input$whichGroups2) < 2) & isTRUE(input$choose_single == 3)
+  cond_smallgrp <- any(length(input$whichGroups1) < 3, length(input$whichGroups2) < 3) & isTRUE(input$choose_single == 3) & input$chooseplots != "Density Plot"
+  cond_onesample <- any(length(input$whichGroups1) < 2, length(input$whichGroups2) < 2) & isTRUE(input$choose_single == 3) & input$chooseplots != "Density Plot"
   content <- if(cond_smallgrp) "style = 'color:deepskyblue'>G-test disabled for groups with less than 3 samples" else NULL
   content_onesample <- if(cond_onesample) "style = 'color:deepskyblue'>Input at least 2 samples per group for group comparison." else NULL
   

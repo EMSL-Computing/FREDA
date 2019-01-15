@@ -7116,7 +7116,7 @@ input[type="checkbox"] {
   animation-fill-mode: forwards;
 }
 
-.suggest .selectize-input, .suggest .form-control, .suggest-upload .input-group{
+.suggest .selectize-input, .suggest .form-control, .suggest-upload .input-group, .suggest .btn-group-container-sw{
   animation: suggest 0.2s linear;
   animation-fill-mode: forwards;
 }

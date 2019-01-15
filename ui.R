@@ -353,61 +353,64 @@ shinyUI(tagList(useShinyjs(),
                    ################## Visualize Panel ###############################################
                    tabPanel("Visualize",
                             
-                            sidebarLayout(
+                            fluidRow(
                               
                               # Sidebar Panel
-                              sidebarPanel(
-                                
-                                # Select Plot Type
-                                uiOutput('plot_type'),
-                                
+                              column(4,
+                                wellPanel(style = "margin-top:-10px",
+                                   
+                                  # Select Plot Type
+                                  uiOutput('plot_type', style = "margin-top:-10px"),       
+                                          
                                 # Select samples/groups
-                                uiOutput("plotUI"),
-                                
-                                # Single dropdown for 1 sample/group or....
-                                shinyjs::hidden(div(id = "js_toggle_single", uiOutput("plotUI_single"))),
-                                
-                                # ...two dropdowns and extra options for group comparison
-                                shinyjs::hidden(div(id = "js_toggle_groups", uiOutput("plotUI_comparison"))),
-                                conditionalPanel(condition = "input.choose_single == 3 && input.chooseplots !== '0'", uiOutput("summary_fxn_out", class = "adjustdown")),
-                                
-                                # Label inputs
-                                tags$hr(style = "thickness:5px"),
-                                
-                                splitLayout(
-                                  uiOutput("title_out"),
-                                  tags$div(id = "js_legend_title_input", uiOutput("legend_title_out"))
-                                  ),
-                                splitLayout(
-                                  uiOutput("x_axis_out"),
-                                  uiOutput("y_axis_out")
-                                ),
-                                
-                              
-                                # Seperate buttons to generate plot or simply update labels without recalculating data
-                                
-                                shinyjs::disabled(
-                                  fluidRow(
-                                    column(width = 6,
-                                           actionButton("plot_submit", label = "Generate Plot", icon = icon("plus"), lib = "glyphicon")
+                                  uiOutput("plotUI"),
+                                  
+                                  # Single dropdown for 1 sample/group or....
+                                  shinyjs::hidden(div(id = "js_toggle_single", uiOutput("plotUI_single"))),
+                                  
+                                  # ...two dropdowns and extra options for group comparison
+                                  shinyjs::hidden(div(id = "js_toggle_groups", 
+                                                      tagList(div(id = "js_whichGroups1", uiOutput("plotUI_comparison_1")), 
+                                                              div(id = "js_whichGroups2", uiOutput("plotUI_comparison_2"))))),
+                                  conditionalPanel(condition = "input.choose_single == 3 && input.chooseplots !== '0'", uiOutput("summary_fxn_out", class = "adjustdown")),
+                                  
+                                  # Label inputs
+                                  tags$hr(style = "thickness:5px"),
+                                  
+                                  splitLayout(
+                                    uiOutput("title_out"),
+                                    tags$div(id = "js_legend_title_input", uiOutput("legend_title_out"))
                                     ),
-                                    column(width = 6,
-                                           actionButton("update_axes", label = "Update Labels", icon = icon("refresh"), lib = "glyphicon")
+                                  splitLayout(
+                                    uiOutput("x_axis_out"),
+                                    uiOutput("y_axis_out")
+                                  ),
+                                  
+                                
+                                  # Seperate buttons to generate plot or simply update labels without recalculating data
+                                  
+                                  shinyjs::disabled(
+                                    fluidRow(
+                                      column(width = 6,
+                                             actionButton("plot_submit", label = "Generate Plot", icon = icon("plus"), lib = "glyphicon")
+                                      ),
+                                      column(width = 6,
+                                             actionButton("update_axes", label = "Update Labels", icon = icon("refresh"), lib = "glyphicon")
+                                      )
                                     )
-                                  )
-                                ),
-                                
-                                br(),
-                                br(),
-                                
-                                div(id = "warnings_visualize", style = "overflow-y:scroll;max-height:150px", uiOutput("warnings_visualize"))
-                              ),# End sidebar conditionals on Visualize tab #
-                              
-                              mainPanel(
+                                  ),
+                                  
+                                  br(),
+                                  br(),
+                                  
+                                  div(id = "warnings_visualize", style = "overflow-y:scroll;max-height:150px", uiOutput("warnings_visualize"))
+                                )# End sidebar conditionals on Visualize tab #
+                              ),
+                              column(8,
                                 #tags$div(plotlyOutput('FxnPlot'), class = "square"),
 
 
-                                wellPanel(
+                                wellPanel(style = "margin-top:-10px",
                                   plotlyOutput('FxnPlot', width = '700px', height = '600px') %>% 
                                     withSpinner(color = "orange", type = 8)
                                 ),
