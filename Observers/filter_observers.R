@@ -145,7 +145,7 @@ lapply(1:3, function(i){
 
 # delay behavior for when users changed input ranges / categories.  prevent redrawing multiple times
 observe({
-  c(massfilter_ids(), molfilter_ids(), formfilter_ids(), revals$custom1_ids, revals$custom2_ids, revals$custom3_ids)
+  c(sampfilter_ids(), massfilter_ids(), molfilter_ids(), formfilter_ids(), revals$custom1_ids, revals$custom2_ids, revals$custom3_ids)
  
   if(isolate(revals$redraw_filter_plot == FALSE)){
     invalidateLater(1000, session)

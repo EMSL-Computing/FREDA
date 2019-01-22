@@ -46,7 +46,7 @@ shinyUI(tagList(useShinyjs(),
                               ## Sidebar panel on Upload tab ##
                               sidebarPanel(
                                 # Set width of sidebar panel
-                                width = 5,
+                                width = 4,
                                 
                                 # Load e_data file
                                 div(id = "js_file_edata",
@@ -71,23 +71,23 @@ shinyUI(tagList(useShinyjs(),
                                 tags$hr(style = "margin:6px"),
                                 
                                 # Get which instrument generated the data #
-                                selectInput('instrument', 
+                                inlineCSS('#instrument .btn-default, #select .btn-default {font-weight:lighter;}'),
+                                radioGroupButtons('instrument', 
                                             label = 'What instrument generated this data?',
                                             choices = list(# 'Select an option' = 0,
                                               '12T or 15T' = '12T', '21T'), 
-                                            selected = 'Select an option'
+                                            selected = '12T', justified = TRUE
                                 ), 
                                 
                                 tags$hr(style = "margin:6px"),
                                 
                                 # Get whether formulas or elemental columns are included #
-                                div(id = "js_select", selectInput('select', 
+                                div(id = "js_select", radioGroupButtons('select', 
                                                                   label = 'Does this file have formulas 
                                                                   or elemental columns?',
-                                                                  choices = list('Select an option' = 0, 
-                                                                                 'Formulas' = 1, 
+                                                                  choices = list('Formulas' = 1, 
                                                                                  'Elemental Columns' = 2),
-                                                                  selected = 'Select an option') 
+                                                                  selected = 'Select an option', justified = TRUE) 
                                 ), 
                                 
                                 # (Conditional on the above selectInput) Formula: 
@@ -100,20 +100,24 @@ shinyUI(tagList(useShinyjs(),
                                 # (Conditional on the above selectInput) Elemental columns: 
                                 ##  which columns contain the elements?
                                 
-                                conditionalPanel(id = "element_select", style = "padding-left:6px;padding-right:6px",
+                                inlineCSS('#element_select button {width:100%;}'),
+                                conditionalPanel(id = "element_select",
                                   condition = "input.select == 2",
-                                  fluidRow(
-                                    column(width = 4,
-                                           uiOutput("c_column"), 
-                                           uiOutput("h_column")
-                                    ),
-                                    column(width = 4,
-                                           uiOutput("n_column"),
-                                           uiOutput("o_column") 
-                                    ),
-                                    column(width = 4,
-                                           uiOutput("s_column"), 
-                                           uiOutput("p_column")
+                                  
+                                  dropdownButton(inputId = "element_dropdown", circle = FALSE, label = "Specify Elemental Count Columns",
+                                    fluidRow(
+                                      column(width = 4,
+                                             uiOutput("c_column"), 
+                                             uiOutput("h_column")
+                                      ),
+                                      column(width = 4,
+                                             uiOutput("n_column"),
+                                             uiOutput("o_column") 
+                                      ),
+                                      column(width = 4,
+                                             uiOutput("s_column"), 
+                                             uiOutput("p_column")
+                                      )
                                     )
                                   )
                                 ), 
@@ -121,12 +125,11 @@ shinyUI(tagList(useShinyjs(),
                                 tags$hr(style = "margin:6px"),
                                 
                                 # Create an option for Isotopic Analysis
-                                div(id = "js_isotope_yn", selectInput('isotope_yn',
+                                div(id = "js_isotope_yn", radioGroupButtons('isotope_yn',
                                                                       label = 'Were isotopic peaks identified in the molecular assignments file?',
-                                                                      choices = list('Select an Option' = 0,
-                                                                                     'Yes' = 1,
+                                                                      choices = list('Yes' = 1,
                                                                                      'No' = 2),
-                                                                      selected = 'Select an Option')
+                                                                      selected = 'Select an Option', justified = TRUE)
                                 ),
                                 # Condition on presence of isotope information
                                 conditionalPanel(
@@ -151,9 +154,6 @@ shinyUI(tagList(useShinyjs(),
                               ), # End sidebar panel
                               
                               mainPanel(
-                                
-                                # Set default width of panel
-                                width = 7,
                                 
                                 # Show 'Success' message if peakICR created successfully
                                 div(id = "warnings", style = "overflow-y:scroll;max-height:250px", uiOutput("warnings")),
@@ -244,7 +244,22 @@ shinyUI(tagList(useShinyjs(),
                                 # Checkbox: Mass filter yes/no
                                 #HTML('<h5><b>Mass Filter</b></h5>')
                                 
-                            
+                                div(class="adjustdown", checkboxInput('samplefilter', 
+                                                                      tagList(tags$b("Sample Filter", style = "display:inline-block"),
+                                                                              div(style = "color:deepskyblue;display:inline-block",
+                                                                                  tipify(icon("question-sign", lib = "glyphicon"), 
+                                                                                         title = "Retain a subset of all samples", 
+                                                                                         placement = "top", trigger = 'hover')
+                                                                              ) 
+                                                                      ), 
+                                                                      value = FALSE
+                                                        )
+                                ),
+                                
+                                uiOutput("filter_samples"),
+                                
+                                tags$hr(style = "margin:6px"),
+                                
                                 div(class="adjustdown", checkboxInput('massfilter', 
                                                                       tagList(tags$b("Mass Filter", style = "display:inline-block"),
                                                                               div(style = "color:deepskyblue;display:inline-block",

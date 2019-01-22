@@ -30,8 +30,8 @@ observeEvent(c(input$edata_id_col, Edata(), Emeta(), input$select, input$isotope
   req(Edata(), Emeta(), input$edata_id_col != "Select one")
   
   conditions <- c(!(input$edata_id_col %in% edata_cnames() & input$edata_id_col %in% emeta_cnames()),
-                  isTRUE(input$select == 0),
-                  isTRUE(input$isotope_yn == 0),
+                  isTRUE(is.null(input$select)),
+                  isTRUE(is.null(input$isotope_yn)),
                   isTRUE(input$f_column == "Select one"))
   
   if(conditions[1]){
@@ -44,7 +44,7 @@ observeEvent(c(input$edata_id_col, Edata(), Emeta(), input$select, input$isotope
   }
   else content2 = NULL
   
-  if(input$select != 1){
+  if(isTRUE(input$select != 1)){
     revals$warningmessage$formula_col <- NULL
   }
 
@@ -56,6 +56,15 @@ observeEvent(c(input$edata_id_col, Edata(), Emeta(), input$select, input$isotope
 
 })
 
+observeEvent(input$select,{
+  if(input$select == 2){
+    toggleDropdownButton(inputId = "element_dropdown")
+  }
+})
+
+observeEvent(input$element_dropdown,{
+  print(input$element_dropdown)
+})
 
 # Peak ID column mismatch, gets a separate observer for code-cleanliness
 observeEvent(c(Edata(), Emeta(), input$edata_id_col), {
@@ -85,7 +94,7 @@ observeEvent(c(Edata(), Emeta(), input$edata_id_col), {
 # ISO info column not selected or doesn't contain selected symbol
 observeEvent(c(input$iso_info_column, input$iso_symbol, input$isotope_yn, input$select), {
   
-  if(input$isotope_yn != "1"){
+  if(isTRUE(input$isotope_yn != "1")){
     revals$warningmessage$warniso <- NULL
   }
   else{
@@ -139,7 +148,7 @@ observeEvent(c(input$c_column, input$h_column, input$n_column,
   }
   else{
     content = NULL
-    if(input$isotope_yn == 0 & input$select != 0){
+    if(is.null(input$isotope_yn) & input$select != 0){
       content_isoyn = "style = 'color:deepskyblue'>Please indicate whether isotope information is present in the molecular identification file"
     }
     else content_isoyn = NULL
@@ -147,7 +156,7 @@ observeEvent(c(input$c_column, input$h_column, input$n_column,
   
   toggleCssClass("element_select", "blueoutline", conditions[1])
   toggleCssClass("element_select", "redoutline", isTRUE(conditions[2]))
-  toggleCssClass("js_isotope_yn", "suggest", all(!any(conditions), input$isotope_yn == 0, input$select != 0))
+  toggleCssClass("js_isotope_yn", "suggest", all(!any(conditions), is.null(input$isotope_yn), input$select != 0))
   revals$warningmessage$elements <- content
   revals$warningmessage$chooseiso <- content_isoyn
   
@@ -178,7 +187,7 @@ observeEvent(c(input$f_column,input$select, input$isotope_yn),{
   }
   else{
     content = NULL
-    if(input$isotope_yn == 0 & input$select != 0){
+    if(is.null(input$isotope_yn) & input$select != 0){
       content_isoyn = "style = 'color:deepskyblue'>Please indicate whether isotope information is present in the molecular identification file"
     }
     else content_isoyn = NULL
@@ -186,7 +195,7 @@ observeEvent(c(input$f_column,input$select, input$isotope_yn),{
   
   toggleCssClass("f_column", "attention", conditions[1])
   toggleCssClass("f_column", "suggest", !conditions[1] & conditions[2])
-  toggleCssClass("js_isotope_yn", "suggest", all(!any(conditions), input$isotope_yn == 0, input$select != 0))
+  toggleCssClass("js_isotope_yn", "suggest", all(!any(conditions), is.null(input$isotope_yn), input$select != 0))
   revals$warningmessage$chooseiso <- content_isoyn
   revals$warningmessage$formula_col <- content
   

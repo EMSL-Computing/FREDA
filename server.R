@@ -326,7 +326,7 @@ shinyServer(function(session, input, output) {
             (input$s_column != 'Select a column') &
             (input$p_column != 'Select a column')
         }, 
-        'Missing column information. Please double-check drop-down options.')
+        'Missing elemental column information. Please double-check drop-down options.')
       )
       validate(
         need({
@@ -753,21 +753,26 @@ shinyServer(function(session, input, output) {
   # Drop down list: Minimum Number of observations
   # Depends on edata_cnames()
   output$minobs <- renderUI({
-    
-    #tags$h()
-    selectInput('minobs', "Minimum number of times observed", 
-                choices = seq(1, (length(edata_cnames()) - 1), 1), selected = 2)
-    
+     selectInput('minobs', "Minimum number observed", choices = seq(1, (length(edata_cnames()) - 1), 1), selected = 2)
   }) # End minobs
   
+  output$filter_samples <- renderUI({
+    selectInput('keep_samples', "Keep Samples:", choices = peakIcr2$f_data[,getFDataColName(peakIcr2)], selected = peakIcr2$f_data[,getFDataColName(peakIcr2)], multiple = TRUE)
+  })
   #### Action Button Reactions (Filter Tab) ####
   
   # Event: Create filtered nonreactive peakIcr2 when action button clicked
   # Depends on action button 'filter_click'
   observeEvent(input$filter_click, {
     # if the data is already filtered start over from the uploaded data
-    if (any(c("moleculeFilt", "massFilt", "formulaFilt") %in% names(attributes(peakIcr2)$filters)) | any(grepl("emetaFilt", names(attributes(peakIcr2)$filters)))){
+    if (any(c("moleculeFilt", "massFilt", "formulaFilt") %in% names(attributes(peakIcr2)$filters)) | any(grepl("emetaFilt", names(attributes(peakIcr2)$filters))) | !all(colnames(peakIcr2$e_data) %in% colnames(uploaded_data()$e_data))){
       peakIcr2 <<- uploaded_data()
+    }
+    
+    # Apply sample filter
+    if(input$samplefilter){
+      req(length(input$keep_samples) > 0)
+      peakIcr2 <<- subset(peakIcr2, samples = input$keep_samples)
     }
     
     # If mass filtering is checked
@@ -886,12 +891,26 @@ shinyServer(function(session, input, output) {
   })
   
   # Reactive value for each filter which store a list of retained ID's
+  sampfilter_ids <- eventReactive(c(input$keep_samples, input$samplefilter),{
+    if(input$samplefilter){
+      if(length(input$keep_samples) == 0) NULL
+      else{
+        uploaded_data() %>% 
+          subset(samples = input$keep_samples) %>%
+          {.$e_data[which(rowSums(.$e_data[-which(colnames(.$e_data) == getEDataColName(.))]) != 0),]} %>% 
+          pluck(getMassColName(peakIcr2))
+      }
+    }
+    else NULL
+  })
+  
+  
   massfilter_ids <- eventReactive(c(input$massfilter, input$min_mass, input$max_mass),{
     revals$redraw_filter_plot <- FALSE
     if (input$massfilter){
       mass_filter(uploaded_data()) %>% 
         dplyr::filter(!!sym(getMassColName(peakIcr2)) <= input$max_mass, !!sym(getMassColName(peakIcr2)) >= input$min_mass) %>%
-        pluck(1)
+        pluck(getMassColName(peakIcr2))
     }
     else NULL
   })
@@ -900,7 +919,7 @@ shinyServer(function(session, input, output) {
     if (input$molfilter){
      molecule_filter(uploaded_data()) %>%
         dplyr::filter(Num_Observations >= as.integer(input$minobs)) %>%
-        pluck(1)
+        pluck(getMassColName(peakIcr2))
     }
     else NULL
   })
@@ -909,7 +928,7 @@ shinyServer(function(session, input, output) {
     if (input$formfilter){
       formula_filter(uploaded_data()) %>%
         dplyr::filter(Formula_Assigned == TRUE) %>%
-        pluck(1)
+        pluck(getMassColName(peakIcr2))
     }
     else NULL
   })
@@ -932,7 +951,7 @@ shinyServer(function(session, input, output) {
       else customids_to_keep <- NULL
       
       # Get summary table from sourced file 'summaryFilter.R'
-      summaryFilt(peakICR(), massfilter_ids(), molfilter_ids(), formfilter_ids(), customids_to_keep)
+      summaryFilt(peakICR(), sampfilter_ids(), massfilter_ids(), molfilter_ids(), formfilter_ids(), customids_to_keep)
     
     
   }, ignoreInit = TRUE) # End summaryFilterDataFrame
@@ -945,46 +964,8 @@ shinyServer(function(session, input, output) {
     # Set default results: NA if no filters selected
     afterResults <- c(NA, NA, NA, NA)
     
-    # If mass filter checked
-    if (input$massfilter) {
-      
-      # Get which row has the row name 'After Mass Filter'
-      rowNum <- which(summaryFilterDataFrame()$data_state == 'After Mass Filter')
-      
-      # Get relevant columns out of summaryFilterDataFrame
-      afterResults <- unlist(summaryFilterDataFrame()[rowNum, c('sum_peaks', 'assigned', 
-                                                                'min_mass', 'max_mass')])
-    }
-    # If molecule filter checked
-    if (input$molfilter) {
-      
-      # Get which row has the row name 'After Mass Filter'
-      rowNum <- which(summaryFilterDataFrame()$data_state == 'After Molecule Filter')
-      
-      # Get relevant columns out of summaryFilterDataFrame
-      afterResults <- unlist(summaryFilterDataFrame()[rowNum, c('sum_peaks', 'assigned', 
-                                                                'min_mass', 'max_mass')])
-    }
-    
-    if (input$formfilter) {
-      
-      # Get which row has the row name 'After Mass Filter'
-      rowNum <- which(summaryFilterDataFrame()$data_state == 'After Formula Filter')
-      
-      # Get relevant columns out of summaryFilterDataFrame
-      afterResults <- unlist(summaryFilterDataFrame()[rowNum, c('sum_peaks', 'assigned', 
-                                                                'min_mass', 'max_mass')])
-    }
-    
-    if (input$customfilterz) {
-      
-      # Get which row has the row name 'After Mass Filter'
-      rowNum <- which(summaryFilterDataFrame()$data_state == 'After Custom Filters')
-      
-      # Get relevant columns out of summaryFilterDataFrame
-      afterResults <- unlist(summaryFilterDataFrame()[rowNum, c('sum_peaks', 'assigned', 
-                                                                'min_mass', 'max_mass')])
-    }
+    last_filt_ind <- max(which(summaryFilterDataFrame()[,'dispText'] != 'NA'))
+    afterResults <- unlist(summaryFilterDataFrame()[last_filt_ind, c('sum_peaks', 'assigned', 'min_mass', 'max_mass')])
     
     # Find which row in summaryFilterDataFrame represents the Unfiltered information
     rowNum = which(summaryFilterDataFrame()$data_state == 'Unfiltered')
@@ -1023,10 +1004,10 @@ shinyServer(function(session, input, output) {
     
     req(isolate(revals$redraw_filter_plot) == TRUE)
     
-    filter_inds <- c(TRUE, isolate(input$massfilter), isolate(input$molfilter), isolate(input$formfilter), 
+    filter_inds <- c(TRUE, isolate(input$samplefilter), isolate(input$massfilter), isolate(input$molfilter), isolate(input$formfilter), 
                      any(c(isolate(input$custom1), isolate(input$custom2), isolate(input$custom3)) != "Select item") & isolate(input$customfilterz))
     
-    which_filts <- c("Unfiltered", "After Mass Filter", "After Molecule Filter", "After Formula Filter", "After Custom Filters")[filter_inds]
+    which_filts <- c("Unfiltered", "After Sample Filter", "After Mass Filter", "After Molecule Filter", "After Formula Filter", "After Custom Filters")[filter_inds]
     
     # Melt dataframe into 2 objects
     ggdata_barplot <- melt(summaryFilterDataFrame()[,c('data_state', 'assigned', 'unassigned')]) %>% filter(data_state %in% which_filts)
@@ -1137,7 +1118,7 @@ shinyServer(function(session, input, output) {
       tagList(
           div(id = "js_whichSamples",
               selectInput('whichSamples', 'Grouped Samples',
-                      choices = sample_names(),
+                      choices = colnames(peakIcr2$e_data %>% dplyr::select(-one_of(getEDataColName(peakIcr2)))),
                       multiple = TRUE, selected = isolate(revals$single_group))),
           conditionalPanel(
             condition = 'input.whichSamples.length < 2',
@@ -1145,7 +1126,7 @@ shinyServer(function(session, input, output) {
           )# End conditional output multiple samples#
         )
     }
-    else return(div(id = "js_whichSamples", selectInput('whichSamples', 'Sample', choices = sample_names(), selected = revals$single_sample)))
+    else return(div(id = "js_whichSamples", selectInput('whichSamples', 'Sample', choices = colnames(peakIcr2$e_data %>% dplyr::select(-one_of(getEDataColName(peakIcr2)))), selected = revals$single_sample)))
   })
   
   # selector for summary funcion
