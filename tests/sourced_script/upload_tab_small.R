@@ -8,11 +8,11 @@ app$setInputs(top_page = "Upload", wait_ = FALSE, values_ = FALSE)
 app$uploadFile(file_edata = "test_edata.csv")
 app$setInputs(edata_id_col = "Mass", wait_ = FALSE, values_ = FALSE)
 app$uploadFile(file_emeta = "test_emeta.csv")
-
+app$setInputs(select = "2")
 app$setInputs(isotope_yn = "1")
 app$setInputs(iso_info_filter = "1")
-app$setInputs(iso_info_column = "C13",
-              select = "2")
+app$setInputs(iso_info_column = "C13")
+
 app$snapshot(items = list(input = TRUE, output = c("head_emeta", "head_edata")))
 app$setInputs(upload_click = "click")
 app$setInputs(upload_dismiss = "click", wait_ = FALSE, values_ = FALSE)

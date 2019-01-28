@@ -116,10 +116,12 @@ observeEvent(input$flip_colors, {
 
 # make the options mutually exclusive when doing a comparison of two groups
 observeEvent(input$whichGroups2,{
-  updateSelectInput(session, "whichGroups1", choices = setdiff(sample_names(), input$whichGroups2), selected = input$whichGroups1)
+  req(exists("peakIcr2"))
+  updateSelectInput(session, "whichGroups1", choices = setdiff(colnames(peakIcr2$e_data)[-which(colnames(peakIcr2$e_data) == getEDataColName(peakIcr2))], input$whichGroups2), selected = input$whichGroups1)
 }, ignoreNULL = FALSE)
 observeEvent(input$whichGroups1,{
-  updateSelectInput(session, "whichGroups2", choices = setdiff(sample_names(), input$whichGroups1), selected = input$whichGroups2)
+  req(exists("peakIcr2"))
+  updateSelectInput(session, "whichGroups2", choices = setdiff(colnames(peakIcr2$e_data)[-which(colnames(peakIcr2$e_data) == getEDataColName(peakIcr2))], input$whichGroups1), selected = input$whichGroups2)
 }, ignoreNULL = FALSE)
 
 # Multi purpose observer on input$chooseplots

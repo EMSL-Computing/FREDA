@@ -75,7 +75,7 @@ selection_values <- list("mass_cname", "isotopic_cname", "mf_cname", "c_cname", 
 # make vector of columns that the user selected.  'No Selection' if they didnt make a selection
 selection_values <- lapply(selection_values, function(name){
   res <- ifelse(is.null(attributes(processed)$cnames[[name]]), "No Selection", attributes(processed)$cnames[[name]])
-  if(name == "isotopic_cname") res <- paste0(res, " : ", c13)
+  if(name == "isotopic_cname" & res != "No Selection") res <- paste0(res, " : ", c13)
   
   res
   }) %>% unlist()
@@ -164,7 +164,9 @@ dontoutput <-lapply(6:length(equations), function(i){
 ###**Filters**###
 
 ```{r}
-# get the filters applied and 
+# get the filters applied and make a df to display
+
+# row filters
 filters <- attributes(processed)$filters %>% names()
 filters_names <- sapply(filters, function(x){ switch(x, "massFilt" = "Mass Filter", 
                                                      "moleculeFilt" = "Molecule Filter", 
@@ -172,15 +174,28 @@ filters_names <- sapply(filters, function(x){ switch(x, "massFilt" = "Mass Filte
                                                      paste0("Custom Filter on column: ", gsub("emetaFilt_", "", x)))})
 
 num_filtered <- sapply(attributes(processed)$filters, function(x){
-  length(x$filtered)
+  as.character(length(x$filtered))
 })
 
-filt_df <- data.frame("Filter" = filters_names, "Peaks Removed" = num_filtered, row.names = NULL, check.names = FALSE)
+# sample filter
+removed_samples <- setdiff(upload$f_data[,getFDataColName(upload)], processed$f_data[,getFDataColName(processed)])
+retained_samples <- setdiff(upload$f_data[,getFDataColName(upload)], removed_samples)
+
+if(length(removed_samples) > 0){
+  num_filtered <- c(nrow(upload$e_data) - nrow(subset(upload, samples = retained_samples, check_rows = TRUE)$e_data), num_filtered)
+  filters_names <- c("Sample Filter", filters_names)
+}
+
+filt_df <- data.frame("Filter" = filters_names, "Number of Peaks Removed" = num_filtered, row.names = NULL, check.names = FALSE)
 ```
 
 The following filters were applied to the data:
 
 **`r if(length(filters_names) > 0) filters_names else "No filters were applied to the data"`** 
+
+`r if(length(removed_samples) > 0) paste("Samples Removed: ", paste(removed_samples, collapse = ", "), collapse = "") else NULL`
+
+`r if(length(removed_samples) > 0) paste("Samples Kept: ", paste(retained_samples, collapse = ", "), collapse = "") else NULL`
 
 `r if(length(filters_names) > 0) "The following table shows the number of peaks removed by each filter. Filters are applied *in order* from top to bottom, i.e. 'Peaks Removed' for any given filter is the peaks removed after previous filters have already been applied." else NULL`
 

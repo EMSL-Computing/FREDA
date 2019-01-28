@@ -37,8 +37,8 @@ shinyServer(function(session, input, output) {
                            plot_data_export = NULL, peakICR_export = NULL, redraw_filter_plot = TRUE, reac_filter_plot = TRUE,
                            group_1 = NULL, group_2 = NULL, single_group = NULL, single_sample = NULL, 
                            warningmessage = list(upload = "<p style = 'color:deepskyblue'>Upload data and molecular identification files described in 'Data Requirements' on the previous page."),
-                           warningmessage_visualize = list(), current_plot = NULL, plot_list = list(), plot_data = list(), reset_counter = 0,
-                           chooseplots = NULL)
+                           warningmessage_visualize = list(), warningmessage_filter = list(), current_plot = NULL, plot_list = list(), plot_data = list(), reset_counter = 0,
+                           chooseplots = NULL, filter_click_disable = list(init = TRUE))
   
   exportTestValues(plot_data = revals$plot_data_export, peakICR = revals$peakICR_export, color_choices = revals$color_by_choices)
   ######## Welcome Tab #############
@@ -301,7 +301,8 @@ shinyServer(function(session, input, output) {
                               instrument_type = input$instrument,
                               mf_cname = input$f_column,
                               isotopic_cname = input$iso_info_column,
-                              isotopic_notation = as.character(input$iso_symbol))
+                              isotopic_notation = as.character(input$iso_symbol),
+                              check_rows = TRUE)
         
       } # End C13 / no C13 if statement
       
@@ -310,7 +311,8 @@ shinyServer(function(session, input, output) {
         res <- as.peakIcrData(e_data = Edata(), f_data = fdata(),
                               e_meta = Emeta(), edata_cname = input$edata_id_col, 
                               fdata_cname = 'SampleId', mass_cname = input$edata_id_col, 
-                              instrument_type = input$instrument, mf_cname = input$f_column)
+                              instrument_type = input$instrument, mf_cname = input$f_column,
+                              check_rows = TRUE)
       } 
     }
     
@@ -349,7 +351,8 @@ shinyServer(function(session, input, output) {
                               instrument_type = input$instrument,
                               c_cname = input$c_column, h_cname = input$h_column, 
                               n_cname = input$n_column, o_cname = input$o_column, 
-                              s_cname = input$s_column, p_cname = input$p_column)
+                              s_cname = input$s_column, p_cname = input$p_column,
+                              check_rows = TRUE)
         
       }
       if (input$isotope_yn == 1 & isTRUE(input$iso_info_filter == 1)) { # If there's C13 # 
@@ -368,7 +371,8 @@ shinyServer(function(session, input, output) {
                               n_cname = input$n_column, o_cname = input$o_column, 
                               s_cname = input$s_column, p_cname = input$p_column, 
                               isotopic_cname = input$iso_info_column,
-                              isotopic_notation = as.character(input$iso_symbol))
+                              isotopic_notation = as.character(input$iso_symbol),
+                              check_rows = TRUE)
         
       } # End C13 / no C13 if statement
       
@@ -688,6 +692,14 @@ shinyServer(function(session, input, output) {
   source("Observers/filter_observers.R", local = TRUE)
   ###
   
+  output$warnings_filter <- renderUI({
+    HTML(lapply(revals$warningmessage_filter, function(el){
+      paste0("<p ", el, "</p>")
+    }) %>%
+      paste(collapse = "")
+    )
+  })
+  
   # ----- Filter Reset Setup -----# 
   # Keep a reactive copy of the pre-filtered data in case of a filter reset event
   uploaded_data <- eventReactive(input$preprocess_click, {
@@ -720,7 +732,7 @@ shinyServer(function(session, input, output) {
     
     column_choices <- peakIcr2$e_meta %>% 
       dplyr::select(-one_of(drop_cols)) %>%
-      dplyr::select(which(sapply(., function(col){ length(unique(col)) < 20 } ) | sapply(., is.numeric))) %>% #dont include columns with too many categories
+      dplyr::select(which(sapply(., function(col){ length(unique(col)) < 12 } ) | sapply(., is.numeric))) %>% #dont include columns with too many categories
       colnames() 
     
     #columns included in calculation_options.csv get their prettified names, everything else gets the column name
@@ -753,11 +765,11 @@ shinyServer(function(session, input, output) {
   # Drop down list: Minimum Number of observations
   # Depends on edata_cnames()
   output$minobs <- renderUI({
-     selectInput('minobs', "Minimum number observed", choices = seq(1, (length(edata_cnames()) - 1), 1), selected = 2)
+     selectInput('minobs', "Minimum number observed", choices = seq(1, max(length(input$keep_samples),1), 1), selected = 2)
   }) # End minobs
   
   output$filter_samples <- renderUI({
-    selectInput('keep_samples', "Keep Samples:", choices = peakIcr2$f_data[,getFDataColName(peakIcr2)], selected = peakIcr2$f_data[,getFDataColName(peakIcr2)], multiple = TRUE)
+    selectInput('keep_samples', "Keep Samples:", choices = peakICR()$f_data[,getFDataColName(peakICR())], selected = peakICR()$f_data[,getFDataColName(peakICR())], multiple = TRUE)
   })
   #### Action Button Reactions (Filter Tab) ####
   
@@ -772,7 +784,7 @@ shinyServer(function(session, input, output) {
     # Apply sample filter
     if(input$samplefilter){
       req(length(input$keep_samples) > 0)
-      peakIcr2 <<- subset(peakIcr2, samples = input$keep_samples)
+      peakIcr2 <<- subset(peakIcr2, samples = input$keep_samples, check_rows = TRUE)
     }
     
     # If mass filtering is checked
@@ -896,8 +908,8 @@ shinyServer(function(session, input, output) {
       if(length(input$keep_samples) == 0) NULL
       else{
         uploaded_data() %>% 
-          subset(samples = input$keep_samples) %>%
-          {.$e_data[which(rowSums(.$e_data[-which(colnames(.$e_data) == getEDataColName(.))]) != 0),]} %>% 
+          subset(samples = input$keep_samples, check_rows = TRUE) %>%
+          {.$e_data} %>%
           pluck(getMassColName(peakIcr2))
       }
     }
@@ -915,11 +927,20 @@ shinyServer(function(session, input, output) {
     else NULL
   })
   
-  molfilter_ids <- eventReactive(c(input$minobs, input$molfilter), {
+  molfilter_ids <- eventReactive(c(input$minobs, input$molfilter, input$keep_samples, input$samplefilter), {
     if (input$molfilter){
-     molecule_filter(uploaded_data()) %>%
-        dplyr::filter(Num_Observations >= as.integer(input$minobs)) %>%
-        pluck(getMassColName(peakIcr2))
+      if(input$samplefilter){
+        uploaded_data() %>% 
+          subset(samples = input$keep_samples, check_rows = TRUE) %>%
+          molecule_filter() %>% 
+            dplyr::filter(Num_Observations >= as.integer(input$minobs)) %>%
+            pluck(getMassColName(peakIcr2))
+      }
+      else{
+       molecule_filter(uploaded_data()) %>%
+          dplyr::filter(Num_Observations >= as.integer(input$minobs)) %>%
+          pluck(getMassColName(peakIcr2))
+      }
     }
     else NULL
   })
@@ -949,7 +970,6 @@ shinyServer(function(session, input, output) {
           pluck(1)
       }
       else customids_to_keep <- NULL
-      
       # Get summary table from sourced file 'summaryFilter.R'
       summaryFilt(peakICR(), sampfilter_ids(), massfilter_ids(), molfilter_ids(), formfilter_ids(), customids_to_keep)
     
@@ -963,7 +983,6 @@ shinyServer(function(session, input, output) {
     
     # Set default results: NA if no filters selected
     afterResults <- c(NA, NA, NA, NA)
-    
     last_filt_ind <- max(which(summaryFilterDataFrame()[,'dispText'] != 'NA'))
     afterResults <- unlist(summaryFilterDataFrame()[last_filt_ind, c('sum_peaks', 'assigned', 'min_mass', 'max_mass')])
     
@@ -1004,7 +1023,7 @@ shinyServer(function(session, input, output) {
     
     req(isolate(revals$redraw_filter_plot) == TRUE)
     
-    filter_inds <- c(TRUE, isolate(input$samplefilter), isolate(input$massfilter), isolate(input$molfilter), isolate(input$formfilter), 
+    filter_inds <- c(TRUE, isolate(input$samplefilter) & length(isolate(input$keep_samples)) > 0, isolate(input$massfilter), isolate(input$molfilter), isolate(input$formfilter), 
                      any(c(isolate(input$custom1), isolate(input$custom2), isolate(input$custom3)) != "Select item") & isolate(input$customfilterz))
     
     which_filts <- c("Unfiltered", "After Sample Filter", "After Mass Filter", "After Molecule Filter", "After Formula Filter", "After Custom Filters")[filter_inds]
@@ -1068,7 +1087,7 @@ shinyServer(function(session, input, output) {
     
     radioGroupButtons('chooseplots', 
                   choices = choices, 
-                  selected = 0
+                  selected = 0, justified = TRUE
     )
   })
   
@@ -1098,14 +1117,14 @@ shinyServer(function(session, input, output) {
   output$plotUI_comparison_1 <- renderUI({
     req(input$choose_single != 0, !is.null(input$chooseplots))
     selectInput('whichGroups1', HTML("<input type = 'text' id = 'group1_name' placeholder = 'Group 1' style = 'border-style:unset;'/>"),
-                    choices = setdiff(sample_names(), isolate(input$whichGroups2)),
+                    choices = setdiff(colnames(peakIcr2$e_data)[-which(colnames(peakIcr2$e_data) == getEDataColName(peakIcr2))], isolate(input$whichGroups2)),
                     multiple = TRUE, selected = isolate(revals$group_1))
   })
     
   output$plotUI_comparison_2 <- renderUI({
-    req(input$choose_single != 0, !is.null(input$chooseplots))    
+    req(input$choose_single != 0, !is.null(input$chooseplots))
     selectInput("whichGroups2", HTML("<input type = 'text' id = 'group2_name' placeholder = 'Group 2' style = 'border-style:unset;'/>"), 
-            choices = setdiff(sample_names(), isolate(input$whichGroups1)), 
+            choices = setdiff(colnames(peakIcr2$e_data)[-which(colnames(peakIcr2$e_data) == getEDataColName(peakIcr2))], isolate(input$whichGroups1)), 
             multiple = TRUE, selected = isolate(revals$group_2))
       
     
@@ -1651,9 +1670,9 @@ shinyServer(function(session, input, output) {
     edata_col <- plot_data()$e_data %>% pluck(input$vk_colors)
     emeta_col <- plot_data()$e_meta %>% pluck(input$vk_colors)
     if (input$vk_colors %in% (plot_data()$e_data %>% colnames())){
-      (is.numeric(edata_col) & !(is_integer(edata_col) & length(unique(edata_col)) < 20))
+      (is.numeric(edata_col) & !(is_integer(edata_col) & length(unique(edata_col)) < 12))
     }else if (input$vk_colors %in% (plot_data()$e_meta %>% colnames())){
-      (is.numeric(emeta_col) & !(is_integer(emeta_col) & length(unique(emeta_col)) < 20))
+      (is.numeric(emeta_col) & !(is_integer(emeta_col) & length(unique(emeta_col)) < 12))
     }else if (input$vk_colors %in% c("bs1", "bs2")){
       FALSE
     }else TRUE

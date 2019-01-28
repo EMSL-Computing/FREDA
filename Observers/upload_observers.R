@@ -62,10 +62,6 @@ observeEvent(input$select,{
   }
 })
 
-observeEvent(input$element_dropdown,{
-  print(input$element_dropdown)
-})
-
 # Peak ID column mismatch, gets a separate observer for code-cleanliness
 observeEvent(c(Edata(), Emeta(), input$edata_id_col), {
   conditions <- FALSE

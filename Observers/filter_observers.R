@@ -96,6 +96,7 @@ observeEvent(input$customfilterz, {
     lapply(1:3, function(i){
       revals[[paste0("custom", i, "_ids")]] <- NULL
       output[[paste0("filter",i,"UI")]] <- NULL
+      revals$filter_click_disable[[paste0("disable_custom", i)]] <- TRUE
     })
     
   }
@@ -148,7 +149,7 @@ observe({
   c(sampfilter_ids(), massfilter_ids(), molfilter_ids(), formfilter_ids(), revals$custom1_ids, revals$custom2_ids, revals$custom3_ids)
  
   if(isolate(revals$redraw_filter_plot == FALSE)){
-    invalidateLater(1000, session)
+    invalidateLater(800, session)
     isolate(revals$redraw_filter_plot <- TRUE)
   }
   else{
@@ -193,16 +194,48 @@ lapply(1:3, function(i){
     })
     
     # specifies bad ranges
-    condition = cond_min >= cond_max
+    condition = isTRUE(cond_min >= cond_max)
     
     # put up warning and disable filter button
     toggleCssClass(paste0("js_range_custom", i), "attention", condition = condition)
-    toggleState(paste0("filter_click"), condition = !condition)
+    revals$filter_click_disable[[paste0("diable_custom", i)]] <- if(condition) FALSE else TRUE
+    revals$warningmessage_filter$bad_custom_range = if(isTRUE(condition)) "style = 'color:red'>Invalid range for a custom filter" else NULL
     
   })
   
 })
 
+# warn and disable filter for invalid mass range
+observeEvent(c(input$min_mass, input$max_mass, input$massfilter), {
+    cond = (isTRUE(input$min_mass >= input$max_mass) | input$min_mass == 0) & input$massfilter
+    toggleCssClass("min_mass", "attention", condition = !cond)
+    revals$filter_click_disable$cond_mass <- if(isTRUE(cond)) FALSE else TRUE
+    revals$warningmessage_filter$bad_mass_range = if(isTRUE(cond)) "style = 'color:red'>Invalid range for mass filter.  Must be 0 < min < max" else NULL
+})
+
+# check that at least one sample is selected
+observeEvent(c(input$keep_samples, input$samplefilter),{
+  cond = length(input$keep_samples) == 0 & input$samplefilter
+  toggleCssClass("js_filter_samples", "attention", condition = cond)
+  revals$warningmessage_filter$nosamples <- if(isTRUE(cond)) "style = 'color:red'>Choose at least one sample to keep" else NULL
+  revals$filter_click_disable$cond_samples <- if(isTRUE(cond)) FALSE else TRUE
+}, ignoreNULL = F)
+
+# check that not all rows are filtered by checking the last non-NA row of summaryFilterDataFrame()
+observeEvent(summaryFilterDataFrame(),{
+  filter_inds <- c(TRUE, isolate(input$samplefilter) & length(isolate(input$keep_samples)) > 0, isolate(input$massfilter), isolate(input$molfilter), isolate(input$formfilter), 
+                   any(c(isolate(input$custom1), isolate(input$custom2), isolate(input$custom3)) != "Select item") & isolate(input$customfilterz))
+  final_peaks <- summaryFilterDataFrame()[max(which(filter_inds)), 'sum_peaks']
+  cond = isTRUE(final_peaks > 0)
+  revals$filter_click_disable$cond_peaks <- if(!cond) FALSE else TRUE
+  revals$warningmessage_filter$nopeaks <- if(!cond) "style = 'color:red'>Your filters removed all rows or have value errors, adjust some values and try again" else NULL
+})
+
+# all conditions must be met to click filter
+observe({
+  cond = all(unlist(revals$filter_click_disable))
+  toggleState("filter_click", condition = cond)
+})
 
 #-------- Reset Activity -------#
 # Allow a 'reset' that restores the uploaded object and unchecks the filter
@@ -236,10 +269,11 @@ observeEvent(input$clear_filters_no,{
 # if they click yes, reset data and exit modal dialog
 observeEvent(input$clear_filters_yes, {
   if (f$clearFilters) {
-    updateCheckboxInput(session = session, inputId = "massfilter", value = FALSE)
-    updateCheckboxInput(session = session, inputId = "molfilter", value = FALSE)
-    updateCheckboxInput(session = session, inputId = "formfilter", value = FALSE)
-    updateCheckboxInput(session = session, inputId = "customfilterz", value = FALSE)
+    updateCheckboxInput(session, inputId = "massfilter", value = FALSE)
+    updateCheckboxInput(session, inputId = "molfilter", value = FALSE)
+    updateCheckboxInput(session, inputId = "formfilter", value = FALSE)
+    updateCheckboxInput(session, inputId = "customfilterz", value = FALSE)
+    updateCheckboxInput(session, inputId = "samplefilter", value = FALSE)
   }
   
   # reset parameter table, plot_list, and group plot data.  revert to pre-filtered data

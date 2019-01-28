@@ -13,6 +13,7 @@ library(shinyBS)
 library(shinyjs)
 library(DT)
 library(shinycssloaders)
+library(shinyWidgets)
 
 
 # Define UI for application that draws a histogram
@@ -243,7 +244,7 @@ shinyUI(tagList(useShinyjs(),
 
                                 # Checkbox: Mass filter yes/no
                                 #HTML('<h5><b>Mass Filter</b></h5>')
-                                
+
                                 div(class="adjustdown", checkboxInput('samplefilter', 
                                                                       tagList(tags$b("Sample Filter", style = "display:inline-block"),
                                                                               div(style = "color:deepskyblue;display:inline-block",
@@ -256,7 +257,7 @@ shinyUI(tagList(useShinyjs(),
                                                         )
                                 ),
                                 
-                                uiOutput("filter_samples"),
+                                div(id = "js_filter_samples", uiOutput("filter_samples")),
                                 
                                 tags$hr(style = "margin:6px"),
                                 
@@ -342,7 +343,12 @@ shinyUI(tagList(useShinyjs(),
                                       width = 6, actionButton('reset_filters', "Reset Filters", icon = icon("trash"), lib = "glyphicon")
                                     )
                                   )
-                                )
+                                ),
+                                
+                                br(),
+                                br(),
+                                
+                                div(id = "warnings_filter", style = "overflow-y:scroll;max-height:150px", uiOutput("warnings_filter"))
                               
                               ), # End sidebar panel on Filter tab
                               
@@ -372,11 +378,12 @@ shinyUI(tagList(useShinyjs(),
                               
                               # Sidebar Panel
                               column(4,
-                                wellPanel(style = "margin-top:-10px",
-                                   
-                                  # Select Plot Type
-                                  uiOutput('plot_type', style = "margin-top:-10px"),       
-                                          
+                                # Select Plot Type
+                                inlineCSS("#chooseplots .btn{font-size:10.5pt;}"),
+                                uiOutput('plot_type', style = "margin-top:-10px"),     
+                                
+                                wellPanel(style = "margin-top:-20px",
+                                
                                 # Select samples/groups
                                   uiOutput("plotUI"),
                                   
