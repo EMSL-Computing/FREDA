@@ -445,7 +445,7 @@ shinyUI(tagList(useShinyjs(),
                                 # color and van-krevelen bounds dropdowns
                                 fluidRow(
                                   column(width = 4, class = "grey_out", id = "js_vk_colors",
-                                         shinyjs::disabled(selectInput("vk_colors", "Color By:", choices = NULL, selected = NULL))
+                                         shinyjs::disabled(selectInput("vk_colors", "Color by:", choices = NULL, selected = NULL))
                                          ),
                                   column(width = 5, class = "grey_out", id = "js_vkbounds",
                                          shinyjs::disabled(selectInput('vkbounds', 'Display Van Krevelen boundary set:',

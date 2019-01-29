@@ -128,7 +128,7 @@ observeEvent(input$whichGroups1,{
 observeEvent(input$chooseplots, {
   # Pre-populate dropdowns so users can select colors and custom scatterplot axes before submitting plot.
   # Need a vector of the numeric columns to pass to scatterplot
-  numeric_cols <- which(sapply(full_join(plot_data()$e_meta, plot_data()$e_data) %>% dplyr::select(emeta_display_choices()), is.numeric))
+  numeric_cols <- which(sapply(peakIcr2$e_meta %>% dplyr::select(emeta_display_choices()), is.numeric))
 
   updateSelectInput(session, 'vk_colors', choices = emeta_display_choices(), selected = emeta_display_choices()[1])
   updateSelectInput(session, 'scatter_x', choices = emeta_display_choices()[numeric_cols][-3], selected = emeta_display_choices()[numeric_cols][2])
@@ -142,15 +142,7 @@ observeEvent(input$chooseplots, {
                  'Custom Scatter Plot' = c("vk_colors", "scatter_x", "scatter_y", "colorpal", "legend_title_input"), 
                  'Select an Option' = "0")
   
-  # if(input$chooseplots %in% c("Custom Scatter Plot") | nrow(peakIcr2$f_data) == 1){
-  #   disable("choose_single")
-  #   addCssClass("choose_single", "grey_out")
-  # }
-  # else{
-  #   enable("choose_single")
-  #   removeCssClass("choose_single", "grey_out")
-  # }
-  
+  # Toggle axes and coloring options depending on plot type
   lapply(dropdown_ids, function(inputid){
     toggleState(inputid, condition = inputid %in% choices[[input$chooseplots]])
     toggleCssClass(paste0("js_", inputid), "grey_out", condition = !(inputid %in% choices[[input$chooseplots]]))
@@ -197,9 +189,9 @@ observeEvent(numeric_selected(),{
 
 ### Summary comparison plot selection control ###
 observeEvent(c(input$pres_fn, input$whichGroups1, input$whichGroups2, input$choose_single),{
-  cond_smallgrp <- any(length(input$whichGroups1) < 3, length(input$whichGroups2) < 3) & isTRUE(input$choose_single == 3) & input$chooseplots != "Density Plot"
+  cond_smallgrp <- any(length(input$whichGroups1) < 3, length(input$whichGroups2) < 3) & isTRUE(input$choose_single == 3) & input$chooseplots != "Density Plot" 
   cond_onesample <- any(length(input$whichGroups1) < 2, length(input$whichGroups2) < 2) & isTRUE(input$choose_single == 3) & input$chooseplots != "Density Plot"
-  content <- if(cond_smallgrp) "style = 'color:deepskyblue'>G-test disabled for groups with less than 3 samples" else NULL
+  content <- if(cond_smallgrp & isTRUE(input$summary_fxn == "uniqueness_gtest")) "style = 'color:deepskyblue'>G-test disabled for groups with less than 3 samples" else NULL
   content_onesample <- if(cond_onesample) "style = 'color:deepskyblue'>Input at least 2 samples per group for group comparison." else NULL
   
   if (isTRUE(input$pres_fn == "nsamps")){
@@ -233,6 +225,7 @@ observeEvent(input$summary_fxn,{
   toggleCssClass("js_absn_thresh", "grey_out", condition = input$summary_fxn == "uniqueness_gtest")
 })
 
+# Control coloring choices depending on vk bounds selection
 observeEvent(input$vkbounds, {
   req(isTRUE(input$choose_single == 1) & isTRUE(input$chooseplots == "Van Krevelen Plot"))
 
@@ -256,7 +249,7 @@ observeEvent(input$vkbounds, {
   }
 })
 
-# Observer which stores sample selections so user doesn't have to re-input
+# Observer which stores sample selections so user (me testing the app) doesn't have to re-input
 observeEvent(c(input$whichGroups1, input$whichGroups2, input$whichSamples),{
   revals$group_1 <- input$whichGroups1
   revals$group_2 <- input$whichGroups2

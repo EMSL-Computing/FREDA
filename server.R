@@ -1093,9 +1093,7 @@ shinyServer(function(session, input, output) {
   
   # Logic to force single sample selection in the case where only 1 sample is present
   output$plotUI <- renderUI({
-    validate(
-      need(!is.null(input$chooseplots), message = "Please select plot type")
-    )
+    req(!is.null(input$chooseplots))
     if (nrow(peakIcr2$f_data) == 1 | input$chooseplots == "Custom Scatter Plot"){
       return(tagList(
         tags$div(class = "grey_out",
