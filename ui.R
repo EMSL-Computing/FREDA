@@ -325,7 +325,9 @@ shinyUI(tagList(useShinyjs(),
                                 
                                 hr(),
                                 
-                                conditionalPanel("input.customfilterz == true",
+                                inlineCSS("#custom_cond_panel .dropdown-toggle {background-color:#ffffff;border-radius:4px;}
+                                          #custom_cond_panel .bootstrap-select{border-radius:4px;}"),
+                                conditionalPanel(id = "custom_cond_panel", condition = "input.customfilterz == true",
                                                    uiOutput("filter1UI"),
                                                    uiOutput("customfilter1UI"),  
                                                    uiOutput("filter2UI"),
@@ -391,6 +393,8 @@ shinyUI(tagList(useShinyjs(),
                                   shinyjs::hidden(div(id = "js_toggle_single", uiOutput("plotUI_single"))),
                                   
                                   # ...two dropdowns and extra options for group comparison
+                                  inlineCSS("#js_toggle_groups .dropdown-toggle, #js_toggle_single .dropdown-toggle {background-color:#ffffff;border-radius:4px;}
+                                                #js_toggle_groups .bootstrap-select, #js_toggle_single .bootstrap-select {border-radius:4px;}"),
                                   shinyjs::hidden(div(id = "js_toggle_groups", 
                                                       tagList(div(id = "js_whichGroups1", uiOutput("plotUI_comparison_1")), 
                                                               div(id = "js_whichGroups2", uiOutput("plotUI_comparison_2"))))),

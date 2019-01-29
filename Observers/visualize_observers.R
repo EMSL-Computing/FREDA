@@ -117,19 +117,22 @@ observeEvent(input$flip_colors, {
 # make the options mutually exclusive when doing a comparison of two groups
 observeEvent(input$whichGroups2,{
   req(exists("peakIcr2"))
-  updateSelectInput(session, "whichGroups1", choices = setdiff(colnames(peakIcr2$e_data)[-which(colnames(peakIcr2$e_data) == getEDataColName(peakIcr2))], input$whichGroups2), selected = input$whichGroups1)
+  updatePickerInput(session, "whichGroups1", choices = setdiff(colnames(peakIcr2$e_data)[-which(colnames(peakIcr2$e_data) == getEDataColName(peakIcr2))], input$whichGroups2), selected = input$whichGroups1)
 }, ignoreNULL = FALSE)
 observeEvent(input$whichGroups1,{
   req(exists("peakIcr2"))
-  updateSelectInput(session, "whichGroups2", choices = setdiff(colnames(peakIcr2$e_data)[-which(colnames(peakIcr2$e_data) == getEDataColName(peakIcr2))], input$whichGroups1), selected = input$whichGroups2)
+  updatePickerInput(session, "whichGroups2", choices = setdiff(colnames(peakIcr2$e_data)[-which(colnames(peakIcr2$e_data) == getEDataColName(peakIcr2))], input$whichGroups1), selected = input$whichGroups2)
 }, ignoreNULL = FALSE)
 
 # Multi purpose observer on input$chooseplots
 observeEvent(input$chooseplots, {
   # Pre-populate dropdowns so users can select colors and custom scatterplot axes before submitting plot.
+  # Need a vector of the numeric columns to pass to scatterplot
+  numeric_cols <- which(sapply(full_join(plot_data()$e_meta, plot_data()$e_data) %>% dplyr::select(emeta_display_choices()), is.numeric))
+
   updateSelectInput(session, 'vk_colors', choices = emeta_display_choices(), selected = emeta_display_choices()[1])
-  updateSelectInput(session, 'scatter_x', choices = emeta_display_choices(), selected = emeta_display_choices()[2])
-  updateSelectInput(session, 'scatter_y', choices = emeta_display_choices(), selected = emeta_display_choices()[3])
+  updateSelectInput(session, 'scatter_x', choices = emeta_display_choices()[numeric_cols][-3], selected = emeta_display_choices()[numeric_cols][2])
+  updateSelectInput(session, 'scatter_y', choices = emeta_display_choices()[numeric_cols][-2], selected = emeta_display_choices()[numeric_cols][3])
   
   # Rest of this observer controls shinyjs disable/enable behavior for reactive plot dropdowns
   dropdown_ids <- c("vkbounds", "vk_colors", "scatter_x", "scatter_y", "colorpal", "legend_title_input")

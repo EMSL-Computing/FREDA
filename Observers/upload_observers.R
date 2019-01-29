@@ -97,16 +97,16 @@ observeEvent(c(input$iso_info_column, input$iso_symbol, input$isotope_yn, input$
     req(!is.null(input$iso_info_column))
     req(!is.null(input$iso_symbol))
   
-    conditions <- input$iso_info_column == "0"
+    conditions <- isTRUE(input$iso_info_column == "0")
   
     if(conditions){
-      if(input$select != 0){
+      if(isTRUE(input$select != 0)){
         content <- "style = 'color:deepskyblue'>Please choose a column of isotopic information"
       }
       else content <- NULL
     }
-    else if(!(any(Emeta()[,input$iso_info_column] %in% input$iso_symbol))){
-      conditions[2] <- !(any(Emeta()[,input$iso_info_column] %in% input$iso_symbol))
+    else if(isTRUE(!(any(Emeta()[,input$iso_info_column] %in% input$iso_symbol)))){
+      conditions[2] <- isTRUE(!(any(Emeta()[,input$iso_info_column] %in% input$iso_symbol)))
       content <- "style = 'color:red'>The entered isotopic notation does not match the entries in the chosen isotope information column. Please revise."
     }
     else content = NULL
@@ -126,17 +126,17 @@ observeEvent(c(input$c_column, input$h_column, input$n_column,
                  
   elcols <- c(input$c_column, input$h_column, input$n_column, 
               input$o_column, input$s_column, input$p_column)
-  conditions <- any(elcols == 'Select a column')
+  conditions <- isTRUE(any(elcols == 'Select a column'))
   
   if(conditions[1]){
-    if(input$select == 2){
+    if(isTRUE(input$select == 2)){
       content = "style = 'color:deepskyblue'>One or more element selections are missing, Please double-check drop-down options."
     }
     else content = NULL
     content_isoyn = NULL
-  }else if(any(sapply(elcols, function(col){!is.numeric(Emeta()[,col])})) & input$select == 2){
-    conditions[2] <- any(sapply(elcols, function(col){!is.numeric(Emeta()[,col])}))
-    if(input$select == 2){
+  }else if(isTRUE(any(sapply(elcols, function(col){!is.numeric(Emeta()[,col])}))) & isTRUE(input$select == 2)){
+    conditions[2] <- isTRUE(any(sapply(elcols, function(col){!is.numeric(Emeta()[,col])})))
+    if(isTRUE(input$select == 2)){
       content = "style = 'color:red'>One or more elemental columns are non-numeric"
     }
     else content = NULL
@@ -144,13 +144,13 @@ observeEvent(c(input$c_column, input$h_column, input$n_column,
   }
   else{
     content = NULL
-    if(is.null(input$isotope_yn) & input$select != 0){
+    if(isTRUE(is.null(input$isotope_yn) & input$select != 0)){
       content_isoyn = "style = 'color:deepskyblue'>Please indicate whether isotope information is present in the molecular identification file"
     }
     else content_isoyn = NULL
   }
   
-  toggleCssClass("element_select", "blueoutline", conditions[1])
+  toggleCssClass("element_select", "blueoutline", isTRUE(conditions[1]))
   toggleCssClass("element_select", "redoutline", isTRUE(conditions[2]))
   toggleCssClass("js_isotope_yn", "suggest", all(!any(conditions), is.null(input$isotope_yn), input$select != 0))
   revals$warningmessage$elements <- content

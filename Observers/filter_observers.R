@@ -46,9 +46,10 @@ lapply(1:3, function(i){
   
                   cats <- unique(uploaded_data()$e_meta[, isolate(input[[el]])]) %>% setdiff(NA)
                   
-                  splitLayout(id = paste0("js_range_custom", i),
-                              selectInput(inputId = paste0("categorical_custom",i), label = "Categories to Keep", choices = cats,
-                                          multiple = TRUE, selected = cats),
+                  splitLayout(id = paste0("js_range_custom", i), cellArgs = list(style = "overflow:visible"),
+
+                              pickerInput(inputId = paste0("categorical_custom",i), label = "Categories to Keep", choices = cats,
+                                          multiple = TRUE, selected = cats, options =  pickerOptions(dropupAuto = FALSE, actionsBox = TRUE)),
                               tagList(
                                 br(),
                                 checkboxInput(inputId = paste0("na_custom",i), label = "Keep NAs?", value = ischecked)
@@ -63,7 +64,7 @@ lapply(1:3, function(i){
                   numericInput(inputId = paste0("minimum_custom",i), label = "Min", value = NULL, min = 0, max = 1, step = 0.01),
                   numericInput(inputId = paste0("maximum_custom",i), label = "Max", value = NULL, min = 0, max = 1, step = 0.01),
                   checkboxInput(inputId = paste0("na_custom",i), label = "Keep NAs?", value = NULL),
-                  selectInput(inputId = paste0("categorical_custom",i), label = "Categories to Keep", choices = NULL, selected = NULL)
+                  pickerInput(inputId = paste0("categorical_custom",i), label = "Categories to Keep", choices = NULL, selected = NULL)
                 )
               })
               

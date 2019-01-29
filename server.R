@@ -1008,7 +1008,7 @@ shinyServer(function(session, input, output) {
     display_table[3:4, 2] <- formatC(round(summary_table[3:4, 2], digits = 4), format = "f", big.mark = ",")
     
     #___test-export___
-    exportTestValues(rem_peaks = as.numeric(afterResults["sum_peaks"]))
+    exportTestValues(rem_peaks = as.numeric(summaryFilterDataFrame()[last_filt_ind, 'sum_peaks']))
     
     return(display_table)
   }, # End code portion of summary_filter
@@ -1116,16 +1116,18 @@ shinyServer(function(session, input, output) {
   # UI output for group comparison
   output$plotUI_comparison_1 <- renderUI({
     req(input$choose_single != 0, !is.null(input$chooseplots))
-    selectInput('whichGroups1', HTML("<input type = 'text' id = 'group1_name' placeholder = 'Group 1' style = 'border-style:unset;'/>"),
-                    choices = setdiff(colnames(peakIcr2$e_data)[-which(colnames(peakIcr2$e_data) == getEDataColName(peakIcr2))], isolate(input$whichGroups2)),
-                    multiple = TRUE, selected = isolate(revals$group_1))
+    pickerInput('whichGroups1', HTML("<input type = 'text' id = 'group1_name' placeholder = 'Group 1' style = 'border-style:unset;'/>"),
+            choices = setdiff(colnames(peakIcr2$e_data)[-which(colnames(peakIcr2$e_data) == getEDataColName(peakIcr2))], isolate(input$whichGroups2)),
+            multiple = TRUE, selected = isolate(revals$group_1), 
+            options =  pickerOptions(dropupAuto = FALSE, actionsBox = TRUE))
   })
     
   output$plotUI_comparison_2 <- renderUI({
     req(input$choose_single != 0, !is.null(input$chooseplots))
-    selectInput("whichGroups2", HTML("<input type = 'text' id = 'group2_name' placeholder = 'Group 2' style = 'border-style:unset;'/>"), 
+    pickerInput("whichGroups2", HTML("<input type = 'text' id = 'group2_name' placeholder = 'Group 2' style = 'border-style:unset;'/>"), 
             choices = setdiff(colnames(peakIcr2$e_data)[-which(colnames(peakIcr2$e_data) == getEDataColName(peakIcr2))], isolate(input$whichGroups1)), 
-            multiple = TRUE, selected = isolate(revals$group_2))
+            multiple = TRUE, selected = isolate(revals$group_2), 
+            options =  pickerOptions(dropupAuto = FALSE, actionsBox = TRUE))
       
     
   })
@@ -1136,9 +1138,10 @@ shinyServer(function(session, input, output) {
     if(input$choose_single == 2){
       tagList(
           div(id = "js_whichSamples",
-              selectInput('whichSamples', 'Grouped Samples',
+              pickerInput('whichSamples', 'Grouped Samples',
                       choices = colnames(peakIcr2$e_data %>% dplyr::select(-one_of(getEDataColName(peakIcr2)))),
-                      multiple = TRUE, selected = isolate(revals$single_group))),
+                      multiple = TRUE, selected = isolate(revals$single_group), 
+                      options =  pickerOptions(dropupAuto = FALSE, actionsBox = TRUE))),
           conditionalPanel(
             condition = 'input.whichSamples.length < 2',
             tags$p("Please select at least 2 samples", style = "color:gray")
@@ -1226,6 +1229,7 @@ shinyServer(function(session, input, output) {
       return(subset(peakIcr2, input$whichSamples))
       #key_name <- paste(attributes(peakIcr2)$cnames$fdata_cname, "=", input$whichSamples, sep = "")
     }
+    if (input$chooseplots == "Custom Scatter Plot") req(input$scatter_x != input$scatter_y)
     #---------- Group Plots ------------#
     else if (input$choose_single == 2) { # single group'
       
@@ -1398,9 +1402,7 @@ shinyServer(function(session, input, output) {
     
     if (input$chooseplots == 'Custom Scatter Plot') {
       # allow only numeric columns for the axes but keep categorical coloring options
-      numeric_cols <- which(sapply(full_join(plot_data()$e_meta, plot_data()$e_data) %>% 
-                                     dplyr::select(color_by_choices), 
-                                   is.numeric))
+      numeric_cols <- which(sapply(full_join(plot_data()$e_meta, plot_data()$e_data) %>% dplyr::select(color_by_choices), is.numeric))
       
       axes_choices <- revals$axes_choices <- color_by_choices[numeric_cols]
       
@@ -1812,63 +1814,73 @@ shinyServer(function(session, input, output) {
       }
       else rows <- input$parmsTable2_rows_selected
       #
+      total_files <- sum(c(input$report_selection, length(input$download_selection), rows)) + 1
       
-      # option to choose report output format?  need to change inputs in report.R.
-      if (input$report_selection == TRUE){
-        fs <- c(fs, paste0(tempdir(), "/report.html"))
-        report(peakICR(), peakIcr2, output_file = paste0(tempdir(), "/report.html"), output_format = "html_document", C13_ID = input$iso_symbol)
-      }
-      
-      if ("separate" %in% input$download_selection){
-        fs <- c(fs, paste0(tempdir(), "/FREDA_processed_e_data.csv"), paste0(tempdir(), "/FREDA_processed_e_meta.csv"))
-        write.csv(peakIcr2$e_data, file = paste0(tempdir(), "/FREDA_processed_e_data.csv"), row.names = FALSE)
-        write.csv(peakIcr2$e_meta, file = paste0(tempdir(), "/FREDA_processed_e_meta.csv"), row.names = FALSE)
-      }
-      if ("merged" %in% input$download_selection){
-        fs <- c(fs, paste0(tempdir(), "/FREDA_processed_merged_data.csv"))
-        merged_data <- merge(peakIcr2$e_data, peakIcr2$e_meta)
-        write.csv(merged_data, file = paste0(tempdir(), "/FREDA_processed_merged_data.csv"), row.names = FALSE)
-      }
-      if ("group_data" %in% input$download_selection){
-        if(length(revals$plot_data) != 0){
-          for(i in 1:length(revals$plot_data)){
-            if (!is.null(revals$plot_data[[i]])){
-              path <- paste0(tempdir(), "/FREDA_group_data_summary_", gsub("/", "-", parmTable$parms[["File Name"]][i]),".csv")
-              fs <- c(fs, path)
-              write.csv(revals$plot_data[[i]], file = path, row.names = FALSE) 
+      withProgress(message = "Writing files...",{
+        # option to choose report output format?  need to change inputs in report.R.
+        if (input$report_selection == TRUE){
+          fs <- c(fs, paste0(tempdir(), "/report.html"))
+          report(peakICR(), peakIcr2, output_file = paste0(tempdir(), "/report.html"), output_format = "html_document", C13_ID = input$iso_symbol)
+          incProgress(1/total_files)
+        }
+        
+        if ("separate" %in% input$download_selection){
+          fs <- c(fs, paste0(tempdir(), "/FREDA_processed_e_data.csv"), paste0(tempdir(), "/FREDA_processed_e_meta.csv"))
+          write.csv(peakIcr2$e_data, file = paste0(tempdir(), "/FREDA_processed_e_data.csv"), row.names = FALSE)
+          write.csv(peakIcr2$e_meta, file = paste0(tempdir(), "/FREDA_processed_e_meta.csv"), row.names = FALSE)
+          incProgress(1/total_files)
+        }
+        if ("merged" %in% input$download_selection){
+          fs <- c(fs, paste0(tempdir(), "/FREDA_processed_merged_data.csv"))
+          merged_data <- merge(peakIcr2$e_data, peakIcr2$e_meta)
+          write.csv(merged_data, file = paste0(tempdir(), "/FREDA_processed_merged_data.csv"), row.names = FALSE)
+          incProgress(1/total_files)
+        }
+        if ("group_data" %in% input$download_selection){
+          if(length(revals$plot_data) != 0){
+            for(i in 1:length(revals$plot_data)){
+              if (!is.null(revals$plot_data[[i]])){
+                path <- paste0(tempdir(), "/FREDA_group_data_summary_", gsub("/", "-", parmTable$parms[["File Name"]][i]),".csv")
+                fs <- c(fs, path)
+                write.csv(revals$plot_data[[i]], file = path, row.names = FALSE) 
+              }
             }
           }
-        }
-      }
-      
-      if (length(rows) > 0) {
-        bitmaps <- list()
-        for (i in rows) {
-          path <- paste(tempdir(), "/",gsub("/", "-", parmTable$parms[["File Name"]][i]), ".", input$image_format, sep = "") #create a plot name
-          fs <- c(fs, path) # append the new plot to the old plots
-          export(revals$plot_list[[i]],
-                 file = paste(tempdir(), "plot",i,".png", sep = ""), zoom = 2) # use webshot to export a screenshot to the opened pdf
-          #r <- brick(file.path(getwd(), paste("plot",i,".png", sep = ""))) # create a raster of the screenshot
-          img <- magick::image_read(paste(tempdir(), "plot",i,".png", sep = ""))#attr(r,"file")@name) #turn the raster into an image of selected format
-          
-          if (isTRUE(getOption("shiny.testmode"))) bitmaps[[i]] <- as.raster(img)
-          
-          image_write(img, path = path, format = input$image_format) #write the image
-          #rsvg::rsvg_svg(img, file = path)
+          incProgress(1/total_files)
         }
         
-        # ___test-export___
-        exportTestValues(images_out = digest::digest(bitmaps))
+        if (length(rows) > 0) {
+          bitmaps <- list()
+          for (i in rows) {
+            path <- paste(tempdir(), "/",gsub("/", "-", parmTable$parms[["File Name"]][i]), ".", input$image_format, sep = "") #create a plot name
+            fs <- c(fs, path) # append the new plot to the old plots
+            export(revals$plot_list[[i]],
+                   file = paste(tempdir(), "plot",i,".png", sep = ""), zoom = 2) # use webshot to export a screenshot to the opened pdf
+            #r <- brick(file.path(getwd(), paste("plot",i,".png", sep = ""))) # create a raster of the screenshot
+            img <- magick::image_read(paste(tempdir(), "plot",i,".png", sep = ""))#attr(r,"file")@name) #turn the raster into an image of selected format
+            
+            if (isTRUE(getOption("shiny.testmode"))) bitmaps[[i]] <- as.raster(img)
+            
+            image_write(img, path = path, format = input$image_format) #write the image
+            incProgress(1/total_files)
+            #rsvg::rsvg_svg(img, file = path)
+          }
+          
+          # ___test-export___
+          exportTestValues(images_out = digest::digest(bitmaps))
+          
+          fs <- c(fs, paste0(tempdir(), "/Plot_key.csv"))
+          outtable <- parmTable$parms[rows,]
+          write.csv( outtable, row.names = FALSE, file = paste0(tempdir(), "/Plot_key.csv"))
+        }
+        print(fs)
         
-        fs <- c(fs, paste0(tempdir(), "/Plot_key.csv"))
-        outtable <- parmTable$parms[rows,]
-        write.csv( outtable, row.names = FALSE, file = paste0(tempdir(), "/Plot_key.csv"))
-      }
-      print(fs)
+        zip(zipfile=fname, files=fs, flags = "-j")
+        incProgress(1/total_files)
+        if (file.exists(paste0(fname,".zip"))){file.rename(paste0(fname,".zip"),fname)}
+        # setwd(orig_wd)
+      })
       
-      zip(zipfile=fname, files=fs, flags = "-j")
-      if (file.exists(paste0(fname,".zip"))){file.rename(paste0(fname,".zip"),fname)}
-      # setwd(orig_wd)
     },
     contentType = "application/zip"
   )
