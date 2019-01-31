@@ -36,8 +36,9 @@ shinyServer(function(session, input, output) {
   revals <- reactiveValues(ntables = 0, makeplot = 1, color_by_choices = NULL, axes_choices = NULL,
                            plot_data_export = NULL, peakICR_export = NULL, redraw_filter_plot = TRUE, reac_filter_plot = TRUE,
                            group_1 = NULL, group_2 = NULL, single_group = NULL, single_sample = NULL, 
-                           warningmessage = list(upload = "<p style = 'color:deepskyblue'>Upload data and molecular identification files described in 'Data Requirements' on the previous page."),
-                           warningmessage_visualize = list(), warningmessage_filter = list(), current_plot = NULL, plot_list = list(), plot_data = list(), reset_counter = 0,
+                           warningmessage_upload = list(upload = "style = 'color:deepskyblue'>Upload data and molecular identification files described in 'Data Requirements' on the previous page."),
+                           warningmessage_visualize = list(), warningmessage_filter = list(), warningmessage_preprocess = list(),
+                           current_plot = NULL, plot_list = list(), plot_data = list(), reset_counter = 0,
                            chooseplots = NULL, filter_click_disable = list(init = TRUE))
   
   exportTestValues(plot_data = revals$plot_data_export, peakICR = revals$peakICR_export, color_choices = revals$color_by_choices)
@@ -47,14 +48,7 @@ shinyServer(function(session, input, output) {
   example_emeta <- read.csv('Data/example12T_emeta.csv')
   calc_opts <- read.csv('calculation_options.csv', stringsAsFactors = FALSE)
   calc_vars <- read.csv('calculation_variables.csv', stringsAsFactors = FALSE)
-  #### in case we want a preview rendered #####
-  # output$example_data_table <- DT::renderDataTable({
-  #   example_edata
-  # })
-  # 
-  # output$example_meta_table <- DT::renderDataTable({
-  #   example_emeta
-  # })
+  
   #############
   output$downloadData <- downloadHandler(
     filename = "FREDA_Example_Data.zip",
@@ -72,87 +66,33 @@ shinyServer(function(session, input, output) {
     contentType = "application/zip"
   )
   ######## Upload Tab ##############
+  # Upload Tab Reactive Values:
+  # Edata():  The uploaded data file
+  # edata_cnames():  All column names from from Edata()
+  # Emeta():  The uploaded e_meta file
+  # emeta_cnames():  All column names from Emeta()
+  # sample_names(): Sample names from uploaded data (all columns from Edata() minus mass column)
+  # fdata():  dummy f_data object created from sample_names().  Needed for input to as.peakICR.  CONTAINS NO GROUPING INFORMATION
+  source("Reactive_Variables/upload_revals.R", local = TRUE)
   
+  print("im here")
   ### Upload Observers:  Contains conditional dropdown behavior, shinyjs functionality.
   source("Observers/upload_observers.R", local = TRUE)
   ###
   
   #### Sidebar Panel (Upload Tab) ####
   
-  # Object: Get e_data from file input
-  Edata <- reactive({
-    # Error handling: Need file_edata path
-    req(input$file_edata$datapath)
-    
-    # Load file
-    filename <- input$file_edata$datapath
-    
-    exportTestValues(e_data = read.csv(filename, stringsAsFactors = FALSE))
-    read.csv(filename, stringsAsFactors = FALSE)
-    
-  }) # End Edata #
-  
-  # Object: Get list of column names of Edata
-  # Note: created when e_data is uploaded
-  edata_cnames <- reactive({
-    
-    # Get column names
-    names(Edata())
-    
-  }) # End edata_cnames #
-  
   # Drop down list: Get edata unique identifier
   output$edata_id <- renderUI({
-    
     # Drop down list with options from column names
     selectInput("edata_id_col", "Choose column with IDs",
                 choices  = c('Select one', edata_cnames()))
-    
   }) # End edata_id #
-  
-  # Object: Get e_meta from file input
-  Emeta <- reactive({
-    
-    # Error handling: Need file_emeta to be valid
-    req(input$file_emeta$datapath)
-    
-    # Load file
-    filename <- input$file_emeta$datapath
-    
-    exportTestValues(e_meta = read.csv(filename, stringsAsFactors = FALSE))
-    read.csv(filename, stringsAsFactors = FALSE)
-    
-  }) # End Emeta #
-  
-  # Object: Emeta column names 
-  # Note: created when emeta is loaded/updated
-  emeta_cnames <- reactive({
-    
-    names(Emeta())
-    
-  }) # End emeta_cnames #
-  
-  # Object: Sample names from e_data
-  # Note: This object is created when e_data and edata_id are entered
-  sample_names <- reactive({
-    setdiff(edata_cnames(), input$edata_id_col)
-    
-  }) # End sample_names #
-  
-  # Create reactive fake f_data (used when action button creates peakICR())
-  fdata <- reactive({
-    
-    col2 <- rep(NA, length(sample_names()))
-    data.frame('SampleId' = sample_names(), 'Var1' = col2)
-    
-  }) # End fdata #
   
   # Drop-down lists: Choose formula column
   output$f_column <- renderUI({
-    
     selectInput("f_column", "Choose formula column",
                 choices = c('Select one', emeta_cnames()))
-    
   }) # End f_column #
   
   ### C H N O S P C13 ###
@@ -386,8 +326,8 @@ shinyServer(function(session, input, output) {
   }) # End peakICR creation
 
   # display list of warnings pasted on separate lines
-  output$warnings <- renderUI({
-    HTML(lapply(revals$warningmessage, function(el){
+  output$warnings_upload <- renderUI({
+    HTML(lapply(revals$warningmessage_upload, function(el){
       paste0("<p ", el, "</p>")
       }) %>%
       paste(collapse = "")
@@ -505,21 +445,6 @@ shinyServer(function(session, input, output) {
     
   }) # End edata_text
   
-  # Display preview for edata
-  # output$head_edata <- renderDataTable({
-  #   
-  #   if (dim(Edata())[2] > 6)
-  #     head(Edata())[,1:6]
-  #   else
-  #     head(Edata())
-  #   
-  # }, # End code portion of head_edata
-  # 
-  #   
-  #   # Options for renderDataTable
-  #   options = list(dom = 't', searching = FALSE)
-  #   
-  #   ) # End head_edata
   output$head_edata <- DT::renderDT({
     tmp <- Edata()
     
@@ -551,10 +476,14 @@ shinyServer(function(session, input, output) {
   
   ####### Preprocess Tab #######
   
-  #### Populate List from CSV File ####
+  # Preprocess Tab reactive variables:
+  # emeta_display_choices():  Columns of emeta minus mass column, isotopic information column, and categorical columns with greater than 12 categories
+  # successMessage():  Success messages and modal dialog when filter button is clicked
+  source("Reactive_Variables/preprocess_revals.R", local = TRUE)
   
   source("Observers/preprocess_observers.R", local = TRUE)
   
+  # Populate List from CSV File calculation_options.csv
   output$which_calcs <- renderUI({
     choices <- calc_opts$Function
     names(choices) <- calc_opts$DisplayName
@@ -565,6 +494,11 @@ shinyServer(function(session, input, output) {
                          )
                        })
     )
+  })
+  
+  # Warnings for preprocess tab
+  output$warnings_preprocess <- renderUI({
+    HTML(paste(revals$warningmessage_preprocess, collapse = ""))
   })
   
   #### Action Button reactions ####
@@ -580,7 +514,6 @@ shinyServer(function(session, input, output) {
     }
     
     # Apply all relevant functions
-    
     withProgress(message = "Calculating Values....",{
       for(el in input$tests){
         if(grepl("assign_class", el)){
@@ -605,7 +538,7 @@ shinyServer(function(session, input, output) {
     
   }, priority = 10) # End action button event
   
-  # Creates two reactive variables for continuous and categorical variables
+  # Creates two reactive variables for continuous and categorical variables which are used to display separate tables
   # Note: dependent on preprocess click and the user-specified calculations
   observeEvent(input$preprocess_click, {
     # Error handling: peakIcr2 must have a non-NULL Kendrick Mass column name
@@ -692,12 +625,10 @@ shinyServer(function(session, input, output) {
   source("Observers/filter_observers.R", local = TRUE)
   ###
   
+  # filter warnings
   output$warnings_filter <- renderUI({
-    HTML(lapply(revals$warningmessage_filter, function(el){
-      paste0("<p ", el, "</p>")
-    }) %>%
-      paste(collapse = "")
-    )
+    HTML(lapply(revals$warningmessage_filter, function(el){paste0("<p ", el, "</p>")}) %>%
+      paste(collapse = ""))
   })
   
   # ----- Filter Reset Setup -----# 
@@ -722,32 +653,6 @@ shinyServer(function(session, input, output) {
     }
     
     return(temp)
-  })
-  
-  #get display name choices for dropdown
-  emeta_display_choices <- reactive({
-    input$preprocess_click
-    drop_cols <- c(attr(peakIcr2, "cnames")$mass_cname,
-                   input$iso_info_column)
-    
-    column_choices <- peakIcr2$e_meta %>% 
-      dplyr::select(-one_of(drop_cols)) %>%
-      dplyr::select(which(sapply(., function(col){ length(unique(col)) < 12 } ) | sapply(., is.numeric))) %>% #dont include columns with too many categories
-      colnames() 
-    
-    #columns included in calculation_options.csv get their prettified names, everything else gets the column name
-    names(column_choices) <- lapply(column_choices, function(x){
-      if (x %in% calc_vars$ColumnName){
-        calc_vars %>% filter(ColumnName == x) %>% pluck("DisplayName")
-      }
-      else x
-    }) %>% unlist()
-    
-    #____test export_____
-    exportTestValues(display_names = column_choices)
-    
-    column_choices
-    
   })
   
   # Allow a button click to undo filtering
@@ -787,7 +692,7 @@ shinyServer(function(session, input, output) {
       peakIcr2 <<- subset(peakIcr2, samples = input$keep_samples, check_rows = TRUE)
     }
     
-    # If mass filtering is checked
+    # Apply mass filter
     if (input$massfilter){
       
       # Error handling: Min mass less than max mass, but greater than 0
@@ -800,7 +705,7 @@ shinyServer(function(session, input, output) {
                              max_mass = as.numeric(input$max_mass))
     }
     
-    # If molecule filtering is checked
+    # Apply molecule filter
     if (input$molfilter) {
       
       # Create and apply molecule filter to nonreactive peakICR object
@@ -809,13 +714,14 @@ shinyServer(function(session, input, output) {
       
     } # End molecule filter if statement
     
+    # Apply formula filter
     if (input$formfilter){
       filterForm <- formula_filter(peakIcr2)
       peakIcr2 <<- applyFilt(filterForm, peakIcr2)
       
     }
     
-    # custom filters
+    # Apply custom filters
     if (input$customfilterz){
       
         #apply the filter for each input
@@ -854,128 +760,14 @@ shinyServer(function(session, input, output) {
   
   #### Main Panel (Filter Tab) ####
   
-  # Object: Create 'Success' message if everything works out, show errors if not
-  # Note: Created when Filter action button is clicked
-  successMessage <- eventReactive(input$filter_click, {
-    
-    # If mass filter is checked
-    if (input$massfilter) {
-      
-      # Error handling: need 0 < minMass < maxMass
-      validate(
-        need((input$min_mass < input$max_mass), 
-             'Minimum mass must be less than maximum mass'), 
-        
-        need((input$min_mass > 0), 
-             'Minimum mass must be greater than 0'),
-        
-        need((input$min_mass && input$max_mass), 
-             'Both minimum and maximum mass required to filter')
-        
-      ) # End error handling
-    }
-    showModal(
-      modalDialog(title = "Filter Success",
-                  fluidRow(
-                    column(10, align = "center", offset = 1,
-                           HTML('<h4 style= "color:#1A5276">Your data has been filtered using mass and/or minimum observations. 
-                                You may proceed to the next tabs for subsequnt analysis.</h4>'),
-                           hr(),
-                           actionButton("filter_dismiss", "Review results", width = '75%'),
-                           br(),
-                           br(),
-                           actionButton("goto_viz", "Continue to Visualization", width = '75%')
-                           )
-                  )
-                  ,footer = NULL)
-    )
-    
-    HTML('<h4 style= "color:#1A5276">You may now proceed to visualization</h4>')
-    
-  }) # End successMessage
-  
   # Display successMessage
   # Depends on: successMessage
   output$filterTest <- renderUI({
-    
     successMessage()
-    
   })
   
-  # Reactive value for each filter which store a list of retained ID's
-  sampfilter_ids <- eventReactive(c(input$keep_samples, input$samplefilter),{
-    if(input$samplefilter){
-      if(length(input$keep_samples) == 0) NULL
-      else{
-        uploaded_data() %>% 
-          subset(samples = input$keep_samples, check_rows = TRUE) %>%
-          {.$e_data} %>%
-          pluck(getMassColName(peakIcr2))
-      }
-    }
-    else NULL
-  })
-  
-  
-  massfilter_ids <- eventReactive(c(input$massfilter, input$min_mass, input$max_mass),{
-    revals$redraw_filter_plot <- FALSE
-    if (input$massfilter){
-      mass_filter(uploaded_data()) %>% 
-        dplyr::filter(!!sym(getMassColName(peakIcr2)) <= input$max_mass, !!sym(getMassColName(peakIcr2)) >= input$min_mass) %>%
-        pluck(getMassColName(peakIcr2))
-    }
-    else NULL
-  })
-  
-  molfilter_ids <- eventReactive(c(input$minobs, input$molfilter, input$keep_samples, input$samplefilter), {
-    if (input$molfilter){
-      if(input$samplefilter){
-        uploaded_data() %>% 
-          subset(samples = input$keep_samples, check_rows = TRUE) %>%
-          molecule_filter() %>% 
-            dplyr::filter(Num_Observations >= as.integer(input$minobs)) %>%
-            pluck(getMassColName(peakIcr2))
-      }
-      else{
-       molecule_filter(uploaded_data()) %>%
-          dplyr::filter(Num_Observations >= as.integer(input$minobs)) %>%
-          pluck(getMassColName(peakIcr2))
-      }
-    }
-    else NULL
-  })
-  
-  formfilter_ids <- eventReactive(input$formfilter, {
-    if (input$formfilter){
-      formula_filter(uploaded_data()) %>%
-        dplyr::filter(Formula_Assigned == TRUE) %>%
-        pluck(getMassColName(peakIcr2))
-    }
-    else NULL
-  })
-  
-  # Object: Get data frame from summaryFilt
-  # Depends on a reactive variable that has delayed invalidation
-  summaryFilterDataFrame <- eventReactive(revals$reac_filter_plot, {
-    req(input$top_page == "Filter")
-    
-      # determine which, if any, custom filters to apply
-      conds <- c(!is.null(revals$custom1_ids), !is.null(revals$custom2_ids), !is.null(revals$custom3_ids))
-      
-      if (any(conds) & isolate(input$customfilterz)){
-        customids_to_keep <- data.frame(ids = c(revals$custom1_ids, revals$custom2_ids, revals$custom3_ids), stringsAsFactors = FALSE) %>%
-          group_by(ids) %>%
-          mutate(n = n()) %>%
-          filter(n == sum(conds)) %>%
-          pluck(1)
-      }
-      else customids_to_keep <- NULL
-      # Get summary table from sourced file 'summaryFilter.R'
-      summaryFilt(peakICR(), sampfilter_ids(), massfilter_ids(), molfilter_ids(), formfilter_ids(), customids_to_keep)
-    
-    
-  }, ignoreInit = TRUE) # End summaryFilterDataFrame
-  
+  ## Filter tab reactive values
+  source("Reactive_Variables/filter_revals.R", local = TRUE)
   
   # Show table from summaryFilt
   # Depends on: summaryFilterDataFrame
@@ -1053,11 +845,17 @@ shinyServer(function(session, input, output) {
   
   ####### Visualize Tab #######
   
-  ## Sidebar Panel ##
+  #Visualize Tab reactive variables:
+  # plot_data(): Plotting dataframe that is passed to output$FxnPlot.  This object triggers an important observer (in server.R) which controls dropdown selection
+  # plot_defaults():  defaults arguments to plot axes/title values
+  # numeric_selected():  keeps track of whether the column selected by input$vk_colors is numeric or categorical
+  source("Reactive_Variables/visualize_revals.R", local = TRUE)
   
   #### Viztab observers.  Help Button. Dropdown choices, plot clearing, and shinyjs helper functionality###
   source("Observers/visualize_observers.R", local = TRUE)
   #####
+  
+  ## Sidebar Panel ##
   
   # Plot options, with selections removed if the necessary columns in e_meta are not present.
   output$plot_type <- renderUI({
@@ -1211,110 +1009,6 @@ shinyServer(function(session, input, output) {
       removeClass("js_colorpal", "grey_out")
       colored_radiobuttons(inputId = "colorpal", label = "Pick a coloring scheme", inline = TRUE,
                                choices = choices, extensions = extensions)
-    }
-  })
-  
-  # Create plotting dataframe to be passed to FxnPlot
-  plot_data <- eventReactive(input$plot_submit,{
-    
-    req(calc_vars)
-    validate(need(!is.null(input$chooseplots) & input$choose_single !=0, message = "Please select plot type"))
-    if (is.null(input$choose_single)){ # corresponds to data with a single sample
-      return(peakIcr2) # no need to subset
-    }
-    if (input$choose_single == 1) { # single sample -selected- but multiple samples present
-      validate(need(!is.null(input$whichSamples), message = "Please select a sample to plot"))
-      return(subset(peakIcr2, input$whichSamples))
-      #key_name <- paste(attributes(peakIcr2)$cnames$fdata_cname, "=", input$whichSamples, sep = "")
-    }
-    if (input$chooseplots == "Custom Scatter Plot") req(input$scatter_x != input$scatter_y)
-    #---------- Group Plots ------------#
-    else if (input$choose_single == 2) { # single group'
-      
-      validate(need(!is.null(input$whichSamples), message = "Please select samples for grouping"))
-      validate(need(length(input$whichSamples) > 1, message = "Please select at least 2 samples"))
-      
-      temp_group_df <- data.frame(input$whichSamples, "Group")
-      colnames(temp_group_df) <- c(getFDataColName(peakIcr2), "Group")
-      
-      temp_data <- peakIcr2 %>% 
-        subset(input$whichSamples)
-      
-      temp_data <- fticRanalysis:::setGroupDF(temp_data, temp_group_df)
-      
-      # no need to summarize for density plot function
-      if (input$chooseplots == "Density Plot"){
-        return(temp_data)
-      }
-
-      temp_data <- summarizeGroups(temp_data, summary_functions = getGroupSummaryFunctionNames())
-      temp_data$e_meta <- cbind(temp_data$e_meta, temp_data$e_data %>% dplyr::select(-one_of(getEDataColName(temp_data))))
-      
-      return(temp_data)
-      
-    } else if (isolate(input$choose_single) == 3) {# two groups 
-      # Make sure at least one test has been calculated
-      validate(need(!is.null(isolate(input$whichGroups1)), message = "Please select samples for first grouping"))
-      validate(need(length(input$whichGroups1) > 1, message = "Please select at least 1 sample"))
-      validate(need(!is.null(isolate(input$whichGroups2)), message = "Please select samples for second grouping"))
-      validate(need(length(input$whichGroups2) > 1, message = "Please select at least 1 sample"))
-      
-      group1 <- ifelse(is.null(input$group1_name) | isTRUE(input$group1_name == ""), "Group 1", input$group1_name)
-      group2 <- ifelse(is.null(input$group2_name) | isTRUE(input$group2_name == ""), "Group 2", input$group2_name)
-      
-      # assign a group DF to the data with a level for each of the two groups
-      group1_samples <- isolate(input$whichGroups1)
-      group2_samples <- isolate(input$whichGroups2)
-      temp_group_df <- data.frame(c(group1_samples, group2_samples), c(rep(group1, times=length(group1_samples)), rep(group2, length(group2_samples))))
-      colnames(temp_group_df) <- c(getFDataColName(peakIcr2), "Group")
-      
-      temp_data <- peakIcr2 %>%
-        subset(samples=c(group1_samples, group2_samples))
-      
-      temp_data <- fticRanalysis:::setGroupDF(temp_data, temp_group_df)
-      
-      # no need to summarize for density plot function
-      if (input$chooseplots == "Density Plot"){
-        return(temp_data)
-      }
-      
-      # error checking after passing density plots
-      validate(need(input$summary_fxn %in% fticRanalysis:::getGroupComparisonSummaryFunctionNames(), "Please select a summary function"))
-      
-      # get the value of the single pairwise comparison         
-      grpComparisonsObj <- divideByGroupComparisons(temp_data, comparisons = "all")[[1]]$value
-      
-      # paramaters specific to uniqueness_gtest()
-      if (input$summary_fxn == "uniqueness_gtest"){
-        validate(need(isTRUE(input$pval < 1 & input$pval > 0) & is.numeric(input$pval), message = "Specify a p-value between 0 and 1"))
-        gtest_parms <- list(pres_fn = input$pres_fn, pvalue_thresh = input$pval)
-      }
-      else {
-        gtest_parms <- list(absn_thresh = input$absn_thresh)
-      }
-      
-      # conditional error checking depending on nsamps and proportion
-      if (input$pres_fn == "nsamps"){
-        validate(need(input$pres_thresh <= min(length(input$whichGroups1), length(input$whichGroups2)), "Maximum threshold is above the minimum number of samples in a group"),
-                 need(is.numeric(input$pres_thresh), "Please enter a numeric value for threshold to determine presence"),
-                 need(input$absn_thresh < input$pres_thresh & input$absn_thresh >= 0, "absence threshold must be non-negative and lower than presence threshold"))
-      }
-      else if (input$pres_fn == "prop"){
-        validate(need(input$pres_thresh <= 1 & input$pres_thresh > 0, "Proportion threshold is not in the interval (0,1]"),
-                 need(is.numeric(input$pres_thresh), "Please enter a numeric proportion threshold to determine presence"),
-                 need(input$absn_thresh < input$pres_thresh & input$absn_thresh >= 0, "absence threshold must be non-negative and lower than presence threshold"))
-      }
-      
-      # populate a list of args to pass to summarizeGroupComparisons()
-      parms <- list()
-      parms[[input$summary_fxn]] <- c(list(pres_thresh = input$pres_thresh), gtest_parms)
-      
-      # create the group comparisons object, passing the user specified function and its (user specified) list of args.
-      summaryObj <- summarizeGroupComparisons(grpComparisonsObj, summary_functions = input$summary_fxn, 
-                                              summary_function_params = parms)
-      
-      return(summaryObj)
-      
     }
   })
   
@@ -1603,31 +1297,6 @@ shinyServer(function(session, input, output) {
     
   })
   
-  
-  #------ plot axes and titles options ------#
-  # use the 'formals' argument to figure out default chart labels
-  plot_defaults <- reactive({
-    validate((
-      need(!is.null(input$chooseplots), message = "")
-    ))
-    if (input$chooseplots == 'Van Krevelen Plot') {
-      defs <- formals(vanKrevelenPlot)
-      #defs$legendTitle = names(emeta_display_choices())[emeta_display_choices() == input$vk_colors]
-    } else if (input$chooseplots == "Custom Scatter Plot"){
-      defs <- formals(scatterPlot)
-      defs$ylabel = NULL
-      defs$xlabel = NULL
-    } else if (input$chooseplots == 'Kendrick Plot') {
-      defs <- formals(kendrickPlot)
-      #defs$legendTitle = input$vk_colors
-    } else if (input$chooseplots == 'Density Plot') {
-      defs <- formals(densityPlot)
-      defs$ylabel = "Density"
-      defs$xlabel = NULL
-    }
-    return(defs)
-  })
-  
   # Axis and title label input menus
   output$title_out <- renderUI({
     
@@ -1664,19 +1333,6 @@ shinyServer(function(session, input, output) {
     }
     
   })
-  
-  # reactive variable that keeps track of whether the selected column is numeric or categorical.
-  numeric_selected <- eventReactive(c(input$vk_colors, plot_data()),{
-    edata_col <- plot_data()$e_data %>% pluck(input$vk_colors)
-    emeta_col <- plot_data()$e_meta %>% pluck(input$vk_colors)
-    if (input$vk_colors %in% (plot_data()$e_data %>% colnames())){
-      (is.numeric(edata_col) & !(is_integer(edata_col) & length(unique(edata_col)) < 12))
-    }else if (input$vk_colors %in% (plot_data()$e_meta %>% colnames())){
-      (is.numeric(emeta_col) & !(is_integer(emeta_col) & length(unique(emeta_col)) < 12))
-    }else if (input$vk_colors %in% c("bs1", "bs2")){
-      FALSE
-    }else TRUE
-  }, ignoreNULL = FALSE)
   
   #-------- create a table that stores plotting information -------#
   # the table needs to grow with each click of the download button
@@ -1853,7 +1509,7 @@ shinyServer(function(session, input, output) {
             path <- paste(tempdir(), "/",gsub("/", "-", parmTable$parms[["File Name"]][i]), ".", input$image_format, sep = "") #create a plot name
             fs <- c(fs, path) # append the new plot to the old plots
             export(revals$plot_list[[i]],
-                   file = paste(tempdir(), "plot",i,".png", sep = ""), zoom = 2) # use webshot to export a screenshot to the opened pdf
+                   file = paste(tempdir(), "plot",i,".png", sep = ""), vheight = 744*3, vwidth = 992*3, zoom = 2/3) # use webshot to export a screenshot to the opened pdf
             #r <- brick(file.path(getwd(), paste("plot",i,".png", sep = ""))) # create a raster of the screenshot
             img <- magick::image_read(paste(tempdir(), "plot",i,".png", sep = ""))#attr(r,"file")@name) #turn the raster into an image of selected format
             
@@ -1882,25 +1538,4 @@ shinyServer(function(session, input, output) {
     },
     contentType = "application/zip"
   )
-  
-  #----------- plot download ---------#
-  # 
-  #   output$download_plots <- downloadHandler(
-  #     filename = 'pdfs.zip', #this creates a directory to store the pdfs...not sure why it's not zipping
-  #     content = function(fname) { #write a function to create the content populating said directory
-  #       fs <- c()
-  #       tmpdir <- tempdir() # render the images in a temporary environment
-  #       setwd(tempdir())
-  #       print(tempdir())
-  # 
-  #       print(fs) #print all the pdfs to file
-  #       zip(zipfile=fname, files=fs) #zip  it up (this isn't working for some reason!)
-  #       if (file.exists(paste0(fname,".zip"))){file.rename(paste0(fname,".zip"),fname)} #bug workaround see https://groups.google.com/forum/?utm_medium=email&utm_source=footer#!msg/shiny-discuss/D5F2nqrIhiM/ZshRutFpiVQJ
-  #     },
-  #     contentType = "application/zip"
-  #   )
-  ####### Glossary Tab #######
-  
-  
-  
-  })
+})

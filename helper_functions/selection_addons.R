@@ -1,4 +1,5 @@
 ##Function which creates info hover icons for preprocessing checkboxes.
+##Thanks to @K. Rohde on stackoverflow for this.  https://stackoverflow.com/questions/36670065/tooltip-in-shiny-ui-for-help-text
 
 tooltip_checkbox <- function(..., extensions){
   output <- checkboxGroupInput(...)
@@ -32,3 +33,4 @@ colored_radiobuttons <- function(..., extensions){
   
   output
 }
+

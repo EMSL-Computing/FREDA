@@ -1,4 +1,4 @@
-# Summary Panel: Display table summaries of numeric and categorical columns in e_meta
+### Summary Panel: Display table summaries of numeric and categorical columns in e_meta ###
 
 # For numeric columns:
 observe({
@@ -55,6 +55,10 @@ output$categorical_summary <- renderUI({
 
 ## END TABLE SUMMARY SECTION ##
 
+# display warning if nothing selected
+observeEvent(input$tests, {
+  revals$warningmessage_preprocess$no_selection <- if(!isTRUE(length(input$tests) > 0)) "<p style = 'color:deepskyblue'>Select at least one test to calculate</p>" else NULL
+}, ignoreNULL = FALSE)
 
 # Success dialogs
 observeEvent(input$preprocess_click,{

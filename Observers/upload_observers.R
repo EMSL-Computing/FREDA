@@ -5,7 +5,7 @@ observeEvent(c(input$top_page, input$file_edata, input$file_emeta), {
   toggleCssClass("js_file_emeta", "suggest-upload", is.null(input$file_emeta))
   
   if(!is.null(input$file_edata) & !is.null(input$file_emeta)){
-    revals$warningmessage$upload <- NULL
+    revals$warningmessage_upload$upload <- NULL
   }
   
 }, priority = 2)
@@ -21,7 +21,7 @@ observeEvent(input$edata_id_col,{
 
   toggleCssClass("edata_id", "suggest", condition)
   #toggleCssClass("edata_id", "attention", conditions[2] & !conditions[1])
-  revals$warningmessage$warnidcol <- content
+  revals$warningmessage_upload$warnidcol <- content
 
 }, priority = 1)
 
@@ -45,13 +45,13 @@ observeEvent(c(input$edata_id_col, Edata(), Emeta(), input$select, input$isotope
   else content2 = NULL
   
   if(isTRUE(input$select != 1)){
-    revals$warningmessage$formula_col <- NULL
+    revals$warningmessage_upload$formula_col <- NULL
   }
 
   toggleCssClass("edata_id", "attention", conditions[1])
   toggleCssClass("js_select", "suggest", all(!conditions[1], conditions[2]))
-  revals$warningmessage$warnidcol <- content
-  revals$warningmessage$chooselement <- content2
+  revals$warningmessage_upload$warnidcol <- content
+  revals$warningmessage_upload$chooselement <- content2
   
 
 })
@@ -81,7 +81,7 @@ observeEvent(c(Edata(), Emeta(), input$edata_id_col), {
   
   toggleCssClass("js_file_edata", "attention-upload", any(conditions))
   toggleCssClass("js_file_emeta", "attention-upload", any(conditions))
-  revals$warningmessage$idcolmismatch <- content
+  revals$warningmessage_upload$idcolmismatch <- content
   
 })
 
@@ -91,7 +91,7 @@ observeEvent(c(Edata(), Emeta(), input$edata_id_col), {
 observeEvent(c(input$iso_info_column, input$iso_symbol, input$isotope_yn, input$select), {
   
   if(isTRUE(input$isotope_yn != "1")){
-    revals$warningmessage$warniso <- NULL
+    revals$warningmessage_upload$warniso <- NULL
   }
   else{
     req(!is.null(input$iso_info_column))
@@ -113,7 +113,7 @@ observeEvent(c(input$iso_info_column, input$iso_symbol, input$isotope_yn, input$
     
     toggleCssClass("js_iso_info_column", "suggest", conditions[1] & input$select != 0)
     toggleCssClass("js_iso_symbol", "attention", isTRUE(conditions[2]))
-    revals$warningmessage$warniso <- content
+    revals$warningmessage_upload$warniso <- content
   }
 })
 
@@ -153,8 +153,8 @@ observeEvent(c(input$c_column, input$h_column, input$n_column,
   toggleCssClass("element_select", "blueoutline", isTRUE(conditions[1]))
   toggleCssClass("element_select", "redoutline", isTRUE(conditions[2]))
   toggleCssClass("js_isotope_yn", "suggest", all(!any(conditions), is.null(input$isotope_yn), input$select != 0))
-  revals$warningmessage$elements <- content
-  revals$warningmessage$chooseiso <- content_isoyn
+  revals$warningmessage_upload$elements <- content
+  revals$warningmessage_upload$chooseiso <- content_isoyn
   
 })
 
@@ -192,8 +192,8 @@ observeEvent(c(input$f_column,input$select, input$isotope_yn),{
   toggleCssClass("f_column", "attention", conditions[1])
   toggleCssClass("f_column", "suggest", !conditions[1] & conditions[2])
   toggleCssClass("js_isotope_yn", "suggest", all(!any(conditions), is.null(input$isotope_yn), input$select != 0))
-  revals$warningmessage$chooseiso <- content_isoyn
-  revals$warningmessage$formula_col <- content
+  revals$warningmessage_upload$chooseiso <- content_isoyn
+  revals$warningmessage_upload$formula_col <- content
   
 })
 

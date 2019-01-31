@@ -157,7 +157,7 @@ shinyUI(tagList(useShinyjs(),
                               mainPanel(
                                 
                                 # Show 'Success' message if peakICR created successfully
-                                div(id = "warnings", style = "overflow-y:scroll;max-height:250px", uiOutput("warnings")),
+                                div(id = "warnings_upload", style = "overflow-y:scroll;max-height:250px", uiOutput("warnings_upload")),
                                 uiOutput('success_upload'),
                                 
                                 # Summary panel
@@ -195,9 +195,10 @@ shinyUI(tagList(useShinyjs(),
                                 sidebarPanel(
                                   
                                   div(class = "adjustdown",uiOutput("which_calcs")),
-                              
+                                  
                                   # Action button: add test columns with reasults to peakIcr2
-                                  shinyjs::disabled(actionButton('preprocess_click', 'Process Data', icon = icon("cog"), lib = "glyphicon"))
+                                  shinyjs::disabled(actionButton('preprocess_click', 'Process Data', icon = icon("cog"), lib = "glyphicon")),
+                                  uiOutput("warnings_preprocess")
                                 ), # End sidebar panel
                                 
                                 mainPanel(

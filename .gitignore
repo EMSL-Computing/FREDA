@@ -40,3 +40,6 @@ tests/test_*/
 
 # Docker
 Dockerfile
+
+#random
+script_dump.R
