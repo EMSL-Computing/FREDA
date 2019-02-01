@@ -7131,6 +7131,16 @@ input[type="checkbox"] {
   animation-fill-mode: forwards;
 }
 
+.pulse {
+  animation: clicked 0.6s ease-out;
+  animation-fill-mode:both;
+}
+
+@keyframes clicked{
+  from{box-shadow: 0 0 0 0 rgba(0,191,255,1);}
+  to{box-shadow: 0 0 1px 5px rgba(0,191,255,0);}
+}
+
 @keyframes attention{
   from{box-shadow: 0 0 0 0 rgba(255,0,0,0);}
   to{box-shadow: 0 0 1px 3px rgba(255,0,0,1);}

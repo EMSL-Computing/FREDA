@@ -433,22 +433,29 @@ shinyUI(tagList(useShinyjs(),
                                   div(id = "warnings_visualize", style = "overflow-y:scroll;max-height:150px", uiOutput("warnings_visualize"))
                                 )# End sidebar conditionals on Visualize tab #
                               ),
+                              
+                              # Plot panel and axes/color controls.
                               column(8,
-                                #tags$div(plotlyOutput('FxnPlot'), class = "square"),
-
-
                                 wellPanel(style = "margin-top:-10px",
-                                  plotlyOutput('FxnPlot', width = '700px', height = '600px') %>% 
-                                    withSpinner(color = "orange", type = 8)
+                                      div(style = "display:inline-block",
+                                        plotlyOutput('FxnPlot', width = '700px', height = '600px') %>% 
+                                          withSpinner(color = "orange", type = 8)
+                                      ),
+                                      div(style = "display:inline-block;vertical-align:top;margin:10px 0px 0px 10px",
+                                      div(shinyjs::disabled(actionButton(inputId = "add_plot", style = "width:%",label = "Save This Plot for Later Download", icon = icon("save")))),
+                                      br(),
+                                      inlineCSS("#view_plots .glyphicon{float:left;}"),
+                                      div(uiOutput("view_plots"))
+                                      )
+
                                 ),
-                                # width = 7,
 
                                 # color and van-krevelen bounds dropdowns
                                 fluidRow(
                                   column(width = 4, class = "grey_out", id = "js_vk_colors",
                                          shinyjs::disabled(selectInput("vk_colors", "Color by:", choices = NULL, selected = NULL))
                                          ),
-                                  column(width = 5, class = "grey_out", id = "js_vkbounds",
+                                  column(width = 4, class = "grey_out", id = "js_vkbounds",
                                          shinyjs::disabled(selectInput('vkbounds', 'Display Van Krevelen boundary set:',
                                                      choices = c('BS1' = 'bs1', 'BS2' = 'bs2', 'None' = 0),
                                                      selected = 'bs1'))
@@ -468,14 +475,7 @@ shinyUI(tagList(useShinyjs(),
                                 # color pallete options and button to flip colorscale direction
                                 inlineCSS("#js_colorpal img{margin-top:-9px;}"),
                                 tags$div(id = "js_colorpal", uiOutput("colorpal_out"), style = "display:inline-block"),
-                                actionButton("flip_colors", "Invert color scale", style = "display:inline-block"),
-                                  
-                                br(),
-                                hr(),
-                                shinyjs::disabled(actionButton(inputId = "add_plot", label = "Store these plot parameters", icon = icon("save"))),
-                                br(),
-                                br(),
-                                dataTableOutput("parmsTable", width = "55%")
+                                actionButton("flip_colors", "Invert color scale", style = "display:inline-block")
                                 )# End main panel on Visualize tab #
                               
                             )), # End Visualize tab #

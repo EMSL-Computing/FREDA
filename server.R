@@ -74,8 +74,7 @@ shinyServer(function(session, input, output) {
   # sample_names(): Sample names from uploaded data (all columns from Edata() minus mass column)
   # fdata():  dummy f_data object created from sample_names().  Needed for input to as.peakICR.  CONTAINS NO GROUPING INFORMATION
   source("Reactive_Variables/upload_revals.R", local = TRUE)
-  
-  print("im here")
+
   ### Upload Observers:  Contains conditional dropdown behavior, shinyjs functionality.
   source("Observers/upload_observers.R", local = TRUE)
   ###
@@ -1332,6 +1331,12 @@ shinyServer(function(session, input, output) {
       textInput(inputId = "legend_title_input", label = "Legend Label", value = "")
     }
     
+  })
+  
+  # view plot table button UI
+  output$view_plots <- renderUI({
+    n_plots <- nrow(parmTable$parms[which(rowSums(!is.na(parmTable$parms))!=0),])
+    actionButton(inputId = "view_plots", label = sprintf("View Table Info of %i Saved Plots", n_plots) ,style = "width:100%", icon = icon("folder-open", lib = "glyphicon"))
   })
   
   #-------- create a table that stores plotting information -------#

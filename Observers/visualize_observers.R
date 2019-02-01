@@ -5,6 +5,21 @@ observeEvent(input$top_page, {
   revals$chooseplots <- input$chooseplots
 }, priority = 10)
 
+# display modal dialog of saved plot info
+observeEvent(input$view_plots,{
+  showModal(modalDialog(
+    dataTableOutput("parmsTable")
+    )
+  )
+})
+
+# animate the saved plots button to indicate your plot was saved
+observeEvent(input$add_plot,{
+  addCssClass("view_plots", "pulse")
+  Sys.sleep(0.6)
+  removeCssClass("view_plots", "pulse")
+})
+
 # shinyjs helpers and reactive value storage for selection inputs
 observeEvent(c(input$top_page, input$chooseplots, input$choose_single, input$whichSamples, input$whichGroups1, input$whichGroups2),{
                  req(input$top_page == "Visualize")
