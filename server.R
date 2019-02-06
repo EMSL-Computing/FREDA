@@ -37,9 +37,11 @@ shinyServer(function(session, input, output) {
                            plot_data_export = NULL, peakICR_export = NULL, redraw_filter_plot = TRUE, reac_filter_plot = TRUE,
                            group_1 = NULL, group_2 = NULL, single_group = NULL, single_sample = NULL, 
                            warningmessage_upload = list(upload = "style = 'color:deepskyblue'>Upload data and molecular identification files described in 'Data Requirements' on the previous page."),
-                           warningmessage_visualize = list(), warningmessage_filter = list(), warningmessage_preprocess = list(),
+                           warningmessage_visualize = list(), warningmessage_filter = list(), warningmessage_preprocess = list(), warningmessage_groups = list(),
                            current_plot = NULL, plot_list = list(), plot_data = list(), reset_counter = 0,
-                           chooseplots = NULL, filter_click_disable = list(init = TRUE))
+                           chooseplots = NULL, filter_click_disable = list(init = TRUE), 
+                           groupstab_df = data.frame("Group Name" = character(0), "Group Samples" = character(0), stringsAsFactors = FALSE, check.names = FALSE), 
+                           groups_list = list())
   
   exportTestValues(plot_data = revals$plot_data_export, peakICR = revals$peakICR_export, color_choices = revals$color_by_choices)
   ######## Welcome Tab #############
@@ -471,7 +473,25 @@ shinyServer(function(session, input, output) {
     
   })# End emeta_text
   
+  ####### Groups Tab ######
   
+  # sample selection input, depends on sample names in the UI
+  source("Observers/groups_observers.R", local = TRUE)
+  
+  # sample names selector based on the sample names of peakIcr()
+  output$group_samples <- renderUI({
+    validate(need(sample_names(), message = "Upload data before defining groups"))
+    pickerInput("group_samples", "Samples to include in this group:", choices = sample_names(), multiple = TRUE)
+  })
+  
+  # table which displays stored groups
+  output$group_table <- DT::renderDataTable(revals$groupstab_df,
+                                            selection = 'single',
+                                            options = list(scrollX = TRUE))
+  
+  output$warnings_groups <- renderUI({
+    HTML(paste(revals$warningmessage_groups, collapse = ""))
+  })
   
   ####### Preprocess Tab #######
   
@@ -754,7 +774,33 @@ shinyServer(function(session, input, output) {
 
     #__test-export__
     exportTestValues(peakIcr2 = peakIcr2)
-   
+    
+    # remove samples from groups reactive value
+    if(length(revals$groups_list) > 0){
+      for(i in 1:length(revals$groups_list)){
+        remaining_samples <- intersect(revals$groups_list[[i]], input$keep_samples)
+        
+        if(length(remaining_samples) == 0){
+          revals$groups_list[[i]] <- character(0)
+          revals$groupstab_df <- revals$groupstab_df[-which(revals$groupstab_df[["Group Name"]] == names(revals$groups_list)[i]),]
+          }
+        else{
+          revals$groups_list[[i]] <- remaining_samples
+          
+          samples <- paste(remaining_samples, collapse = ";")
+          row <- list(names(revals$groups_list)[i], samples)
+          
+          revals$groupstab_df[which(revals$groupstab_df[["Group Name"]] == names(revals$groups_list)[i]),] <- row
+        }
+      }
+      revals$groups_list <- revals$groups_list[sapply(revals$groups_list, function(x){length(x) != 0})]
+    }
+    
+    
+    
+    # update table in groups tab
+    
+    
   }) # End creating peakIcr2
   
   #### Main Panel (Filter Tab) ####

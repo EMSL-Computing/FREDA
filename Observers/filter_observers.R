@@ -262,6 +262,27 @@ observeEvent(input$reset_filters,{
   )
 })
 
+observeEvent(c(input$samplefilter, input$keep_samples),{
+  # a list which contains vectors of logical indicating whether that sample will be kept or not
+  samples_tf <- lapply(revals$groups_list, function(el){ el %in% input$keep_samples })
+  
+  # there is at least one group with samples that will be dropped, and the checkbox is clicked
+  cond <- length(which(!sapply(samples_tf, all))) > 0 & input$samplefilter
+  
+  if(cond){
+    warn_string <- "<p style=color:deepskyblue>The following groups will have some of their samples removed:</p>"
+    
+    # for every list element, if not all are kept, append a warning
+    for(i in 1:length(samples_tf)){
+      if(!all(samples_tf[[i]])){
+        warn_string <- paste0(warn_string, sprintf("<p style = color:deepskyblue>%s: Samples remaining: %i</p>", names(samples_tf)[i], sum(samples_tf[[i]])))
+      }
+    }
+  }
+  
+  revals$warningmessage_filter$removed_groups <- if(cond) warn_string else NULL
+})
+
 # if they click no, just exit the modal dialog
 observeEvent(input$clear_filters_no,{
   removeModal()

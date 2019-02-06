@@ -1,6 +1,6 @@
 # show/hide button for certain pages
 observeEvent(input$top_page,{
-  toggleElement("helpbutton", condition = input$top_page %in% c("Upload", "Preprocess", "Filter", "Visualize"))
+  toggleElement("helpbutton", condition = input$top_page %in% c("Upload", "Groups", "Preprocess", "Filter", "Visualize"))
 })
 
 # Help Button
@@ -27,8 +27,22 @@ observeEvent(input$helpbutton,{
     )
     
   }
-  
-  if(input$top_page == "Preprocess"){
+  else if (input$top_page == "Groups"){
+    showModal(
+      modalDialog("",
+                  tags$p("This tab is used to define groups of samples\n"),
+                  br(),
+                  tags$p("On the left panel, input a name for your group, select the samples to include, and click 'add this group'.\n
+                       A table entry will appear on the right panel.  You can select a row of that table and click 'Remove selected group' to remove the 
+                       group."),
+                  br(),
+                  tags$p("Groups are allowed to share samples, but there will be a warning under the side panel if you want to avoid this.
+                         Plotting of overlapping groups is disallowed.")
+                    )
+                  )
+    
+  }
+  else if(input$top_page == "Preprocess"){
       showModal(
         modalDialog("",
                     tags$p("Here you can tell FREDA to compute certain values based on your input data.  The result of these calculations will be appended
@@ -40,12 +54,13 @@ observeEvent(input$helpbutton,{
                     )
                 )
   }
-  else if(input$top_page == "Filter"){    
+  else if(input$top_page == "Filter"){
       showModal(
         modalDialog("",
                     tags$p("This page allows you to filter the data by various metrics.\n 
                            The default options are to:"),
                     tags$ul(
+                      tags$li("Retain certain samples and drop the rest (Sample Filter)."),
                       tags$li("Retain peaks within a mass range (Mass Filter)"),
                       tags$li("Retain peaks that appear a minimum number of times across all samples (Molecule Filter)"),
                       tags$li("Retain peaks that have elemental information - either elemental columns or a full formula column (Formula Filter)")

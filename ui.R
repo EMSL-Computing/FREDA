@@ -186,6 +186,32 @@ shinyUI(tagList(useShinyjs(),
                               ) # End main panel
                               
                             )), # End Upload tab
+                   ################## Groups Panel ###############################################
+                   tabPanel("Groups",
+                          inlineCSS("#group_samples .dropdown-toggle {background-color:#ffffff;border-radius:4px;}
+                                     #group_samples .bootstrap-select{border-radius:4px;}"),
+                          fluidRow(
+                            column(4,
+                              wellPanel(
+                                    tags$h4("Define A Group"),
+                                    div(id = "js_group_name", textInput("group_name", "Name of this group:")),
+                                    uiOutput("group_samples"),
+                                    actionButton("add_group", "Add this group"),
+                                    br(),
+                                    br(),
+                                    uiOutput("warnings_groups")
+                                )
+                            ),
+                            column(8,
+                              wellPanel(
+                                dataTableOutput("group_table"),
+                                # plotOutput("groups_plot")
+                                actionButton("remove_group", "Remove selected group")
+                              )
+                            )
+                          ),
+                          hr()
+                   ),
                    ################## Preprocess Panel ###############################################
                      tabPanel("Preprocess",
                               
@@ -198,6 +224,7 @@ shinyUI(tagList(useShinyjs(),
                                   
                                   # Action button: add test columns with reasults to peakIcr2
                                   shinyjs::disabled(actionButton('preprocess_click', 'Process Data', icon = icon("cog"), lib = "glyphicon")),
+                                  br(),
                                   uiOutput("warnings_preprocess")
                                 ), # End sidebar panel
                                 

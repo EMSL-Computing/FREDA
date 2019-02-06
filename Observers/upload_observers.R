@@ -218,7 +218,7 @@ observeEvent(peakICR(),{
                actionButton("upload_dismiss", "Review results.", width = '75%'),
                br(),
                br(),
-               actionButton("goto_preprocess", "Continue to preprocessing", width = '75%')
+               actionButton("goto_groups", "Continue to Groups Tab", width = '75%')
                )
       )
       ,footer = NULL)
@@ -232,8 +232,8 @@ observeEvent(peakICR(),{
 
 # modal dialog behavior
 observeEvent(input$upload_dismiss,{removeModal()})
-observeEvent(input$goto_preprocess, {
-  updateTabsetPanel(session, "top_page", selected = "Preprocess")
+observeEvent(input$goto_groups, {
+  updateTabsetPanel(session, "top_page", selected = "Groups")
   removeModal()
 })
 
