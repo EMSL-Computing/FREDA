@@ -38,6 +38,14 @@ numeric_selected <- eventReactive(c(input$vk_colors, plot_data()),{
 # Object:  Plotting dataframe to be passed to output$FxnPlot
 plot_data <- eventReactive(input$plot_submit,{
   
+  g1_samples <- if(is.null(isolate(input$whichGroups1)) & is.null(isolate(input$whichSample1))) NULL 
+    else if(isolate(input$choose_single == 3)) unique(unlist(revals$groups_list[isolate(input$whichGroups1)]))
+    else if(isolate(input$choose_single == 4)) isolate(input$whichSample1)
+  
+  g2_samples <- if(is.null(isolate(input$whichGroups2)) & is.null(isolate(input$whichSample2))) NULL 
+    else if(isolate(input$choose_single == 3)) unique(unlist(revals$groups_list[isolate(input$whichGroups2)]))
+    else if(isolate(input$choose_single == 4)) isolate(input$whichSample2)
+  
   req(calc_vars)
   validate(need(!is.null(input$chooseplots) & input$choose_single !=0, message = "Please select plot type"))
   if (is.null(input$choose_single)){ # corresponds to data with a single sample
@@ -73,24 +81,22 @@ plot_data <- eventReactive(input$plot_submit,{
     
     return(temp_data)
     
-  } else if (isolate(input$choose_single) == 3) {# two groups 
+  } else if (isolate(input$choose_single) %in% c(3,4)) {# two groups 
     # Make sure at least one test has been calculated
-    validate(need(!is.null(isolate(input$whichGroups1)), message = "Please select samples for first grouping"))
-    validate(need(length(input$whichGroups1) > 1, message = "Please select at least 1 sample"))
-    validate(need(!is.null(isolate(input$whichGroups2)), message = "Please select samples for second grouping"))
-    validate(need(length(input$whichGroups2) > 1, message = "Please select at least 1 sample"))
+    validate(need(!is.null(g1_samples), message = "Please select samples for first grouping"))
+    # validate(need(length(g1_samples) > 1, message = "Please select at least 1 sample"))
+    validate(need(!is.null(g2_samples), message = "Please select samples for second grouping"))
+    # validate(need(length(g2_samples) > 1, message = "Please select at least 1 sample"))
     
     group1 <- ifelse(is.null(input$group1_name) | isTRUE(input$group1_name == ""), "Group 1", input$group1_name)
     group2 <- ifelse(is.null(input$group2_name) | isTRUE(input$group2_name == ""), "Group 2", input$group2_name)
     
     # assign a group DF to the data with a level for each of the two groups
-    group1_samples <- isolate(input$whichGroups1)
-    group2_samples <- isolate(input$whichGroups2)
-    temp_group_df <- data.frame(c(group1_samples, group2_samples), c(rep(group1, times=length(group1_samples)), rep(group2, length(group2_samples))))
+    temp_group_df <- data.frame(c(g1_samples, g2_samples), c(rep(group1, times=length(g1_samples)), rep(group2, length(g2_samples))))
     colnames(temp_group_df) <- c(getFDataColName(peakIcr2), "Group")
     
     temp_data <- peakIcr2 %>%
-      subset(samples=c(group1_samples, group2_samples))
+      subset(samples=c(g1_samples, g2_samples))
     
     temp_data <- fticRanalysis:::setGroupDF(temp_data, temp_group_df)
     
@@ -116,7 +122,7 @@ plot_data <- eventReactive(input$plot_submit,{
     
     # conditional error checking depending on nsamps and proportion
     if (input$pres_fn == "nsamps"){
-      validate(need(input$pres_thresh <= min(length(input$whichGroups1), length(input$whichGroups2)), "Maximum threshold is above the minimum number of samples in a group"),
+      validate(need(input$pres_thresh <= min(length(g1_samples), length(g2_samples)), "Maximum threshold is above the minimum number of samples in a group"),
                need(is.numeric(input$pres_thresh), "Please enter a numeric value for threshold to determine presence"),
                need(input$absn_thresh < input$pres_thresh & input$absn_thresh >= 0, "absence threshold must be non-negative and lower than presence threshold"))
     }

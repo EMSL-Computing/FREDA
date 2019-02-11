@@ -49,7 +49,7 @@ massfilter_ids <- eventReactive(c(input$massfilter, input$min_mass, input$max_ma
 # removed molecule filter ids
 molfilter_ids <- eventReactive(c(input$minobs, input$molfilter, input$keep_samples, input$samplefilter), {
   if (input$molfilter){
-    if(input$samplefilter){
+    if(input$samplefilter & length(input$keep_samples) > 0){
       uploaded_data() %>% 
         subset(samples = input$keep_samples, check_rows = TRUE) %>%
         molecule_filter() %>% 

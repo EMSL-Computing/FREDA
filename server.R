@@ -35,7 +35,7 @@ shinyServer(function(session, input, output) {
   
   revals <- reactiveValues(ntables = 0, makeplot = 1, color_by_choices = NULL, axes_choices = NULL,
                            plot_data_export = NULL, peakICR_export = NULL, redraw_filter_plot = TRUE, reac_filter_plot = TRUE,
-                           group_1 = NULL, group_2 = NULL, single_group = NULL, single_sample = NULL, 
+                           group_1 = NULL, group_2 = NULL, single_group = NULL, single_sample = NULL, whichSample1 = NULL, whichSample2 = NULL, 
                            warningmessage_upload = list(upload = "style = 'color:deepskyblue'>Upload data and molecular identification files described in 'Data Requirements' on the previous page."),
                            warningmessage_visualize = list(), warningmessage_filter = list(), warningmessage_preprocess = list(), warningmessage_groups = list(),
                            current_plot = NULL, plot_list = list(), plot_data = list(), reset_counter = 0,
@@ -941,37 +941,78 @@ shinyServer(function(session, input, output) {
       return(tagList(
         tags$div(class = "grey_out",
           hidden(selectInput('choose_single', 'I want to plot using:',
-                                                choices = c('Make a selection' = 0, 'A single sample' = 1, 'Multiple samples by group' = 2, 'A comparison of groups' = 3),
-                                                selected = 1))
+                    choices = c('Make a selection' = 0, 'A single sample' = 1, 'Multiple samples by group' = 2, 
+                                'A comparison of groups' = 3, 'A comparison of two samples' = 4),
+                    selected = 1))
           ),
         tags$p("No grouping options for custom scatter plots and single sample datasets.", style = "color:gray;font-size:small;margin-top:3px")
       ))
     }
     else {
       return(selectInput('choose_single', 'I want to plot using:',
-                         choices = c('Make a selection' = 0, 'A single sample' = 1, 'Multiple samples by group' = 2, 'A comparison of groups' = 3),
+                         choices = c('Make a selection' = 0, 'A single sample' = 1, 'Multiple samples' = 2,
+                                     'A comparison of groups' = 3, 'A comparison of two samples' = 4),
                          selected = 0))
     }
   })
   
+  # UI output for comparison of
+  
+  
   # UI output for group comparison
   output$plotUI_comparison_1 <- renderUI({
     req(input$choose_single != 0, !is.null(input$chooseplots))
-    pickerInput('whichGroups1', HTML("<input type = 'text' id = 'group1_name' placeholder = 'Group 1' style = 'border-style:unset;'/>"),
-            choices = setdiff(colnames(peakIcr2$e_data)[-which(colnames(peakIcr2$e_data) == getEDataColName(peakIcr2))], isolate(input$whichGroups2)),
-            multiple = TRUE, selected = isolate(revals$group_1), 
-            options =  pickerOptions(dropupAuto = FALSE, actionsBox = TRUE))
+    if(input$choose_single == 3){
+      pickerInput('whichGroups1', HTML("<input type = 'text' id = 'group1_name' placeholder = 'Group 1' style = 'border-style:unset;'/>"),
+              choices = setdiff(names(revals$groups_list), isolate(input$whichGroups2)),
+              selected = isolate(revals$group_1), 
+              multiple = TRUE,
+              options =  pickerOptions(dropupAuto = FALSE, actionsBox = TRUE))
+    }
+    else if(input$choose_single == 4){
+      choice_diff <- setdiff(colnames(peakIcr2$e_data[-which(colnames(peakIcr2$e_data) == getEDataColName(peakIcr2))]), isolate(input$whichSample2))
+      pickerInput('whichSample1', "Sample 1:",
+                  choices = choice_diff,
+                  selected = if(is.null(isolate(revals$whichSample1))) choice_diff[1] else isolate(revals$whichSample1),
+                  options =  pickerOptions(dropupAuto = FALSE))
+    }
   })
     
   output$plotUI_comparison_2 <- renderUI({
     req(input$choose_single != 0, !is.null(input$chooseplots))
-    pickerInput("whichGroups2", HTML("<input type = 'text' id = 'group2_name' placeholder = 'Group 2' style = 'border-style:unset;'/>"), 
-            choices = setdiff(colnames(peakIcr2$e_data)[-which(colnames(peakIcr2$e_data) == getEDataColName(peakIcr2))], isolate(input$whichGroups1)), 
-            multiple = TRUE, selected = isolate(revals$group_2), 
-            options =  pickerOptions(dropupAuto = FALSE, actionsBox = TRUE))
-      
-    
+    if(input$choose_single == 3){
+      pickerInput("whichGroups2", HTML("<input type = 'text' id = 'group2_name' placeholder = 'Group 2' style = 'border-style:unset;'/>"), 
+              choices = setdiff(names(revals$groups_list), isolate(input$whichGroups1)),
+              selected = isolate(revals$group_2), 
+              multiple = TRUE,
+              options =  pickerOptions(dropupAuto = FALSE, actionsBox = TRUE))
+    }
+    else if(input$choose_single == 4){
+      choice_diff <- setdiff(colnames(peakIcr2$e_data[-which(colnames(peakIcr2$e_data) == getEDataColName(peakIcr2))]), isolate(input$whichSample1))
+      pickerInput("whichSample2", "Sample 2:", 
+                  choices = choice_diff,
+                  selected = if(is.null(isolate(revals$whichSample2))) choice_diff[2] else isolate(revals$whichSample2),
+                  options =  pickerOptions(dropupAuto = FALSE))
+    }
   })
+  
+  # output$plotUI_sample_comp_1 <- renderUI({
+  #   req(input$choose_single != 0, !is.null(input$chooseplots))
+  #   if(input$chooseplots == 3){
+  #     pickerInput('whichSample1', "Sample 1:",
+  #                 choices = setdiff(colnames(peakIcr2$e_data[-which(colnames(peakIcr2$e_data) == getEDataColName(peakIcr2))]),
+  #                                   input$whichSample2),
+  #                 options =  pickerOptions(dropupAuto = FALSE))
+  #   }
+  # })
+  # 
+  # output$plotUI_sample_comp_2 <- renderUI({
+  #   req(input$choose_single != 0, !is.null(input$chooseplots))
+  #   pickerInput("whichSample2", "Sample 2:", 
+  #               choices = setdiff(colnames(peakIcr2$e_data[-which(colnames(peakIcr2$e_data) == getEDataColName(peakIcr2))]),
+  #                                 input$whichSample1),
+  #               options =  pickerOptions(dropupAuto = FALSE))
+  # })
   
   # UI output for single sample or single group
   output$plotUI_single <- renderUI({
@@ -989,7 +1030,9 @@ shinyServer(function(session, input, output) {
           )# End conditional output multiple samples#
         )
     }
-    else return(div(id = "js_whichSamples", selectInput('whichSamples', 'Sample', choices = colnames(peakIcr2$e_data %>% dplyr::select(-one_of(getEDataColName(peakIcr2)))), selected = revals$single_sample)))
+    else return(div(id = "js_whichSamples", selectInput('whichSamples', 'Sample', 
+                                                        choices = colnames(peakIcr2$e_data %>% dplyr::select(-one_of(getEDataColName(peakIcr2)))), 
+                                                        selected = revals$single_sample)))
   })
   
   # selector for summary funcion
@@ -1089,7 +1132,7 @@ shinyServer(function(session, input, output) {
       edata_colors <- plot_data()$e_data %>% dplyr::select(-one_of(getEDataColName(plot_data()))) %>% colnames()
       color_by_choices <- c(edata_colors[!(edata_colors %in% emeta_display_choices())], emeta_display_choices())
       
-    } else if (input$choose_single == 3) {
+    } else if (input$choose_single %in% c(3,4)) {
       color_by_choices <- c("Group membership" = input$summary_fxn)
     }
     
@@ -1176,6 +1219,14 @@ shinyServer(function(session, input, output) {
     # for testing if plot actually got updated in test mode
     exportTestValues(plot = NULL, plot_attrs = NULL)
     
+    g1_samples <- if(is.null(isolate(input$whichGroups1)) & is.null(isolate(input$whichSample1))) NULL 
+                  else if(isolate(input$choose_single == 3)) unique(unlist(revals$groups_list[isolate(input$whichGroups1)]))
+                  else if(isolate(input$choose_single == 4)) isolate(input$whichSample1)
+                    
+    g2_samples <- if(is.null(isolate(input$whichGroups2)) & is.null(isolate(input$whichSample2))) NULL 
+                  else if(isolate(input$choose_single == 3)) unique(unlist(revals$groups_list[isolate(input$whichGroups2)]))
+                  else if(isolate(input$choose_single == 4)) isolate(input$whichSample2)
+                    
     if (isolate(v$clearPlot)){
       return(NULL)
     } else {
@@ -1207,7 +1258,7 @@ shinyServer(function(session, input, output) {
         colorPal <- scales::col_numeric(pal, domain)
         #revals$colorPal <- paste(paste(pal, collapse = ","), paste(domain, collapse = ","), sep = ":")
       }
-      else if(input$choose_single != 3 & !(input$vk_colors %in% c("bs1", "bs2"))){
+      else if(!(input$choose_single %in% c(3,4)) & !(input$vk_colors %in% c("bs1", "bs2"))){
         # if there are too many categories, warn user and provide color palette
         if(length(unique(plot_data()$e_meta[, input$vk_colors])) > 12){
           ramp <- colorRampPalette(RColorBrewer::brewer.pal(12, "Set3"))
@@ -1217,13 +1268,13 @@ shinyServer(function(session, input, output) {
         else colorPal <- NA
         #revals$colorPal <- NA
       }
-      else if(input$choose_single == 3 | !(input$vk_colors %in% c("bs1", "bs2"))) colorPal <- NA
+      else if(input$choose_single %in% c(3,4) | !(input$vk_colors %in% c("bs1", "bs2"))) colorPal <- NA
       
       
       #----------- Single sample plots ------------#
       #-------Kendrick Plot-----------# 
       if (input$chooseplots == 'Kendrick Plot') {
-        validate(need(!is.null(input$whichSamples) | !(is.null(isolate(input$whichGroups1)) & is.null(isolate(input$whichGroups2))), message = "Please select at least 1 sample"))
+        validate(need(!is.null(input$whichSamples) | !(is.null(g1_samples) & is.null(g2_samples)), message = "Please select at least 1 sample"))
         p <- kendrickPlot(isolate(plot_data()), colorCName = input$vk_colors, colorPal = colorPal,
                           xlabel = isolate(input$x_axis_input), ylabel = isolate(input$y_axis_input),
                           title = isolate(input$title_input),legendTitle = revals$legendTitle)
@@ -1241,7 +1292,7 @@ shinyServer(function(session, input, output) {
       }
       #-------VanKrevelen Plot--------#
       if (input$chooseplots == 'Van Krevelen Plot') {
-        validate(need(!is.null(input$whichSamples) | !(is.null(isolate(input$whichGroups1)) & is.null(isolate(input$whichGroups2))), message = "Please select at least 1 sample"))
+        validate(need(!is.null(input$whichSamples) | !(is.null(g1_samples) & is.null(g2_samples)), message = "Please select at least 1 sample"))
         if (input$vkbounds == 0) { #no bounds
           # if no boundary lines, leave the option to color by boundary
           if (input$vk_colors %in% c('bs1', 'bs2')) {
@@ -1272,12 +1323,12 @@ shinyServer(function(session, input, output) {
       
       #--------- Density Plot --------#
       if (input$chooseplots == 'Density Plot') {
-        validate(need(!is.null(input$whichSamples) | !(is.null(isolate(input$whichGroups1)) & is.null(isolate(input$whichGroups2))), message = "Please select at least 1 sample"),
+        validate(need(!is.null(input$whichSamples) | !(is.null(g1_samples) & is.null(g2_samples)), message = "Please select at least 1 sample"),
                  need(!is.na(input$vk_colors), message = "Please select a variable to color by")
         )
         
         # sample/group inputs depending on whether or not we are doing a comparison of groups
-        if (input$choose_single == 3){
+        if (input$choose_single %in% c(3,4)){
           samples = FALSE
           groups = unique(isolate(attr(plot_data(), "group_DF")$Group))
         }
@@ -1395,6 +1446,14 @@ shinyServer(function(session, input, output) {
   
   observeEvent(input$add_plot, {
     
+    g1_samples <- if(is.null(isolate(input$whichGroups1)) & is.null(isolate(input$whichSample1))) NULL 
+      else if(isolate(input$choose_single == 3)) unique(unlist(revals$groups_list[isolate(input$whichGroups1)]))
+      else if(isolate(input$choose_single == 4)) isolate(input$whichSample1)
+    
+    g2_samples <- if(is.null(isolate(input$whichGroups2)) & is.null(isolate(input$whichSample2))) NULL 
+      else if(isolate(input$choose_single == 3)) unique(unlist(revals$groups_list[isolate(input$whichGroups2)]))
+      else if(isolate(input$choose_single == 4)) isolate(input$whichSample2)
+    
     # counter which begins at 1 even if a filter reset has occurred.
     ind <- input$add_plot - revals$reset_counter
     
@@ -1408,11 +1467,11 @@ shinyServer(function(session, input, output) {
     newLine$FileName <- ifelse(is.na(input$title_input) | input$title_input == "", paste0("Plot_", ind), paste0("Plot_", ind, "_", input$title_input))
     newLine$PlotType <- input$chooseplots
     # Single or Multiple Samples
-    newLine$SampleType <- switch(as.character(input$choose_single), "1" = "Single Sample", "2" = "Single Group of Samples", "3" = "Comparison of Two Groups")
+    newLine$SampleType <- switch(as.character(input$choose_single), "1" = "Single Sample", "2" = "Single Group of Samples", "3" = "Comparison of Two Groups", "4" = "Comparison of Two Samples")
     # Sample(s) in The first group (depends on input$choose_single to decide if this is a single or multiple sample list)
-    newLine$Group_1_Samples <- ifelse(input$choose_single %in% c(1,2), yes = paste(input$whichSamples, collapse = ","), no = paste(input$whichGroups1, collapse = ","))
+    newLine$Group_1_Samples <- ifelse(input$choose_single %in% c(1,2), yes = paste(input$whichSamples, collapse = ","), no = paste(g1_samples, collapse = ","))
     # Sample(s) in the second group. Automatically NA if input$choose_single is single sample or single group
-    newLine$Group_2_Samples <- ifelse(input$choose_single == 3, yes =  paste(input$whichGroups2, collapse = ","), no = "None")
+    newLine$Group_2_Samples <- ifelse(input$choose_single %in% c(3,4), yes =  paste(g2_samples , collapse = ","), no = "None")
     # Boundary set borders to use (NA for non-Van Krevelen plots)
     newLine$BoundarySet <- ifelse(input$chooseplots == "Van Krevelen Plot", yes = ifelse(input$vkbounds == 0, "None", input$vkbounds), no = "None")
     newLine$ColorBy <- input$vk_colors
@@ -1425,7 +1484,7 @@ shinyServer(function(session, input, output) {
                             "Density Plot" = "Density", "Custom Scatter Plot" = input$scatter_y)
     
     
-    newLine$compfn <- ifelse(isTRUE(input$choose_single == 3) & isTRUE(input$summary_fxn != ""), 
+    newLine$compfn <- ifelse(isTRUE(input$choose_single %in% c(3,4)) & isTRUE(input$summary_fxn != ""), 
                              switch(input$summary_fxn,
                                     "select_none" = "None", 
                                     "uniqueness_gtest" = "G test", 
@@ -1439,7 +1498,7 @@ shinyServer(function(session, input, output) {
       revals$plot_data[[ind]] <- plot_data()$e_data 
     }
     
-    if (input$choose_single == 3){
+    if (input$choose_single %in% c(3,4)){
       # store edata result of summarizeGroupComparisons()
       revals$plot_data[[ind]] <- plot_data()$e_data 
       
@@ -1474,11 +1533,7 @@ shinyServer(function(session, input, output) {
   
   # warning messages for viztab
   output$warnings_visualize <- renderUI({
-    HTML(lapply(revals$warningmessage_visualize, function(el){
-      paste0("<p ", el, "</p>")
-    }) %>%
-      paste(collapse = "")
-    )
+    HTML(paste(revals$warningmessage_visualize, collapse = ""))
   })
   
   # End Visualize tab #

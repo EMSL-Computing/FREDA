@@ -409,7 +409,7 @@ shinyUI(tagList(useShinyjs(),
                               # Sidebar Panel
                               column(4,
                                 # Select Plot Type
-                                inlineCSS("#chooseplots .btn{font-size:10.5pt;}"),
+                                inlineCSS("#chooseplots .btn{font-size:10.5pt;} #chooseplots .btn-group-container-sw{display:block;}" ),
                                 uiOutput('plot_type', style = "margin-top:-10px"),     
                                 
                                 wellPanel(style = "margin-top:-20px",
@@ -426,7 +426,7 @@ shinyUI(tagList(useShinyjs(),
                                   shinyjs::hidden(div(id = "js_toggle_groups", 
                                                       tagList(div(id = "js_whichGroups1", uiOutput("plotUI_comparison_1")), 
                                                               div(id = "js_whichGroups2", uiOutput("plotUI_comparison_2"))))),
-                                  conditionalPanel(condition = "input.choose_single == 3 && input.chooseplots !== '0'", uiOutput("summary_fxn_out", class = "adjustdown")),
+                                  conditionalPanel(condition = "(input.choose_single == 3 || input.choose_single == 4) && input.chooseplots !== '0'", uiOutput("summary_fxn_out", class = "adjustdown")),
                                   
                                   # Label inputs
                                   tags$hr(style = "thickness:5px"),
@@ -464,14 +464,14 @@ shinyUI(tagList(useShinyjs(),
                               # Plot panel and axes/color controls.
                               column(8,
                                 wellPanel(style = "margin-top:-10px",
-                                      div(style = "display:inline-block",
-                                        plotlyOutput('FxnPlot', width = '700px', height = '600px') %>% 
+                                      div(style = "display:inline-block;outline-style:auto;outline-width:thin;width:65%",
+                                        plotlyOutput('FxnPlot', width = 'auto', height = '600px') %>% 
                                           withSpinner(color = "orange", type = 8)
                                       ),
-                                      div(style = "display:inline-block;vertical-align:top;margin:10px 0px 0px 10px",
-                                      div(shinyjs::disabled(actionButton(inputId = "add_plot", style = "width:%",label = "Save This Plot for Later Download", icon = icon("save")))),
+                                      inlineCSS("#saveplot_ui .glyphicon{float:left;}"),
+                                      div(id = "saveplot_ui", style = "display:inline-block;vertical-align:top;margin:10px 0px 0px 10px",
+                                      div(shinyjs::disabled(actionButton(inputId = "add_plot", style = "width:100%", label = "Save This Plot for Later Download", icon = icon("save")))),
                                       br(),
-                                      inlineCSS("#view_plots .glyphicon{float:left;}"),
                                       div(uiOutput("view_plots"))
                                       )
 
