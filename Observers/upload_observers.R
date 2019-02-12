@@ -197,6 +197,16 @@ observeEvent(c(input$f_column,input$select, input$isotope_yn),{
   
 })
 
+# warning dialog on iso filter
+observeEvent(input$iso_info_filter,{
+  if (input$iso_info_filter == 2)
+    showModal(
+      modalDialog("",h4("Warning!", style = "color:Orange; font-weight:bold"),
+                  HTML("<p style = color:Orange; font-weight:bold> Leaving isotopic peaks in the data may confound analysis/visualization results. We recommend filtering isotopic peaks.")
+      )
+    )
+})
+
 # Show success message when peakICR() is sucessfully created 
 observeEvent(peakICR(),{
   #Error handling: peakICR() must exist
@@ -217,8 +227,9 @@ observeEvent(peakICR(),{
                hr(),
                actionButton("upload_dismiss", "Review results.", width = '75%'),
                br(),
+               actionButton("goto_groups", "Continue to groups tab", width = '75%'),
                br(),
-               actionButton("goto_groups", "Continue to Groups Tab", width = '75%')
+               actionButton("goto_preprocess", "Skip to preprocess tab", width = '75%')
                )
       )
       ,footer = NULL)
@@ -232,8 +243,14 @@ observeEvent(peakICR(),{
 
 # modal dialog behavior
 observeEvent(input$upload_dismiss,{removeModal()})
+
 observeEvent(input$goto_groups, {
   updateTabsetPanel(session, "top_page", selected = "Groups")
+  removeModal()
+})
+
+observeEvent(input$goto_preprocess, {
+  updateTabsetPanel(session, "top_page", selected = "Preprocess")
   removeModal()
 })
 

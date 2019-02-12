@@ -129,7 +129,8 @@ observeEvent(c(input$top_page, input$choose_single, input$whichGroups1, input$wh
 
 # logical reactive value that clears the plot if a new type is selected
 v <- reactiveValues(clearPlot = TRUE)
-observeEvent(c(input$chooseplots, input$choose_single, input$whichSamples), {
+observeEvent(c(input$chooseplots, input$choose_single, input$whichSamples, 
+               input$whichGroups1, input$whichGroups2, input$whichSample1, input$whichSample2), {
   v$clearPlot <- TRUE
   disable("add_plot")
 }, priority = 10)

@@ -64,3 +64,8 @@ observeEvent(input$remove_group,{
   revals$groupstab_df <- revals$groupstab_df[-ind,] 
 }, priority = 10)
 
+# continue to preprocess
+observeEvent(input$goto_preprocess_main,{
+  updateTabsetPanel(session, "top_page", selected = "Preprocess")
+})
+

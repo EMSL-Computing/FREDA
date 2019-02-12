@@ -190,9 +190,9 @@ shinyUI(tagList(useShinyjs(),
                    tabPanel("Groups",
                           inlineCSS("#group_samples .dropdown-toggle {background-color:#ffffff;border-radius:4px;}
                                      #group_samples .bootstrap-select{border-radius:4px;}"),
-                          fluidRow(
+                          fluidRow(style = "display:flex;flex-direction:row;align-items:stretch",
                             column(4,
-                              wellPanel(
+                              wellPanel(style = "height:100%",
                                     tags$h4("Define A Group"),
                                     div(id = "js_group_name", textInput("group_name", "Name of this group:")),
                                     uiOutput("group_samples"),
@@ -203,14 +203,15 @@ shinyUI(tagList(useShinyjs(),
                                 )
                             ),
                             column(8,
-                              wellPanel(
+                              wellPanel(style = "height:100%",
                                 dataTableOutput("group_table"),
                                 # plotOutput("groups_plot")
                                 actionButton("remove_group", "Remove selected group")
                               )
                             )
                           ),
-                          hr()
+                          hr(),
+                          actionButton("goto_preprocess_main", "Continue to preproces tab")
                    ),
                    ################## Preprocess Panel ###############################################
                      tabPanel("Preprocess",
@@ -509,14 +510,11 @@ shinyUI(tagList(useShinyjs(),
                    
                    ################## Download Panel ##############################################
                    tabPanel('Download',
-                            fluidRow(
-                              column(width = 7,
-                                wellPanel(fluidRow(
-                                  column(width = 10,
-                                         tags$h4(icon("table", "fa-2x"), tags$b("Processed Data"))
-                                         )
-                                  ),
-                                          checkboxGroupInput("download_selection", label = "Check Download Selection",
+                            fluidRow(style = "display:flex;flex-direction:row;align-items:stretch",
+                              column(width = 6,
+                                wellPanel(style = "height:100%",
+                                         tags$h4(icon("table", "fa-2x"), tags$b("Processed Data")),
+                                         checkboxGroupInput("download_selection", label = "Check Download Selection",
                                                              choices = c('Data File as one .csv and Molecular Identification File as another .csv' = "separate",
                                                                          'merged Data File and Molecular Identification File as a single .csv' = "merged",
                                                                          'Data summaries for grouped plots' = "group_data"),
@@ -524,28 +522,20 @@ shinyUI(tagList(useShinyjs(),
                                           )
                               ),
                               column(width = 5,
-                                     wellPanel(fluidRow(
-                                       column(width = 8,
-                                              tags$h4(icon("align-left", "fa-2x"), tags$b("Summary Report"))
-                                       )
-                                     ),
-                                     checkboxInput("report_selection", label = "Download a summary of preprocessing and filtering", value = TRUE),
-                                    br()
-                                     )
+                                     wellPanel(style = "height:100%",
+                                          tags$h4(icon("align-left", "fa-2x"), tags$b("Summary Report")),
+                                          checkboxInput("report_selection", label = "Download a summary of preprocessing and filtering", value = TRUE)
+                                        )
                                      )
                             ),
-                            fluidRow(
-                              column(width = 12,
+                            fluidRow(style = "margin-top:10px",
+                              column(width = 11,
                                      wellPanel(
                                        fluidRow(
                                        column(width = 2,
                                               tags$h4(icon("image", "fa-2x"), tags$b("Figures"))
                                        )
                                      ),
-                                     # tags$div(class = "row",
-                                     #          icon("image", "fa-4x"),
-                                     #          tags$h3(tags$b("Figures"))
-                                     # ),
                                      tags$h5(tags$b("Select figures by row. When clicked, the download selection will highlight.")),
                                      fluidRow(
                                        column(width = 9,
@@ -560,7 +550,7 @@ shinyUI(tagList(useShinyjs(),
                               )
                             ),
                             #verbatimTextOutput('x4'),
-                            disabled(downloadButton('download_processed_data', tags$b('Download Selected Items'), style = "width:100%")),
+                            disabled(downloadButton('download_processed_data', tags$b('Download Selected Items'), style = "width:45.8333%;margin-left:22.91667%")),
                             tags$br()
                             
                    ), 

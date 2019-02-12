@@ -182,14 +182,6 @@ shinyServer(function(session, input, output) {
     } else (return(NULL))
   })
   
-  observeEvent(input$iso_info_filter,{
-    if (input$iso_info_filter == 2)
-    showModal(
-      modalDialog("",h4("Warning!", style = "color:Orange; font-weight:bold"),
-                  HTML("<p style = color:Orange; font-weight:bold> Leaving isotopic peaks in the data may confound analysis/visualization results. We recommend filtering isotopic peaks.")
-                    )
-                  )
-  })
   ### END of CHNOSP DROP DOWN LISTS ###
   
   
@@ -1580,7 +1572,8 @@ shinyServer(function(session, input, output) {
         # option to choose report output format?  need to change inputs in report.R.
         if (input$report_selection == TRUE){
           fs <- c(fs, paste0(tempdir(), "/report.html"))
-          report(peakICR(), peakIcr2, output_file = paste0(tempdir(), "/report.html"), output_format = "html_document", C13_ID = input$iso_symbol)
+          report(peakICR(), peakIcr2, output_file = paste0(tempdir(), "/report.html"), output_format = "html_document", 
+                 C13_ID = input$iso_symbol, groups_list = revals$groups_list)
           incProgress(1/total_files)
         }
         
@@ -1615,7 +1608,7 @@ shinyServer(function(session, input, output) {
             path <- paste(tempdir(), "/",gsub("/", "-", parmTable$parms[["File Name"]][i]), ".", input$image_format, sep = "") #create a plot name
             fs <- c(fs, path) # append the new plot to the old plots
             export(revals$plot_list[[i]],
-                   file = paste(tempdir(), "plot",i,".png", sep = ""), vheight = 744*3, vwidth = 992*3, zoom = 2/3) # use webshot to export a screenshot to the opened pdf
+                   file = paste(tempdir(), "plot",i,".png", sep = ""), zoom = 2) # use webshot to export a screenshot to the opened pdf
             #r <- brick(file.path(getwd(), paste("plot",i,".png", sep = ""))) # create a raster of the screenshot
             img <- magick::image_read(paste(tempdir(), "plot",i,".png", sep = ""))#attr(r,"file")@name) #turn the raster into an image of selected format
             

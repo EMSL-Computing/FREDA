@@ -6,6 +6,7 @@ params:
   upload: NA
   processed: NA
   C13_ID: NA
+  groups_list: NA
 ---
 
 ```{r setup, include=FALSE}
@@ -18,6 +19,7 @@ knitr::opts_chunk$set(echo = FALSE)
 upload <- params$upload
 processed <- params$processed
 c13 <- params$C13_ID
+groups <- params$groups_list
 
 library(dplyr)
 library(kableExtra)
@@ -80,7 +82,19 @@ selection_values <- lapply(selection_values, function(name){
   res
   }) %>% unlist()
 
-kable(data.frame("Value" = selection_names, "Column Selected" = selection_values))
+kable(data.frame("Value" = selection_names, "Column Selected" = selection_values), align = c("l", "c"))
+```
+
+****
+
+`r if(length(groups) > 0) "###**Groups**###"`
+
+```{r}
+if(length(groups) > 0){
+  groups_df <- data.frame("Group Name" = names(groups), "Samples" = sapply(groups, paste, collapse = " | "), check.names = FALSE)
+  rownames(groups_df) <- NULL
+}
+kable(groups_df, align = c('l', 'c'))
 ```
 
 ****
