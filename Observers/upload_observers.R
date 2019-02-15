@@ -225,7 +225,7 @@ observeEvent(peakICR(),{
                HTML('<h4 style= "color:#1A5276">Your data has been successfully uploaded. 
                     You may proceed to the subsequent tabs for analysis.</h4>'),
                hr(),
-               actionButton("upload_dismiss", "Review results.", width = '75%'),
+               actionButton("upload_dismiss", "Review results", width = '75%'),
                br(),
                actionButton("goto_groups", "Continue to groups tab", width = '75%'),
                br(),

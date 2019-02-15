@@ -40,8 +40,7 @@ shinyServer(function(session, input, output) {
                            warningmessage_visualize = list(), warningmessage_filter = list(), warningmessage_preprocess = list(), warningmessage_groups = list(),
                            current_plot = NULL, plot_list = list(), plot_data = list(), reset_counter = 0,
                            chooseplots = NULL, filter_click_disable = list(init = TRUE), 
-                           groupstab_df = data.frame("Group Name" = character(0), "Group Samples" = character(0), stringsAsFactors = FALSE, check.names = FALSE), 
-                           groups_list = list())
+                           groups_list = list(), remove_samples = list())
   
   exportTestValues(plot_data = revals$plot_data_export, peakICR = revals$peakICR_export, color_choices = revals$color_by_choices)
   ######## Welcome Tab #############
@@ -470,14 +469,19 @@ shinyServer(function(session, input, output) {
   # sample selection input, depends on sample names in the UI
   source("Observers/groups_observers.R", local = TRUE)
   
+  # Groups tab reactive variables:
+  # groupstab_df():  reactive table that displays groups and their filtered/non filtered samples
+  source("Reactive_Variables/groups_revals.R", local = TRUE)
+  
   # sample names selector based on the sample names of peakIcr()
   output$group_samples <- renderUI({
     validate(need(sample_names(), message = "Upload data before defining groups"))
-    pickerInput("group_samples", "Samples to include in this group:", choices = sample_names(), multiple = TRUE)
+    pickerInput("group_samples", "Samples to include in this group:", choices = sample_names(), 
+                options =  pickerOptions(dropupAuto = FALSE, actionsBox = TRUE), multiple = TRUE)
   })
   
   # table which displays stored groups
-  output$group_table <- DT::renderDataTable(revals$groupstab_df,
+  output$group_table <- DT::renderDataTable(groupstab_df(),
                                             selection = 'single',
                                             options = list(scrollX = TRUE))
   
@@ -701,7 +705,19 @@ shinyServer(function(session, input, output) {
     if(input$samplefilter){
       req(length(input$keep_samples) > 0)
       peakIcr2 <<- subset(peakIcr2, samples = input$keep_samples, check_rows = TRUE)
-    }
+      revals$removed_samples <- c(revals$removed_samples, setdiff(sample_names(), input$keep_samples))
+      
+      # remove empty lists
+      if(length(revals$groups_list) > 0){
+          
+          # get indices of now empty groups
+          inds <- sapply(revals$groups_list, function(el){
+            length(intersect(el, input$keep_samples)) == 0
+          })
+          
+          revals$groups_list[inds] <- NULL
+      }
+    }else revals$removed_samples <- list()
     
     # Apply mass filter
     if (input$massfilter){
@@ -766,32 +782,6 @@ shinyServer(function(session, input, output) {
 
     #__test-export__
     exportTestValues(peakIcr2 = peakIcr2)
-    
-    # remove samples from groups reactive value
-    if(length(revals$groups_list) > 0){
-      for(i in 1:length(revals$groups_list)){
-        remaining_samples <- intersect(revals$groups_list[[i]], input$keep_samples)
-        
-        if(length(remaining_samples) == 0){
-          revals$groups_list[[i]] <- character(0)
-          revals$groupstab_df <- revals$groupstab_df[-which(revals$groupstab_df[["Group Name"]] == names(revals$groups_list)[i]),]
-          }
-        else{
-          revals$groups_list[[i]] <- remaining_samples
-          
-          samples <- paste(remaining_samples, collapse = ";")
-          row <- list(names(revals$groups_list)[i], samples)
-          
-          revals$groupstab_df[which(revals$groupstab_df[["Group Name"]] == names(revals$groups_list)[i]),] <- row
-        }
-      }
-      revals$groups_list <- revals$groups_list[sapply(revals$groups_list, function(x){length(x) != 0})]
-    }
-    
-    
-    
-    # update table in groups tab
-    
     
   }) # End creating peakIcr2
   
@@ -1210,15 +1200,7 @@ shinyServer(function(session, input, output) {
     
     # for testing if plot actually got updated in test mode
     exportTestValues(plot = NULL, plot_attrs = NULL)
-    
-    g1_samples <- if(is.null(isolate(input$whichGroups1)) & is.null(isolate(input$whichSample1))) NULL 
-                  else if(isolate(input$choose_single == 3)) unique(unlist(revals$groups_list[isolate(input$whichGroups1)]))
-                  else if(isolate(input$choose_single == 4)) isolate(input$whichSample1)
-                    
-    g2_samples <- if(is.null(isolate(input$whichGroups2)) & is.null(isolate(input$whichSample2))) NULL 
-                  else if(isolate(input$choose_single == 3)) unique(unlist(revals$groups_list[isolate(input$whichGroups2)]))
-                  else if(isolate(input$choose_single == 4)) isolate(input$whichSample2)
-                    
+
     if (isolate(v$clearPlot)){
       return(NULL)
     } else {
@@ -1266,7 +1248,7 @@ shinyServer(function(session, input, output) {
       #----------- Single sample plots ------------#
       #-------Kendrick Plot-----------# 
       if (input$chooseplots == 'Kendrick Plot') {
-        validate(need(!is.null(input$whichSamples) | !(is.null(g1_samples) & is.null(g2_samples)), message = "Please select at least 1 sample"))
+        validate(need(!is.null(input$whichSamples) | !(is.null(isolate(g1_samples())) & is.null(isolate(g2_samples()))), message = "Please select at least 1 sample"))
         p <- kendrickPlot(isolate(plot_data()), colorCName = input$vk_colors, colorPal = colorPal,
                           xlabel = isolate(input$x_axis_input), ylabel = isolate(input$y_axis_input),
                           title = isolate(input$title_input),legendTitle = revals$legendTitle)
@@ -1284,7 +1266,7 @@ shinyServer(function(session, input, output) {
       }
       #-------VanKrevelen Plot--------#
       if (input$chooseplots == 'Van Krevelen Plot') {
-        validate(need(!is.null(input$whichSamples) | !(is.null(g1_samples) & is.null(g2_samples)), message = "Please select at least 1 sample"))
+        validate(need(!is.null(input$whichSamples) | !(is.null(isolate(g1_samples())) & is.null(isolate(g2_samples()))), message = "Please select at least 1 sample"))
         if (input$vkbounds == 0) { #no bounds
           # if no boundary lines, leave the option to color by boundary
           if (input$vk_colors %in% c('bs1', 'bs2')) {
@@ -1315,8 +1297,8 @@ shinyServer(function(session, input, output) {
       
       #--------- Density Plot --------#
       if (input$chooseplots == 'Density Plot') {
-        validate(need(!is.null(input$whichSamples) | !(is.null(g1_samples) & is.null(g2_samples)), message = "Please select at least 1 sample"),
-                 need(!is.na(input$vk_colors), message = "Please select a variable to color by")
+        validate(need(!is.null(input$whichSamples) | !(is.null(isolate(g1_samples())) & is.null(isolate(g2_samples()))), message = "Please select at least 1 sample"),
+                 need(!is.na(input$vk_colors), message = "Please select a variable")
         )
         
         # sample/group inputs depending on whether or not we are doing a comparison of groups
@@ -1437,15 +1419,7 @@ shinyServer(function(session, input, output) {
                                 "Comparisons Method" = NA, check.names = FALSE)
   
   observeEvent(input$add_plot, {
-    
-    g1_samples <- if(is.null(isolate(input$whichGroups1)) & is.null(isolate(input$whichSample1))) NULL 
-      else if(isolate(input$choose_single == 3)) unique(unlist(revals$groups_list[isolate(input$whichGroups1)]))
-      else if(isolate(input$choose_single == 4)) isolate(input$whichSample1)
-    
-    g2_samples <- if(is.null(isolate(input$whichGroups2)) & is.null(isolate(input$whichSample2))) NULL 
-      else if(isolate(input$choose_single == 3)) unique(unlist(revals$groups_list[isolate(input$whichGroups2)]))
-      else if(isolate(input$choose_single == 4)) isolate(input$whichSample2)
-    
+
     # counter which begins at 1 even if a filter reset has occurred.
     ind <- input$add_plot - revals$reset_counter
     
@@ -1461,9 +1435,9 @@ shinyServer(function(session, input, output) {
     # Single or Multiple Samples
     newLine$SampleType <- switch(as.character(input$choose_single), "1" = "Single Sample", "2" = "Single Group of Samples", "3" = "Comparison of Two Groups", "4" = "Comparison of Two Samples")
     # Sample(s) in The first group (depends on input$choose_single to decide if this is a single or multiple sample list)
-    newLine$Group_1_Samples <- ifelse(input$choose_single %in% c(1,2), yes = paste(input$whichSamples, collapse = ","), no = paste(g1_samples, collapse = ","))
+    newLine$Group_1_Samples <- ifelse(input$choose_single %in% c(1,2), yes = paste(input$whichSamples, collapse = ","), no = paste(g1_samples(), collapse = ","))
     # Sample(s) in the second group. Automatically NA if input$choose_single is single sample or single group
-    newLine$Group_2_Samples <- ifelse(input$choose_single %in% c(3,4), yes =  paste(g2_samples , collapse = ","), no = "None")
+    newLine$Group_2_Samples <- ifelse(input$choose_single %in% c(3,4), yes =  paste(g2_samples() , collapse = ","), no = "None")
     # Boundary set borders to use (NA for non-Van Krevelen plots)
     newLine$BoundarySet <- ifelse(input$chooseplots == "Van Krevelen Plot", yes = ifelse(input$vkbounds == 0, "None", input$vkbounds), no = "None")
     newLine$ColorBy <- input$vk_colors

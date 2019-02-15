@@ -275,7 +275,9 @@ observeEvent(c(input$samplefilter, input$keep_samples),{
     # for every list element, if not all are kept, append a warning
     for(i in 1:length(samples_tf)){
       if(!all(samples_tf[[i]])){
-        warn_string <- paste0(warn_string, sprintf("<p style = color:deepskyblue>%s: Samples remaining: %i</p>", names(samples_tf)[i], sum(samples_tf[[i]])))
+        rmv_warning <- if(sum(samples_tf[[i]]) == 0) "<span style = color:red>This group will be removed</span>" else ""
+        warn_string <- paste0(warn_string, 
+                              sprintf("<p style = color:deepskyblue>%s | Samples remaining: %i.  %s</p>", names(samples_tf)[i], sum(samples_tf[[i]]), rmv_warning))
       }
     }
   }
@@ -309,6 +311,9 @@ observeEvent(input$clear_filters_yes, {
   
   # counter to control plot storage indices in case of reset
   revals$reset_counter <- input$add_plot
+  
+  # reset 'removed samples' reval
+  revals$removed_samples <- list()
   
   removeModal()
 })

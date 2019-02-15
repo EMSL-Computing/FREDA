@@ -22,11 +22,8 @@ observeEvent(input$add_plot,{
 
 # shinyjs helpers and reactive value storage for selection inputs
 observeEvent(c(input$top_page, input$chooseplots, input$choose_single, input$whichSamples, 
-               input$whichGroups1, input$whichGroups2, input$whichSample1, input$whichSample2),{
+               g1_samples(), g2_samples()),{
     req(input$top_page == "Visualize")
-   
-    g1_samples <- if(is.null(isolate(input$whichGroups1))) NULL else unique(unlist(revals$groups_list[isolate(input$whichGroups1)]))
-    g2_samples <- if(is.null(isolate(input$whichGroups2))) NULL else unique(unlist(revals$groups_list[isolate(input$whichGroups2)]))
 
     # show/hide dropdowns for sample selection depending on single sample/single group/group comparison
     toggle("js_toggle_groups", condition = input$choose_single %in% c(3,4))
@@ -37,8 +34,8 @@ observeEvent(c(input$top_page, input$chooseplots, input$choose_single, input$whi
     toggleCssClass("plotUI", "suggest", !is.null(input$chooseplots) & input$choose_single == 0)
     toggleCssClass("js_whichSamples", "suggest", any(input$choose_single %in% c(1,2) & is.null(input$whichSamples), 
                                                      input$choose_single == 2 & any(length(input$whichSamples) < 2, is.null(input$whichSamples))))
-    toggleCssClass("js_whichGroups1", "suggest", input$choose_single == 3 & is.null(g1_samples))
-    toggleCssClass("js_whichGroups2", "suggest", input$choose_single == 3 & is.null(g2_samples))
+    toggleCssClass("js_whichGroups1", "suggest", input$choose_single == 3 & is.null(g1_samples()))
+    toggleCssClass("js_whichGroups2", "suggest", input$choose_single == 3 & is.null(g2_samples()))
 
     toggleElement("warnings_visualize", condition = isTRUE(input$choose_single != 0 & !is.null(input$chooseplots)))
    
@@ -48,19 +45,11 @@ observeEvent(c(input$top_page, input$chooseplots, input$choose_single, input$whi
 
 
 # helpers for summary functions
-observeEvent(c(input$top_page, input$choose_single, input$whichGroups1, input$whichGroups2, input$whichSample1, input$whichSample2,
+observeEvent(c(input$top_page, input$choose_single, g1_samples(), g2_samples(),
                input$summary_fxn, input$pres_thresh, input$pres_fn, input$absn_thresh, input$pval),{
                  req(input$top_page == "Visualize")
-                 
-                 g1_samples <- if(is.null(isolate(input$whichGroups1)) & is.null(isolate(input$whichSample1))) NULL 
-                  else if(isolate(input$choose_single == 3)) unique(unlist(revals$groups_list[isolate(input$whichGroups1)]))
-                  else if(isolate(input$choose_single == 4)) isolate(input$whichSample1)
-                 
-                 g2_samples <- if(is.null(isolate(input$whichGroups2)) & is.null(isolate(input$whichSample2))) NULL 
-                  else if(isolate(input$choose_single == 3)) unique(unlist(revals$groups_list[isolate(input$whichGroups2)]))
-                  else if(isolate(input$choose_single == 4)) isolate(input$whichSample2)
-                 
-                 toggleCssClass("js_summary_fxn", "suggest", input$choose_single %in% c(3,4) & all(!is.null(g1_samples), !is.null(g2_samples)) & !(input$summary_fxn %in% fticRanalysis:::getGroupComparisonSummaryFunctionNames()))
+
+                 toggleCssClass("js_summary_fxn", "suggest", input$choose_single %in% c(3,4) & all(!is.null(g1_samples()), !is.null(g2_samples())) & !(input$summary_fxn %in% fticRanalysis:::getGroupComparisonSummaryFunctionNames()))
                  
                  # conditions different between counts and proportion 
                  if (isTRUE(input$pres_fn == "nsamps") & isTRUE(input$choose_single %in% c(3,4))){
@@ -68,7 +57,7 @@ observeEvent(c(input$top_page, input$choose_single, input$whichGroups1, input$wh
                    if(isTRUE(input$summary_fxn == "uniqueness_gtest")){
                      # logical conditions that are TRUE if the user did something wrong
                      cond_pval <- any(input$pval <= 0, input$pval >= 1)
-                     cond_pres <- any(input$pres_thresh > min(length(g1_samples), length(g2_samples)), 
+                     cond_pres <- any(input$pres_thresh > min(length(g1_samples()), length(g2_samples())), 
                                       input$pres_thresh < 1, 
                                       !is.numeric(input$pres_thresh))
                      toggleCssClass("js_pval", "attention", cond_pval)
@@ -80,9 +69,9 @@ observeEvent(c(input$top_page, input$choose_single, input$whichGroups1, input$wh
                      content_absn <- NULL
                    }
                    else if(isTRUE(input$summary_fxn == "uniqueness_nsamps") & isTRUE(input$choose_single %in% c(3,4))){
-                     cond_pres <- any(input$pres_thresh > min(length(g1_samples), length(g2_samples)), input$pres_thresh < 1,
+                     cond_pres <- any(input$pres_thresh > min(length(g1_samples()), length(g2_samples())), input$pres_thresh < 1,
                                       !is.numeric(input$pres_thresh), input$absn_thresh >= input$pres_thresh)
-                     cond_absn <- any(input$absn_thresh > min(length(g1_samples), length(g2_samples)) - 1, input$absn_thresh < 0, 
+                     cond_absn <- any(input$absn_thresh > min(length(g1_samples()), length(g2_samples())) - 1, input$absn_thresh < 0, 
                                       !is.numeric(input$absn_thresh), input$absn_thresh >= input$pres_thresh)
                      
                      toggleCssClass("js_pres_thresh", "attention", cond_pres)
@@ -130,7 +119,7 @@ observeEvent(c(input$top_page, input$choose_single, input$whichGroups1, input$wh
 # logical reactive value that clears the plot if a new type is selected
 v <- reactiveValues(clearPlot = TRUE)
 observeEvent(c(input$chooseplots, input$choose_single, input$whichSamples, 
-               input$whichGroups1, input$whichGroups2, input$whichSample1, input$whichSample2), {
+               g1_samples(), g2_samples()), {
   v$clearPlot <- TRUE
   disable("add_plot")
 }, priority = 10)
@@ -172,7 +161,9 @@ observeEvent(input$chooseplots, {
   # Pre-populate dropdowns so users can select colors and custom scatterplot axes before submitting plot.
   # Need a vector of the numeric columns to pass to scatterplot
   numeric_cols <- which(sapply(peakIcr2$e_meta %>% dplyr::select(emeta_display_choices()), is.numeric))
-
+  
+  color_select_label <- if(input$chooseplots == 'Density Plot') "Plot Distribution of Variable:" else "Color by:"
+  
   updateSelectInput(session, 'vk_colors', choices = emeta_display_choices(), selected = emeta_display_choices()[1])
   updateSelectInput(session, 'scatter_x', choices = emeta_display_choices()[numeric_cols][-3], selected = emeta_display_choices()[numeric_cols][2])
   updateSelectInput(session, 'scatter_y', choices = emeta_display_choices()[numeric_cols][-2], selected = emeta_display_choices()[numeric_cols][3])
@@ -212,11 +203,8 @@ observeEvent(c(input$scatter_x, input$scatter_y),{
 })
 
 # disable plot_submit and add warning if groups are overlapping
-observeEvent(c(input$whichGroups1, input$whichGroups2, input$chooseplots),{
-  g1_samples <- if(is.null(isolate(input$whichGroups1))) NULL else unique(unlist(revals$groups_list[isolate(input$whichGroups1)]))
-  g2_samples <- if(is.null(isolate(input$whichGroups2))) NULL else unique(unlist(revals$groups_list[isolate(input$whichGroups2)]))
-  
-  overlap <- intersect(g1_samples, g2_samples)
+observeEvent(c(input$whichGroups1, input$whichGroups2, input$chooseplots, g1_samples(), g2_samples()),{
+  overlap <- intersect(g1_samples(), g2_samples())
   cond_overlap <- length(overlap) != 0
   
   toggleState("plot_submit", !(cond_overlap & isTRUE(input$choose_single == 3)))
@@ -244,17 +232,9 @@ observeEvent(numeric_selected(),{
 })
 
 ### Summary comparison plot selection control ###
-observeEvent(c(input$pres_fn, input$whichGroups1, input$whichGroups2, input$whichSample1, input$whichSample2, input$choose_single),{
+observeEvent(c(input$pres_fn, g1_samples(), g2_samples(), input$choose_single),{
   
-  g1_samples <- if(is.null(isolate(input$whichGroups1)) & is.null(isolate(input$whichSample1))) NULL 
-    else if(isolate(input$choose_single == 3)) unique(unlist(revals$groups_list[isolate(input$whichGroups1)]))
-    else if(isolate(input$choose_single == 4)) isolate(input$whichSample1)
-  
-  g2_samples <- if(is.null(isolate(input$whichGroups2)) & is.null(isolate(input$whichSample2))) NULL 
-    else if(isolate(input$choose_single == 3)) unique(unlist(revals$groups_list[isolate(input$whichGroups2)]))
-    else if(isolate(input$choose_single == 4)) isolate(input$whichSample2)
-  
-  cond_smallgrp <- any(length(g1_samples) < 3, length(g2_samples) < 3) & isTRUE(input$choose_single %in% c(3,4)) & input$chooseplots != "Density Plot" 
+  cond_smallgrp <- any(length(g1_samples()) < 3, length(g2_samples()) < 3) & isTRUE(input$choose_single %in% c(3,4)) & input$chooseplots != "Density Plot" 
   # cond_onesample <- any(length(input$whichGroups1) < 2, length(input$whichGroups2) < 2) & isTRUE(input$choose_single == 3) & input$chooseplots != "Density Plot"
   content <- if(cond_smallgrp & isTRUE(input$summary_fxn == "uniqueness_gtest")) "style = 'color:deepskyblue'>G-test disabled for groups with less than 3 samples" else NULL
   # content_onesample <- if(cond_onesample) "style = 'color:deepskyblue'>Input at least 2 samples per group for group comparison." else NULL
@@ -264,7 +244,7 @@ observeEvent(c(input$pres_fn, input$whichGroups1, input$whichGroups2, input$whic
       choices = c("Select one" = "select_none", "Presence/absence thresholds" = "uniqueness_nsamps")
     }
     else choices = c("Select one" = "select_none", "G test" = "uniqueness_gtest", "Presence/absence thresholds" = "uniqueness_nsamps")
-    updateNumericInput(session, "thresh", min = 1, max = min(length(g1_samples), length(g2_samples)))
+    updateNumericInput(session, "thresh", min = 1, max = min(length(g1_samples()), length(g2_samples())))
   }
   else if (isTRUE(input$pres_fn == "prop")){
     if(cond_smallgrp){

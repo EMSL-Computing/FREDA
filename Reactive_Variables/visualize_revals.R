@@ -35,16 +35,22 @@ numeric_selected <- eventReactive(c(input$vk_colors, plot_data()),{
   }else TRUE
 }, ignoreNULL = FALSE)
 
+# Objects: vectors of sample names.  Depend on group/sample selection dropdown when doing a comparison
+g1_samples <- eventReactive(c(input$whichGroups1, input$whichSample1, input$choose_single),{
+  if(is.null(isolate(input$whichGroups1)) & is.null(isolate(input$whichSample1))) NULL 
+  else if(isolate(input$choose_single == 3)) setdiff(unique(unlist(revals$groups_list[isolate(input$whichGroups1)])), revals$removed_samples)
+  else if(isolate(input$choose_single == 4)) isolate(input$whichSample1)
+})
+
+g2_samples <- eventReactive(c(input$whichGroups2, input$whichSample2, input$choose_single),{
+  if(is.null(isolate(input$whichGroups2)) & is.null(isolate(input$whichSample2))) NULL 
+  else if(isolate(input$choose_single == 3)) setdiff(unique(unlist(revals$groups_list[isolate(input$whichGroups2)])), revals$removed_samples)
+  else if(isolate(input$choose_single == 4)) isolate(input$whichSample2)
+})
+#
+
 # Object:  Plotting dataframe to be passed to output$FxnPlot
 plot_data <- eventReactive(input$plot_submit,{
-  
-  g1_samples <- if(is.null(isolate(input$whichGroups1)) & is.null(isolate(input$whichSample1))) NULL 
-    else if(isolate(input$choose_single == 3)) unique(unlist(revals$groups_list[isolate(input$whichGroups1)]))
-    else if(isolate(input$choose_single == 4)) isolate(input$whichSample1)
-  
-  g2_samples <- if(is.null(isolate(input$whichGroups2)) & is.null(isolate(input$whichSample2))) NULL 
-    else if(isolate(input$choose_single == 3)) unique(unlist(revals$groups_list[isolate(input$whichGroups2)]))
-    else if(isolate(input$choose_single == 4)) isolate(input$whichSample2)
   
   req(calc_vars)
   validate(need(!is.null(input$chooseplots) & input$choose_single !=0, message = "Please select plot type"))
@@ -83,20 +89,20 @@ plot_data <- eventReactive(input$plot_submit,{
     
   } else if (isolate(input$choose_single) %in% c(3,4)) {# two groups 
     # Make sure at least one test has been calculated
-    validate(need(!is.null(g1_samples), message = "Please select samples for first grouping"))
+    validate(need(!is.null(g1_samples()), message = "Please select samples for first grouping"))
     # validate(need(length(g1_samples) > 1, message = "Please select at least 1 sample"))
-    validate(need(!is.null(g2_samples), message = "Please select samples for second grouping"))
+    validate(need(!is.null(g2_samples()), message = "Please select samples for second grouping"))
     # validate(need(length(g2_samples) > 1, message = "Please select at least 1 sample"))
     
     group1 <- ifelse(is.null(input$group1_name) | isTRUE(input$group1_name == ""), "Group 1", input$group1_name)
     group2 <- ifelse(is.null(input$group2_name) | isTRUE(input$group2_name == ""), "Group 2", input$group2_name)
     
     # assign a group DF to the data with a level for each of the two groups
-    temp_group_df <- data.frame(c(g1_samples, g2_samples), c(rep(group1, times=length(g1_samples)), rep(group2, length(g2_samples))))
+    temp_group_df <- data.frame(c(g1_samples(), g2_samples()), c(rep(group1, times=length(g1_samples())), rep(group2, length(g2_samples()))))
     colnames(temp_group_df) <- c(getFDataColName(peakIcr2), "Group")
-    
+
     temp_data <- peakIcr2 %>%
-      subset(samples=c(g1_samples, g2_samples))
+      subset(samples=c(g1_samples(), g2_samples()))
     
     temp_data <- fticRanalysis:::setGroupDF(temp_data, temp_group_df)
     
@@ -122,7 +128,7 @@ plot_data <- eventReactive(input$plot_submit,{
     
     # conditional error checking depending on nsamps and proportion
     if (input$pres_fn == "nsamps"){
-      validate(need(input$pres_thresh <= min(length(g1_samples), length(g2_samples)), "Maximum threshold is above the minimum number of samples in a group"),
+      validate(need(input$pres_thresh <= min(length(g1_samples()), length(g2_samples())), "Maximum threshold is above the minimum number of samples in a group"),
                need(is.numeric(input$pres_thresh), "Please enter a numeric value for threshold to determine presence"),
                need(input$absn_thresh < input$pres_thresh & input$absn_thresh >= 0, "absence threshold must be non-negative and lower than presence threshold"))
     }

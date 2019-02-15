@@ -1,17 +1,14 @@
-# update table and groups_list on button click
+# update groups_list on button click
 observeEvent(input$add_group, {
   req(!is.null(input$group_name) & input$group_name != "")
   req(length(input$group_samples) > 0)
   req(!(input$group_name %in% names(revals$groups_list)))
   
   revals$groups_list[[input$group_name]] <- input$group_samples
-  
-  samples <- paste(input$group_samples, collapse = ";")
-  row <- list(input$group_name, samples)
+
   updateTextInput(session, "group_name", value = "")
-  
-  revals$groupstab_df[nrow(revals$groupstab_df) + 1,] <- row
-  
+  updatePickerInput(session, "group_samples", selected = setdiff(sample_names(), c(unlist(revals$groups_list), input$group_samples)))
+
 })
 
 # shinyjs observer which disables input if selection is not valid
@@ -55,13 +52,17 @@ observeEvent(c(input$group_name, input$group_samples, input$remove_group), {
   
 })
 
+# toggle remove button
+observeEvent(input$group_table_rows_selected,{
+  toggleState("remove_group", length(input$group_table_rows_selected) > 0)
+}, ignoreNULL = F)
+
 # remove table and list entries of selected row on button click
 observeEvent(input$remove_group,{
   req(input$group_table_rows_selected)
   ind <- input$group_table_rows_selected
   
   revals$groups_list[[ind]] <- NULL
-  revals$groupstab_df <- revals$groupstab_df[-ind,] 
 }, priority = 10)
 
 # continue to preprocess
