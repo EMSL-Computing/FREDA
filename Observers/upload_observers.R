@@ -226,9 +226,7 @@ observeEvent(peakICR(),{
                     You may proceed to the subsequent tabs for analysis.</h4>'),
                hr(),
                actionButton("upload_dismiss", "Review results", width = '75%'),
-               br(),
-               actionButton("goto_groups", "Continue to groups tab", width = '75%'),
-               br(),
+               actionButton("goto_groups", "Continue to groups tab", style = "margin:5px;width:75%"),
                actionButton("goto_preprocess", "Skip to preprocess tab", width = '75%')
                )
       )

@@ -945,10 +945,10 @@ shinyServer(function(session, input, output) {
   output$plotUI_comparison_1 <- renderUI({
     req(input$choose_single != 0, !is.null(input$chooseplots))
     if(input$choose_single == 3){
+      choice_diff <- setdiff(names(revals$groups_list), isolate(input$whichGroups2))
       pickerInput('whichGroups1', HTML("<input type = 'text' id = 'group1_name' placeholder = 'Group 1' style = 'border-style:unset;'/>"),
-              choices = setdiff(names(revals$groups_list), isolate(input$whichGroups2)),
-              selected = isolate(revals$group_1), 
-              multiple = TRUE,
+              choices = choice_diff,
+              selected = if(is.null(isolate(revals$group_1))) choice_diff[1] else isolate(revals$group_1),
               options =  pickerOptions(dropupAuto = FALSE, actionsBox = TRUE))
     }
     else if(input$choose_single == 4){
@@ -963,10 +963,10 @@ shinyServer(function(session, input, output) {
   output$plotUI_comparison_2 <- renderUI({
     req(input$choose_single != 0, !is.null(input$chooseplots))
     if(input$choose_single == 3){
+      choice_diff <- setdiff(names(revals$groups_list), isolate(input$whichGroups1))
       pickerInput("whichGroups2", HTML("<input type = 'text' id = 'group2_name' placeholder = 'Group 2' style = 'border-style:unset;'/>"), 
               choices = setdiff(names(revals$groups_list), isolate(input$whichGroups1)),
-              selected = isolate(revals$group_2), 
-              multiple = TRUE,
+              selected = if(is.null(isolate(revals$group_2))) choice_diff[2] else isolate(revals$group_2),
               options =  pickerOptions(dropupAuto = FALSE, actionsBox = TRUE))
     }
     else if(input$choose_single == 4){

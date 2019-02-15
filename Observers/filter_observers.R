@@ -254,7 +254,6 @@ observeEvent(input$reset_filters,{
                actionButton("clear_filters_yes", "Yes, clear filters without saving plots.", width = '100%'),
                br(),
                br(),
-               br(),
                actionButton("clear_filters_no", "No, take me back.", width = '100%')
         ))),
     footer = NULL

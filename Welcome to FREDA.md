@@ -17,9 +17,9 @@ The FTICR R Exploratory Data Analysis (FREDA) tool is designed to allow users up
 
 #### **Recent Updates:**
 
-  * *Groups Tab:  group uploaded samples into named groups*
-  * *HTML report generation*
-  * *Calculate compound classes in preprocessing step*
+  * *Groups Tab:  Combine samples into named groups*
+  * *Downloadable HTML report*
+  * *Calculate compound classes in preprocessing*
 
 ======
 

@@ -136,11 +136,11 @@ observeEvent(input$flip_colors, {
 observeEvent(input$whichGroups2,{
   req(exists("peakIcr2"))
   updatePickerInput(session, "whichGroups1", choices = setdiff(names(revals$groups_list), input$whichGroups2), selected = input$whichGroups1)
-}, ignoreNULL = FALSE)
+})
 observeEvent(input$whichGroups1,{
   req(exists("peakIcr2"))
   updatePickerInput(session, "whichGroups2", choices = setdiff(names(revals$groups_list), input$whichGroups1), selected = input$whichGroups2)
-}, ignoreNULL = FALSE)
+})
 
 # make the options mutually exclusive when doing a comparison of two samples
 observeEvent(input$whichSample2,{
@@ -164,7 +164,7 @@ observeEvent(input$chooseplots, {
   
   color_select_label <- if(input$chooseplots == 'Density Plot') "Plot Distribution of Variable:" else "Color by:"
   
-  updateSelectInput(session, 'vk_colors', choices = emeta_display_choices(), selected = emeta_display_choices()[1])
+  updateSelectInput(session, 'vk_colors', label = color_select_label, choices = emeta_display_choices(), selected = emeta_display_choices()[1])
   updateSelectInput(session, 'scatter_x', choices = emeta_display_choices()[numeric_cols][-3], selected = emeta_display_choices()[numeric_cols][2])
   updateSelectInput(session, 'scatter_y', choices = emeta_display_choices()[numeric_cols][-2], selected = emeta_display_choices()[numeric_cols][3])
   
