@@ -36,13 +36,13 @@ numeric_selected <- eventReactive(c(input$vk_colors, plot_data()),{
 }, ignoreNULL = FALSE)
 
 # Objects: vectors of sample names.  Depend on group/sample selection dropdown when doing a comparison
-g1_samples <- eventReactive(c(input$whichGroups1, input$whichSample1, input$choose_single),{
+g1_samples <- eventReactive(c(input$whichGroups1, input$whichSample1, input$choose_single, input$top_page),{
   if(is.null(isolate(input$whichGroups1)) & is.null(isolate(input$whichSample1))) NULL 
   else if(isolate(input$choose_single == 3)) setdiff(unique(unlist(revals$groups_list[isolate(input$whichGroups1)])), revals$removed_samples)
   else if(isolate(input$choose_single == 4)) isolate(input$whichSample1)
 })
 
-g2_samples <- eventReactive(c(input$whichGroups2, input$whichSample2, input$choose_single),{
+g2_samples <- eventReactive(c(input$whichGroups2, input$whichSample2, input$choose_single, input$top_page),{
   if(is.null(isolate(input$whichGroups2)) & is.null(isolate(input$whichSample2))) NULL 
   else if(isolate(input$choose_single == 3)) setdiff(unique(unlist(revals$groups_list[isolate(input$whichGroups2)])), revals$removed_samples)
   else if(isolate(input$choose_single == 4)) isolate(input$whichSample2)

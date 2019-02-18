@@ -3,9 +3,10 @@
 "Kendrick Mass and Defect","calc_kendrick","Kendrick Defect = Nominal Kendrick Mass - Kendrick Mass \n\n Kendrick MAss = IUPAC mass*(14/14.01565), where IUPAC mass is based on the 12C atomic mass as exactly 12 Da. <a href=""https://pubs.acs.org/doi/pdf/10.1021/ac010560w"">[Hughey et al., 2001]</a>"
 "NOSC","calc_nosc","Nominal oxidation state of carbon. <a href=""https://onlinelibrary.wiley.com/doi/abs/10.1002/rcm.2386"">[Koch \& Dittmar, 2006]</a><a href = ""https://onlinelibrary.wiley.com/doi/full/10.1002/rcm.7433"">[Erratum]</a>"
 "Gibbs Free Energy","calc_gibbs","Cox Gibbs Free Energy. Calculated as:60.3 - 28.5*NOSC <a href=""https://www.sciencedirect.com/science/article/pii/S0016703711000378"">[LaRowe &amp; Van Cappellen, 2011]</a>"
-"Aromaticity & Modified Aromaticity","calc_aroma","Aromaticity & Modified Aromaticity"
-"DBE & DBE - O","calc_dbe","DBE & DBE - O"
-"Elemental Composition","assign_elemental_composition","Elemental Composition"
+"Aromaticity & Modified Aromaticity","calc_aroma","Aromaticity & Modified Aromaticity. <a href = ""https://onlinelibrary.wiley.com/doi/abs/10.1002/rcm.2386"">[Koch \& Dittmar, 2006]</a> <a href = ""https://onlinelibrary.wiley.com/doi/full/10.1002/rcm.7433"">[Erratum]</a>"
+"DBE & DBE - O","calc_dbe","DBE & DBE - O <a href = ""https://onlinelibrary.wiley.com/doi/abs/10.1002/rcm.2386"">[Koch \& Dittmar, 2006]</a> <a href = ""https://onlinelibrary.wiley.com/doi/full/10.1002/rcm.7433"">[Erratum]</a>"
+"Elemental Composition","assign_elemental_composition","Elemental composition constructed from elemental counts"
 "Compound Classes Using Boundary Set 1","assign_class;bs1","Compound Classes Using Boundary Set 1 <a href=""https://pubs.acs.org/doi/abs/10.1021/ac034415p""> [Kim et al., 2003]</a>"
 "Compound Classes Using Boundary Set 2","assign_class;bs2","Compound Classes Using Boundary Set 2 <a href=""https://www.sciencedirect.com/science/article/pii/S0038071716306447""> [Bailey et al., 2017]</a>"
 "Compound Classes Using Boundary Set 3","assign_class;bs3","Compound Classes Using Boundary Set 3 <a href=""https://pubs.acs.org/doi/abs/10.1021/acs.analchem.8b00529""> [Rivas-Ubach et al., 2018]</a>"
+

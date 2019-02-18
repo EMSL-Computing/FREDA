@@ -78,11 +78,11 @@ observeEvent(input$helpbutton,{
                       "<div><p>This page is used to generate plots from your processed data.  Roughly from top to bottom on the left panel, do the following:</p>
                           <ul>
                             <li>Select the type of plot you want to generate.</li>
-                            <li>Choose whether you would like to plot a single sample, multiple samples, or a comparison of groups</li>
+                            <li>Choose whether you would like to plot a single sample, multiple samples, or a comparison of two samples/groups</li>
                             <ul>
                               <li>If you selected a single sample, a dropdown will appear asking you to specify which one.</li>
                               <li>If you selected multiple samples by group, the same dropdown will appear.  Select samples that should be grouped.  <b>One</b> group will be created with the samples you specify.</li>
-                              <li>If you selected a comparison of groups, two group dropdowns will appear.  Select samples that you want included in each of the two groups.
+                              <li>If you selected a comparison of groups or a comparison of two samples, two dropdowns will appear.  Select samples or groups that you want to perform a comparison on.
                                   Further, there will be dropdowns requesting how you would like to compare the two groups.</li>
                             </ul>
                             <li>If desired, specify axis and title labels and hit 'Generate Plot'</li>

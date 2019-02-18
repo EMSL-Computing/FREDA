@@ -24,7 +24,6 @@ observeEvent(input$add_plot,{
 observeEvent(c(input$top_page, input$chooseplots, input$choose_single, input$whichSamples, 
                g1_samples(), g2_samples()),{
     req(input$top_page == "Visualize")
-
     # show/hide dropdowns for sample selection depending on single sample/single group/group comparison
     toggle("js_toggle_groups", condition = input$choose_single %in% c(3,4))
     toggle("js_toggle_single", condition = input$choose_single %in% c(1,2))
@@ -236,7 +235,7 @@ observeEvent(c(input$pres_fn, g1_samples(), g2_samples(), input$choose_single),{
   
   cond_smallgrp <- any(length(g1_samples()) < 3, length(g2_samples()) < 3) & isTRUE(input$choose_single %in% c(3,4)) & input$chooseplots != "Density Plot" 
   # cond_onesample <- any(length(input$whichGroups1) < 2, length(input$whichGroups2) < 2) & isTRUE(input$choose_single == 3) & input$chooseplots != "Density Plot"
-  content <- if(cond_smallgrp & isTRUE(input$summary_fxn == "uniqueness_gtest")) "style = 'color:deepskyblue'>G-test disabled for groups with less than 3 samples" else NULL
+  content <- if(cond_smallgrp & isTRUE(input$summary_fxn == "uniqueness_gtest")) "<p style = 'color:deepskyblue'>G-test disabled for groups with less than 3 samples</p>" else NULL
   # content_onesample <- if(cond_onesample) "style = 'color:deepskyblue'>Input at least 2 samples per group for group comparison." else NULL
   
   if (isTRUE(input$pres_fn == "nsamps")){

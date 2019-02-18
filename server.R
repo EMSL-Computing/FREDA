@@ -876,6 +876,7 @@ shinyServer(function(session, input, output) {
   # plot_data(): Plotting dataframe that is passed to output$FxnPlot.  This object triggers an important observer (in server.R) which controls dropdown selection
   # plot_defaults():  defaults arguments to plot axes/title values
   # numeric_selected():  keeps track of whether the column selected by input$vk_colors is numeric or categorical
+  # g1_samples() and g2_samples()  These store the samples that will be compared during group/sample comparison plots
   source("Reactive_Variables/visualize_revals.R", local = TRUE)
   
   #### Viztab observers.  Help Button. Dropdown choices, plot clearing, and shinyjs helper functionality###
