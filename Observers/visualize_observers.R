@@ -254,7 +254,10 @@ observeEvent(c(input$pres_fn, g1_samples(), g2_samples(), input$choose_single),{
   }
   else choices = NULL
   
-  selected = ifelse(input$summary_fxn %in% c("uniqueness_nsamps", "uniqueness_prop"), choices["Presence/absence thresholds"], input$summary_fxn)
+  selected = if(isTRUE(input$summary_fxn %in% c("uniqueness_nsamps", "uniqueness_prop"))) choices["Presence/absence thresholds"] 
+            else if(!cond_smallgrp & isTRUE(input$summary_fxn %in% c("uniqueness_gtest"))) choices["G test"] 
+            else choices["Select one"]
+  
   updateSelectInput(session, "summary_fxn", choices = choices, selected = selected)
   revals$warningmessage_visualize$small_groups <-  content 
   # revals$warningmessage_visualize$one_sample <- content_onesample 
