@@ -634,6 +634,45 @@ shinyServer(function(session, input, output) {
     
   }) # End process_hist
   
+  ############## QC tab ################
+  
+  # Y axis scale select for boxplots
+  output$qc_plot_scale <- renderUI({
+    validate(need(exists("peakIcr2", where = 1), message = "No data object found, please verify you have successfully uploaded data"))
+    pickerInput("qc_plot_scale", "Plot on scale:", 
+                choices = list('Log base 2' = 'log2', 'Log base 10'='log10', 'Natural log'='log', 
+                               'Presence/absence' = 'pres', 'Raw abundance'='abundance'), 
+                selected = attributes(peakIcr2)$data_info$data_scale)
+    
+  })
+  
+  # Group selection
+  output$qc_select_groups <- renderUI({
+    pickerInput("qc_select_groups", "Select a Group", 
+                choices = c("Plot all samples", names(revals$groups_list))
+    )
+  })
+  
+  # Boxplots
+  output$qc_boxplots <- renderPlotly({
+    req(exists("peakIcr2", where = 1))
+    
+    ds = attributes(peakIcr2)$data_info$data_scale
+    
+    # subset the data if a group is selected
+    if(isTRUE(input$qc_select_groups %in% names(revals$groups_list))){
+      tempIcr2 <- subset(peakIcr2, samples = revals$groups_list[[input$qc_select_groups]])
+    } 
+    else tempIcr2 <- peakIcr2
+    
+    # if their data scale selection does not match the object's data scale, transform before plotting
+    if(isTRUE(ds != input$qc_plot_scale)){
+      plot(edata_transform(tempIcr2, input$qc_plot_scale))
+    }
+    else plot(tempIcr2)
+    
+  })
+  
   ############## Filter tab ##############
   
   ### Filter Observers.  Contains much of the dropdown behavior and helper button functionality.
@@ -939,10 +978,8 @@ shinyServer(function(session, input, output) {
     }
   })
   
-  # UI output for comparison of
-  
-  
-  # UI output for group comparison
+  ## UI outputs for group/sample comparisons ##
+  ## conditional display depending on whether comparing two samples or two groups ## 
   output$plotUI_comparison_1 <- renderUI({
     req(input$choose_single != 0, !is.null(input$chooseplots))
     if(input$choose_single == 3){
@@ -979,23 +1016,7 @@ shinyServer(function(session, input, output) {
     }
   })
   
-  # output$plotUI_sample_comp_1 <- renderUI({
-  #   req(input$choose_single != 0, !is.null(input$chooseplots))
-  #   if(input$chooseplots == 3){
-  #     pickerInput('whichSample1', "Sample 1:",
-  #                 choices = setdiff(colnames(peakIcr2$e_data[-which(colnames(peakIcr2$e_data) == getEDataColName(peakIcr2))]),
-  #                                   input$whichSample2),
-  #                 options =  pickerOptions(dropupAuto = FALSE))
-  #   }
-  # })
-  # 
-  # output$plotUI_sample_comp_2 <- renderUI({
-  #   req(input$choose_single != 0, !is.null(input$chooseplots))
-  #   pickerInput("whichSample2", "Sample 2:", 
-  #               choices = setdiff(colnames(peakIcr2$e_data[-which(colnames(peakIcr2$e_data) == getEDataColName(peakIcr2))]),
-  #                                 input$whichSample1),
-  #               options =  pickerOptions(dropupAuto = FALSE))
-  # })
+  ##
   
   # UI output for single sample or single group
   output$plotUI_single <- renderUI({

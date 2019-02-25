@@ -80,7 +80,7 @@ shinyUI(tagList(useShinyjs(),
                                 ), 
                                 div(id = "js_data_scale", pickerInput('data_scale', 
                                                   label = 'On what scale are your data?',
-                                                  choices = list('Log base 2' = 'log2', 'Log base 10'='log10', 'Natural log'='ln', 
+                                                  choices = list('Log base 2' = 'log2', 'Log base 10'='log10', 'Natural log'='log', 
                                                                  'Presence/absence' = 'pres', 'Raw abundance'='abundance'), 
                                                   selected = 'abundance'
                                   )
@@ -274,14 +274,19 @@ shinyUI(tagList(useShinyjs(),
                      ##################### QUALITY CONTROL PANEL ###########################
                      tabPanel("Quality Control",
                               fluidRow(style = "display:flex;flex-direction:row;align-items:stretch",
-                                       HTML("Hello World!")
-                                       
-                                       
-                                
+                                      column(4,
+                                        wellPanel(
+                                                uiOutput("qc_plot_scale", style = "width:50%"),
+                                                uiOutput("qc_select_groups", style = "width:50%")
+                                                )
+                                      ),
+                                      column(8,
+                                        wellPanel(
+                                             plotlyOutput("qc_boxplots")
+                                             )
+                                      )
                               )
-                              
-                              
-                              )
+                      )
                    ),
                    ################## Filter Panel ##############################################
                    tabPanel("Filter",
