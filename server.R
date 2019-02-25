@@ -234,7 +234,7 @@ shinyServer(function(session, input, output) {
                               mf_cname = input$f_column,
                               isotopic_cname = input$iso_info_column,
                               isotopic_notation = as.character(input$iso_symbol),
-                              check_rows = TRUE)
+                              check_rows = TRUE, data_scale = input$data_scale)
         
       } # End C13 / no C13 if statement
       
@@ -244,7 +244,7 @@ shinyServer(function(session, input, output) {
                               e_meta = Emeta(), edata_cname = input$edata_id_col, 
                               fdata_cname = 'SampleId', mass_cname = input$edata_id_col, 
                               instrument_type = input$instrument, mf_cname = input$f_column,
-                              check_rows = TRUE)
+                              check_rows = TRUE, , data_scale = input$data_scale)
       } 
     }
     
@@ -284,7 +284,7 @@ shinyServer(function(session, input, output) {
                               c_cname = input$c_column, h_cname = input$h_column, 
                               n_cname = input$n_column, o_cname = input$o_column, 
                               s_cname = input$s_column, p_cname = input$p_column,
-                              check_rows = TRUE)
+                              check_rows = TRUE, data_scale = input$data_scale)
         
       }
       if (input$isotope_yn == 1 & isTRUE(input$iso_info_filter == 1)) { # If there's C13 # 
@@ -304,7 +304,7 @@ shinyServer(function(session, input, output) {
                               s_cname = input$s_column, p_cname = input$p_column, 
                               isotopic_cname = input$iso_info_column,
                               isotopic_notation = as.character(input$iso_symbol),
-                              check_rows = TRUE)
+                              check_rows = TRUE, data_scale = input$data_scale)
         
       } # End C13 / no C13 if statement
       

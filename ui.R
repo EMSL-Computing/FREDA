@@ -68,17 +68,23 @@ shinyUI(tagList(useShinyjs(),
                                                          "text/comma-separated-values,text/plain",
                                                          ".csv"))), 
                                 
-                                # Horizontal rule #
                                 tags$hr(style = "margin:6px"),
                                 
                                 # Get which instrument generated the data #
-                                inlineCSS('#instrument .btn-default, #select .btn-default {font-weight:lighter;}'),
+                                inlineCSS(list('#instrument .btn-default, #select .btn-default' = 'font-weight:lighter;',
+                                          '#js_data_scale .filter-option'='text-align:center;')),
                                 radioGroupButtons('instrument', 
                                             label = 'What instrument generated this data?',
-                                            choices = list(# 'Select an option' = 0,
-                                              '12T or 15T' = '12T', '21T'), 
+                                            choices = list('12T or 15T' = '12T', '21T'), 
                                             selected = '12T', justified = TRUE
                                 ), 
+                                div(id = "js_data_scale", pickerInput('data_scale', 
+                                                  label = 'On what scale are your data?',
+                                                  choices = list('Log base 2' = 'log2', 'Log base 10'='log10', 'Natural log'='ln', 
+                                                                 'Presence/absence' = 'pres', 'Raw abundance'='abundance'), 
+                                                  selected = 'abundance'
+                                  )
+                                ),
                                 
                                 tags$hr(style = "margin:6px"),
                                 
@@ -186,82 +192,97 @@ shinyUI(tagList(useShinyjs(),
                               ) # End main panel
                               
                             )), # End Upload tab
-                   ################## Groups Panel ###############################################
-                   tabPanel("Groups",
-                          inlineCSS("#group_samples .dropdown-toggle {background-color:#ffffff;border-radius:4px;}
-                                     #group_samples .bootstrap-select{border-radius:4px;}"),
-                          fluidRow(style = "display:flex;flex-direction:row;align-items:stretch",
-                            column(4,
-                              wellPanel(style = "height:100%",
-                                    tags$h4("Define a Group"),
-                                    div(id = "js_group_name", textInput("group_name", "Name of this group:")),
-                                    uiOutput("group_samples"),
-                                    actionButton("add_group", "Add this group"),
-                                    br(),
-                                    br(),
-                                    uiOutput("warnings_groups")
-                                )
-                            ),
-                            column(8,
-                              wellPanel(style = "height:100%",
-                                dataTableOutput("group_table"),
-                                # plotOutput("groups_plot")
-                                actionButton("remove_group", "Remove selected group")
-                              )
-                            )
-                          ),
-                          hr(),
-                          actionButton("goto_preprocess_main", "Continue to preproces tab")
-                   ),
-                   ################## Preprocess Panel ###############################################
-                     tabPanel("Preprocess",
-                              
-                              sidebarLayout(
-                                
-                                # Sidebar panel
-                                sidebarPanel(
-                                  
-                                  div(class = "adjustdown",uiOutput("which_calcs")),
-                                  
-                                  # Action button: add test columns with reasults to peakIcr2
-                                  shinyjs::disabled(actionButton('preprocess_click', 'Process Data', icon = icon("cog"), lib = "glyphicon")),
-                                  br(),
-                                  uiOutput("warnings_preprocess")
-                                ), # End sidebar panel
-                                
-                                mainPanel(
-                                  
-                                  # Set default main panel width 
-                                  width = 8,
-  
-                                  # Include numeric and categorical summaries in a well panel
-                                  
-                                  wellPanel(
-                                    tags$div(class = "row",
-                                             tags$div(class = "col-sm-5", style = "height:350px;overflow-y:scroll;",
-                                                      uiOutput("numeric_header"),
-                                                      dataTableOutput('numeric_summary')
-                                             ),
-                                             tags$div(class = "col-sm-7", style = "height:350px;overflow-y:scroll;",
-                                                      uiOutput("cat_header"),
-                                                      uiOutput('categorical_summary')
-                                                      
-                                            )
-  
-                                    )
-                                  ),
-                                  
-                                  # Drop down list: which histogram should be displayed?
-                                  uiOutput('which_hist_out'),
-                                  
-                                  # Plot: histogram
-                                  plotlyOutput('preprocess_hist')
-                                  
-                                ) # End main panel on Preprocess tab #
-                                
-                              )), # End Preprocess tab #
-
                    
+                   ######################### PREPROCESSING NAVBAR GROUP ############################
+                   navbarMenu("Preprocessing",
+                     
+                     ################## Groups Panel ###############################################
+                     tabPanel("Groups",
+                            inlineCSS("#group_samples .dropdown-toggle {background-color:#ffffff;border-radius:4px;}
+                                       #group_samples .bootstrap-select{border-radius:4px;}"),
+                            fluidRow(style = "display:flex;flex-direction:row;align-items:stretch",
+                              column(4,
+                                wellPanel(style = "height:100%",
+                                      tags$h4("Define a Group"),
+                                      div(id = "js_group_name", textInput("group_name", "Name of this group:")),
+                                      uiOutput("group_samples"),
+                                      actionButton("add_group", "Add this group"),
+                                      br(),
+                                      br(),
+                                      uiOutput("warnings_groups")
+                                  )
+                              ),
+                              column(8,
+                                wellPanel(style = "height:100%",
+                                  dataTableOutput("group_table"),
+                                  # plotOutput("groups_plot")
+                                  actionButton("remove_group", "Remove selected group")
+                                )
+                              )
+                            ),
+                            hr(),
+                            actionButton("goto_preprocess_main", "Continue to preproces tab")
+                     ),
+                     ################## Preprocess Panel ###############################################
+                       tabPanel("Preprocess",
+                                
+                                sidebarLayout(
+                                  
+                                  # Sidebar panel
+                                  sidebarPanel(
+                                    
+                                    div(class = "adjustdown",uiOutput("which_calcs")),
+                                    
+                                    # Action button: add test columns with reasults to peakIcr2
+                                    shinyjs::disabled(actionButton('preprocess_click', 'Process Data', icon = icon("cog"), lib = "glyphicon")),
+                                    br(),
+                                    uiOutput("warnings_preprocess")
+                                  ), # End sidebar panel
+                                  
+                                  mainPanel(
+                                    
+                                    # Set default main panel width 
+                                    width = 8,
+    
+                                    # Include numeric and categorical summaries in a well panel
+                                    
+                                    wellPanel(
+                                      tags$div(class = "row",
+                                               tags$div(class = "col-sm-5", style = "height:350px;overflow-y:scroll;",
+                                                        uiOutput("numeric_header"),
+                                                        dataTableOutput('numeric_summary')
+                                               ),
+                                               tags$div(class = "col-sm-7", style = "height:350px;overflow-y:scroll;",
+                                                        uiOutput("cat_header"),
+                                                        uiOutput('categorical_summary')
+                                                        
+                                              )
+    
+                                      )
+                                    ),
+                                    
+                                    # Drop down list: which histogram should be displayed?
+                                    uiOutput('which_hist_out'),
+                                    
+                                    # Plot: histogram
+                                    plotlyOutput('preprocess_hist')
+                                    
+                                  ) # End main panel on Preprocess tab #
+                                  
+                                )), # End Preprocess tab #
+                     
+                     ##################### QUALITY CONTROL PANEL ###########################
+                     tabPanel("Quality Control",
+                              fluidRow(style = "display:flex;flex-direction:row;align-items:stretch",
+                                       HTML("Hello World!")
+                                       
+                                       
+                                
+                              )
+                              
+                              
+                              )
+                   ),
                    ################## Filter Panel ##############################################
                    tabPanel("Filter",
                             
