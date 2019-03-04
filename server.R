@@ -40,7 +40,7 @@ shinyServer(function(session, input, output) {
                            warningmessage_visualize = list(), warningmessage_filter = list(), warningmessage_preprocess = list(), warningmessage_groups = list(),
                            current_plot = NULL, plot_list = list(), plot_data = list(), reset_counter = 0,
                            chooseplots = NULL, filter_click_disable = list(init = TRUE), 
-                           groups_list = list(), remove_samples = list())
+                           groups_list = list(), removed_samples = list())
   
   exportTestValues(plot_data = revals$plot_data_export, peakICR = revals$peakICR_export, color_choices = revals$color_by_choices)
   ######## Welcome Tab #############
@@ -244,7 +244,7 @@ shinyServer(function(session, input, output) {
                               e_meta = Emeta(), edata_cname = input$edata_id_col, 
                               fdata_cname = 'SampleId', mass_cname = input$edata_id_col, 
                               instrument_type = input$instrument, mf_cname = input$f_column,
-                              check_rows = TRUE, , data_scale = input$data_scale)
+                              check_rows = TRUE, data_scale = input$data_scale)
       } 
     }
     
@@ -312,6 +312,9 @@ shinyServer(function(session, input, output) {
     
     # create nonreactive peakIcr object
     peakIcr2 <<- res
+    
+    # reset 'removed samples' reval
+    revals$removed_samples <- list()
     
     return(res)
     
@@ -547,6 +550,9 @@ shinyServer(function(session, input, output) {
       }
     })
     
+    # reset 'removed samples' reval
+    revals$removed_samples <- list()
+    
     if (isTRUE(getOption("shiny.testmode"))) {
       exportTestValues(peakIcr2 = peakIcr2)
     }
@@ -641,35 +647,89 @@ shinyServer(function(session, input, output) {
     validate(need(exists("peakIcr2", where = 1), message = "No data object found, please verify you have successfully uploaded data"))
     pickerInput("qc_plot_scale", "Plot on scale:", 
                 choices = list('Log base 2' = 'log2', 'Log base 10'='log10', 'Natural log'='log', 
-                               'Presence/absence' = 'pres', 'Raw abundance'='abundance'), 
+                               'Presence/absence' = 'pres', 'Raw intensity'='abundance'), 
                 selected = attributes(peakIcr2)$data_info$data_scale)
     
   })
   
   # Group selection
   output$qc_select_groups <- renderUI({
-    pickerInput("qc_select_groups", "Select a Group", 
-                choices = c("Plot all samples", names(revals$groups_list))
+    pickerInput("qc_select_groups", "Select groups:", 
+                choices = names(revals$groups_list),
+                multiple = TRUE
     )
+  })
+  
+  # PCOA Axis Selection
+  
+  output$qc_select_x <- renderUI({
+    nsamps <- length(setdiff(sample_names(), revals$removed_samples))
+    pickerInput('pc_x', 'X-axis Principal Component', choices = seq(1,min(nsamps, 5)), selected=1)
+  })
+  
+  output$qc_select_y <- renderUI({
+    nsamps <- length(setdiff(sample_names(), revals$removed_samples))
+    pickerInput('pc_y', 'Y-axis Principal Component', choices = seq(1,min(nsamps, 5)), selected=2)
   })
   
   # Boxplots
   output$qc_boxplots <- renderPlotly({
     req(exists("peakIcr2", where = 1))
+    req(!is.null(input$qc_plot_scale))
     
+    input$update_boxplot_axes
+    
+    color_by <- if(isTRUE(input$qc_plot_scale %in% c('log2', 'log10', 'log', 'abundance'))) 'groups' else 'molform'
     ds = attributes(peakIcr2)$data_info$data_scale
     
     # subset the data if a group is selected
-    if(isTRUE(input$qc_select_groups %in% names(revals$groups_list))){
-      tempIcr2 <- subset(peakIcr2, samples = revals$groups_list[[input$qc_select_groups]])
+    if(isTRUE(all(input$qc_select_groups %in% names(revals$groups_list)) & !is.null(input$qc_select_groups))){
+      # get set of unique samples in all selected groups
+      samples <- revals$groups_list[input$qc_select_groups] %>% unlist() %>% unique() %>% setdiff(revals$removed_samples)
+      tempIcr2 <- subset(peakIcr2, samples = samples)
     } 
     else tempIcr2 <- peakIcr2
     
     # if their data scale selection does not match the object's data scale, transform before plotting
     if(isTRUE(ds != input$qc_plot_scale)){
-      plot(edata_transform(tempIcr2, input$qc_plot_scale))
+      plot(edata_transform(tempIcr2, input$qc_plot_scale), colorBy = color_by)
     }
-    else plot(tempIcr2)
+    else plot(tempIcr2, xlabel=isolate(input$qc_boxplot_xlab), ylabel=isolate(input$qc_boxplot_ylab), 
+              title = isolate(input$qc_boxplot_title), colorBy=color_by)
+    
+  })
+  
+  # qc plots
+  output$qc_pcoa_plots <- renderPlotly({
+    req(exists("peakIcr2", where = 1))
+    req(!is.null(input$pc_x) & !is.null(input$pc_y))
+    validate(need(length(sample_names()>0), "No data found, or only 1 sample"))
+    
+    samples <- setdiff(sample_names(), revals$removed_samples)
+    
+    # for each sample create a string indicating each group it belongs to
+    if(!is.null(input$qc_select_groups)){
+      groups <- sapply(samples, function(sampname){
+        tempgroup = NULL
+        for(grp in names(revals$groups_list[input$qc_select_groups])){
+          if(isTRUE(sampname %in% revals$groups_list[[grp]])) tempgroup[length(tempgroup)+1] <- grp
+        }
+
+        if(is.null(tempgroup)){
+          return("None")
+          }
+        else return(paste(tempgroup, collapse="_"))
+      })
+
+      group_DF <- data.frame(samples, groups)
+      colnames(group_DF) <- c(getFDataColName(peakIcr2), "Group")
+    }
+    else group_DF <- NULL
+
+    tempIcr2 <- fticRanalysis:::setGroupDF(peakIcr2, group_DF)
+    pcs <- getPrincipalCoordinates(tempIcr2)
+
+    plotPrincipalCoordinates(pcs, x=as.integer(input$pc_x), y=as.integer(input$pc_y), icrData=tempIcr2)
     
   })
   
