@@ -111,7 +111,8 @@ lapply(1:3, function(i){
   el = paste0("custom", i)
   
   observeEvent(c(input[[paste0("minimum_custom", i)]], input[[paste0("maximum_custom", i)]], 
-                 input[[paste0("categorical_custom", i)]], input[[paste0("na_custom", i)]]), {
+                 input[[paste0("categorical_custom", i)]], input[[paste0("na_custom", i)]],
+                 input$top_page), {
                   req(input[[el]] != "Select item")
                    
                    revals$redraw_filter_plot <- FALSE

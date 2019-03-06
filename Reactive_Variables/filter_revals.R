@@ -22,7 +22,7 @@ summaryFilterDataFrame <- eventReactive(revals$reac_filter_plot, {
 
 ### ids which are passed to summaryFilt() to calculate the remaining peaks for table and bar plot
 # removed sample filter ids
-sampfilter_ids <- eventReactive(c(input$keep_samples, input$samplefilter),{
+sampfilter_ids <- eventReactive(c(input$keep_samples, input$samplefilter, input$top_page),{
   if(input$samplefilter){
     if(length(input$keep_samples) == 0) NULL
     else{
@@ -36,7 +36,7 @@ sampfilter_ids <- eventReactive(c(input$keep_samples, input$samplefilter),{
 })
 
 # removed mass filter filter ids
-massfilter_ids <- eventReactive(c(input$massfilter, input$min_mass, input$max_mass),{
+massfilter_ids <- eventReactive(c(input$massfilter, input$min_mass, input$max_mass, input$top_page),{
   revals$redraw_filter_plot <- FALSE
   if (input$massfilter){
     mass_filter(uploaded_data()) %>% 
@@ -47,7 +47,7 @@ massfilter_ids <- eventReactive(c(input$massfilter, input$min_mass, input$max_ma
 })
 
 # removed molecule filter ids
-molfilter_ids <- eventReactive(c(input$minobs, input$molfilter, input$keep_samples, input$samplefilter), {
+molfilter_ids <- eventReactive(c(input$minobs, input$molfilter, input$keep_samples, input$samplefilter, input$top_page), {
   if (input$molfilter){
     if(input$samplefilter & length(input$keep_samples) > 0){
       uploaded_data() %>% 
@@ -66,7 +66,7 @@ molfilter_ids <- eventReactive(c(input$minobs, input$molfilter, input$keep_sampl
 })
 
 # removed formula filter ids
-formfilter_ids <- eventReactive(input$formfilter, {
+formfilter_ids <- eventReactive(c(input$formfilter, input$top_page), {
   if (input$formfilter){
     formula_filter(uploaded_data()) %>%
       dplyr::filter(Formula_Assigned == TRUE) %>%

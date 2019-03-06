@@ -315,6 +315,7 @@ shinyServer(function(session, input, output) {
     
     # reset 'removed samples' reval
     revals$removed_samples <- list()
+    revals$groups_list <- list()
     
     return(res)
     
@@ -661,7 +662,6 @@ shinyServer(function(session, input, output) {
   })
   
   # PCOA Axis Selection
-  
   output$qc_select_x <- renderUI({
     nsamps <- length(setdiff(sample_names(), revals$removed_samples))
     pickerInput('pc_x', 'X-axis Principal Component', choices = seq(1,min(nsamps, 5)), selected=1)
@@ -692,7 +692,9 @@ shinyServer(function(session, input, output) {
     
     # if their data scale selection does not match the object's data scale, transform before plotting
     if(isTRUE(ds != input$qc_plot_scale)){
-      plot(edata_transform(tempIcr2, input$qc_plot_scale), colorBy = color_by)
+      plot(edata_transform(tempIcr2, input$qc_plot_scale), 
+           xlabel=isolate(input$qc_boxplot_xlab), ylabel=isolate(input$qc_boxplot_ylab), 
+           title = isolate(input$qc_boxplot_title),colorBy = color_by)
     }
     else plot(tempIcr2, xlabel=isolate(input$qc_boxplot_xlab), ylabel=isolate(input$qc_boxplot_ylab), 
               title = isolate(input$qc_boxplot_title), colorBy=color_by)
@@ -700,38 +702,38 @@ shinyServer(function(session, input, output) {
   })
   
   # qc plots
-  output$qc_pcoa_plots <- renderPlotly({
-    req(exists("peakIcr2", where = 1))
-    req(!is.null(input$pc_x) & !is.null(input$pc_y))
-    validate(need(length(sample_names()>0), "No data found, or only 1 sample"))
-    
-    samples <- setdiff(sample_names(), revals$removed_samples)
-    
-    # for each sample create a string indicating each group it belongs to
-    if(!is.null(input$qc_select_groups)){
-      groups <- sapply(samples, function(sampname){
-        tempgroup = NULL
-        for(grp in names(revals$groups_list[input$qc_select_groups])){
-          if(isTRUE(sampname %in% revals$groups_list[[grp]])) tempgroup[length(tempgroup)+1] <- grp
-        }
-
-        if(is.null(tempgroup)){
-          return("None")
-          }
-        else return(paste(tempgroup, collapse="_"))
-      })
-
-      group_DF <- data.frame(samples, groups)
-      colnames(group_DF) <- c(getFDataColName(peakIcr2), "Group")
-    }
-    else group_DF <- NULL
-
-    tempIcr2 <- fticRanalysis:::setGroupDF(peakIcr2, group_DF)
-    pcs <- getPrincipalCoordinates(tempIcr2)
-
-    plotPrincipalCoordinates(pcs, x=as.integer(input$pc_x), y=as.integer(input$pc_y), icrData=tempIcr2)
-    
-  })
+  # output$qc_pcoa_plots <- renderPlotly({
+  #   req(exists("peakIcr2", where = 1))
+  #   req(!is.null(input$pc_x) & !is.null(input$pc_y))
+  #   validate(need(length(sample_names()>0), "No data found, or only 1 sample"))
+  #   
+  #   samples <- setdiff(sample_names(), revals$removed_samples)
+  #   
+  #   # for each sample create a string indicating each group it belongs to
+  #   if(!is.null(input$qc_select_groups)){
+  #     groups <- sapply(samples, function(sampname){
+  #       tempgroup = NULL
+  #       for(grp in names(revals$groups_list[input$qc_select_groups])){
+  #         if(isTRUE(sampname %in% revals$groups_list[[grp]])) tempgroup[length(tempgroup)+1] <- grp
+  #       }
+  # 
+  #       if(is.null(tempgroup)){
+  #         return("None")
+  #         }
+  #       else return(paste(tempgroup, collapse="_"))
+  #     })
+  # 
+  #     group_DF <- data.frame(samples, groups)
+  #     colnames(group_DF) <- c(getFDataColName(peakIcr2), "Group")
+  #   }
+  #   else group_DF <- NULL
+  # 
+  #   tempIcr2 <- fticRanalysis:::setGroupDF(peakIcr2, group_DF)
+  #   pcs <- getPrincipalCoordinates(tempIcr2)
+  # 
+  #   plotPrincipalCoordinates(pcs, x=as.integer(input$pc_x), y=as.integer(input$pc_y), icrData=tempIcr2)
+  #   
+  # })
   
   ############## Filter tab ##############
   
@@ -990,7 +992,7 @@ shinyServer(function(session, input, output) {
     validate(need(exists("peakIcr2", where = 1), "A peakIcr object was not found, please check that you have successfully uploaded data"))
     req(input$top_page == "Visualize")
     
-    choices <- c('Van Krevelen Plot', 'Kendrick Plot', 'Density Plot', 'Custom Scatter Plot')
+    choices <- c('Van Krevelen Plot', 'Kendrick Plot', 'Density Plot', 'Custom Scatter Plot', 'PCOA Plot')
     
     #disallow kendrick plots if either kmass or kdefect not calculated/present in emeta
     if (is.null(attr(peakIcr2, "cnames")$kmass_cname) | is.null(attr(peakIcr2, "cnames")$kdefect_cname)){
@@ -1002,32 +1004,36 @@ shinyServer(function(session, input, output) {
       choices <- choices[choices != "Van Krevelen Plot"]
     }
     
-    #disallow density plots if at least 1 
+    #disallow density plots if there are no numeric columns
     if (!any(sapply(peakIcr2$e_meta %>% dplyr::select(-one_of(getEDataColName(peakIcr2))), is.numeric))){
       choices <- choices[choices != c("Density Plot", "Custom Scatter Plot")]
+    }
+    
+    if (nrow(peakIcr2$f_data) < 2){
+      choices <- choices[choices != 'PCOA Plot']
     }
     
     #if everything is disallowed, give warning and silently stop execution.
     if (all(choices == 0)) return(tags$p("There is not enough information in the molecular identification file to produce any plots.  Choose more variables to calculate in the preprocess tab or append some metadata to the molecular identification file prior to uploading", style = "color:gray"))
     
-    radioGroupButtons('chooseplots', 
+    selectInput('chooseplots', 'Choose a Plot Type',
                   choices = choices, 
-                  selected = 0, justified = TRUE
+                  selected = 0
     )
   })
   
   # Logic to force single sample selection in the case where only 1 sample is present
   output$plotUI <- renderUI({
     req(!is.null(input$chooseplots))
-    if (nrow(peakIcr2$f_data) == 1 | input$chooseplots == "Custom Scatter Plot"){
+    if (nrow(peakIcr2$f_data) == 1 | (input$chooseplots %in% c('Custom Scatter Plot', 'PCOA Plot'))){
       return(tagList(
-        tags$div(class = "grey_out",
+        tags$div(class = 'grey_out',
           hidden(selectInput('choose_single', 'I want to plot using:',
                     choices = c('Make a selection' = 0, 'A single sample' = 1, 'Multiple samples by group' = 2, 
                                 'A comparison of groups' = 3, 'A comparison of two samples' = 4),
                     selected = 1))
-          ),
-        tags$p("No grouping options for custom scatter plots and single sample datasets.", style = "color:gray;font-size:small;margin-top:3px")
+          )
+        #tags$p("No grouping options for custom scatter plots and single sample datasets.", style = "color:gray;font-size:small;margin-top:3px")
       ))
     }
     else {
@@ -1080,7 +1086,7 @@ shinyServer(function(session, input, output) {
   
   # UI output for single sample or single group
   output$plotUI_single <- renderUI({
-    req(input$choose_single != 0, !is.null(input$chooseplots))
+    req(input$choose_single != 0, !is.null(input$chooseplots), input$chooseplots != 'PCOA Plot')
     if(input$choose_single == 2){
       tagList(
           div(id = "js_whichSamples",
@@ -1244,11 +1250,19 @@ shinyServer(function(session, input, output) {
       
     }
     
-    if (input$chooseplots == 'Custom Scatter Plot') {
+    if (input$chooseplots %in% c('Custom Scatter Plot', 'PCOA Plot')) {
       # allow only numeric columns for the axes but keep categorical coloring options
       numeric_cols <- which(sapply(full_join(plot_data()$e_meta, plot_data()$e_data) %>% dplyr::select(color_by_choices), is.numeric))
       
-      axes_choices <- revals$axes_choices <- color_by_choices[numeric_cols]
+      if(input$chooseplots == 'Custom Scatter Plot'){
+        axes_choices <- revals$axes_choices <- color_by_choices[numeric_cols]
+      }
+      else if(input$chooseplots == 'PCOA Plot'){
+        axes_choices <- 1:min(5, ncol(peakIcr2$e_data)-2)
+        names(axes_choices) <- paste0('PC', axes_choices)
+        selected_x <- 1
+        selected_y <- 2
+      }
       
       updateSelectInput(session, 'scatter_x', "Horizontal Axis Variable:",
                         choices = axes_choices[!(axes_choices %in% c(input$scatter_y, input$vk_colors))],
@@ -1282,10 +1296,11 @@ shinyServer(function(session, input, output) {
     
     # for testing if plot actually got updated in test mode
     exportTestValues(plot = NULL, plot_attrs = NULL)
-
+    
     if (isolate(v$clearPlot)){
       return(NULL)
-    } else {
+    } 
+    else {
       # Make sure a plot stype selection has been chosen
       validate(need(input$choose_single != 0, message = "Please select plotting criteria"))
       
@@ -1422,6 +1437,14 @@ shinyServer(function(session, input, output) {
                                                  no = input$y_axis_input)),
                          title = isolate(input$title_input), legendTitle = revals$legendTitle)
         
+      }
+      #----------- PCOA Plot ----------#
+      if(input$chooseplots==('PCOA Plot')){
+        # maximum of 5 pcs or the number of samples - 2 (#columns - ID column - 1)
+        pcs <- getPrincipalCoordinates(plot_data(), n_dims = min(5, ncol(plot_data()$e_data)-2))
+        p <- plotPrincipalCoordinates(pcs, x=as.numeric(input$scatter_x), y=as.numeric(input$scatter_y), 
+                                      xlabel = isolate(input$x_axis_input), ylabel=isolate(input$y_axis_input),
+                                      icrData=plot_data())
       }
     }
     

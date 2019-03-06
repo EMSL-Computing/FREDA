@@ -18,6 +18,10 @@ plot_defaults <- reactive({
     defs <- formals(densityPlot)
     defs$ylabel = "Density"
     defs$xlabel = NULL
+  } else if (input$chooseplots == 'PCOA Plot') {
+    defs <- formals(plotPrincipalCoordinates)
+    defs$xlabel = 'PC1'
+    defs$ylabel = 'PC2'
   }
   return(defs)
 })
@@ -54,6 +58,35 @@ plot_data <- eventReactive(input$plot_submit,{
   
   req(calc_vars)
   validate(need(!is.null(input$chooseplots) & input$choose_single !=0, message = "Please select plot type"))
+  
+  if(input$chooseplots=='PCOA Plot'){
+    req(exists("peakIcr2", where = 1))
+    validate(need(length(sample_names()>0), "No data found, or only 1 sample"))
+    
+    samples <- setdiff(sample_names(), revals$removed_samples)
+    
+    # for each sample create a string indicating each group it belongs to
+    if(!is.null(input$qc_select_groups)){
+      groups <- sapply(samples, function(sampname){
+        tempgroup = NULL
+        for(grp in names(revals$groups_list[input$qc_select_groups])){
+          if(isTRUE(sampname %in% revals$groups_list[[grp]])) tempgroup[length(tempgroup)+1] <- grp
+        }
+        
+        if(is.null(tempgroup)){
+          return("None")
+        }
+        else return(paste(tempgroup, collapse="_"))
+      })
+      
+      group_DF <- data.frame(samples, groups)
+      colnames(group_DF) <- c(getFDataColName(peakIcr2), "Group")
+    }
+    else group_DF <- NULL
+    
+    temp_data <- fticRanalysis:::setGroupDF(peakIcr2, group_DF)
+    return(temp_data)
+  }
   if (is.null(input$choose_single)){ # corresponds to data with a single sample
     return(peakIcr2) # no need to subset
   }

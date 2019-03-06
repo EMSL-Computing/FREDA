@@ -164,16 +164,26 @@ observeEvent(input$chooseplots, {
   color_select_label <- if(input$chooseplots == 'Density Plot') "Plot Distribution of Variable:" else "Color by:"
   
   updateSelectInput(session, 'vk_colors', label = color_select_label, choices = emeta_display_choices(), selected = emeta_display_choices()[1])
-  updateSelectInput(session, 'scatter_x', choices = emeta_display_choices()[numeric_cols][-3], selected = emeta_display_choices()[numeric_cols][2])
-  updateSelectInput(session, 'scatter_y', choices = emeta_display_choices()[numeric_cols][-2], selected = emeta_display_choices()[numeric_cols][3])
+  
+  if(input$chooseplots == 'Custom Scatter Plot'){
+    updateSelectInput(session, 'scatter_x', choices = emeta_display_choices()[numeric_cols][-3], selected = emeta_display_choices()[numeric_cols][2])
+    updateSelectInput(session, 'scatter_y', choices = emeta_display_choices()[numeric_cols][-2], selected = emeta_display_choices()[numeric_cols][3])
+  }
+  else if(input$chooseplots == 'PCOA Plot') {
+    axes_choices <- 1:min(5, ncol(peakIcr2$e_data)-2)
+    names(axes_choices) <- paste0('PC', axes_choices)
+    updateSelectInput(session, 'scatter_x', choices = axes_choices, selected=1)
+    updateSelectInput(session, 'scatter_y', choices = axes_choices, selected=2)
+  }
   
   # Rest of this observer controls shinyjs disable/enable behavior for reactive plot dropdowns
-  dropdown_ids <- c("vkbounds", "vk_colors", "scatter_x", "scatter_y", "colorpal", "legend_title_input")
-  choices = list('Van Krevelen Plot' = c("vk_colors", "vkbounds", "colorpal", "legend_title_input"), 
-                 'Kendrick Plot' = c("vk_colors", "colorpal", "legend_title_input"),
-                 'Density Plot' = "vk_colors", 
-                 'Custom Scatter Plot' = c("vk_colors", "scatter_x", "scatter_y", "colorpal", "legend_title_input"), 
-                 'Select an Option' = "0")
+  dropdown_ids <- c('vkbounds', 'vk_colors', 'scatter_x', 'scatter_y', 'colorpal', 'legend_title_input')
+  choices = list('Van Krevelen Plot' = c('vk_colors', 'vkbounds', 'colorpal', 'legend_title_input'), 
+                 'Kendrick Plot' = c('vk_colors', 'colorpal', 'legend_title_input'),
+                 'Density Plot' = 'vk_colors', 
+                 'Custom Scatter Plot' = c('vk_colors', 'scatter_x', 'scatter_y', 'colorpal', 'legend_title_input'),
+                 'PCOA Plot' = c('scatter_x', 'scatter_y', 'legend_title_input'),
+                 'Select an Option' = '0')
   
   # Toggle axes and coloring options depending on plot type
   lapply(dropdown_ids, function(inputid){
@@ -184,19 +194,19 @@ observeEvent(input$chooseplots, {
 
 # maintain mutual exclusivity of scatterplot axes and colors
 observeEvent(c(input$scatter_x, input$vk_colors),{
-  updateSelectInput(session, "scatter_y", 
+  updateSelectInput(session, 'scatter_y', 
                     choices = revals$axes_choices[!(revals$axes_choices %in% c(input$scatter_x, input$vk_colors))], 
                     selected = input$scatter_y)
 })
 
 observeEvent(c(input$scatter_y, input$vk_colors),{
-  updateSelectInput(session, "scatter_x", 
+  updateSelectInput(session, 'scatter_x', 
                     choices = revals$axes_choices[!(revals$axes_choices %in% c(input$scatter_y, input$vk_colors))], 
                     selected = input$scatter_x)
 })
 
 observeEvent(c(input$scatter_x, input$scatter_y),{
-  updateSelectInput(session, "vk_colors", 
+  updateSelectInput(session, 'vk_colors', 
                     choices = revals$color_by_choices[!(revals$color_by_choices %in% c(input$scatter_y, input$scatter_x))], 
                     selected = input$vk_colors)
 })
@@ -206,7 +216,7 @@ observeEvent(c(input$whichGroups1, input$whichGroups2, input$chooseplots, g1_sam
   overlap <- intersect(g1_samples(), g2_samples())
   cond_overlap <- length(overlap) != 0
   
-  toggleState("plot_submit", !(cond_overlap & isTRUE(input$choose_single == 3)))
+  toggleState('plot_submit', !(cond_overlap & isTRUE(input$choose_single == 3)))
   revals$warningmessage_visualize$group_overlap <- if(cond_overlap & isTRUE(input$choose_single == 3)) sprintf("<p style = color:red>Please choose mutually exclusive groups.  The following samples were present in both groups: %s.</p>", paste(overlap, collapse = ", ")) else NULL
   
 })

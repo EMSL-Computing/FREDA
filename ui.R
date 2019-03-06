@@ -277,18 +277,18 @@ shinyUI(tagList(useShinyjs(),
                                               textInput('qc_boxplot_xlab', "X-axis"),
                                               textInput('qc_boxplot_ylab', 'Y-axis'),
                                               textInput('qc_boxplot_title', 'Title'),
-                                              actionButton('update_boxplot_axes', "Reset Boxplot Axes"),
-                                              hr(style='margin:2px'),
-                                              splitLayout(cellArgs = list(style='overflow:visible'),
-                                                uiOutput('qc_select_x'),
-                                                uiOutput('qc_select_y')
-                                                )
+                                              actionButton('update_boxplot_axes', "Reset Boxplot Axes")
+                                              # hr(style='margin:2px'),
+                                              # splitLayout(cellArgs = list(style='overflow:visible'),
+                                              #   uiOutput('qc_select_x'),
+                                              #   uiOutput('qc_select_y')
+                                              #   )
                                               )
                                     ),
                                     column(8,
                                       wellPanel(
-                                           div(id='style_qc_boxplots', style='border-style:solid;border-width:1px', plotlyOutput("qc_boxplots") %>% withSpinner(color = "orange", type = 8)),
-                                           div(id='style_qc_x', style='border-style:solid;border-width:1px;margin-top:3px', plotlyOutput("qc_pcoa_plots") %>% withSpinner(color = "orange", type = 8))
+                                           div(id='style_qc_boxplots', style='border-style:solid;border-width:1px', plotlyOutput("qc_boxplots") %>% withSpinner(color = "orange", type = 8))
+                                           # div(id='style_qc_x', style='border-style:solid;border-width:1px;margin-top:3px', plotlyOutput("qc_pcoa_plots") %>% withSpinner(color = "orange", type = 8))
                                            #uiOutput("download_qc")
                                            )
                                     )
@@ -439,61 +439,79 @@ shinyUI(tagList(useShinyjs(),
                    tabPanel("Visualize",
                             
                             fluidRow(
-                              
                               # Sidebar Panel
-                              column(4,
-                                # Select Plot Type
-                                inlineCSS("#chooseplots .btn{font-size:10.5pt;} #chooseplots .btn-group-container-sw{display:block;}" ),
-                                uiOutput('plot_type', style = "margin-top:-10px"),     
+                              div(id='viz_sidebar', column(4,
                                 
-                                wellPanel(style = "margin-top:-20px",
-                                
-                                # Select samples/groups
-                                  uiOutput("plotUI"),
+                                # Begin collapsible section                           
+                                bsCollapse(id='viz_sidebar', open = c('peakplots', 'axlabs', 'downloads'), multiple=TRUE, 
                                   
-                                  # Single dropdown for 1 sample/group or....
-                                  shinyjs::hidden(div(id = "js_toggle_single", uiOutput("plotUI_single"))),
-                                  
-                                  # ...two dropdowns and extra options for group comparison
-                                  inlineCSS("#js_toggle_groups .dropdown-toggle, #js_toggle_single .dropdown-toggle {background-color:#ffffff;border-radius:4px;}
-                                                #js_toggle_groups .bootstrap-select, #js_toggle_single .bootstrap-select {border-radius:4px;}"),
-                                  shinyjs::hidden(div(id = "js_toggle_groups", 
-                                                      tagList(div(id = "js_whichGroups1", uiOutput("plotUI_comparison_1")), 
-                                                              div(id = "js_whichGroups2", uiOutput("plotUI_comparison_2"))))),
-                                  conditionalPanel(condition = "(input.choose_single == 3 || input.choose_single == 4) && input.chooseplots !== '0'", uiOutput("summary_fxn_out", class = "adjustdown")),
-                                  
-                                  # Label inputs
-                                  tags$hr(style = "thickness:5px"),
-                                  
-                                  splitLayout(
-                                    uiOutput("title_out"),
-                                    tags$div(id = "js_legend_title_input", uiOutput("legend_title_out"))
-                                    ),
-                                  splitLayout(
-                                    uiOutput("x_axis_out"),
-                                    uiOutput("y_axis_out")
+                                  # Plot Parameters
+                                  bsCollapsePanel('Construct A Plot', value = 'peakplots',
+                                    # Select Plot Type
+                                  inlineCSS("#chooseplots .btn{font-size:10.5pt;} #chooseplots .btn-group-container-sw{display:block;}" ),
+                                  uiOutput('plot_type', style = "margin-top:-10px"),     
+
+                                  # Select samples/groups
+                                    uiOutput("plotUI"),
+                                    
+                                    # Single dropdown for 1 sample/group or....
+                                    shinyjs::hidden(div(id = "js_toggle_single", uiOutput("plotUI_single"))),
+                                    
+                                    # ...two dropdowns and extra options for group comparison
+                                    inlineCSS("#js_toggle_groups .dropdown-toggle, #js_toggle_single .dropdown-toggle {background-color:#ffffff;border-radius:4px;}
+                                                  #js_toggle_groups .bootstrap-select, #js_toggle_single .bootstrap-select {border-radius:4px;}"),
+                                    shinyjs::hidden(div(id = "js_toggle_groups", 
+                                                        tagList(div(id = "js_whichGroups1", uiOutput("plotUI_comparison_1")), 
+                                                                div(id = "js_whichGroups2", uiOutput("plotUI_comparison_2"))))),
+                                    conditionalPanel(condition = "(input.choose_single == 3 || input.choose_single == 4) && input.chooseplots !== '0'", uiOutput("summary_fxn_out", class = "adjustdown")),
+                                    
+                                    # Label inputs
+                                    tags$hr(style = "thickness:5px")
+                                    
                                   ),
-                                  
-                                
-                                  # Seperate buttons to generate plot or simply update labels without recalculating data
-                                  
-                                  shinyjs::disabled(
-                                    fluidRow(
-                                      column(width = 6,
-                                             actionButton("plot_submit", label = "Generate Plot", icon = icon("plus"), lib = "glyphicon")
-                                      ),
-                                      column(width = 6,
-                                             actionButton("update_axes", label = "Update Labels", icon = icon("refresh"), lib = "glyphicon")
+                                  # Axes Options
+                                  bsCollapsePanel('Axes Labels', value = 'axlabs',
+                                      splitLayout(
+                                        uiOutput("title_out"),
+                                        tags$div(id = "js_legend_title_input", uiOutput("legend_title_out"))
+                                        ),
+                                      splitLayout(
+                                        uiOutput("x_axis_out"),
+                                        uiOutput("y_axis_out")
                                       )
-                                    )
                                   ),
+                                  bsCollapsePanel('Save Plot', value = 'downloads',
+                                      inlineCSS("#saveplot_ui .glyphicon{float:left;}"),
+                                      div(id = "saveplot_ui", style = "display:inline-block;vertical-align:top;margin:10px 0px 0px 10px",
+                                          div(shinyjs::disabled(actionButton(inputId = "add_plot", style = "width:100%", label = "Save This Plot for Later Download", icon = icon("save")))),
+                                          br(),
+                                          div(uiOutput("view_plots"))
+                                      )
+                                    
+                                  )
+                                ),
+                                      
+                                    
+                                      # Seperate buttons to generate plot or simply update labels without recalculating data
+                                      
+                                      shinyjs::disabled(
+                                        fluidRow(
+                                          column(width = 6,
+                                                 actionButton("plot_submit", label = "Generate Plot", icon = icon("plus"), lib = "glyphicon")
+                                          ),
+                                          column(width = 6,
+                                                 actionButton("update_axes", label = "Update Labels", icon = icon("refresh"), lib = "glyphicon")
+                                          )
+                                        )
+                                      ),
+                                      
+                                      br(),
+                                      br(),
+                                      
+                                      div(id = "warnings_visualize", style = "overflow-y:scroll;max-height:150px", uiOutput("warnings_visualize"))
                                   
-                                  br(),
-                                  br(),
-                                  
-                                  div(id = "warnings_visualize", style = "overflow-y:scroll;max-height:150px", uiOutput("warnings_visualize"))
-                                )# End sidebar conditionals on Visualize tab #
-                              ),
+                                # End sidebar conditionals on Visualize tab #
+                              )),
                               
                               # Plot panel and axes/color controls.
                               column(8,
@@ -501,14 +519,7 @@ shinyUI(tagList(useShinyjs(),
                                       div(style = "display:inline-block;outline-style:auto;outline-width:thin;width:65%",
                                         plotlyOutput('FxnPlot', width = 'auto', height = '600px') %>% 
                                           withSpinner(color = "orange", type = 8)
-                                      ),
-                                      inlineCSS("#saveplot_ui .glyphicon{float:left;}"),
-                                      div(id = "saveplot_ui", style = "display:inline-block;vertical-align:top;margin:10px 0px 0px 10px",
-                                      div(shinyjs::disabled(actionButton(inputId = "add_plot", style = "width:100%", label = "Save This Plot for Later Download", icon = icon("save")))),
-                                      br(),
-                                      div(uiOutput("view_plots"))
                                       )
-
                                 ),
 
                                 # color and van-krevelen bounds dropdowns
@@ -539,7 +550,8 @@ shinyUI(tagList(useShinyjs(),
                                 actionButton("flip_colors", "Invert color scale", style = "display:inline-block")
                                 )# End main panel on Visualize tab #
                               
-                            )), # End Visualize tab #
+                            )
+                    ), # End Visualize tab #
                    
                    ################## Download Panel ##############################################
                    tabPanel('Download',
