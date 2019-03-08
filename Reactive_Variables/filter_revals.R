@@ -24,8 +24,14 @@ summaryFilterDataFrame <- eventReactive(revals$reac_filter_plot, {
 # removed sample filter ids
 sampfilter_ids <- eventReactive(c(input$keep_samples, input$samplefilter, input$top_page),{
   if(input$samplefilter){
-    if(length(input$keep_samples) == 0) NULL
+    if(length(input$keep_samples) == 0){ # no samples kept
+      return(NULL)
+    }
+    else if(length(intersect(colnames(peakIcr2$e_data), input$keep_samples)) == 0){ # selected samples not in data
+      return(NULL)
+    }
     else{
+      inspect <<- uploaded_data()
       uploaded_data() %>% 
         subset(samples = input$keep_samples, check_rows = TRUE) %>%
         {.$e_data} %>%
@@ -49,7 +55,8 @@ massfilter_ids <- eventReactive(c(input$massfilter, input$min_mass, input$max_ma
 # removed molecule filter ids
 molfilter_ids <- eventReactive(c(input$minobs, input$molfilter, input$keep_samples, input$samplefilter, input$top_page), {
   if (input$molfilter){
-    if(input$samplefilter & length(input$keep_samples) > 0){
+    # if we are subsampling and samples are selected and the selected samples are in the data
+    if(input$samplefilter & length(input$keep_samples) > 0 & length(intersect(colnames(peakIcr2$e_data), input$keep_samples)) !=0 ){
       uploaded_data() %>% 
         subset(samples = input$keep_samples, check_rows = TRUE) %>%
         molecule_filter() %>% 

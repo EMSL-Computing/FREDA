@@ -145,12 +145,7 @@ shinyUI(tagList(useShinyjs(),
                                   div(id = "js_iso_info_column", uiOutput('iso_info_column_out')),
                                   div(id = "js_iso_symbol", uiOutput('iso_symbol_out'))
                                 ),
-                                # # Condition on absence of isotope information
-                                # conditionalPanel(
-                                #   condition = "input.isotope_yn == 2",
-                                #   uiOutput('c13_column')
-                                # ),
-
+                                
                                 tags$hr(),
                                 
                                 # Action button: pressing this creates the peakICR object
@@ -159,28 +154,26 @@ shinyUI(tagList(useShinyjs(),
                               ), # End sidebar panel
                               
                               mainPanel(
-                                
-                                # Show 'Success' message if peakICR created successfully
+                                # warnings panel
                                 div(id = "warnings_upload", style = "overflow-y:scroll;max-height:250px", uiOutput("warnings_upload")),
-                                uiOutput('success_upload'),
+                                
+                                tags$hr(),
                                 
                                 # Summary panel
-                                wellPanel(
-                                  
+                                wellPanel(style = 'width:50%',
+                                  # Show 'Success' message if peakICR created successfully
+                                  uiOutput('success_upload'),        
+                                          
                                   # Number of peaks, samples, and peaks with formulas assigned
                                   textOutput('num_peaks'), 
                                   textOutput('num_samples'), 
                                   textOutput('num_peaks_formula')
                                 ),
                                 
-                                # Horizontal ruler
-                                tags$hr(), 
-                                
                                 # Show preview of e_data
                                 htmlOutput('edata_text'), 
                                 DTOutput("head_edata", width = "90%"),
                                 
-                                # Horizontal rule
                                 tags$hr(),
                                 
                                 # Show preview of e_meta
@@ -268,9 +261,9 @@ shinyUI(tagList(useShinyjs(),
                    
                    ##################### QUALITY CONTROL PANEL ###########################
                    tabPanel("Quality Control",
-                            fluidRow(
+                            fluidRow(style = 'display:flex;flex-direction:row;align-items:stretch',
                                     column(4,
-                                      wellPanel(
+                                      wellPanel(style = 'height:100%',
                                               uiOutput('qc_select_groups', style = "width:50%"),
                                               hr(style='margin:2px'),
                                               uiOutput('qc_plot_scale', style = "width:50%"),
@@ -278,16 +271,13 @@ shinyUI(tagList(useShinyjs(),
                                               textInput('qc_boxplot_ylab', 'Y-axis'),
                                               textInput('qc_boxplot_title', 'Title'),
                                               actionButton('update_boxplot_axes', "Reset Boxplot Axes")
-                                              # hr(style='margin:2px'),
-                                              # splitLayout(cellArgs = list(style='overflow:visible'),
-                                              #   uiOutput('qc_select_x'),
-                                              #   uiOutput('qc_select_y')
-                                              #   )
-                                              )
+                                      )
                                     ),
                                     column(8,
-                                      wellPanel(
-                                           div(id='style_qc_boxplots', style='border-style:solid;border-width:1px', plotlyOutput("qc_boxplots") %>% withSpinner(color = "orange", type = 8))
+                                      wellPanel(style = 'height:100%',
+                                           div(id='style_qc_boxplots', style='border-style:solid;border-width:1px;height:100%', 
+                                               plotlyOutput("qc_boxplots", height = '100%') %>% withSpinner(color = "orange", type = 8)
+                                               )
                                            # div(id='style_qc_x', style='border-style:solid;border-width:1px;margin-top:3px', plotlyOutput("qc_pcoa_plots") %>% withSpinner(color = "orange", type = 8))
                                            #uiOutput("download_qc")
                                            )
@@ -448,11 +438,13 @@ shinyUI(tagList(useShinyjs(),
                                   # Plot Parameters
                                   bsCollapsePanel('Construct A Plot', value = 'peakplots',
                                     # Select Plot Type
-                                  inlineCSS("#chooseplots .btn{font-size:10.5pt;} #chooseplots .btn-group-container-sw{display:block;}" ),
-                                  uiOutput('plot_type', style = "margin-top:-10px"),     
+                                    inlineCSS("#chooseplots .btn{font-size:10.5pt;} #chooseplots .btn-group-container-sw{display:block;}" ),
+                                    uiOutput('plot_type', style = "margin-top:-10px"),     
 
-                                  # Select samples/groups
+                                    # Select samples/groups
                                     uiOutput("plotUI"),
+                                    
+                                    uiOutput("pcoa_dist"),
                                     
                                     # Single dropdown for 1 sample/group or....
                                     shinyjs::hidden(div(id = "js_toggle_single", uiOutput("plotUI_single"))),

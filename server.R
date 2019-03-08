@@ -694,11 +694,10 @@ shinyServer(function(session, input, output) {
     if(isTRUE(ds != input$qc_plot_scale)){
       plot(edata_transform(tempIcr2, input$qc_plot_scale), 
            xlabel=isolate(input$qc_boxplot_xlab), ylabel=isolate(input$qc_boxplot_ylab), 
-           title = isolate(input$qc_boxplot_title),colorBy = color_by)
+           title = isolate(input$qc_boxplot_title),colorBy = color_by) %>% layout(margin = list(b = 100), xaxis = list(tickangle = 45))
     }
     else plot(tempIcr2, xlabel=isolate(input$qc_boxplot_xlab), ylabel=isolate(input$qc_boxplot_ylab), 
-              title = isolate(input$qc_boxplot_title), colorBy=color_by)
-    
+              title = isolate(input$qc_boxplot_title), colorBy=color_by) %>% layout(margin = list(b = 100), xaxis = list(tickangle = 45))
   })
   
   # qc plots
@@ -1042,6 +1041,16 @@ shinyServer(function(session, input, output) {
                                      'A comparison of groups' = 3, 'A comparison of two samples' = 4),
                          selected = 0))
     }
+  })
+  
+  # pcoa distance metric dropdown
+  output$pcoa_dist <- renderUI({
+    req(input$chooseplots=='PCOA Plot')
+    dist_choices = c('manhattan', 'euclidean', 'canberra', 'clark', 'bray', 'kulczynski', 
+                    'jaccard', 'gower', 'altGower', 'morisita', 'horn', 'mountford', 'raup', 
+                    'binomial', 'chao', 'cao','mahalanobis')
+    
+    selectInput('choose_dist', "Choose a distance metric", choices = dist_choices, selected = 'bray')
   })
   
   ## UI outputs for group/sample comparisons ##
@@ -1441,8 +1450,8 @@ shinyServer(function(session, input, output) {
       #----------- PCOA Plot ----------#
       if(input$chooseplots==('PCOA Plot')){
         # maximum of 5 pcs or the number of samples - 2 (#columns - ID column - 1)
-        pcs <- getPrincipalCoordinates(plot_data(), n_dims = min(5, ncol(plot_data()$e_data)-2))
-        p <- plotPrincipalCoordinates(pcs, x=as.numeric(input$scatter_x), y=as.numeric(input$scatter_y), 
+        pcs <- getPrincipalCoordinates(plot_data(), n_dims = min(5, ncol(plot_data()$e_data)-2), dist_metric = isolate(input$choose_dist))
+        p <- plotPrincipalCoordinates(pcs, title = isolate(input$title_input), x=as.numeric(input$scatter_x), y=as.numeric(input$scatter_y), 
                                       xlabel = isolate(input$x_axis_input), ylabel=isolate(input$y_axis_input),
                                       icrData=plot_data())
       }
