@@ -194,18 +194,21 @@ observeEvent(input$chooseplots, {
 
 # maintain mutual exclusivity of scatterplot axes and colors
 observeEvent(c(input$scatter_x, input$vk_colors),{
+  req(input$chooseplots == 'Custom Scatter Plot')
   updateSelectInput(session, 'scatter_y', 
                     choices = revals$axes_choices[!(revals$axes_choices %in% c(input$scatter_x, input$vk_colors))], 
                     selected = input$scatter_y)
 })
 
 observeEvent(c(input$scatter_y, input$vk_colors),{
+  req(input$chooseplots == 'Custom Scatter Plot')
   updateSelectInput(session, 'scatter_x', 
                     choices = revals$axes_choices[!(revals$axes_choices %in% c(input$scatter_y, input$vk_colors))], 
                     selected = input$scatter_x)
 })
 
 observeEvent(c(input$scatter_x, input$scatter_y),{
+  req(input$chooseplots == 'Custom Scatter Plot')
   updateSelectInput(session, 'vk_colors', 
                     choices = revals$color_by_choices[!(revals$color_by_choices %in% c(input$scatter_y, input$scatter_x))], 
                     selected = input$vk_colors)

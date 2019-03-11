@@ -209,7 +209,7 @@ shinyUI(tagList(useShinyjs(),
                             )
                           ),
                           hr(),
-                          actionButton("goto_preprocess_main", "Continue to preproces tab")
+                          actionButton("goto_preprocess_main", "Continue to preprocess tab")
                    ),
                    ################## Preprocess Panel ###############################################
                      tabPanel("Preprocess",
@@ -275,14 +275,16 @@ shinyUI(tagList(useShinyjs(),
                                     ),
                                     column(8,
                                       wellPanel(style = 'height:100%',
-                                           div(id='style_qc_boxplots', style='border-style:solid;border-width:1px;height:100%', 
-                                               plotlyOutput("qc_boxplots", height = '100%') %>% withSpinner(color = "orange", type = 8)
+                                           div(id='style_qc_boxplots', style='border-style:solid;border-width:1px', 
+                                               plotlyOutput("qc_boxplots") %>% withSpinner(color = "orange", type = 8)
                                                )
                                            # div(id='style_qc_x', style='border-style:solid;border-width:1px;margin-top:3px', plotlyOutput("qc_pcoa_plots") %>% withSpinner(color = "orange", type = 8))
                                            #uiOutput("download_qc")
                                            )
                                     )
-                            )
+                            ),
+                            hr(),
+                            actionButton('goto_filter_fromqc', "Continue to the filter tab")
                     ),
 
                    ################## Filter Panel ##############################################
@@ -455,10 +457,7 @@ shinyUI(tagList(useShinyjs(),
                                     shinyjs::hidden(div(id = "js_toggle_groups", 
                                                         tagList(div(id = "js_whichGroups1", uiOutput("plotUI_comparison_1")), 
                                                                 div(id = "js_whichGroups2", uiOutput("plotUI_comparison_2"))))),
-                                    conditionalPanel(condition = "(input.choose_single == 3 || input.choose_single == 4) && input.chooseplots !== '0'", uiOutput("summary_fxn_out", class = "adjustdown")),
-                                    
-                                    # Label inputs
-                                    tags$hr(style = "thickness:5px")
+                                    conditionalPanel(condition = "(input.choose_single == 3 || input.choose_single == 4) && input.chooseplots !== '0'", uiOutput("summary_fxn_out", class = "adjustdown"))
                                     
                                   ),
                                   # Axes Options

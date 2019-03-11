@@ -31,7 +31,6 @@ sampfilter_ids <- eventReactive(c(input$keep_samples, input$samplefilter, input$
       return(NULL)
     }
     else{
-      inspect <<- uploaded_data()
       uploaded_data() %>% 
         subset(samples = input$keep_samples, check_rows = TRUE) %>%
         {.$e_data} %>%
@@ -82,3 +81,37 @@ formfilter_ids <- eventReactive(c(input$formfilter, input$top_page), {
   else NULL
 })
 ### end filter ids ###
+
+# Object: Create 'Success' message if everything works out, show errors if not
+# Note: Created when Filter action button is clicked
+successMessage <- eventReactive(input$filter_click, {
+  
+  # If mass filter is checked
+  if (input$massfilter) {
+    
+    # Error handling: need 0 < minMass < maxMass
+    validate(need((input$min_mass < input$max_mass),'Minimum mass must be less than maximum mass'), 
+             need((input$min_mass > 0),'Minimum mass must be greater than 0'),
+             need((input$min_mass && input$max_mass),'Both minimum and maximum mass required to filter')
+             
+    ) # End error handling
+  }
+  showModal(
+    modalDialog(title = "Filter Success",
+                fluidRow(
+                  column(10, align = "center", offset = 1,
+                         HTML('<h4 style= "color:#1A5276">Your data has been filtered.</h4>
+                              <h4 style= "color:#1A5276">The filtered data is stored and will be reset if you re-upload or re-process data.</h4>'),
+                         hr(),
+                         actionButton("filter_dismiss", "Review results", width = '75%'),
+                         br(),
+                         br(),
+                         actionButton("goto_viz", "Continue to Visualization", width = '75%')
+                         )
+                )
+                ,footer = NULL)
+  )
+  
+  HTML('<h4 style= "color:#1A5276">You may now proceed to visualization</h4>')
+  
+}) # End successMessage

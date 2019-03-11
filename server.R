@@ -642,6 +642,7 @@ shinyServer(function(session, input, output) {
   }) # End process_hist
   
   ############## QC tab ################
+  source('Observers/qc_observers.R', local = TRUE)
   
   # Y axis scale select for boxplots
   output$qc_plot_scale <- renderUI({
@@ -1139,6 +1140,7 @@ shinyServer(function(session, input, output) {
      # non-density plots 
     }else{ 
       summary_dropdown <- tagList(
+        hr(style = 'margin-top:2px;height:3px;background-color:#1A5276'),
         radioButtons("pres_fn", 
                      div("Determine presence/absence by:", div(style = "color:deepskyblue;display:inline-block", tipify(icon("question-sign", lib = "glyphicon"), title = text_pres_fn, placement = "top", trigger = 'hover'))), 
                      choices = c("No. of Samples Present" = "nsamps", "Proportion of Samples Present" = "prop"), inline = TRUE, selected = "nsamps"),
@@ -1256,15 +1258,25 @@ shinyServer(function(session, input, output) {
       updateSelectInput(session, 'vk_colors', 'Color by:',
                         choices = color_by_choices,
                         selected = selected)
-      
     }
     
     if (input$chooseplots %in% c('Custom Scatter Plot', 'PCOA Plot')) {
       # allow only numeric columns for the axes but keep categorical coloring options
       numeric_cols <- which(sapply(full_join(plot_data()$e_meta, plot_data()$e_data) %>% dplyr::select(color_by_choices), is.numeric))
       
+      # maintain exclusivity of colorby and x-y variables only in scatterplot
       if(input$chooseplots == 'Custom Scatter Plot'){
         axes_choices <- revals$axes_choices <- color_by_choices[numeric_cols]
+        
+        updateSelectInput(session, 'scatter_x', "Horizontal Axis Variable:",
+                          choices = axes_choices[!(axes_choices %in% c(input$scatter_y, input$vk_colors))],
+                          selected = selected_x)
+        updateSelectInput(session, "scatter_y", "Vertical Axis Variable:",
+                          choices = axes_choices[!(axes_choices %in% c(input$scatter_x, input$vk_colors))],
+                          selected = selected_y)
+        updateSelectInput(session, 'vk_colors', 'Color  by:',
+                          choices = color_by_choices[!(color_by_choices %in% c(input$scatter_x, input$scatter_y))],
+                          selected = selected)
       }
       else if(input$chooseplots == 'PCOA Plot'){
         axes_choices <- 1:min(5, ncol(peakIcr2$e_data)-2)
@@ -1272,16 +1284,6 @@ shinyServer(function(session, input, output) {
         selected_x <- 1
         selected_y <- 2
       }
-      
-      updateSelectInput(session, 'scatter_x', "Horizontal Axis Variable:",
-                        choices = axes_choices[!(axes_choices %in% c(input$scatter_y, input$vk_colors))],
-                        selected = selected_x)
-      updateSelectInput(session, "scatter_y", "Vertical Axis Variable:",
-                        choices = axes_choices[!(axes_choices %in% c(input$scatter_x, input$vk_colors))],
-                        selected = selected_y)
-      updateSelectInput(session, 'vk_colors', 'Color  by:',
-                        choices = color_by_choices[!(color_by_choices %in% c(input$scatter_x, input$scatter_y))],
-                        selected = selected)
     }
     
     revals$color_by_choices <- color_by_choices

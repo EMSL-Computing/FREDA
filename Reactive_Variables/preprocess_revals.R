@@ -26,37 +26,3 @@ emeta_display_choices <- reactive({
   column_choices
   
 })
-
-# Object: Create 'Success' message if everything works out, show errors if not
-# Note: Created when Filter action button is clicked
-successMessage <- eventReactive(input$filter_click, {
-  
-  # If mass filter is checked
-  if (input$massfilter) {
-    
-    # Error handling: need 0 < minMass < maxMass
-    validate(need((input$min_mass < input$max_mass),'Minimum mass must be less than maximum mass'), 
-             need((input$min_mass > 0),'Minimum mass must be greater than 0'),
-             need((input$min_mass && input$max_mass),'Both minimum and maximum mass required to filter')
-             
-    ) # End error handling
-  }
-  showModal(
-    modalDialog(title = "Filter Success",
-                fluidRow(
-                  column(10, align = "center", offset = 1,
-                         HTML('<h4 style= "color:#1A5276">Your data has been filtered using mass and/or minimum observations. 
-                              You may proceed to the next tabs for subsequnt analysis.</h4>'),
-                         hr(),
-                         actionButton("filter_dismiss", "Review results", width = '75%'),
-                         br(),
-                         br(),
-                         actionButton("goto_viz", "Continue to Visualization", width = '75%')
-                         )
-                )
-                ,footer = NULL)
-  )
-  
-  HTML('<h4 style= "color:#1A5276">You may now proceed to visualization</h4>')
-  
-}) # End successMessage
