@@ -66,17 +66,17 @@ plot_data <- eventReactive(input$plot_submit,{
     samples <- setdiff(sample_names(), revals$removed_samples)
     
     # for each sample create a string indicating each group it belongs to
-    if(!is.null(input$qc_select_groups)){
+    if(!is.null(input$viztab_select_groups)){
       groups <- sapply(samples, function(sampname){
         tempgroup = NULL
-        for(grp in names(revals$groups_list[input$qc_select_groups])){
+        for(grp in names(revals$groups_list[input$viztab_select_groups])){
           if(isTRUE(sampname %in% revals$groups_list[[grp]])) tempgroup[length(tempgroup)+1] <- grp
         }
         
         if(is.null(tempgroup)){
           return("None")
         }
-        else return(paste(tempgroup, collapse="_"))
+        else return(paste(tempgroup, collapse="&"))
       })
       
       group_DF <- data.frame(samples, groups)

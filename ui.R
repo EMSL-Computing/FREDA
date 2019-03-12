@@ -435,18 +435,20 @@ shinyUI(tagList(useShinyjs(),
                               div(id='viz_sidebar', column(4,
                                 
                                 # Begin collapsible section                           
-                                bsCollapse(id='viz_sidebar', open = c('peakplots', 'axlabs', 'downloads'), multiple=TRUE, 
+                                bsCollapse(id='viz_sidebar', open = c('peakplots', 'axlabs'), multiple=TRUE, 
                                   
                                   # Plot Parameters
-                                  bsCollapsePanel('Construct A Plot', value = 'peakplots',
+                                  bsCollapsePanel(div('Construct a plot', div(style = 'float:right', uiOutput('chooseplots_icon'))), value = 'peakplots',
                                     # Select Plot Type
                                     inlineCSS("#chooseplots .btn{font-size:10.5pt;} #chooseplots .btn-group-container-sw{display:block;}" ),
                                     uiOutput('plot_type', style = "margin-top:-10px"),     
 
                                     # Select samples/groups
-                                    uiOutput("plotUI"),
+                                    uiOutput('plotUI'),
                                     
-                                    uiOutput("pcoa_dist"),
+                                    uiOutput('pcoa_dist'),
+                                    
+                                    uiOutput('viztab_select_groups'),
                                     
                                     # Single dropdown for 1 sample/group or....
                                     shinyjs::hidden(div(id = "js_toggle_single", uiOutput("plotUI_single"))),
@@ -461,7 +463,7 @@ shinyUI(tagList(useShinyjs(),
                                     
                                   ),
                                   # Axes Options
-                                  bsCollapsePanel('Axes Labels', value = 'axlabs',
+                                  bsCollapsePanel(div('Axes labels', div(style = 'float:right', uiOutput('axlabs_icon'))), value = 'axlabs',
                                       splitLayout(
                                         uiOutput("title_out"),
                                         tags$div(id = "js_legend_title_input", uiOutput("legend_title_out"))
@@ -471,12 +473,13 @@ shinyUI(tagList(useShinyjs(),
                                         uiOutput("y_axis_out")
                                       )
                                   ),
-                                  bsCollapsePanel('Save Plot', value = 'downloads',
+                                  bsCollapsePanel(div('Save plot and view saved plots', div(style = 'float:right', uiOutput('saveplots_icon'))), value = 'downloads',
                                       inlineCSS("#saveplot_ui .glyphicon{float:left;}"),
                                       div(id = "saveplot_ui", style = "display:inline-block;vertical-align:top;margin:10px 0px 0px 10px",
-                                          div(shinyjs::disabled(actionButton(inputId = "add_plot", style = "width:100%", label = "Save This Plot for Later Download", icon = icon("save")))),
-                                          br(),
-                                          div(uiOutput("view_plots"))
+                                          splitLayout(
+                                            div(shinyjs::disabled(actionButton(inputId = "add_plot", style = "width:100%", label = "Save This Plot for Later Download", icon = icon("save")))),
+                                            div(uiOutput("view_plots"))
+                                          )
                                       )
                                     
                                   )

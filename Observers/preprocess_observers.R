@@ -71,8 +71,8 @@ observeEvent(input$preprocess_click,{
                   column(10, align = "center", offset = 1,
                          HTML('<h4 style= "color:#1A5276">Your data has been preprocessed.  Calculated variables have been added to the molecular identification file and can be used in subsequent filtering and visualization.</h4>'),
                          hr(),
-                         actionButton('preprocess_dismiss', 'Review results.', width = '75%'),
-                         actionButton('goto_qc', 'Go to the QC tab to see some boxplots.', style = 'width:75%;margin:5px'),
+                         actionButton('preprocess_dismiss', 'Review results', width = '75%'),
+                         actionButton('goto_qc', 'Go to the QC tab to see some boxplots', style = 'width:75%;margin:5px'),
                          actionButton('goto_filter', 'Continue to filtering', width = '75%')
                   )
                 )

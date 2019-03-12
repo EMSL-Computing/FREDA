@@ -1054,6 +1054,15 @@ shinyServer(function(session, input, output) {
     selectInput('choose_dist', "Choose a distance metric", choices = dist_choices, selected = 'bray')
   })
   
+  # select groups to color by
+  output$viztab_select_groups <- renderUI({
+    req(input$chooseplots=='PCOA Plot')
+    pickerInput("viztab_select_groups", "Select groups:", 
+                choices = names(revals$groups_list),
+                multiple = TRUE
+    )
+  })
+  
   ## UI outputs for group/sample comparisons ##
   ## conditional display depending on whether comparing two samples or two groups ## 
   output$plotUI_comparison_1 <- renderUI({
@@ -1546,24 +1555,28 @@ shinyServer(function(session, input, output) {
     # fill values to a position depending on input$add_plot
     
     # which type of plot
-    newLine$FileName <- ifelse(is.na(input$title_input) | input$title_input == "", paste0("Plot_", ind), paste0("Plot_", ind, "_", input$title_input))
+    newLine$FileName <- ifelse(is.na(input$title_input) | input$title_input == '', paste0('Plot_', ind), paste0('Plot_', ind, '_', input$title_input))
     newLine$PlotType <- input$chooseplots
     # Single or Multiple Samples
-    newLine$SampleType <- switch(as.character(input$choose_single), "1" = "Single Sample", "2" = "Single Group of Samples", "3" = "Comparison of Two Groups", "4" = "Comparison of Two Samples")
+    newLine$SampleType <- ifelse(input$chooseplots == "PCOA Plot", 'None',
+                             switch(as.character(input$choose_single), '1' = 'Single Sample', '2' = 'Single Group of Samples', '3' = 'Comparison of Two Groups', '4' = 'Comparison of Two Samples')
+                          )
     # Sample(s) in The first group (depends on input$choose_single to decide if this is a single or multiple sample list)
-    newLine$Group_1_Samples <- ifelse(input$choose_single %in% c(1,2), yes = paste(input$whichSamples, collapse = ","), no = paste(g1_samples(), collapse = ","))
+    newLine$Group_1_Samples <- ifelse(input$choose_single %in% c(1,2), yes = paste(input$whichSamples, collapse = ','), no = paste(g1_samples(), collapse = ','))
     # Sample(s) in the second group. Automatically NA if input$choose_single is single sample or single group
-    newLine$Group_2_Samples <- ifelse(input$choose_single %in% c(3,4), yes =  paste(g2_samples() , collapse = ","), no = "None")
+    newLine$Group_2_Samples <- ifelse(input$choose_single %in% c(3,4), yes =  paste(g2_samples() , collapse = ','), no = 'None')
     # Boundary set borders to use (NA for non-Van Krevelen plots)
-    newLine$BoundarySet <- ifelse(input$chooseplots == "Van Krevelen Plot", yes = ifelse(input$vkbounds == 0, "None", input$vkbounds), no = "None")
+    newLine$BoundarySet <- ifelse(input$chooseplots == 'Van Krevelen Plot', yes = ifelse(input$vkbounds == 0, 'None', input$vkbounds), no = 'None')
     newLine$ColorBy <- input$vk_colors
     newLine$x_var <- input$scatter_x
     newLine$y_var <- input$scatter_y
     
-    newLine$x_var <- switch(input$chooseplots, "Van Krevelen Plot" = "O:C Ratio", "Kendrick Plot" = "Kendrick Mass", 
-                                               "Density Plot" = input$vk_colors, "Custom Scatter Plot" = input$scatter_x)
-    newLine$y_var <- switch(input$chooseplots, "Van Krevelen Plot" = "H:C Ratio", "Kendrick Plot" = "Kendrick Defect", 
-                            "Density Plot" = "Density", "Custom Scatter Plot" = input$scatter_y)
+    newLine$x_var <- switch(input$chooseplots, 'Van Krevelen Plot' = 'O:C Ratio', 'Kendrick Plot' = 'Kendrick Mass', 
+                                               'Density Plot' = input$vk_colors, 'Custom Scatter Plot' = input$scatter_x,
+                                               'PCOA Plot' = paste0('Principal Component ', input$scatter_x))
+    newLine$y_var <- switch(input$chooseplots, 'Van Krevelen Plot' = 'H:C Ratio', 'Kendrick Plot' = 'Kendrick Defect', 
+                                               'Density Plot' = 'Density', 'Custom Scatter Plot' = input$scatter_y,
+                                               'PCOA Plot' = paste0('Principal Component ', input$scatter_y))
     
     
     newLine$compfn <- ifelse(isTRUE(input$choose_single %in% c(3,4)) & isTRUE(input$summary_fxn != ""), 
@@ -1617,6 +1630,29 @@ shinyServer(function(session, input, output) {
   output$warnings_visualize <- renderUI({
     HTML(paste(revals$warningmessage_visualize, collapse = ""))
   })
+  
+  # icon control for viztab collapsible sections
+  output$chooseplots_icon <- renderUI({
+    req(input$top_page == 'Visualize')
+    if('peakplots' %in% input$viz_sidebar)
+      icon('chevron-up', lib = 'glyphicon')
+    else icon('chevron-down', lib = 'glyphicon')
+  })
+  
+  output$axlabs_icon <- renderUI({
+    req(input$top_page == 'Visualize')
+    if('axlabs' %in% input$viz_sidebar)
+      icon('chevron-up', lib = 'glyphicon')
+    else icon('chevron-down', lib = 'glyphicon')
+  })
+  
+  output$saveplots_icon <- renderUI({
+    req(input$top_page == 'Visualize')
+    if('downloads' %in% input$viz_sidebar)
+      icon('chevron-up', lib = 'glyphicon')
+    else icon('chevron-down', lib = 'glyphicon')
+  })
+  # 
   
   # End Visualize tab #
   
