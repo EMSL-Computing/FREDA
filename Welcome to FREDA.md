@@ -2,7 +2,7 @@
 
 ***
 
-The FTICR R Exploratory Data Analysis (FREDA) tool is designed to allow users upload and explore data generated from FTICR mass spectrometry. Current capabilities include:
+The FTMS R Exploratory Data Analysis (FREDA) tool is designed to allow users upload and explore data generated from FT mass spectrometry. Current capabilities include:
 
 * Upload data from .csv file  
 * Assign samples to named groups

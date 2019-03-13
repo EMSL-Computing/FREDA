@@ -7,9 +7,9 @@ observe({
   
   # Create Table Output
   output$numeric_summary <- DT::renderDataTable({
-    columns <- summaryPreprocess(peakIcr2, revals$numeric_cols) %>% colnames()
+    columns <- summaryPreprocess(peakData2, revals$numeric_cols) %>% colnames()
     
-    summaryPreprocess(peakIcr2, revals$numeric_cols) %>%
+    summaryPreprocess(peakData2, revals$numeric_cols) %>%
       datatable(options = list(dom = "t", pageLength = nrow(.))) %>% 
       formatRound(columns, digits = 2)
   }) 
@@ -26,7 +26,7 @@ observe({
   req(nrow(revals$categorical_cols) > 0) 
   
   # List of tables which will be passed to renderTable()
-  table_list <- summaryPreprocess(peakIcr2, revals$categorical_cols, categorical = TRUE)
+  table_list <- summaryPreprocess(peakData2, revals$categorical_cols, categorical = TRUE)
   
   # Reactive variable which lets lapply know how many output ID's to generate depending on number of categorical variables selected
   revals$ntables <- length(table_list)
@@ -62,7 +62,7 @@ observeEvent(input$tests, {
 
 # Success dialogs
 observeEvent(input$preprocess_click,{
-  req(peakIcr2)
+  req(peakData2)
   validate(need(input$tests, message = "Please choose at least one test to calculate"))
   
   showModal(

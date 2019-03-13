@@ -1,17 +1,17 @@
 #' Create a Summary For the Information created On Preprocess Tab
 #' 
-#' This function takes as input a preprocessed peakICR object (created when the 
+#' This function takes as input a preprocessed peakData object (created when the 
 #' Preprocess Data button is clicked) and what tests have been applied, and then finds the min, 
 #' mean, median, and max for the summary table.
 #' 
-#'  @param icRobject an object of class 'peakICR', with the default calculations already applied
+#'  @param ftmsRobject an object of class 'peakData', with the default calculations already applied
 #'  @param testsSelected A two-column data frame with real names of the test columns in one column 
 #'  and the display names in the second
 #'  @param categorial set to TRUE if the tests selected are on categorical variables
 #'  @param split_chars Character that divides categories for observations that belong to more than one category
 #'  @return A table of information
 
-summaryPreprocess <- function(icRobject, testsSelected, categorical = FALSE, split_chars = ";") {
+summaryPreprocess <- function(ftmsRobject, testsSelected, categorical = FALSE, split_chars = ";") {
 
   ## Categorical variable handling block
   if(categorical){
@@ -20,7 +20,7 @@ summaryPreprocess <- function(icRobject, testsSelected, categorical = FALSE, spl
     lapply(testsSelected[,1], function(colname){
       
       # split any values in the column that have 2 categories
-      split_col <- strsplit(icRobject$e_meta[,colname], split_chars) %>% unlist()
+      split_col <- strsplit(ftmsRobject$e_meta[,colname], split_chars) %>% unlist()
      
       tab_na <- table(split_col, useNA = "ifany")
       tab <- table(split_col)
@@ -56,7 +56,7 @@ summaryPreprocess <- function(icRobject, testsSelected, categorical = FALSE, spl
     row.names(summaryTable) <- rowNames
     
     # Call summary and extract info
-    allCols <- icRobject$e_meta %>% dplyr::select(testsSelected[,1])
+    allCols <- ftmsRobject$e_meta %>% dplyr::select(testsSelected[,1])
 
     # NOT YET WORKING: Sapply the summary
     # summaryTable <- t(sapply(allCols, function(x) unname(summary(x)[c('Min.', 'Mean', 'Median', 'Max.')])))

@@ -1,10 +1,10 @@
-#' Creates a report for peakIcr objects
+#' Creates a report for peakData objects
 #'
-#' This function generates a .docx report for a peakIcr object
+#' This function generates a .docx report for a peakData object
 #'
-#' @param peakIcrData a list containing peakIcrData objects, including at least one data object (of the class 'peakIcrData' created by \code{\link{as.seqData}} and any other peakIcrData objects to include in the report.
+#' @param peakData a list containing peakData objects, including at least one data object (of the class 'peakData' created by \code{\link{as.seqData}} and any other peakData objects to include in the report.
 #'
-#' @details This function generates a .docx report for a peakIcrData data object.  The report includes attributes of the original data, calculated metadata, and filtering procedures applied. 
+#' @details This function generates a .docx report for a peakData data object.  The report includes attributes of the original data, calculated metadata, and filtering procedures applied. 
 #'
 #' @return A .docx report of the preprocessing and filtering performed on the data
 #'
@@ -24,16 +24,13 @@
 report <- function(uploaded_data, processed_data, output_file=NULL, output_format = 'html_document', ...){
   library(rmarkdown)
 
-  if(!is.list(peakIcrData)){
-    stop("peakIcrData must be a list of peakIcr objects")
-  }
-  if(!all(inherits(uploaded_data, "peakIcrData"), inherits(processed_data, "peakIcrData"))){
-    stop("One or both of the input data objects are not of class 'peakIcrData'")
+  if(!all(inherits(uploaded_data, "peakData"), inherits(processed_data, "peakData"))){
+    stop("One or both of the input data objects are not of class 'peakData'")
   }
 
   params <- list(upload=uploaded_data, processed = processed_data, ...)
 
-  render("peakIcrData_Report.Rmd", output_file=output_file, output_format = output_format, params=params, envir = new.env())
+  render("peakData_Report.Rmd", output_file=output_file, output_format = output_format, params=params, envir = new.env())
 
 }
 

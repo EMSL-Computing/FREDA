@@ -306,7 +306,7 @@ observeEvent(input$clear_filters_yes, {
                                 "Comparisons Method" = NA, check.names = FALSE)
   revals$plot_list <- list()
   revals$plot_data <- list()
-  peakIcr2 <<- uploaded_data()
+  peakData2 <<- uploaded_data()
   #
   
   # counter to control plot storage indices in case of reset

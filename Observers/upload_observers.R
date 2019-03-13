@@ -207,14 +207,14 @@ observeEvent(input$iso_info_filter,{
     )
 })
 
-# Show success message when peakICR() is sucessfully created 
-observeEvent(peakICR(),{
-  #Error handling: peakICR() must exist
-  req(peakICR())
+# Show success message when peakData() is sucessfully created 
+observeEvent(peakData(),{
+  #Error handling: peakData() must exist
+  req(peakData())
   
   #___test-export___
   if (isTRUE(getOption("shiny.testmode"))) {
-    revals$peakICR_export <- peakICR()
+    revals$peakData_export <- peakData()
   }
   
   showModal(

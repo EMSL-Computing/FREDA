@@ -38,7 +38,7 @@ sample_names <- reactive({
   setdiff(edata_cnames(), input$edata_id_col)
   
 }) # End sample_names #
-# Create reactive fake f_data (used when action button creates peakICR())
+# Create reactive fake f_data (used when action button creates peakData())
 fdata <- reactive({
   col2 <- rep(NA, length(sample_names()))
   data.frame('SampleId' = sample_names(), 'Var1' = col2)

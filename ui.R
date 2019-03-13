@@ -148,7 +148,7 @@ shinyUI(tagList(useShinyjs(),
                                 
                                 tags$hr(),
                                 
-                                # Action button: pressing this creates the peakICR object
+                                # Action button: pressing this creates the peakData object
                                 actionButton('upload_click', 'Process Data', icon = icon("cog"), lib = "glyphicon")
                                 
                               ), # End sidebar panel
@@ -161,7 +161,7 @@ shinyUI(tagList(useShinyjs(),
                                 
                                 # Summary panel
                                 wellPanel(style = 'width:50%',
-                                  # Show 'Success' message if peakICR created successfully
+                                  # Show 'Success' message if peakData created successfully
                                   uiOutput('success_upload'),        
                                           
                                   # Number of peaks, samples, and peaks with formulas assigned
@@ -186,8 +186,6 @@ shinyUI(tagList(useShinyjs(),
                    
                    ################## Groups Panel ###############################################
                    tabPanel("Groups",
-                          inlineCSS("#group_samples .dropdown-toggle {background-color:#ffffff;border-radius:4px;}
-                                     #group_samples .bootstrap-select{border-radius:4px;}"),
                           fluidRow(style = "display:flex;flex-direction:row;align-items:stretch",
                             column(4,
                               wellPanel(style = "height:100%",
@@ -221,7 +219,7 @@ shinyUI(tagList(useShinyjs(),
                                   
                                   div(class = "adjustdown",uiOutput("which_calcs")),
                                   
-                                  # Action button: add test columns with reasults to peakIcr2
+                                  # Action button: add test columns with results to peakData2
                                   shinyjs::disabled(actionButton('preprocess_click', 'Process Data', icon = icon("cog"), lib = "glyphicon")),
                                   br(),
                                   uiOutput("warnings_preprocess")
@@ -270,7 +268,7 @@ shinyUI(tagList(useShinyjs(),
                                               textInput('qc_boxplot_xlab', "X-axis"),
                                               textInput('qc_boxplot_ylab', 'Y-axis'),
                                               textInput('qc_boxplot_title', 'Title'),
-                                              actionButton('update_boxplot_axes', "Reset Boxplot Axes")
+                                              actionButton('update_boxplot_axes', "Update Boxplot Axes")
                                       )
                                     ),
                                     column(8,
@@ -379,8 +377,6 @@ shinyUI(tagList(useShinyjs(),
                                 
                                 hr(),
                                 
-                                inlineCSS("#custom_cond_panel .dropdown-toggle {background-color:#ffffff;border-radius:4px;}
-                                          #custom_cond_panel .bootstrap-select{border-radius:4px;}"),
                                 conditionalPanel(id = "custom_cond_panel", condition = "input.customfilterz == true",
                                                    uiOutput("filter1UI"),
                                                    uiOutput("customfilter1UI"),  
@@ -413,7 +409,7 @@ shinyUI(tagList(useShinyjs(),
                                 # Set default width for panel
                                 width = 7,
                                 
-                                # Success message if peakIcr2 filtered successfully
+                                # Success message if peakData2 filtered successfully
                                 htmlOutput('filterTest'), 
                                 
                                 # Summary panel: display summary of filters
@@ -454,8 +450,6 @@ shinyUI(tagList(useShinyjs(),
                                     shinyjs::hidden(div(id = "js_toggle_single", uiOutput("plotUI_single"))),
                                     
                                     # ...two dropdowns and extra options for group comparison
-                                    inlineCSS("#js_toggle_groups .dropdown-toggle, #js_toggle_single .dropdown-toggle {background-color:#ffffff;border-radius:4px;}
-                                                  #js_toggle_groups .bootstrap-select, #js_toggle_single .bootstrap-select {border-radius:4px;}"),
                                     shinyjs::hidden(div(id = "js_toggle_groups", 
                                                         tagList(div(id = "js_whichGroups1", uiOutput("plotUI_comparison_1")), 
                                                                 div(id = "js_whichGroups2", uiOutput("plotUI_comparison_2"))))),
@@ -475,8 +469,8 @@ shinyUI(tagList(useShinyjs(),
                                   ),
                                   bsCollapsePanel(div('Save plot and view saved plots', div(style = 'float:right', uiOutput('saveplots_icon'))), value = 'downloads',
                                       inlineCSS("#saveplot_ui .glyphicon{float:left;}"),
-                                      div(id = "saveplot_ui", style = "display:inline-block;vertical-align:top;margin:10px 0px 0px 10px",
-                                          splitLayout(
+                                      div(id = "saveplot_ui", style = "display:flex;vertical-align:top;margin:5px 0px 0px 5px",
+                                          splitLayout(cellArgs = list(style = 'overflow-x:hidden'),
                                             div(shinyjs::disabled(actionButton(inputId = "add_plot", style = "width:100%", label = "Save This Plot for Later Download", icon = icon("save")))),
                                             div(uiOutput("view_plots"))
                                           )
@@ -486,26 +480,25 @@ shinyUI(tagList(useShinyjs(),
                                 ),
                                       
                                     
-                                      # Seperate buttons to generate plot or simply update labels without recalculating data
-                                      
-                                      shinyjs::disabled(
-                                        fluidRow(
-                                          column(width = 6,
-                                                 actionButton("plot_submit", label = "Generate Plot", icon = icon("plus"), lib = "glyphicon")
-                                          ),
-                                          column(width = 6,
-                                                 actionButton("update_axes", label = "Update Labels", icon = icon("refresh"), lib = "glyphicon")
-                                          )
-                                        )
-                                      ),
-                                      
-                                      br(),
-                                      br(),
-                                      
-                                      div(id = "warnings_visualize", style = "overflow-y:scroll;max-height:150px", uiOutput("warnings_visualize"))
-                                  
-                                # End sidebar conditionals on Visualize tab #
-                              )),
+                                # Seperate buttons to generate plot or simply update labels without recalculating data
+                                
+                                shinyjs::disabled(
+                                  fluidRow(
+                                    column(width = 6,
+                                           actionButton("plot_submit", label = "Generate Plot", icon = icon("plus"), lib = "glyphicon")
+                                    ),
+                                    column(width = 6,
+                                           actionButton("update_axes", label = "Update Labels", icon = icon("refresh"), lib = "glyphicon")
+                                    )
+                                  )
+                                ),
+                                
+                                br(),
+                                br(),
+                                
+                                div(id = "warnings_visualize", style = "overflow-y:scroll;max-height:150px", uiOutput("warnings_visualize"))
+                                
+                              )),# End sidebar conditionals on Visualize tab #
                               
                               # Plot panel and axes/color controls.
                               column(8,
@@ -544,7 +537,7 @@ shinyUI(tagList(useShinyjs(),
                                 actionButton("flip_colors", "Invert color scale", style = "display:inline-block")
                                 )# End main panel on Visualize tab #
                               
-                            )
+                            )# end fluidrow
                     ), # End Visualize tab #
                    
                    ################## Download Panel ##############################################

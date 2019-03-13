@@ -7081,6 +7081,11 @@ input[type="checkbox"] {
   font-weight:bold;
 }
 
+.shiny-input-container .bootstrap-select, .shiny-input-container .dropdown-toggle {
+  background-color:white;
+  border-radius:4px;
+}
+
 .grey_out {
   color:grey;
 }
@@ -7172,4 +7177,5 @@ input[type="checkbox"] {
 #FxnPlot .main-svg:nth-of-type(2){
   margin-top:3px;
 }
+
 

@@ -1,4 +1,0 @@
-These images are produced every time a test is run.
-
-If a test covers a tab in FREDA in which an image already exists, that image may be overwritten.
-

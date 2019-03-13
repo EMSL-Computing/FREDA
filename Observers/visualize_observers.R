@@ -48,7 +48,7 @@ observeEvent(c(input$top_page, input$choose_single, g1_samples(), g2_samples(),
                input$summary_fxn, input$pres_thresh, input$pres_fn, input$absn_thresh, input$pval),{
                  req(input$top_page == "Visualize")
 
-                 toggleCssClass("js_summary_fxn", "suggest", input$choose_single %in% c(3,4) & all(!is.null(g1_samples()), !is.null(g2_samples())) & !(input$summary_fxn %in% fticRanalysis:::getGroupComparisonSummaryFunctionNames()))
+                 toggleCssClass("js_summary_fxn", "suggest", input$choose_single %in% c(3,4) & all(!is.null(g1_samples()), !is.null(g2_samples())) & !(input$summary_fxn %in% ftmsRanalysis:::getGroupComparisonSummaryFunctionNames()))
                  
                  # conditions different between counts and proportion 
                  if (isTRUE(input$pres_fn == "nsamps") & isTRUE(input$choose_single %in% c(3,4))){
@@ -133,25 +133,25 @@ observeEvent(input$flip_colors, {
 
 # make the options mutually exclusive when doing a comparison of two groups
 observeEvent(input$whichGroups2,{
-  req(exists("peakIcr2"))
+  req(exists("peakData2"))
   updatePickerInput(session, "whichGroups1", choices = setdiff(names(revals$groups_list), input$whichGroups2), selected = input$whichGroups1)
 })
 observeEvent(input$whichGroups1,{
-  req(exists("peakIcr2"))
+  req(exists("peakData2"))
   updatePickerInput(session, "whichGroups2", choices = setdiff(names(revals$groups_list), input$whichGroups1), selected = input$whichGroups2)
 })
 
 # make the options mutually exclusive when doing a comparison of two samples
 observeEvent(input$whichSample2,{
-  req(exists("peakIcr2"))
+  req(exists("peakData2"))
   updatePickerInput(session, "whichSample1", 
-                    choices = setdiff(colnames(peakIcr2$e_data[-which(colnames(peakIcr2$e_data) == getEDataColName(peakIcr2))]), input$whichSample2),
+                    choices = setdiff(colnames(peakData2$e_data[-which(colnames(peakData2$e_data) == getEDataColName(peakData2))]), input$whichSample2),
                     selected = input$whichSample1)
 })
 observeEvent(input$whichSample1,{
-  req(exists("peakIcr2"))
+  req(exists("peakData2"))
   updatePickerInput(session, "whichSample2", 
-                    choices = setdiff(colnames(peakIcr2$e_data[-which(colnames(peakIcr2$e_data) == getEDataColName(peakIcr2))]), input$whichSample1),
+                    choices = setdiff(colnames(peakData2$e_data[-which(colnames(peakData2$e_data) == getEDataColName(peakData2))]), input$whichSample1),
                     selected = input$whichSample2)
 })
 
@@ -159,7 +159,7 @@ observeEvent(input$whichSample1,{
 observeEvent(input$chooseplots, {
   # Pre-populate dropdowns so users can select colors and custom scatterplot axes before submitting plot.
   # Need a vector of the numeric columns to pass to scatterplot
-  numeric_cols <- which(sapply(peakIcr2$e_meta %>% dplyr::select(emeta_display_choices()), is.numeric))
+  numeric_cols <- which(sapply(peakData2$e_meta %>% dplyr::select(emeta_display_choices()), is.numeric))
   
   color_select_label <- if(input$chooseplots == 'Density Plot') "Plot Distribution of Variable:" else "Color by:"
   
@@ -170,7 +170,7 @@ observeEvent(input$chooseplots, {
     updateSelectInput(session, 'scatter_y', choices = emeta_display_choices()[numeric_cols][-2], selected = emeta_display_choices()[numeric_cols][3])
   }
   else if(input$chooseplots == 'PCOA Plot') {
-    axes_choices <- 1:min(5, ncol(peakIcr2$e_data)-2)
+    axes_choices <- 1:min(5, ncol(peakData2$e_data)-2)
     names(axes_choices) <- paste0('PC', axes_choices)
     updateSelectInput(session, 'scatter_x', choices = axes_choices, selected=1)
     updateSelectInput(session, 'scatter_y', choices = axes_choices, selected=2)
