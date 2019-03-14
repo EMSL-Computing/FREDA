@@ -43,117 +43,121 @@ shinyUI(tagList(useShinyjs(),
                    ),
                    ################## Upload Panel #######################################
                    tabPanel("Upload",
-                            sidebarLayout(
+                            fluidRow(
                               ## Sidebar panel on Upload tab ##
-                              sidebarPanel(
-                                # Set width of sidebar panel
-                                width = 4,
-                                
-                                # Load e_data file
-                                div(id = "js_file_edata",
-                                    fileInput("file_edata", "Upload CSV Data File",
-                                              multiple = TRUE,
-                                              accept = c("text/csv",
-                                                         "text/comma-separated-values,text/plain",
-                                                         ".csv"))
-                                    ),
-                                
-                                ## Get unique identifier column from e_data ##
-                                uiOutput('edata_id'),
-                                
-                                # Load e_meta file
-                                div(id = "js_file_emeta", fileInput("file_emeta", "Upload CSV Molecular Identification File",
-                                              multiple = TRUE,
-                                              accept = c("text/csv",
-                                                         "text/comma-separated-values,text/plain",
-                                                         ".csv"))), 
-                                
-                                tags$hr(style = "margin:6px"),
-                                
-                                # Get which instrument generated the data #
-                                inlineCSS(list('#instrument .btn-default, #select .btn-default' = 'font-weight:lighter;',
-                                          '#js_data_scale .filter-option'='text-align:center;')),
-                                radioGroupButtons('instrument', 
-                                            label = 'What instrument generated this data?',
-                                            choices = list('12T or 15T' = '12T', '21T'), 
-                                            selected = '12T', justified = TRUE
-                                ), 
-                                div(id = "js_data_scale", pickerInput('data_scale', 
-                                                  label = 'On what scale are your data?',
-                                                  choices = list('Log base 2' = 'log2', 'Log base 10'='log10', 'Natural log'='log', 
-                                                                 'Presence/absence' = 'pres', 'Raw intensity'='abundance'), 
-                                                  selected = 'abundance'
-                                  )
-                                ),
-                                
-                                tags$hr(style = "margin:6px"),
-                                
-                                # Get whether formulas or elemental columns are included #
-                                div(id = "js_select", radioGroupButtons('select', 
-                                                                  label = 'Does this file have formulas 
-                                                                  or elemental columns?',
-                                                                  choices = list('Formulas' = 1, 
-                                                                                 'Elemental Columns' = 2),
-                                                                  selected = 'Select an option', justified = TRUE) 
-                                ), 
-                                
-                                # (Conditional on the above selectInput) Formula: 
-                                ##  which column contains the formula? #
-                                conditionalPanel(
-                                  condition = "input.select == 1", 
-                                  uiOutput('f_column')
-                                ), 
-                                
-                                # (Conditional on the above selectInput) Elemental columns: 
-                                ##  which columns contain the elements?
-                                
-                                inlineCSS('#element_select button {width:100%;}'),
-                                conditionalPanel(id = "element_select",
-                                  condition = "input.select == 2",
+                              column(width = 4,
+                                bsCollapse(id = 'upload_collapse', open = c('file_upload'), multiple = TRUE,
+                                  bsCollapsePanel(div('Upload two linked csv files', 
+                                                      hidden(div(id = 'ok_files', style = 'color:deepskyblue;float:right', icon('ok', lib='glyphicon')
+                                                        )
+                                                      )
+                                                  ), value = 'file_upload',  
                                   
-                                  dropdownButton(inputId = "element_dropdown", circle = FALSE, label = "Specify Elemental Count Columns",
-                                    fluidRow(
-                                      column(width = 4,
-                                             uiOutput("c_column"), 
-                                             uiOutput("h_column")
-                                      ),
-                                      column(width = 4,
-                                             uiOutput("n_column"),
-                                             uiOutput("o_column") 
-                                      ),
-                                      column(width = 4,
-                                             uiOutput("s_column"), 
-                                             uiOutput("p_column")
+                                    # Load e_data file
+                                    div(id = "js_file_edata",
+                                        fileInput("file_edata", "Upload CSV Data File",
+                                                  multiple = TRUE,
+                                                  accept = c("text/csv",
+                                                             "text/comma-separated-values,text/plain",
+                                                             ".csv"))
+                                        ),
+                                    
+                                    ## Get unique identifier column from e_data ##
+                                    uiOutput('edata_id'),
+                                    
+                                    # Load e_meta file
+                                    div(id = "js_file_emeta", fileInput("file_emeta", "Upload CSV Molecular Identification File",
+                                                  multiple = TRUE,
+                                                  accept = c("text/csv",
+                                                             "text/comma-separated-values,text/plain",
+                                                             ".csv")))
+                                  ),
+                                  bsCollapsePanel('Specify data structure', value = 'column_info',  
+                                    # Get which instrument generated the data #
+                                    inlineCSS(list('#instrument .btn-default, #select .btn-default' = 'font-weight:lighter;',
+                                              '#js_data_scale .filter-option'='text-align:center;')),
+                                    radioGroupButtons('instrument', 
+                                                label = 'What instrument generated this data?',
+                                                choices = list('12T or 15T' = '12T', '21T'), 
+                                                selected = '12T', justified = TRUE
+                                    ), 
+                                    div(id = "js_data_scale", pickerInput('data_scale', 
+                                                      label = 'On what scale are your data?',
+                                                      choices = list('Log base 2' = 'log2', 'Log base 10'='log10', 'Natural log'='log', 
+                                                                     'Presence/absence' = 'pres', 'Raw intensity'='abundance'), 
+                                                      selected = 'abundance'
                                       )
+                                    ),
+                                    
+                                    tags$hr(style = "margin:6px"),
+                                    
+                                    # Get whether formulas or elemental columns are included #
+                                    div(id = "js_select", radioGroupButtons('select', 
+                                                                      label = 'Does this file have formulas 
+                                                                      or elemental columns?',
+                                                                      choices = list('Formulas' = 1, 
+                                                                                     'Elemental Columns' = 2),
+                                                                      selected = 'Select an option', justified = TRUE) 
+                                    ), 
+                                    
+                                    # (Conditional on the above selectInput) Formula: 
+                                    ##  which column contains the formula? #
+                                    conditionalPanel(
+                                      condition = "input.select == 1", 
+                                      uiOutput('f_column')
+                                    ), 
+                                    
+                                    # (Conditional on the above selectInput) Elemental columns: 
+                                    ##  which columns contain the elements?
+                                    
+                                    inlineCSS('#element_select button {width:100%;}'),
+                                    conditionalPanel(id = "element_select", style = 'width:95%;padding-left:2.5%',
+                                      condition = "input.select == 2",
+                                      
+                                      dropdownButton(inputId = "element_dropdown", circle = FALSE, label = "Specify Elemental Count Columns",
+                                        fluidRow(
+                                          column(width = 4,
+                                                 uiOutput("c_column"), 
+                                                 uiOutput("h_column")
+                                          ),
+                                          column(width = 4,
+                                                 uiOutput("n_column"),
+                                                 uiOutput("o_column") 
+                                          ),
+                                          column(width = 4,
+                                                 uiOutput("s_column"), 
+                                                 uiOutput("p_column")
+                                          )
+                                        )
+                                      )
+                                    ), 
+                                    
+                                    tags$hr(style = "margin:6px"),
+                                    
+                                    # Create an option for Isotopic Analysis
+                                    div(id = "js_isotope_yn", radioGroupButtons('isotope_yn',
+                                                                          label = 'Were isotopic peaks identified in the molecular assignments file?',
+                                                                          choices = list('Yes' = 1,
+                                                                                         'No' = 2),
+                                                                          selected = 'Select an Option', justified = TRUE)
+                                    ),
+                                    # Condition on presence of isotope information
+                                    conditionalPanel(
+                                      condition = "input.isotope_yn == 1",
+                                      uiOutput("iso_info_filter_out"),
+                                      div(id = "js_iso_info_column", uiOutput('iso_info_column_out')),
+                                      div(id = "js_iso_symbol", uiOutput('iso_symbol_out'))
                                     )
                                   )
-                                ), 
-                                
-                                tags$hr(style = "margin:6px"),
-                                
-                                # Create an option for Isotopic Analysis
-                                div(id = "js_isotope_yn", radioGroupButtons('isotope_yn',
-                                                                      label = 'Were isotopic peaks identified in the molecular assignments file?',
-                                                                      choices = list('Yes' = 1,
-                                                                                     'No' = 2),
-                                                                      selected = 'Select an Option', justified = TRUE)
                                 ),
-                                # Condition on presence of isotope information
-                                conditionalPanel(
-                                  condition = "input.isotope_yn == 1",
-                                  uiOutput("iso_info_filter_out"),
-                                  div(id = "js_iso_info_column", uiOutput('iso_info_column_out')),
-                                  div(id = "js_iso_symbol", uiOutput('iso_symbol_out'))
-                                ),
-                                
-                                tags$hr(),
-                                
-                                # Action button: pressing this creates the peakData object
-                                actionButton('upload_click', 'Process Data', icon = icon("cog"), lib = "glyphicon")
+                                    tags$hr(),
+                                    
+                                    # Action button: pressing this creates the peakData object
+                                    actionButton('upload_click', 'Process Data', icon = icon("cog"), lib = "glyphicon")
                                 
                               ), # End sidebar panel
                               
-                              mainPanel(
+                              column(width = 8,
                                 # warnings panel
                                 div(id = "warnings_upload", style = "overflow-y:scroll;max-height:250px", uiOutput("warnings_upload")),
                                 
@@ -220,7 +224,7 @@ shinyUI(tagList(useShinyjs(),
                                   div(class = "adjustdown",uiOutput("which_calcs")),
                                   
                                   # Action button: add test columns with results to peakData2
-                                  shinyjs::disabled(actionButton('preprocess_click', 'Process Data', icon = icon("cog"), lib = "glyphicon")),
+                                  disabled(actionButton('preprocess_click', 'Process Data', icon = icon("cog"), lib = "glyphicon")),
                                   br(),
                                   uiOutput("warnings_preprocess")
                                 ), # End sidebar panel
@@ -386,7 +390,7 @@ shinyUI(tagList(useShinyjs(),
                                                    uiOutput("customfilter3UI")
                                                  ),
                                 
-                                shinyjs::disabled(
+                                disabled(
                                   fluidRow(
                                     column(
                                       width = 6, actionButton('filter_click', "Filter Data", icon = icon("cog"), lib = "glyphicon")
@@ -447,13 +451,19 @@ shinyUI(tagList(useShinyjs(),
                                     uiOutput('viztab_select_groups'),
                                     
                                     # Single dropdown for 1 sample/group or....
-                                    shinyjs::hidden(div(id = "js_toggle_single", uiOutput("plotUI_single"))),
+                                    hidden(div(id = "js_toggle_single", uiOutput("plotUI_single"))),
                                     
                                     # ...two dropdowns and extra options for group comparison
-                                    shinyjs::hidden(div(id = "js_toggle_groups", 
+                                    hidden(div(id = "js_toggle_groups", 
                                                         tagList(div(id = "js_whichGroups1", uiOutput("plotUI_comparison_1")), 
-                                                                div(id = "js_whichGroups2", uiOutput("plotUI_comparison_2"))))),
-                                    conditionalPanel(condition = "(input.choose_single == 3 || input.choose_single == 4) && input.chooseplots !== '0'", uiOutput("summary_fxn_out", class = "adjustdown"))
+                                                                div(id = "js_whichGroups2", uiOutput("plotUI_comparison_2"))
+                                                                )
+                                                        )
+                                                    ),
+                                    
+                                    hidden(div(id = 'js_summary_fxn', uiOutput("summary_fxn_out", class = "adjustdown")
+                                               )
+                                           )
                                     
                                   ),
                                   # Axes Options
@@ -468,12 +478,10 @@ shinyUI(tagList(useShinyjs(),
                                       )
                                   ),
                                   bsCollapsePanel(div('Save plot and view saved plots', div(style = 'float:right', uiOutput('saveplots_icon'))), value = 'downloads',
-                                      inlineCSS("#saveplot_ui .glyphicon{float:left;}"),
-                                      div(id = "saveplot_ui", style = "display:flex;vertical-align:top;margin:5px 0px 0px 5px",
-                                          splitLayout(cellArgs = list(style = 'overflow-x:hidden'),
-                                            div(shinyjs::disabled(actionButton(inputId = "add_plot", style = "width:100%", label = "Save This Plot for Later Download", icon = icon("save")))),
-                                            div(uiOutput("view_plots"))
-                                          )
+                                      div(id = "saveplot_ui", style = 'width:90%;padding-left:5%;',
+                                            div(disabled(actionButton(inputId = "add_plot", width = '100%', label = "Save This Plot for Later Download", icon = icon("save")))),
+                                            div(style = 'margin-top:4px', uiOutput("view_plots"))
+                                          
                                       )
                                     
                                   )
@@ -482,7 +490,7 @@ shinyUI(tagList(useShinyjs(),
                                     
                                 # Seperate buttons to generate plot or simply update labels without recalculating data
                                 
-                                shinyjs::disabled(
+                                disabled(
                                   fluidRow(
                                     column(width = 6,
                                            actionButton("plot_submit", label = "Generate Plot", icon = icon("plus"), lib = "glyphicon")
@@ -512,10 +520,10 @@ shinyUI(tagList(useShinyjs(),
                                 # color and van-krevelen bounds dropdowns
                                 fluidRow(
                                   column(width = 4, class = "grey_out", id = "js_vk_colors",
-                                         shinyjs::disabled(selectInput("vk_colors", "Color by:", choices = NULL, selected = NULL))
+                                         disabled(selectInput("vk_colors", "Color by:", choices = NULL, selected = NULL))
                                          ),
                                   column(width = 4, class = "grey_out", id = "js_vkbounds",
-                                         shinyjs::disabled(selectInput('vkbounds', 'Display Van Krevelen boundary set:',
+                                         disabled(selectInput('vkbounds', 'Display Van Krevelen boundary set:',
                                                      choices = c('BS1' = 'bs1', 'BS2' = 'bs2', 'None' = 0),
                                                      selected = 'bs1'))
                                          )
@@ -524,10 +532,10 @@ shinyUI(tagList(useShinyjs(),
                                 # x and y axis variable dropdowns for custom scatter plot
                                 fluidRow(
                                   column(width = 4, class = "grey_out", id = "js_scatter_x",
-                                         shinyjs::disabled(selectInput("scatter_x", "Horizontal Axis Variable:", choices = NULL, selected = NULL))
+                                         disabled(selectInput("scatter_x", "Horizontal Axis Variable:", choices = NULL, selected = NULL))
                                         ),
                                   column(width = 4, class = "grey_out", id = "js_scatter_y",
-                                         shinyjs::disabled(selectInput("scatter_y", "Vertical Axis Variable:", choices = NULL, selected = NULL))
+                                         disabled(selectInput("scatter_y", "Vertical Axis Variable:", choices = NULL, selected = NULL))
                                         )
                                 ),
                                 

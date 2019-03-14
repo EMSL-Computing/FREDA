@@ -7178,4 +7178,13 @@ input[type="checkbox"] {
   margin-top:3px;
 }
 
+#upload_collapse .shiny-input-container{
+  width:95%;
+  padding-left:2.5%;
+}
+
+#upload_collapse .radiobtn {
+  border-radius:5px;
+}
+
 

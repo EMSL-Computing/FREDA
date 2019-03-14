@@ -243,6 +243,11 @@ observeEvent(numeric_selected(),{
   }
 })
 
+observeEvent(c(input$choose_single, input$chooseplots),{
+  cond <- input$choose_single %in% c(3,4) & input$chooseplots != 0
+  toggle('js_summary_fxn', condition = cond)
+})
+
 ### Summary comparison plot selection control ###
 observeEvent(c(input$pres_fn, g1_samples(), g2_samples(), input$choose_single),{
   

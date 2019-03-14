@@ -20,11 +20,9 @@ library(shinyjs)
 library(shinyWidgets)
 library(pander)
 
-
-#peakData2 <- NULL #when finished developing, uncomment this to clear the workspace on exit
-
 shinyServer(function(session, input, output) {
   
+  # onStop(function() rm(peakData2, pos = 1))
   Sys.setenv(R_ZIPCMD="/usr/bin/zip")
   # Source files for 'summaryFilt' and 'summaryPreprocess'
   source('helper_functions/selection_addons.R')
@@ -101,7 +99,7 @@ shinyServer(function(session, input, output) {
   # Note: All require emeta_cnames()
   output$c_column <- renderUI({
     
-    selectInput("c_column", "Choose column for C",
+    selectInput("c_column", "Carbon column:",
                 choices  = c('Select a column', emeta_cnames()),
                 selected = ifelse(grepl("^c$", tolower(emeta_cnames())),
                                   yes = emeta_cnames()[grepl("^c$", tolower(emeta_cnames()))][1],
@@ -111,7 +109,7 @@ shinyServer(function(session, input, output) {
   
   output$h_column <- renderUI({
     
-    selectInput("h_column", "Choose column for H",
+    selectInput("h_column", "Hydrogen column:",
                 choices  = c('Select a column', emeta_cnames()),
                 selected = ifelse(grepl("^h$", tolower(emeta_cnames())),
                                   yes = emeta_cnames()[grepl("^h$", tolower(emeta_cnames()))][1],
@@ -121,7 +119,7 @@ shinyServer(function(session, input, output) {
   
   output$n_column <- renderUI({
     
-    selectInput("n_column", "Choose column for N",
+    selectInput("n_column", "Nitrogen column:",
                 choices  = c('Select a column', emeta_cnames()),
                 selected = ifelse(grepl("^n$", tolower(emeta_cnames())),
                                   yes = emeta_cnames()[grepl("^n$", tolower(emeta_cnames()))][1],
@@ -131,7 +129,7 @@ shinyServer(function(session, input, output) {
   
   output$o_column <- renderUI({
     
-    selectInput("o_column", "Choose column for O",
+    selectInput("o_column", "Oxygen column:",
                 choices  = c('Select a column', emeta_cnames()),
                 selected = ifelse(grepl("^o$", tolower(emeta_cnames())),
                                   yes = emeta_cnames()[grepl("^o$", tolower(emeta_cnames()))][1],
@@ -141,7 +139,7 @@ shinyServer(function(session, input, output) {
   
   output$s_column <- renderUI({
     
-    selectInput("s_column", "Choose column for S",
+    selectInput("s_column", "Sulfur column:",
                 choices  = c('Select a column', emeta_cnames()),
                 selected = ifelse(grepl("^s$", tolower(emeta_cnames())),
                                   yes = emeta_cnames()[grepl("^s$", tolower(emeta_cnames()))][1],
@@ -151,7 +149,7 @@ shinyServer(function(session, input, output) {
   
   output$p_column <- renderUI({
     
-    selectInput("p_column", "Choose column for P",
+    selectInput("p_column", "Phosphorus column:",
                 choices  = c('Select a column', emeta_cnames()),
                 selected = ifelse(grepl("^p$", tolower(emeta_cnames())),
                                   yes = emeta_cnames()[grepl("^p$", tolower(emeta_cnames()))][1],
@@ -1049,7 +1047,7 @@ shinyServer(function(session, input, output) {
     req(input$chooseplots=='PCOA Plot')
     dist_choices = c('manhattan', 'euclidean', 'canberra', 'clark', 'bray', 'kulczynski', 
                     'jaccard', 'gower', 'altGower', 'morisita', 'horn', 'mountford', 'raup', 
-                    'binomial', 'chao', 'cao','mahalanobis')
+                    'binomial', 'cao','mahalanobis')
     
     selectInput('choose_dist', "Choose a distance metric", choices = dist_choices, selected = 'bray')
   })
@@ -1532,7 +1530,8 @@ shinyServer(function(session, input, output) {
   # view plot table button UI
   output$view_plots <- renderUI({
     n_plots <- nrow(parmTable$parms[which(rowSums(!is.na(parmTable$parms))!=0),])
-    actionButton(inputId = "view_plots", label = sprintf("View Table Info of %i Saved Plots", n_plots) ,style = "width:100%", icon = icon("folder-open", lib = "glyphicon"))
+    actionButton(inputId = "view_plots_btn", width = '100%', 
+                 label = sprintf("View Table Info of %i Saved Plots", n_plots), icon = icon("folder-open", lib = "glyphicon"))
   })
   
   #-------- create a table that stores plotting information -------#

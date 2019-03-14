@@ -32,10 +32,17 @@ observeEvent(c(input$edata_id_col, Edata(), Emeta(), input$select, input$isotope
   conditions <- c(!(input$edata_id_col %in% edata_cnames() & input$edata_id_col %in% emeta_cnames()),
                   isTRUE(is.null(input$select)),
                   isTRUE(is.null(input$isotope_yn)),
-                  isTRUE(input$f_column == "Select one"))
+                  isTRUE(input$f_column == "Select one"),
+                  sum(!(Edata()[[input$edata_id_col]] %in% Emeta()[[input$edata_id_col]])) == 0)
   
   if(conditions[1]){
     content = "style = 'color:red'>The chosen ID column does not exist in one or both of the Data/Molecular Identification Files"
+  }
+  else if(conditions[5]){
+    content = NULL
+    # close top panel
+    Sys.sleep(0.6)
+    updateCollapse(session, 'upload_collapse', close = 'file_upload', open = 'column_info')
   }
   else content = NULL
   
@@ -50,6 +57,7 @@ observeEvent(c(input$edata_id_col, Edata(), Emeta(), input$select, input$isotope
 
   toggleCssClass("edata_id", "attention", conditions[1])
   toggleCssClass("js_select", "suggest", all(!conditions[1], conditions[2]))
+  toggle('ok_files', condition = !conditions[1] & conditions[5])
   revals$warningmessage_upload$warnidcol <- content
   revals$warningmessage_upload$chooselement <- content2
   
