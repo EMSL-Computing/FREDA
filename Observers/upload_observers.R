@@ -72,6 +72,7 @@ observeEvent(input$select,{
 
 # Peak ID column mismatch, gets a separate observer for code-cleanliness
 observeEvent(c(Edata(), Emeta(), input$edata_id_col), {
+  req(input$edata_id_col)
   conditions <- FALSE
   
   if(input$edata_id_col %in% edata_cnames() & input$edata_id_col %in% emeta_cnames()){

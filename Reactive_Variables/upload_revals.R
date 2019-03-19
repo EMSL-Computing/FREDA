@@ -6,8 +6,8 @@ Edata <- reactive({
   # Load file
   filename <- input$file_edata$datapath
   
-  exportTestValues(e_data = read.csv(filename, stringsAsFactors = FALSE))
-  read.csv(filename, stringsAsFactors = FALSE)
+  exportTestValues(e_data = read_csv(filename) %>% as.data.frame(stringsAsFactors = FALSE))
+  read_csv(filename) %>% as.data.frame(stringsAsFactors = FALSE)
   
 }) # End Edata #
 
@@ -24,8 +24,8 @@ Emeta <- reactive({
   req(input$file_emeta$datapath)
   # Load file
   filename <- input$file_emeta$datapath
-  exportTestValues(e_meta = read.csv(filename, stringsAsFactors = FALSE))
-  read.csv(filename, stringsAsFactors = FALSE) 
+  exportTestValues(e_meta = read_csv(filename) %>% as.data.frame(stringsAsFactors = FALSE))
+  read_csv(filename) %>% as.data.frame(stringsAsFactors = FALSE)
 }) # End Emeta #
 
 # Object: Emeta column names 

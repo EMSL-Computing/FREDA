@@ -43,10 +43,10 @@ shinyServer(function(session, input, output) {
   exportTestValues(plot_data = revals$plot_data_export, peakData = revals$peakData_export, color_choices = revals$color_by_choices)
   ######## Welcome Tab #############
   #------ Download Example Data ---------#
-  example_edata <- read.csv('Data/example12T_edata.csv')
-  example_emeta <- read.csv('Data/example12T_emeta.csv')
-  calc_opts <- read.csv('calculation_options.csv', stringsAsFactors = FALSE)
-  calc_vars <- read.csv('calculation_variables.csv', stringsAsFactors = FALSE)
+  example_edata <- read_csv('Data/example12T_edata.csv') %>% as.data.frame(stringsAsFactors = FALSE)
+  example_emeta <- read_csv('Data/example12T_emeta.csv') %>% as.data.frame(stringsAsFactors = FALSE)
+  calc_opts <- read_csv('calculation_options.csv') %>% as.data.frame(stringsAsFactors = FALSE)
+  calc_vars <- read_csv('calculation_variables.csv') %>% as.data.frame(stringsAsFactors = FALSE)
   
   #############
   output$downloadData <- downloadHandler(
@@ -57,8 +57,8 @@ shinyServer(function(session, input, output) {
       tmpdir <- tempdir()
       print(tempdir())
       fs <- c("example12T_edata.csv", "example12T_emeta.csv")
-      write.csv(example_edata, row.names = FALSE, file = file.path(tmpdir, "example12T_edata.csv"))
-      write.csv(example_emeta, row.names = FALSE, file = file.path(tmpdir, "example12T_emeta.csv"))      
+      write_csv(example_edata, path = file.path(tmpdir, "example12T_edata.csv"))
+      write_csv(example_emeta, path = file.path(tmpdir, "example12T_emeta.csv"))      
       print(fs)
       zip(zipfile=fname, files=file.path(tmpdir, fs), flags = "-j")
     },
@@ -495,7 +495,6 @@ shinyServer(function(session, input, output) {
   
   # Preprocess Tab reactive variables:
   # emeta_display_choices():  Columns of emeta minus mass column, isotopic information column, and categorical columns with greater than 12 categories
-  # successMessage():  Success messages and modal dialog when filter button is clicked
   source("Reactive_Variables/preprocess_revals.R", local = TRUE)
   
   source("Observers/preprocess_observers.R", local = TRUE)
@@ -566,7 +565,7 @@ shinyServer(function(session, input, output) {
     req(input$tests)
     
     # Get csv file of all possible calculation column names
-    possible_calc_cnames <- read.csv("calculation_variables.csv", header = TRUE, stringsAsFactors = FALSE)
+    possible_calc_cnames <- read_csv("calculation_variables.csv") %>% as.data.frame(stringsAsFactors = FALSE)
     
     # Get column names from peakData2's e_meta
     actual_cnames <- colnames(peakData2$e_meta)
@@ -1704,14 +1703,14 @@ shinyServer(function(session, input, output) {
         
         if ("separate" %in% input$download_selection){
           fs <- c(fs, paste0(tempdir(), "/FREDA_processed_e_data.csv"), paste0(tempdir(), "/FREDA_processed_e_meta.csv"))
-          write.csv(peakData2$e_data, file = paste0(tempdir(), "/FREDA_processed_e_data.csv"), row.names = FALSE)
-          write.csv(peakData2$e_meta, file = paste0(tempdir(), "/FREDA_processed_e_meta.csv"), row.names = FALSE)
+          write_csv(peakData2$e_data, path = paste0(tempdir(), "/FREDA_processed_e_data.csv"))
+          write_csv(peakData2$e_meta, path = paste0(tempdir(), "/FREDA_processed_e_meta.csv"))
           incProgress(1/total_files)
         }
         if ("merged" %in% input$download_selection){
           fs <- c(fs, paste0(tempdir(), "/FREDA_processed_merged_data.csv"))
           merged_data <- merge(peakData2$e_data, peakData2$e_meta)
-          write.csv(merged_data, file = paste0(tempdir(), "/FREDA_processed_merged_data.csv"), row.names = FALSE)
+          write_csv(merged_data, path = paste0(tempdir(), "/FREDA_processed_merged_data.csv"))
           incProgress(1/total_files)
         }
         if ("group_data" %in% input$download_selection){
@@ -1720,7 +1719,7 @@ shinyServer(function(session, input, output) {
               if (!is.null(revals$plot_data[[i]])){
                 path <- paste0(tempdir(), "/FREDA_group_data_summary_", gsub("/", "-", parmTable$parms[["File Name"]][i]),".csv")
                 fs <- c(fs, path)
-                write.csv(revals$plot_data[[i]], file = path, row.names = FALSE) 
+                write_csv(revals$plot_data[[i]], path = path) 
               }
             }
           }
@@ -1749,7 +1748,7 @@ shinyServer(function(session, input, output) {
           
           fs <- c(fs, paste0(tempdir(), "/Plot_key.csv"))
           outtable <- parmTable$parms[rows,]
-          write.csv( outtable, row.names = FALSE, file = paste0(tempdir(), "/Plot_key.csv"))
+          write_csv( outtable, path = paste0(tempdir(), "/Plot_key.csv"))
         }
         print(fs)
         

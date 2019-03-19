@@ -93,8 +93,8 @@ kable(data.frame("Value" = selection_names, "Column Selected" = selection_values
 if(length(groups) > 0){
   groups_df <- data.frame("Group Name" = names(groups), "Samples" = sapply(groups, paste, collapse = " | "), check.names = FALSE)
   rownames(groups_df) <- NULL
+  kable(groups_df, align = c('l', 'c'))
 }
-kable(groups_df, align = c('l', 'c'))
 ```
 
 ****

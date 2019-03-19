@@ -7122,6 +7122,7 @@ input[type="checkbox"] {
 }
 
 .suggest .selectize-input, .suggest .form-control, .suggest-upload .input-group, .suggest .btn-group-container-sw{
+  border-radius:4px;
   animation: suggest 0.2s linear;
   animation-fill-mode: forwards;
 }
@@ -7184,7 +7185,7 @@ input[type="checkbox"] {
 }
 
 #upload_collapse .radiobtn {
-  border-radius:5px;
+  border-radius:4px;
 }
 
 
