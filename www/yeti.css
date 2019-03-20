@@ -3019,7 +3019,7 @@ select[multiple].input-lg {
   padding: 8px 12px;
   font-size: 15px;
   line-height: 1.4;
-  border-radius: 0;
+  border-radius: 4px;
   -webkit-user-select: none;
   -moz-user-select: none;
   -ms-user-select: none;
@@ -7082,7 +7082,7 @@ input[type="checkbox"] {
 }
 
 .shiny-input-container .bootstrap-select, .shiny-input-container .dropdown-toggle {
-  background-color:white;
+  background-color:#e7e7e7;
   border-radius:4px;
 }
 

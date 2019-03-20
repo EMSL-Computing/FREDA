@@ -65,9 +65,7 @@ observeEvent(c(input$edata_id_col, Edata(), Emeta(), input$select, input$isotope
 })
 
 observeEvent(input$select,{
-  if(input$select == 2){
-    toggleDropdownButton(inputId = "element_dropdown")
-  }
+  toggleElement('element_select', condition = input$select == 2)
 })
 
 # Peak ID column mismatch, gets a separate observer for code-cleanliness
@@ -135,7 +133,7 @@ observeEvent(c(input$c_column, input$h_column, input$n_column,
                  
   elcols <- c(input$c_column, input$h_column, input$n_column, 
               input$o_column, input$s_column, input$p_column)
-  conditions <- isTRUE(any(elcols == 'Select a column'))
+  conditions <- isTRUE(any(elcols == 'Select a column') | any(is.null(elcols)))
   
   if(conditions[1]){
     if(isTRUE(input$select == 2)){

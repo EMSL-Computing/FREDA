@@ -98,7 +98,6 @@ shinyServer(function(session, input, output) {
   # First try to locate the column name with a grepl
   # Note: All require emeta_cnames()
   output$c_column <- renderUI({
-    
     selectInput("c_column", "Carbon column:",
                 choices  = c('Select a column', emeta_cnames()),
                 selected = ifelse(grepl("^c$", tolower(emeta_cnames())),

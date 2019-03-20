@@ -72,7 +72,11 @@ shinyUI(tagList(useShinyjs(),
                                                              "text/comma-separated-values,text/plain",
                                                              ".csv")))
                                   ),
-                                  bsCollapsePanel('Specify data structure', value = 'column_info',  
+                                  bsCollapsePanel(div('Specify data structure', 
+                                                      hidden(div(id = 'ok_idcols', style = 'color:deepskyblue;float:right', icon('ok', lib='glyphicon')
+                                                                )
+                                                            )
+                                                      ), value = 'column_info',  
                                     # Get which instrument generated the data #
                                     inlineCSS(list('#instrument .btn-default, #select .btn-default' = 'font-weight:lighter;',
                                               '#js_data_scale .filter-option'='text-align:center;')),
@@ -89,7 +93,7 @@ shinyUI(tagList(useShinyjs(),
                                       )
                                     ),
                                     
-                                    tags$hr(style = "margin:6px"),
+                                    tags$hr(style = "margin:20px 0px 20px 0px"),
                                     
                                     # Get whether formulas or elemental columns are included #
                                     div(id = "js_select", radioGroupButtons('select', 
@@ -110,10 +114,8 @@ shinyUI(tagList(useShinyjs(),
                                     # (Conditional on the above selectInput) Elemental columns: 
                                     ##  which columns contain the elements?
                                     
-                                    inlineCSS('#element_select button {width:100%;}'),
-                                    conditionalPanel(id = "element_select", style = 'width:95%;padding-left:2.5%',
-                                      condition = "input.select == 2",
-                                      
+                                    inlineCSS('#element_select button {width:100%}'),
+                                    hidden(div(id = "element_select", style = 'width:92.5%;margin-left:2.5%',
                                       dropdownButton(inputId = "element_dropdown", circle = FALSE, label = "Specify Elemental Count Columns",
                                         fluidRow(
                                           column(width = 4,
@@ -130,9 +132,9 @@ shinyUI(tagList(useShinyjs(),
                                           )
                                         )
                                       )
-                                    ), 
+                                    )), #hidden div
                                     
-                                    tags$hr(style = "margin:6px"),
+                                    tags$hr(style = "margin:20px 0px 20px 0px"),
                                     
                                     # Create an option for Isotopic Analysis
                                     div(id = "js_isotope_yn", radioGroupButtons('isotope_yn',
