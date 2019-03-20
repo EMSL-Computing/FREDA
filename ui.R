@@ -281,9 +281,11 @@ shinyUI(tagList(useShinyjs(),
                                       wellPanel(style = 'height:100%',
                                            div(id='style_qc_boxplots', style='border-style:solid;border-width:1px', 
                                                plotlyOutput("qc_boxplots") %>% withSpinner(color = "orange", type = 8)
-                                               )
+                                               ),
                                            # div(id='style_qc_x', style='border-style:solid;border-width:1px;margin-top:3px', plotlyOutput("qc_pcoa_plots") %>% withSpinner(color = "orange", type = 8))
-                                           #uiOutput("download_qc")
+                                           div(style = 'margin-left:25%',
+                                               actionButton(inputId = "add_qc_boxplot", width = '66%', label = "Save This Plot for Later Download", icon = icon("save"))
+                                            )
                                            )
                                     )
                             ),

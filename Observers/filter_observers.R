@@ -310,7 +310,7 @@ observeEvent(input$clear_filters_yes, {
   #
   
   # counter to control plot storage indices in case of reset
-  revals$reset_counter <- input$add_plot
+  revals$reset_counter <- input$add_plot+input$add_qc_boxplot
   
   # reset 'removed samples' reval
   revals$removed_samples <- list()

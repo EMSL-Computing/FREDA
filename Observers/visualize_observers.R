@@ -6,7 +6,7 @@ observeEvent(input$top_page, {
 }, priority = 10)
 
 # display modal dialog of saved plot info
-observeEvent(input$view_plots,{
+observeEvent(input$view_plots_btn,{
   showModal(modalDialog(
     dataTableOutput("parmsTable")
     )

@@ -36,7 +36,7 @@ shinyServer(function(session, input, output) {
                            group_1 = NULL, group_2 = NULL, single_group = NULL, single_sample = NULL, whichSample1 = NULL, whichSample2 = NULL, 
                            warningmessage_upload = list(upload = "style = 'color:deepskyblue'>Upload data and molecular identification files described in 'Data Requirements' on the previous page."),
                            warningmessage_visualize = list(), warningmessage_filter = list(), warningmessage_preprocess = list(), warningmessage_groups = list(),
-                           current_plot = NULL, plot_list = list(), plot_data = list(), reset_counter = 0,
+                           current_plot = NULL, plot_list = list(), plot_data = list(), reset_counter = 0, current_qc_boxplot = NULL,
                            chooseplots = NULL, filter_click_disable = list(init = TRUE), 
                            groups_list = list(), removed_samples = list())
   
@@ -689,14 +689,19 @@ shinyServer(function(session, input, output) {
     
     # if their data scale selection does not match the object's data scale, transform before plotting
     if(isTRUE(ds != input$qc_plot_scale)){
-      plot(edata_transform(temp_peakData2, input$qc_plot_scale), 
-           xlabel=isolate(input$qc_boxplot_xlab), ylabel=isolate(input$qc_boxplot_ylab), 
-           title = isolate(input$qc_boxplot_title),colorBy = color_by) %>% layout(margin = list(b = 100), xaxis = list(tickangle = 45))
+      p <- plot(edata_transform(temp_peakData2, input$qc_plot_scale), 
+             xlabel=isolate(input$qc_boxplot_xlab), ylabel=isolate(input$qc_boxplot_ylab), 
+             title = isolate(input$qc_boxplot_title),colorBy = color_by) %>% layout(margin = list(b = 100), xaxis = list(tickangle = 45))
     }
-    else plot(temp_peakData2, xlabel=isolate(input$qc_boxplot_xlab), ylabel=isolate(input$qc_boxplot_ylab), 
-              title = isolate(input$qc_boxplot_title), colorBy=color_by) %>% layout(margin = list(b = 100), xaxis = list(tickangle = 45))
+    else p <- plot(temp_peakData2, xlabel=isolate(input$qc_boxplot_xlab), ylabel=isolate(input$qc_boxplot_ylab), 
+                title = isolate(input$qc_boxplot_title), colorBy=color_by) %>% layout(margin = list(b = 100), xaxis = list(tickangle = 45))
+    
+    revals$current_qc_boxplot <- p
+    enable('add_qc_boxplot')
+    
+    p
   })
-  
+
   # qc plots
   # output$qc_pcoa_plots <- renderPlotly({
   #   req(exists("peakData2", where = 1))
@@ -1543,7 +1548,7 @@ shinyServer(function(session, input, output) {
   observeEvent(input$add_plot, {
 
     # counter which begins at 1 even if a filter reset has occurred.
-    ind <- input$add_plot - revals$reset_counter
+    ind <- input$add_plot + input$add_qc_boxplot - revals$reset_counter
     
     # initialize a new line
     newLine <- data.frame(FileName = NA, PlotType = NA, SampleType = NA, Group_1_Samples = NA,  Group_2_Samples = NA, BoundarySet = NA,
@@ -1616,6 +1621,9 @@ shinyServer(function(session, input, output) {
     
     # store the current plot in a reactiveValue for later download
     revals$plot_list[[ind]] <- revals$current_plot
+    
+    # dont save the plot twice
+    disable('add_plot')
     
   }, priority = 7)
   
