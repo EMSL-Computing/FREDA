@@ -5,9 +5,8 @@ observeEvent(input$goto_filter_fromqc,{
 observeEvent(input$add_qc_boxplot,{
   # counter which begins at 1 even if a filter reset has occurred.
   ind <- input$add_plot + input$add_qc_boxplot - revals$reset_counter
-  
   # initialize a new line
-  newLine <- data.frame(FileName = NA, PlotType = NA, SampleType = NA, Group_1_Samples = NA,  Group_2_Samples = 'None', BoundarySet = NA,
+  newLine <- data.frame(FileName = NA, PlotType = NA, SampleType = NA, Group_1_Samples = NA,  Group_2_Samples = NA, BoundarySet = NA,
                         ColorBy = NA, x_var = NA, y_var = NA, pres_thresh = NA, absn_thresh = NA, pval = NA, compfn = NA)
   
   # which type of plot
@@ -15,7 +14,7 @@ observeEvent(input$add_qc_boxplot,{
   newLine$PlotType <- paste0('QC boxplot with scale:  ', input$qc_plot_scale)
 
   # Sample(s) in The first group (depends on input$choose_single to decide if this is a single or multiple sample list)
-  newLine$Group_1_Samples <- revals$groups_list[input$qc_select_groups] %>% unlist() %>% unique() %>% setdiff(revals$removed_samples) %>% paste(collapse=', ')
+  newLine$Group_1_Samples <- if(!is.null(input$qc_select_groups)) (revals$groups_list[input$qc_select_groups] %>% unlist() %>% unique() %>% setdiff(revals$removed_samples) %>% paste(collapse=', ')) else 'All Samples'
 
   # Prettified colnames
   colnames(newLine) <- c("File Name", "Plot Type", "Sample Type", "Group 1 Samples", "Group 2 Samples", "Boundary Set",
@@ -36,5 +35,6 @@ observeEvent(input$add_qc_boxplot,{
   
   #dont save the plot twice
   disable('add_qc_boxplot')
+  shinyjs::show('qc_download_ok')
   
 })

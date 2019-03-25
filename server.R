@@ -19,6 +19,7 @@ library(shinyBS)
 library(shinyjs)
 library(shinyWidgets)
 library(pander)
+library(readr)
 
 shinyServer(function(session, input, output) {
   
@@ -307,12 +308,16 @@ shinyServer(function(session, input, output) {
       
     } # End elemental column if statement
     
+    shinyjs::show('upload_success')
+    
     # create nonreactive peakData object
     peakData2 <<- res
     
     # reset 'removed samples' reval
     revals$removed_samples <- list()
     revals$groups_list <- list()
+    updateCollapse(session, 'upload_collapse', close = c('file_upload', 'column_info'))
+    shinyjs::show('ok_idcols')
     
     return(res)
     
@@ -646,7 +651,7 @@ shinyServer(function(session, input, output) {
     pickerInput("qc_plot_scale", "Plot on scale:", 
                 choices = list('Log base 2' = 'log2', 'Log base 10'='log10', 'Natural log'='log', 
                                'Presence/absence' = 'pres', 'Raw intensity'='abundance'), 
-                selected = attributes(peakData2)$data_info$data_scale)
+                selected = 'pres')
     
   })
   
@@ -698,44 +703,11 @@ shinyServer(function(session, input, output) {
     
     revals$current_qc_boxplot <- p
     enable('add_qc_boxplot')
+    shinyjs::hide('qc_download_ok')
     
     p
   })
 
-  # qc plots
-  # output$qc_pcoa_plots <- renderPlotly({
-  #   req(exists("peakData2", where = 1))
-  #   req(!is.null(input$pc_x) & !is.null(input$pc_y))
-  #   validate(need(length(sample_names()>0), "No data found, or only 1 sample"))
-  #   
-  #   samples <- setdiff(sample_names(), revals$removed_samples)
-  #   
-  #   # for each sample create a string indicating each group it belongs to
-  #   if(!is.null(input$qc_select_groups)){
-  #     groups <- sapply(samples, function(sampname){
-  #       tempgroup = NULL
-  #       for(grp in names(revals$groups_list[input$qc_select_groups])){
-  #         if(isTRUE(sampname %in% revals$groups_list[[grp]])) tempgroup[length(tempgroup)+1] <- grp
-  #       }
-  # 
-  #       if(is.null(tempgroup)){
-  #         return("None")
-  #         }
-  #       else return(paste(tempgroup, collapse="_"))
-  #     })
-  # 
-  #     group_DF <- data.frame(samples, groups)
-  #     colnames(group_DF) <- c(getFDataColName(peakData2), "Group")
-  #   }
-  #   else group_DF <- NULL
-  # 
-  #   temp_peakData2 <- ftmsRanalysis:::setGroupDF(peakData2, group_DF)
-  #   pcs <- getPrincipalCoordinates(temp_peakData2)
-  # 
-  #   plotPrincipalCoordinates(pcs, x=as.integer(input$pc_x), y=as.integer(input$pc_y), peakData=temp_peakData2)
-  #   
-  # })
-  
   ############## Filter tab ##############
   
   ### Filter Observers.  Contains much of the dropdown behavior and helper button functionality.

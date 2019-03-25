@@ -115,7 +115,7 @@ shinyUI(tagList(useShinyjs(),
                                     ##  which columns contain the elements?
                                     
                                     inlineCSS('#element_select button {width:100%}'),
-                                    hidden(div(id = "element_select", style = 'width:92.5%;margin-left:2.5%',
+                                    hidden(div(id = "element_select", style = 'width:92.5%;margin-left:2.5%;border-radius:4px',
                                       dropdownButton(inputId = "element_dropdown", circle = FALSE, label = "Specify Elemental Count Columns",
                                         fluidRow(
                                           column(width = 4,
@@ -152,10 +152,23 @@ shinyUI(tagList(useShinyjs(),
                                     )
                                   )
                                 ),
-                                    tags$hr(),
-                                    
-                                    # Action button: pressing this creates the peakData object
-                                    actionButton('upload_click', 'Process Data', icon = icon("cog"), lib = "glyphicon")
+                                tags$hr(),
+                                
+                                # Action button: pressing this creates the peakData object
+                                actionButton('upload_click', 'Process Data', icon = icon("cog"), lib = "glyphicon"),
+                                
+                                # Summary panel
+                                hidden(div(id = 'upload_success', style = 'width:75%;margin-top:10px',
+                                  wellPanel(style='border-radius:4px',
+                                            # Show 'Success' message if peakData created successfully
+                                            uiOutput('success_upload'),        
+                                            
+                                            # Number of peaks, samples, and peaks with formulas assigned
+                                            textOutput('num_peaks'), 
+                                            textOutput('num_samples'), 
+                                            textOutput('num_peaks_formula')
+                                  )
+                                ))
                                 
                               ), # End sidebar panel
                               
@@ -164,17 +177,6 @@ shinyUI(tagList(useShinyjs(),
                                 div(id = "warnings_upload", style = "overflow-y:scroll;max-height:250px", uiOutput("warnings_upload")),
                                 
                                 tags$hr(),
-                                
-                                # Summary panel
-                                wellPanel(style = 'width:50%',
-                                  # Show 'Success' message if peakData created successfully
-                                  uiOutput('success_upload'),        
-                                          
-                                  # Number of peaks, samples, and peaks with formulas assigned
-                                  textOutput('num_peaks'), 
-                                  textOutput('num_samples'), 
-                                  textOutput('num_peaks_formula')
-                                ),
                                 
                                 # Show preview of e_data
                                 htmlOutput('edata_text'), 
@@ -282,9 +284,13 @@ shinyUI(tagList(useShinyjs(),
                                            div(id='style_qc_boxplots', style='border-style:solid;border-width:1px', 
                                                plotlyOutput("qc_boxplots") %>% withSpinner(color = "orange", type = 8)
                                                ),
+                                           br(),
                                            # div(id='style_qc_x', style='border-style:solid;border-width:1px;margin-top:3px', plotlyOutput("qc_pcoa_plots") %>% withSpinner(color = "orange", type = 8))
                                            div(style = 'margin-left:25%',
-                                               actionButton(inputId = "add_qc_boxplot", width = '66%', label = "Save This Plot for Later Download", icon = icon("save"))
+                                               actionButton(inputId = "add_qc_boxplot", width = '66%', 
+                                                            label = "Save This Plot for Later Download", 
+                                                            icon = icon("save")),
+                                               hidden(div(id = 'qc_download_ok', style = 'float:right',icon('ok', lib='glyphicon'), "Current plot saved"))
                                             )
                                            )
                                     )
