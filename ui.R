@@ -281,7 +281,7 @@ shinyUI(tagList(useShinyjs(),
                                     ),
                                     column(8,
                                       wellPanel(style = 'height:100%',
-                                           div(id='style_qc_boxplots', style='border-style:solid;border-width:1px', 
+                                           div(id='style_qc_boxplots', style='border-style:solid;border-width:1px;padding-top:5px', 
                                                plotlyOutput("qc_boxplots") %>% withSpinner(color = "orange", type = 8)
                                                ),
                                            br(),
@@ -519,7 +519,7 @@ shinyUI(tagList(useShinyjs(),
                               # Plot panel and axes/color controls.
                               column(8,
                                 wellPanel(style = "margin-top:-10px",
-                                      div(style = "display:inline-block;outline-style:auto;outline-width:thin;width:65%",
+                                      div(style = "display:inline-block;outline-style:dotted;outline-width:thin;width:65%:padding:4px",
                                         plotlyOutput('FxnPlot', width = 'auto', height = '600px') %>% 
                                           withSpinner(color = "orange", type = 8)
                                       )
@@ -540,10 +540,10 @@ shinyUI(tagList(useShinyjs(),
                                 # x and y axis variable dropdowns for custom scatter plot
                                 fluidRow(
                                   column(width = 4, class = "grey_out", id = "js_scatter_x",
-                                         disabled(selectInput("scatter_x", "Horizontal Axis Variable:", choices = NULL, selected = NULL))
+                                         disabled(selectInput("scatter_x", "Horizontal axis variable:", choices = NULL, selected = NULL))
                                         ),
                                   column(width = 4, class = "grey_out", id = "js_scatter_y",
-                                         disabled(selectInput("scatter_y", "Vertical Axis Variable:", choices = NULL, selected = NULL))
+                                         disabled(selectInput("scatter_y", "Vertical axis variable:", choices = NULL, selected = NULL))
                                         )
                                 ),
                                 
@@ -587,7 +587,7 @@ shinyUI(tagList(useShinyjs(),
                                      tags$h5(tags$b("Select figures by row. When clicked, the download selection will highlight.")),
                                      fluidRow(
                                        column(width = 9,
-                                              dataTableOutput("parmsTable2", width = "90%")
+                                              dataTableOutput("parmsTable2")
                                        ),
                                        column(width = 3,
                                               radioButtons(inputId = "image_format", label = "Select an image format",

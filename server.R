@@ -157,10 +157,11 @@ shinyServer(function(session, input, output) {
   })
   
   output$iso_info_filter_out <- renderUI({
-    selectInput(inputId = "iso_info_filter", label = "Filter isotopic peaks?", 
+    radioGroupButtons(inputId = "iso_info_filter", label = "Filter isotopic peaks?", 
                 choices = list('Yes' = 1,
                                'No' = 2),
-                selected = 'Yes'
+                selected = 'Yes',
+                justified = TRUE
     )
   })
   output$iso_info_column_out <- renderUI({
@@ -341,7 +342,7 @@ shinyServer(function(session, input, output) {
     req(peakData())
     
     # If no errors, show Success message
-    HTML('<h4 style= "color:#1A5276">You may proceed to data preprocessing</h4>')
+    HTML('<h4 style= "color:#1A5276">Your data object is created, and can be manipulated in subsequent tabs.</h4>')
     
   }) # End success #
   
@@ -989,7 +990,7 @@ shinyServer(function(session, input, output) {
     #if everything is disallowed, give warning and silently stop execution.
     if (all(choices == 0)) return(tags$p("There is not enough information in the molecular identification file to produce any plots.  Choose more variables to calculate in the preprocess tab or append some metadata to the molecular identification file prior to uploading", style = "color:gray"))
     
-    selectInput('chooseplots', 'Choose a Plot Type',
+    selectInput('chooseplots', 'Choose a plot type',
                   choices = choices, 
                   selected = 0
     )
@@ -1250,10 +1251,10 @@ shinyServer(function(session, input, output) {
       if(input$chooseplots == 'Custom Scatter Plot'){
         axes_choices <- revals$axes_choices <- color_by_choices[numeric_cols]
         
-        updateSelectInput(session, 'scatter_x', "Horizontal Axis Variable:",
+        updateSelectInput(session, 'scatter_x', "Horizontal axis variable:",
                           choices = axes_choices[!(axes_choices %in% c(input$scatter_y, input$vk_colors))],
                           selected = selected_x)
-        updateSelectInput(session, "scatter_y", "Vertical Axis Variable:",
+        updateSelectInput(session, "scatter_y", "Vertical axis variable:",
                           choices = axes_choices[!(axes_choices %in% c(input$scatter_x, input$vk_colors))],
                           selected = selected_y)
         updateSelectInput(session, 'vk_colors', 'Color  by:',
@@ -1437,7 +1438,7 @@ shinyServer(function(session, input, output) {
         pcs <- getPrincipalCoordinates(plot_data(), n_dims = min(5, ncol(plot_data()$e_data)-2), dist_metric = isolate(input$choose_dist))
         p <- plotPrincipalCoordinates(pcs, title = isolate(input$title_input), x=as.numeric(input$scatter_x), y=as.numeric(input$scatter_y), 
                                       xlabel = isolate(input$x_axis_input), ylabel=isolate(input$y_axis_input),
-                                      ftmsObj = plot_data())
+                                      ftmsObj = plot_data(), size = 10)
       }
     }
     
@@ -1471,19 +1472,19 @@ shinyServer(function(session, input, output) {
     validate(
       need(!is.null(input$chooseplots), message = "")
     )
-    textInput(inputId = "title_input", label = "Plot Title", value = "")
+    textInput(inputId = "title_input", label = "Plot title", value = "")
   })
   output$x_axis_out <- renderUI({
     validate(
       need(!is.null(input$chooseplots), message = "")
     )
-    textInput(inputId = "x_axis_input", label = "X Axis Label", value = plot_defaults()$xlabel)
+    textInput(inputId = "x_axis_input", label = "X axis label", value = plot_defaults()$xlabel)
   })
   output$y_axis_out <- renderUI({
     validate(
       need(!is.null(input$chooseplots), message = "")
     )
-    textInput(inputId = "y_axis_input", label = "Y Axis Label", value = plot_defaults()$ylabel)
+    textInput(inputId = "y_axis_input", label = "Y axis label", value = plot_defaults()$ylabel)
   })
   
   # legend input
@@ -1493,11 +1494,11 @@ shinyServer(function(session, input, output) {
     )
     if (input$chooseplots == "Density Plot"){
       addCssClass("js_legend_title_input", "grey_out")
-      disabled(textInput(inputId = "legend_title_input", label = "Legend Label", value = ""))
+      disabled(textInput(inputId = "legend_title_input", label = "Legend label", value = ""))
     }
     else {
       removeCssClass("js_legend_title_input", "grey_out")
-      textInput(inputId = "legend_title_input", label = "Legend Label", value = "")
+      textInput(inputId = "legend_title_input", label = "Legend label", value = "")
     }
     
   })

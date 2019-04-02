@@ -7081,7 +7081,7 @@ input[type="checkbox"] {
   font-weight:bold;
 }
 
-.shiny-input-container .bootstrap-select, .shiny-input-container .dropdown-toggle {
+.shiny-input-container .bootstrap-select, .shiny-input-container .dropdown-toggle, {
   background-color:#e7e7e7;
   border-radius:4px;
 }
