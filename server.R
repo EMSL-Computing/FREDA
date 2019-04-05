@@ -1435,9 +1435,16 @@ shinyServer(function(session, input, output) {
       #----------- PCOA Plot ----------#
       if(input$chooseplots==('PCOA Plot')){
         # maximum of 5 pcs or the number of samples - 2 (#columns - ID column - 1)
+        xlabel = isolate(ifelse(is.null(input$x_axis_input) | (input$x_axis_input == ""), 
+                                yes = paste0('PC ', input$scatter_x), 
+                                no = input$x_axis_input))
+        ylabel = isolate(ifelse(is.null(input$y_axis_input) | (input$y_axis_input == ""), 
+                                yes = paste0('PC ', input$scatter_y), 
+                                no = input$y_axis_input))
+        
         pcs <- getPrincipalCoordinates(plot_data(), n_dims = min(5, ncol(plot_data()$e_data)-2), dist_metric = isolate(input$choose_dist))
         p <- plotPrincipalCoordinates(pcs, title = isolate(input$title_input), x=as.numeric(input$scatter_x), y=as.numeric(input$scatter_y), 
-                                      xlabel = isolate(input$x_axis_input), ylabel=isolate(input$y_axis_input),
+                                      xlabel = xlabel, ylabel=ylabel,
                                       ftmsObj = plot_data(), size = 10)
       }
     }

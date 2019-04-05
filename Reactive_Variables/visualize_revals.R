@@ -20,8 +20,8 @@ plot_defaults <- reactive({
     defs$xlabel = NULL
   } else if (input$chooseplots == 'PCOA Plot') {
     defs <- formals(plotPrincipalCoordinates)
-    defs$xlabel = 'PC1'
-    defs$ylabel = 'PC2'
+    defs$xlabel = NULL
+    defs$ylabel = NULL
   }
   return(defs)
 })
@@ -74,7 +74,7 @@ plot_data <- eventReactive(input$plot_submit,{
         }
         
         if(is.null(tempgroup)){
-          return("None")
+          return("Unassigned")
         }
         else return(paste(tempgroup, collapse="&"))
       })
