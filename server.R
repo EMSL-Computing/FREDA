@@ -23,7 +23,7 @@ library(readr)
 
 shinyServer(function(session, input, output) {
   
-  # onStop(function() rm(peakData2, pos = 1))
+  # onStop(function() rm(revals$peakData2, pos = 1))
   Sys.setenv(R_ZIPCMD="/usr/bin/zip")
   # Source files for 'summaryFilt' and 'summaryPreprocess'
   source('helper_functions/selection_addons.R')
@@ -31,6 +31,7 @@ shinyServer(function(session, input, output) {
   source('helper_functions/summaryPreprocess.R')
   source("helper_functions/renderDownloadPlots.R")
   source("Observers/misc_observers.R", local = TRUE)
+  source('Reactive_Variables/misc_revals.R', local = TRUE)
   
   revals <- reactiveValues(ntables = 0, makeplot = 1, color_by_choices = NULL, axes_choices = NULL,
                            plot_data_export = NULL, peakData_export = NULL, redraw_filter_plot = TRUE, reac_filter_plot = TRUE,
@@ -38,7 +39,7 @@ shinyServer(function(session, input, output) {
                            warningmessage_upload = list(upload = "style = 'color:deepskyblue'>Upload data and molecular identification files described in 'Data Requirements' on the previous page."),
                            warningmessage_visualize = list(), warningmessage_filter = list(), warningmessage_preprocess = list(), warningmessage_groups = list(),
                            current_plot = NULL, plot_list = list(), plot_data = list(), reset_counter = 0, current_qc_boxplot = NULL,
-                           chooseplots = NULL, filter_click_disable = list(init = TRUE), 
+                           chooseplots = NULL, filter_click_disable = list(init = TRUE), peakData2 = NULL, 
                            groups_list = list(), removed_samples = list())
   
   exportTestValues(plot_data = revals$plot_data_export, peakData = revals$peakData_export, color_choices = revals$color_by_choices)
@@ -312,7 +313,7 @@ shinyServer(function(session, input, output) {
     shinyjs::show('upload_success')
     
     # create nonreactive peakData object
-    peakData2 <<- res
+    revals$peakData2 <- res
     
     # reset 'removed samples' reval
     revals$removed_samples <- list()
@@ -525,13 +526,13 @@ shinyServer(function(session, input, output) {
   #### Action Button reactions ####
   
   ## Action button: Apply calculation functions When action button is clicked
-  # Depends on: peakData2, input$tests
+  # Depends on: revals$peakData2, input$tests
   observeEvent(input$preprocess_click, {
     validate(need(input$tests, message = "Please choose at least one test to calculate"))
     
     # If columns have already been calculated, start over from uploaded data
-    if (any(attr(peakData2, "cnames") %in% calc_vars$ColumnName)){
-      peakData2 <<- peakData()
+    if (any(attr(revals$peakData2, "cnames") %in% calc_vars$ColumnName)){
+      revals$peakData2 <- peakData()
     }
     
     # Apply all relevant functions
@@ -540,13 +541,13 @@ shinyServer(function(session, input, output) {
         if(grepl("assign_class", el)){
           foo <- strsplit(el, ";")[[1]]
           f <- get(foo[1], envir=asNamespace("ftmsRanalysis"), mode="function")
-          peakData2 <<- f(peakData2, foo[2])
-          peakData2$e_meta[paste0(foo[2], "_class")] <<- gsub(";.*", "", peakData2$e_meta[,paste0(foo[2], "_class")])
+          revals$peakData2 <- f(revals$peakData2, foo[2])
+          revals$peakData2$e_meta[paste0(foo[2], "_class")] <<- gsub(";.*", "", revals$peakData2$e_meta[,paste0(foo[2], "_class")])
           
         }
         else{
           f <- get(el, envir=asNamespace("ftmsRanalysis"), mode="function")
-          peakData2 <<- f(peakData2)
+          revals$peakData2 <- f(revals$peakData2)
         }
         
         incProgress(1/length(input$tests))
@@ -557,7 +558,7 @@ shinyServer(function(session, input, output) {
     revals$removed_samples <- list()
     
     if (isTRUE(getOption("shiny.testmode"))) {
-      exportTestValues(peakData2 = peakData2)
+      exportTestValues(peakData2 = revals$peakData2)
     }
     
   }, priority = 10) # End action button event
@@ -565,15 +566,15 @@ shinyServer(function(session, input, output) {
   # Creates two reactive variables for continuous and categorical variables which are used to display separate tables
   # Note: dependent on preprocess click and the user-specified calculations
   observeEvent(input$preprocess_click, {
-    # Error handling: peakData2 must have a non-NULL Kendrick Mass column name
-    #req(!is.null(attr(peakData2, 'cnames')$kmass_cname))
+    # Error handling: revals$peakData2 must have a non-NULL Kendrick Mass column name
+    #req(!is.null(attr(revals$peakData2, 'cnames')$kmass_cname))
     req(input$tests)
     
     # Get csv file of all possible calculation column names
     possible_calc_cnames <- read_csv("calculation_variables.csv") %>% as.data.frame(stringsAsFactors = FALSE)
     
-    # Get column names from peakData2's e_meta
-    actual_cnames <- colnames(peakData2$e_meta)
+    # Get column names from revals$peakData2's e_meta
+    actual_cnames <- colnames(revals$peakData2$e_meta)
     
     # Find all columns with names that match names for calculated columns
     v_index <- which(possible_calc_cnames[,1] %in% actual_cnames)
@@ -582,12 +583,12 @@ shinyServer(function(session, input, output) {
     intersect <- possible_calc_cnames[v_index,]
     
     # get numeric columns
-    numeric_cols <- peakData2$e_meta %>% 
+    numeric_cols <- revals$peakData2$e_meta %>% 
       dplyr::select(which(sapply(.[intersect[,1]], is.numeric))) %>% 
       names()
     
     # get categorical columns
-    categorical_cols <- peakData2$e_meta %>% 
+    categorical_cols <- revals$peakData2$e_meta %>% 
       dplyr::select(which(!sapply(.[intersect[,1]], is.numeric))) %>%
       names() 
     
@@ -610,7 +611,7 @@ shinyServer(function(session, input, output) {
       tags$p('I would like to see a histogram/bar-chart across all values of:'),
       selectInput('which_hist', NULL,
                   choices = isolate(emeta_display_choices()),
-                  selected = isolate(colnames(peakData2$e_meta)[ncol(peakData()$e_meta) + 1]))
+                  selected = isolate(colnames(revals$peakData2$e_meta)[ncol(peakData()$e_meta) + 1]))
     )
   }) # End which_hist
   
@@ -629,7 +630,7 @@ shinyServer(function(session, input, output) {
       pluck("DisplayName")
     
     # Plot histogram using plotly
-    p <- plot_ly(x = peakData2$e_meta[,columnName], type = 'histogram') %>%
+    p <- plot_ly(x = isolate(revals$peakData2$e_meta[,columnName]), type = 'histogram') %>%
       layout( title = paste('Observed distribution of', displayName),
               scene = list(
                 xaxis = list(title = displayName),
@@ -648,7 +649,7 @@ shinyServer(function(session, input, output) {
   
   # Y axis scale select for boxplots
   output$qc_plot_scale <- renderUI({
-    validate(need(exists("peakData2", where = 1), message = "No data object found, please verify you have successfully uploaded data"))
+    validate(need(!is.null(revals$peakData2), message = "No data object found, please verify you have successfully uploaded data"))
     pickerInput("qc_plot_scale", "Plot on scale:", 
                 choices = list('Log base 2' = 'log2', 'Log base 10'='log10', 'Natural log'='log', 
                                'Presence/absence' = 'pres', 'Raw intensity'='abundance'), 
@@ -677,21 +678,21 @@ shinyServer(function(session, input, output) {
   
   # Boxplots
   output$qc_boxplots <- renderPlotly({
-    req(exists("peakData2", where = 1))
+    req(!is.null(revals$peakData2))
     req(!is.null(input$qc_plot_scale))
     
     input$update_boxplot_axes
     
     color_by <- if(isTRUE(input$qc_plot_scale %in% c('log2', 'log10', 'log', 'abundance'))) 'groups' else 'molform'
-    ds = attributes(peakData2)$data_info$data_scale
+    ds = attributes(revals$peakData2)$data_info$data_scale
     
     # subset the data if a group is selected
     if(isTRUE(all(input$qc_select_groups %in% names(revals$groups_list)) & !is.null(input$qc_select_groups))){
       # get set of unique samples in all selected groups
       samples <- revals$groups_list[input$qc_select_groups] %>% unlist() %>% unique() %>% setdiff(revals$removed_samples)
-      temp_peakData2 <- subset(peakData2, samples = samples)
+      temp_peakData2 <- subset(revals$peakData2, samples = samples)
     } 
-    else temp_peakData2 <- peakData2
+    else temp_peakData2 <- revals$peakData2
     
     # if their data scale selection does not match the object's data scale, transform before plotting
     if(isTRUE(ds != input$qc_plot_scale)){
@@ -768,18 +769,18 @@ shinyServer(function(session, input, output) {
   })
   #### Action Button Reactions (Filter Tab) ####
   
-  # Event: Create filtered nonreactive peakData2 when action button clicked
+  # Event: Create filtered nonreactive revals$peakData2 when action button clicked
   # Depends on action button 'filter_click'
   observeEvent(input$filter_click, {
     # if the data is already filtered start over from the uploaded data
-    if (any(c("moleculeFilt", "massFilt", "formulaFilt") %in% names(attributes(peakData2)$filters)) | any(grepl("emetaFilt", names(attributes(peakData2)$filters))) | !all(colnames(peakData2$e_data) %in% colnames(uploaded_data()$e_data))){
-      peakData2 <<- uploaded_data()
+    if (any(c("moleculeFilt", "massFilt", "formulaFilt") %in% names(attributes(revals$peakData2)$filters)) | any(grepl("emetaFilt", names(attributes(revals$peakData2)$filters))) | !all(colnames(revals$peakData2$e_data) %in% colnames(uploaded_data()$e_data))){
+      revals$peakData2 <- uploaded_data()
     }
     
     # Apply sample filter
     if(input$samplefilter){
       req(length(input$keep_samples) > 0)
-      peakData2 <<- subset(peakData2, samples = input$keep_samples, check_rows = TRUE)
+      revals$peakData2 <- subset(revals$peakData2, samples = input$keep_samples, check_rows = TRUE)
       revals$removed_samples <- c(revals$removed_samples, setdiff(sample_names(), input$keep_samples))
       
       # remove empty lists
@@ -802,8 +803,8 @@ shinyServer(function(session, input, output) {
       req(input$min_mass > 0)
       
       # Create and apply mass filter to nonreactive peakData object
-      filterMass <- mass_filter(peakData2)
-      peakData2 <<- applyFilt(filterMass, peakData2, min_mass = as.numeric(input$min_mass), 
+      filterMass <- mass_filter(revals$peakData2)
+      revals$peakData2 <- applyFilt(filterMass, revals$peakData2, min_mass = as.numeric(input$min_mass), 
                              max_mass = as.numeric(input$max_mass))
     }
     
@@ -811,15 +812,15 @@ shinyServer(function(session, input, output) {
     if (input$molfilter) {
       
       # Create and apply molecule filter to nonreactive peakData object
-      filterMols <- molecule_filter(peakData2)
-      peakData2 <<- applyFilt(filterMols, peakData2, min_num = as.integer(input$minobs))
+      filterMols <- molecule_filter(revals$peakData2)
+      revals$peakData2 <- applyFilt(filterMols, revals$peakData2, min_num = as.integer(input$minobs))
       
     } # End molecule filter if statement
     
     # Apply formula filter
     if (input$formfilter){
-      filterForm <- formula_filter(peakData2)
-      peakData2 <<- applyFilt(filterForm, peakData2)
+      filterForm <- formula_filter(revals$peakData2)
+      revals$peakData2 <- applyFilt(filterForm, revals$peakData2)
       
     }
     
@@ -833,21 +834,21 @@ shinyServer(function(session, input, output) {
           if (input[[paste0("custom",i)]] == "Select item") return(NULL)
           
           #make the filter based on selection
-          filter <- emeta_filter(peakData2, input[[paste0("custom",i)]])
+          filter <- emeta_filter(revals$peakData2, input[[paste0("custom",i)]])
           
           # if numeric, apply filter with specified max and min values
-          if (is.numeric(peakData2$e_meta[,input[[paste0("custom",i)]]])){
+          if (is.numeric(revals$peakData2$e_meta[,input[[paste0("custom",i)]]])){
             req(input[[paste0("minimum_custom",i)]], input[[paste0("maximum_custom", i)]])
-            peakData2 <<- applyFilt(filter, peakData2,
+            revals$peakData2 <- applyFilt(filter, revals$peakData2,
                                    min_val = input[[paste0("minimum_custom",i)]], 
                                    max_val = input[[paste0("maximum_custom", i)]], 
                                    na.rm = !input[[paste0("na_custom",i)]])
             
           }
           # else apply with selected categories
-          else if (!is.numeric(peakData2$e_meta[,input[[paste0("custom",i)]]])){
+          else if (!is.numeric(revals$peakData2$e_meta[,input[[paste0("custom",i)]]])){
             req(input[[paste0("categorical_custom",i)]])
-            peakData2 <<- applyFilt(filter, peakData2, 
+            revals$peakData2 <- applyFilt(filter, revals$peakData2, 
                                    cats = input[[paste0("categorical_custom",i)]], 
                                    na.rm = !input[[paste0("na_custom",i)]])
           }
@@ -856,9 +857,9 @@ shinyServer(function(session, input, output) {
       }
 
     #__test-export__
-    exportTestValues(peakData2 = peakData2)
+    exportTestValues(peakData2 = revals$peakData2)
     
-  }) # End creating peakData2
+  }) # End creating revals$peakData2
   
   #### Main Panel (Filter Tab) ####
   
@@ -963,27 +964,27 @@ shinyServer(function(session, input, output) {
   # Plot options, with selections removed if the necessary columns in e_meta are not present.
   output$plot_type <- renderUI({
     input$top_page
-    validate(need(exists("peakData2", where = 1), "A peakData object was not found, please check that you have successfully uploaded data"))
+    validate(need(revals$peakData2, "A peakData object was not found, please check that you have successfully uploaded data"))
     req(input$top_page == "Visualize")
     
     choices <- c('Van Krevelen Plot', 'Kendrick Plot', 'Density Plot', 'Custom Scatter Plot', 'PCOA Plot')
     
     #disallow kendrick plots if either kmass or kdefect not calculated/present in emeta
-    if (is.null(attr(peakData2, "cnames")$kmass_cname) | is.null(attr(peakData2, "cnames")$kdefect_cname)){
+    if (is.null(attr(revals$peakData2, "cnames")$kmass_cname) | is.null(attr(revals$peakData2, "cnames")$kdefect_cname)){
       choices <- choices[choices != "Kendrick Plot"]
     }
     
     #disallow vk plots if o:c or h:c ratios not calculated/present in emeta
-    if (is.null(attr(peakData2, "cnames")$o2c_cname) | is.null(attr(peakData2, "cnames")$h2c_cname)){
+    if (is.null(attr(revals$peakData2, "cnames")$o2c_cname) | is.null(attr(revals$peakData2, "cnames")$h2c_cname)){
       choices <- choices[choices != "Van Krevelen Plot"]
     }
     
     #disallow density plots if there are no numeric columns
-    if (!any(sapply(peakData2$e_meta %>% dplyr::select(-one_of(getEDataColName(peakData2))), is.numeric))){
+    if (!any(sapply(revals$peakData2$e_meta %>% dplyr::select(-one_of(getEDataColName(revals$peakData2))), is.numeric))){
       choices <- choices[choices != c("Density Plot", "Custom Scatter Plot")]
     }
     
-    if (nrow(peakData2$f_data) < 2){
+    if (nrow(revals$peakData2$f_data) < 2){
       choices <- choices[choices != 'PCOA Plot']
     }
     
@@ -999,7 +1000,7 @@ shinyServer(function(session, input, output) {
   # Logic to force single sample selection in the case where only 1 sample is present
   output$plotUI <- renderUI({
     req(!is.null(input$chooseplots))
-    if (nrow(peakData2$f_data) == 1 | (input$chooseplots %in% c('Custom Scatter Plot', 'PCOA Plot'))){
+    if (nrow(revals$peakData2$f_data) == 1 | (input$chooseplots %in% c('Custom Scatter Plot', 'PCOA Plot'))){
       return(tagList(
         tags$div(class = 'grey_out',
           hidden(selectInput('choose_single', 'I want to plot using:',
@@ -1049,7 +1050,7 @@ shinyServer(function(session, input, output) {
               options =  pickerOptions(dropupAuto = FALSE, actionsBox = TRUE))
     }
     else if(input$choose_single == 4){
-      choice_diff <- setdiff(colnames(peakData2$e_data[-which(colnames(peakData2$e_data) == getEDataColName(peakData2))]), isolate(input$whichSample2))
+      choice_diff <- setdiff(colnames(revals$peakData2$e_data[-which(colnames(revals$peakData2$e_data) == getEDataColName(revals$peakData2))]), isolate(input$whichSample2))
       pickerInput('whichSample1', "Sample 1:",
                   choices = choice_diff,
                   selected = if(is.null(isolate(revals$whichSample1))) choice_diff[1] else isolate(revals$whichSample1),
@@ -1067,7 +1068,7 @@ shinyServer(function(session, input, output) {
               options =  pickerOptions(dropupAuto = FALSE, actionsBox = TRUE))
     }
     else if(input$choose_single == 4){
-      choice_diff <- setdiff(colnames(peakData2$e_data[-which(colnames(peakData2$e_data) == getEDataColName(peakData2))]), isolate(input$whichSample1))
+      choice_diff <- setdiff(colnames(revals$peakData2$e_data[-which(colnames(revals$peakData2$e_data) == getEDataColName(revals$peakData2))]), isolate(input$whichSample1))
       pickerInput("whichSample2", "Sample 2:", 
                   choices = choice_diff,
                   selected = if(is.null(isolate(revals$whichSample2))) choice_diff[2] else isolate(revals$whichSample2),
@@ -1084,7 +1085,7 @@ shinyServer(function(session, input, output) {
       tagList(
           div(id = "js_whichSamples",
               pickerInput('whichSamples', 'Grouped Samples',
-                      choices = colnames(peakData2$e_data %>% dplyr::select(-one_of(getEDataColName(peakData2)))),
+                      choices = colnames(revals$peakData2$e_data %>% dplyr::select(-one_of(getEDataColName(revals$peakData2)))),
                       multiple = TRUE, selected = isolate(revals$single_group), 
                       options =  pickerOptions(dropupAuto = FALSE, actionsBox = TRUE))),
           conditionalPanel(
@@ -1094,7 +1095,7 @@ shinyServer(function(session, input, output) {
         )
     }
     else return(div(id = "js_whichSamples", selectInput('whichSamples', 'Sample', 
-                                                        choices = colnames(peakData2$e_data %>% dplyr::select(-one_of(getEDataColName(peakData2)))), 
+                                                        choices = colnames(revals$peakData2$e_data %>% dplyr::select(-one_of(getEDataColName(revals$peakData2)))), 
                                                         selected = revals$single_sample)))
   })
   
@@ -1262,7 +1263,7 @@ shinyServer(function(session, input, output) {
                           selected = selected)
       }
       else if(input$chooseplots == 'PCOA Plot'){
-        axes_choices <- 1:min(5, ncol(peakData2$e_data)-2)
+        axes_choices <- 1:min(5, ncol(revals$peakData2$e_data)-2)
         names(axes_choices) <- paste0('PC', axes_choices)
         selected_x <- 1
         selected_y <- 2
@@ -1683,20 +1684,20 @@ shinyServer(function(session, input, output) {
         # option to choose report output format?  need to change inputs in report.R.
         if (input$report_selection == TRUE){
           fs <- c(fs, paste0(tempdir(), "/report.html"))
-          report(peakData(), peakData2, output_file = paste0(tempdir(), "/report.html"), output_format = "html_document", 
+          report(peakData(), revals$peakData2, output_file = paste0(tempdir(), "/report.html"), output_format = "html_document", 
                  C13_ID = input$iso_symbol, groups_list = revals$groups_list)
           incProgress(1/total_files)
         }
         
         if ("separate" %in% input$download_selection){
           fs <- c(fs, paste0(tempdir(), "/FREDA_processed_e_data.csv"), paste0(tempdir(), "/FREDA_processed_e_meta.csv"))
-          write_csv(peakData2$e_data, path = paste0(tempdir(), "/FREDA_processed_e_data.csv"))
-          write_csv(peakData2$e_meta, path = paste0(tempdir(), "/FREDA_processed_e_meta.csv"))
+          write_csv(revals$peakData2$e_data, path = paste0(tempdir(), "/FREDA_processed_e_data.csv"))
+          write_csv(revals$peakData2$e_meta, path = paste0(tempdir(), "/FREDA_processed_e_meta.csv"))
           incProgress(1/total_files)
         }
         if ("merged" %in% input$download_selection){
           fs <- c(fs, paste0(tempdir(), "/FREDA_processed_merged_data.csv"))
-          merged_data <- merge(peakData2$e_data, peakData2$e_meta)
+          merged_data <- merge(revals$peakData2$e_data, revals$peakData2$e_meta)
           write_csv(merged_data, path = paste0(tempdir(), "/FREDA_processed_merged_data.csv"))
           incProgress(1/total_files)
         }

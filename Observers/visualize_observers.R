@@ -133,25 +133,25 @@ observeEvent(input$flip_colors, {
 
 # make the options mutually exclusive when doing a comparison of two groups
 observeEvent(input$whichGroups2,{
-  req(exists("peakData2"))
+  req(!is.null(revals$peakData2))
   updatePickerInput(session, "whichGroups1", choices = setdiff(names(revals$groups_list), input$whichGroups2), selected = input$whichGroups1)
 })
 observeEvent(input$whichGroups1,{
-  req(exists("peakData2"))
+  req(!is.null(revals$peakData2))
   updatePickerInput(session, "whichGroups2", choices = setdiff(names(revals$groups_list), input$whichGroups1), selected = input$whichGroups2)
 })
 
 # make the options mutually exclusive when doing a comparison of two samples
 observeEvent(input$whichSample2,{
-  req(exists("peakData2"))
+  req(!is.null(revals$peakData2))
   updatePickerInput(session, "whichSample1", 
-                    choices = setdiff(colnames(peakData2$e_data[-which(colnames(peakData2$e_data) == getEDataColName(peakData2))]), input$whichSample2),
+                    choices = setdiff(colnames(revals$peakData2$e_data[-which(colnames(revals$peakData2$e_data) == getEDataColName(revals$peakData2))]), input$whichSample2),
                     selected = input$whichSample1)
 })
 observeEvent(input$whichSample1,{
-  req(exists("peakData2"))
+  req(!is.null(revals$peakData2))
   updatePickerInput(session, "whichSample2", 
-                    choices = setdiff(colnames(peakData2$e_data[-which(colnames(peakData2$e_data) == getEDataColName(peakData2))]), input$whichSample1),
+                    choices = setdiff(colnames(revals$peakData2$e_data[-which(colnames(revals$peakData2$e_data) == getEDataColName(revals$peakData2))]), input$whichSample1),
                     selected = input$whichSample2)
 })
 
@@ -159,7 +159,7 @@ observeEvent(input$whichSample1,{
 observeEvent(input$chooseplots, {
   # Pre-populate dropdowns so users can select colors and custom scatterplot axes before submitting plot.
   # Need a vector of the numeric columns to pass to scatterplot
-  numeric_cols <- which(sapply(peakData2$e_meta %>% dplyr::select(emeta_display_choices()), is.numeric))
+  numeric_cols <- which(sapply(revals$peakData2$e_meta %>% dplyr::select(emeta_display_choices()), is.numeric))
   
   color_select_label <- if(input$chooseplots == 'Density Plot') "Plot Distribution of Variable:" else "Color by:"
   
@@ -170,7 +170,7 @@ observeEvent(input$chooseplots, {
     updateSelectInput(session, 'scatter_y', choices = emeta_display_choices()[numeric_cols][-2], selected = emeta_display_choices()[numeric_cols][3])
   }
   else if(input$chooseplots == 'PCOA Plot') {
-    axes_choices <- 1:min(5, ncol(peakData2$e_data)-2)
+    axes_choices <- 1:min(5, ncol(revals$peakData2$e_data)-2)
     names(axes_choices) <- paste0('PC', axes_choices)
     updateSelectInput(session, 'scatter_x', choices = axes_choices, selected=1)
     updateSelectInput(session, 'scatter_y', choices = axes_choices, selected=2)

@@ -60,7 +60,7 @@ plot_data <- eventReactive(input$plot_submit,{
   validate(need(!is.null(input$chooseplots) & input$choose_single !=0, message = "Please select plot type"))
   
   if(input$chooseplots=='PCOA Plot'){
-    req(exists("peakData2", where = 1))
+    req(!is.null(revals$peakData2))
     validate(need(length(sample_names()>0), "No data found, or only 1 sample"))
     
     samples <- setdiff(sample_names(), revals$removed_samples)
@@ -80,20 +80,20 @@ plot_data <- eventReactive(input$plot_submit,{
       })
       
       group_DF <- data.frame(samples, groups)
-      colnames(group_DF) <- c(getFDataColName(peakData2), "Group")
+      colnames(group_DF) <- c(getFDataColName(revals$peakData2), "Group")
     }
     else group_DF <- NULL
     
-    temp_data <- ftmsRanalysis:::setGroupDF(peakData2, group_DF)
+    temp_data <- ftmsRanalysis:::setGroupDF(revals$peakData2, group_DF)
     return(temp_data)
   }
   if (is.null(input$choose_single)){ # corresponds to data with a single sample
-    return(peakData2) # no need to subset
+    return(revals$peakData2) # no need to subset
   }
   if (input$choose_single == 1) { # single sample -selected- but multiple samples present
     validate(need(!is.null(input$whichSamples), message = "Please select a sample to plot"))
-    return(subset(peakData2, input$whichSamples))
-    #key_name <- paste(attributes(peakData2)$cnames$fdata_cname, "=", input$whichSamples, sep = "")
+    return(subset(revals$peakData2, input$whichSamples))
+    #key_name <- paste(attributes(revals$peakData2)$cnames$fdata_cname, "=", input$whichSamples, sep = "")
   }
   if (input$chooseplots == "Custom Scatter Plot") req(input$scatter_x != input$scatter_y)
   #---------- Group Plots ------------#
@@ -103,9 +103,9 @@ plot_data <- eventReactive(input$plot_submit,{
     validate(need(length(input$whichSamples) > 1, message = "Please select at least 2 samples"))
     
     temp_group_df <- data.frame(input$whichSamples, "Group")
-    colnames(temp_group_df) <- c(getFDataColName(peakData2), "Group")
+    colnames(temp_group_df) <- c(getFDataColName(revals$peakData2), "Group")
     
-    temp_data <- peakData2 %>% 
+    temp_data <- revals$peakData2 %>% 
       subset(input$whichSamples)
     
     temp_data <- ftmsRanalysis:::setGroupDF(temp_data, temp_group_df)
@@ -132,9 +132,9 @@ plot_data <- eventReactive(input$plot_submit,{
     
     # assign a group DF to the data with a level for each of the two groups
     temp_group_df <- data.frame(c(g1_samples(), g2_samples()), c(rep(group1, times=length(g1_samples())), rep(group2, length(g2_samples()))))
-    colnames(temp_group_df) <- c(getFDataColName(peakData2), "Group")
+    colnames(temp_group_df) <- c(getFDataColName(revals$peakData2), "Group")
 
-    temp_data <- peakData2 %>%
+    temp_data <- revals$peakData2 %>%
       subset(samples=c(g1_samples(), g2_samples()))
     
     temp_data <- ftmsRanalysis:::setGroupDF(temp_data, temp_group_df)

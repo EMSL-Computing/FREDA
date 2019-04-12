@@ -1,15 +1,14 @@
 ### Summary Panel: Display table summaries of numeric and categorical columns in e_meta ###
 
 # For numeric columns:
-observe({
-  
+observeEvent(revals$numeric_cols,{
   req(nrow(revals$numeric_cols) > 0)
   
   # Create Table Output
   output$numeric_summary <- DT::renderDataTable({
-    columns <- summaryPreprocess(peakData2, revals$numeric_cols) %>% colnames()
+    columns <- summaryPreprocess(isolate(revals$peakData2), revals$numeric_cols) %>% colnames()
     
-    summaryPreprocess(peakData2, revals$numeric_cols) %>%
+    summaryPreprocess(isolate(revals$peakData2), revals$numeric_cols) %>%
       datatable(options = list(dom = "t", pageLength = nrow(.))) %>% 
       formatRound(columns, digits = 2)
   }) 
@@ -22,11 +21,11 @@ observe({
 # For Categorical Columns
 
 # This observer assigns renderTable calls to various output ID's and passes them to the renderUI call immediately below
-observe({
+observeEvent(revals$categorical_cols,{
   req(nrow(revals$categorical_cols) > 0) 
   
   # List of tables which will be passed to renderTable()
-  table_list <- summaryPreprocess(peakData2, revals$categorical_cols, categorical = TRUE)
+  table_list <- summaryPreprocess(revals$peakData2, revals$categorical_cols, categorical = TRUE)
   
   # Reactive variable which lets lapply know how many output ID's to generate depending on number of categorical variables selected
   revals$ntables <- length(table_list)
@@ -62,7 +61,7 @@ observeEvent(input$tests, {
 
 # Success dialogs
 observeEvent(input$preprocess_click,{
-  req(peakData2)
+  req(revals$peakData2)
   validate(need(input$tests, message = "Please choose at least one test to calculate"))
   
   showModal(

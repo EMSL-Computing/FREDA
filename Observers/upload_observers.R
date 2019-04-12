@@ -257,6 +257,7 @@ observeEvent(input$goto_groups, {
 observeEvent(input$goto_preprocess, {
   updateTabsetPanel(session, "top_page", selected = "Preprocess")
   removeModal()
+  print(peakData2_dim())
 })
 
 
