@@ -1,3 +1,9 @@
+# warn user of 
+observeEvent(Edata(),{
+  content <- if(prod(dim(Edata()[,-1])) > max_cells) "style = 'color:deepskyblue;font-weight:bold'>Large data file detected, some plotting options and interactivity may be disabled for performance" else NULL
+  revals$warningmessage_upload$largedata <- content
+})
+
 # Files Selected?
 observeEvent(c(input$top_page, input$file_edata, input$file_emeta), {
   req(input$top_page == "Upload")
@@ -257,7 +263,6 @@ observeEvent(input$goto_groups, {
 observeEvent(input$goto_preprocess, {
   updateTabsetPanel(session, "top_page", selected = "Preprocess")
   removeModal()
-  print(peakData2_dim())
 })
 
 
