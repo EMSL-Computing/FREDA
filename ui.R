@@ -403,10 +403,10 @@ shinyUI(tagList(useShinyjs(),
                                 disabled(
                                   fluidRow(
                                     column(
-                                      width = 6, actionButton('filter_click', "Filter Data", icon = icon("cog"), lib = "glyphicon")
+                                      width = 6, actionButton('filter_click', "Filter Data", icon = icon("cog", lib = "glyphicon"))
                                     ),
                                     column(
-                                      width = 6, actionButton('reset_filters', "Reset Filters", icon = icon("trash"), lib = "glyphicon")
+                                      width = 6, actionButton('reset_filters', "Reset Filters", icon = icon("trash", lib = "glyphicon"))
                                     )
                                   )
                                 ),
@@ -424,7 +424,8 @@ shinyUI(tagList(useShinyjs(),
                                 width = 7,
                                 
                                 # Success message if peakData2 filtered successfully
-                                htmlOutput('filterTest'), 
+                                # htmlOutput('filterTest'), 
+                                hidden(div('Applying your filters, please wait...', id = 'calc_filter', style = 'color:deepskyblue;font-weight:bold;margin-bottom:5px')),
                                 
                                 # Summary panel: display summary of filters
                                 wellPanel(
