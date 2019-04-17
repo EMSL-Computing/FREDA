@@ -33,7 +33,7 @@ shinyServer(function(session, input, output) {
   source("Observers/misc_observers.R", local = TRUE)
   source('Reactive_Variables/misc_revals.R', local = TRUE)
   
-  revals <- reactiveValues(ntables = 0, makeplot = 1, color_by_choices = NULL, axes_choices = NULL,
+  revals <- reactiveValues(ntables = 0, makeplot = 1, color_by_choices = NULL, axes_choices = NULL, redraw_largedata = FALSE, react_largedata = FALSE,
                            plot_data_export = NULL, peakData_export = NULL, redraw_filter_plot = TRUE, reac_filter_plot = TRUE,
                            group_1 = NULL, group_2 = NULL, single_group = NULL, single_sample = NULL, whichSample1 = NULL, whichSample2 = NULL, 
                            warningmessage_upload = list(upload = "style = 'color:deepskyblue'>Upload data and molecular identification files described in 'Data Requirements' on the previous page."),
@@ -49,6 +49,7 @@ shinyServer(function(session, input, output) {
   example_emeta <- read_csv('Data/example12T_emeta.csv') %>% as.data.frame(stringsAsFactors = FALSE)
   calc_opts <- read_csv('calculation_options.csv') %>% as.data.frame(stringsAsFactors = FALSE)
   calc_vars <- read_csv('calculation_variables.csv') %>% as.data.frame(stringsAsFactors = FALSE)
+  max_cells <- 2000000
   
   #############
   output$downloadData <- downloadHandler(
@@ -188,6 +189,7 @@ shinyServer(function(session, input, output) {
   
   # Object: Create peakData when Upload Button clicked
   peakData <- eventReactive(input$upload_click, {
+    shinyjs::disable('upload_click')
     # Error handling: unique identifier chosen
     validate(need(input$edata_id_col != 'Select one', 'Please select a unique identifier column'),
              need(input$edata_id_col %in% edata_cnames() & input$edata_id_col %in% emeta_cnames(),
@@ -320,6 +322,7 @@ shinyServer(function(session, input, output) {
     revals$groups_list <- list()
     updateCollapse(session, 'upload_collapse', close = c('file_upload', 'column_info'))
     shinyjs::show('ok_idcols')
+    shinyjs::enable('upload_click')
     
     return(res)
     
@@ -754,6 +757,10 @@ shinyServer(function(session, input, output) {
   
   observeEvent(input$filter_click, {
     f$clearFilters <- FALSE
+    revals$redraw_largedata <- TRUE
+    if(peakData2_dim() > max_cells){
+      revals$react_largedata <- !revals$react_largedata
+    }
   }, priority = 10)
   
   #### Sidebar Panel (Filter Tab) ####
@@ -858,7 +865,7 @@ shinyServer(function(session, input, output) {
 
     #__test-export__
     exportTestValues(peakData2 = revals$peakData2)
-    
+  
   }) # End creating revals$peakData2
   
   #### Main Panel (Filter Tab) ####
@@ -915,8 +922,7 @@ shinyServer(function(session, input, output) {
   # Plot bar chart
   # Depends on: summaryFilterDataFrame
   output$barplot_filter <- renderPlot({
-    
-    req(isolate(revals$redraw_filter_plot) == TRUE)
+    req(isolate(revals$redraw_filter_plot) == TRUE | (peakData2_dim() > max_cells & revals$redraw_largedata))
     
     filter_inds <- c(TRUE, isolate(input$samplefilter) & length(isolate(input$keep_samples)) > 0, isolate(input$massfilter), isolate(input$molfilter), isolate(input$formfilter), 
                      any(c(isolate(input$custom1), isolate(input$custom2), isolate(input$custom3)) != "Select item") & isolate(input$customfilterz))
@@ -941,7 +947,7 @@ shinyServer(function(session, input, output) {
       scale_fill_brewer(name = 'Peak Type', labels = c('Formulae Assigned', 
                                                        'Formulae Unassigned'), palette="Blues") + 
       labs(x = 'Data State', y = 'Number of peaks') 
-    
+      
   }) # End barplot_filter #
   
   

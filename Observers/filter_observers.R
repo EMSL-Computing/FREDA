@@ -112,11 +112,14 @@ lapply(1:3, function(i){
   
   observeEvent(c(input[[paste0("minimum_custom", i)]], input[[paste0("maximum_custom", i)]], 
                  input[[paste0("categorical_custom", i)]], input[[paste0("na_custom", i)]],
-                 input$top_page), {
-                  req(input[[el]] != "Select item")
+                 input$top_page, revals$redraw_largedata), {
+                   req(input[[el]] != "Select item")
                    
                    revals$redraw_filter_plot <- FALSE
                    
+                   if(!revals$redraw_largedata){
+                     revals[[paste0("custom", i, "_ids")]] <- NULL
+                   }
                    # require that the input has a real selection
                    if(input$customfilterz == TRUE){
                      
@@ -324,10 +327,3 @@ observeEvent(input$goto_viz,{
   updateTabsetPanel(session, "top_page", selected = "Visualize")
   removeModal()
 })
-
-
-
-
-
-
-

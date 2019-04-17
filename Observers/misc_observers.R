@@ -3,6 +3,18 @@ observeEvent(input$top_page,{
   toggleElement("helpbutton", condition = input$top_page %in% c("Upload", "Groups", "Preprocess", "Filter", "Visualize"))
 })
 
+# control drawing of filter plot for large data
+observeEvent(peakData2_dim(),{
+  if(peakData2_dim() < max_cells){
+    revals$redraw_largedata <- TRUE
+  }
+})
+
+# debugger observer for filter tab
+# observeEvent(revals$redraw_largedata,{
+#   print(paste0('redraw_largedata was flipped to', as.character(revals$redraw_largedata)))
+# })
+
 # Help Button
 observeEvent(input$helpbutton,{
   if(input$top_page == "Upload"){

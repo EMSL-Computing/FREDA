@@ -1,6 +1,10 @@
-# warn user of 
+# if edata is big, warn the user and prevent plotting of filter barplot
 observeEvent(Edata(),{
-  content <- if(prod(dim(Edata()[,-1])) > max_cells) "style = 'color:deepskyblue;font-weight:bold'>Large data file detected, some plotting options and interactivity may be disabled for performance" else NULL
+  if(prod(dim(Edata()[,-1])) > max_cells){
+    content <- "style = 'color:deepskyblue;font-weight:bold'>Large data file detected, some plotting options and interactivity may be disabled for performance"
+    revals$redraw_largedata <- FALSE
+  }
+  else content <- NULL
   revals$warningmessage_upload$largedata <- content
 })
 
