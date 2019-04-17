@@ -276,7 +276,9 @@ shinyUI(tagList(useShinyjs(),
                                               textInput('qc_boxplot_xlab', "X-axis"),
                                               textInput('qc_boxplot_ylab', 'Y-axis'),
                                               textInput('qc_boxplot_title', 'Title'),
-                                              actionButton('update_boxplot_axes', "Update Boxplot Axes")
+                                              actionButton('update_boxplot_axes', "Update Boxplot Axes"),
+                                              br(),
+                                              uiOutput('warnings_qc')
                                       )
                                     ),
                                     column(8,

@@ -5,6 +5,10 @@ summaryFilterDataFrame <- eventReactive(revals$reac_filter_plot, {
   req(revals$redraw_largedata, cancelOutput = TRUE)
   print('recalculating summaryfilter dataframe...')
   
+  if(peakData2_dim() > max_cells){
+    on.exit(revals$redraw_largedata <- FALSE)
+  }
+  
   # determine which, if any, custom filters to apply
   conds <- c(!is.null(revals$custom1_ids), !is.null(revals$custom2_ids), !is.null(revals$custom3_ids))
   
@@ -18,10 +22,6 @@ summaryFilterDataFrame <- eventReactive(revals$reac_filter_plot, {
   else customids_to_keep <- NULL
   # Get summary table from sourced file 'summaryFilter.R'
   df <- summaryFilt(peakData(), sampfilter_ids(), massfilter_ids(), molfilter_ids(), formfilter_ids(), customids_to_keep)
-  
-  if(peakData2_dim() > max_cells){
-    revals$redraw_largedata <- FALSE 
-  }
   
   return(df)
   

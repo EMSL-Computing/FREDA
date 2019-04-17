@@ -37,7 +37,7 @@ shinyServer(function(session, input, output) {
                            plot_data_export = NULL, peakData_export = NULL, redraw_filter_plot = TRUE, reac_filter_plot = TRUE,
                            group_1 = NULL, group_2 = NULL, single_group = NULL, single_sample = NULL, whichSample1 = NULL, whichSample2 = NULL, 
                            warningmessage_upload = list(upload = "style = 'color:deepskyblue'>Upload data and molecular identification files described in 'Data Requirements' on the previous page."),
-                           warningmessage_visualize = list(), warningmessage_filter = list(), warningmessage_preprocess = list(), warningmessage_groups = list(),
+                           warningmessage_visualize = list(), warningmessage_filter = list(), warningmessage_preprocess = list(), warningmessage_groups = list(), warningmessage_qc = list(),
                            current_plot = NULL, plot_list = list(), plot_data = list(), reset_counter = 0, current_qc_boxplot = NULL,
                            chooseplots = NULL, filter_click_disable = list(init = TRUE), peakData2 = NULL, 
                            groups_list = list(), removed_samples = list())
@@ -684,10 +684,11 @@ shinyServer(function(session, input, output) {
   
   # Boxplots
   output$qc_boxplots <- renderPlotly({
+    input$update_boxplot_axes
     req(!is.null(revals$peakData2))
     req(!is.null(input$qc_plot_scale))
-    
-    input$update_boxplot_axes
+    if(peakData2_dim() > max_cells) isolate(on.exit(revals$redraw_largedata <- FALSE))
+    req(isolate(revals$redraw_largedata))
     
     color_by <- if(isTRUE(input$qc_plot_scale %in% c('log2', 'log10', 'log', 'abundance'))) 'groups' else 'molform'
     ds = attributes(revals$peakData2)$data_info$data_scale
@@ -715,6 +716,15 @@ shinyServer(function(session, input, output) {
     
     p
   })
+  
+  # qc warnings
+  output$warnings_qc <- renderUI({
+    HTML(lapply(revals$warningmessage_qc, function(el){
+      paste0("<p ", el, "</p>")
+    }) %>%
+      paste(collapse = "")
+    )
+  })
 
   ############## Filter tab ##############
   
@@ -730,12 +740,13 @@ shinyServer(function(session, input, output) {
   
   # ----- Filter Reset Setup -----# 
   # Keep a reactive copy of the pre-filtered data in case of a filter reset event
-  uploaded_data <- eventReactive(input$preprocess_click, {
-    req(peakData(), input$tests)
+  uploaded_data <- reactive({
+    input$preprocess_click
+    req(peakData(), isolate(input$tests))
     
     temp <- peakData()
     
-    for(el in input$tests){
+    for(el in isolate(input$tests)){
       if(grepl("assign_class", el)){
         foo <- strsplit(el, ";")[[1]]
         f <- get(foo[1], envir=asNamespace("ftmsRanalysis"), mode="function")
@@ -759,7 +770,6 @@ shinyServer(function(session, input, output) {
   }, priority = 10)
   
   observeEvent(input$filter_click, {
-    disable('filter_click')
     f$clearFilters <- FALSE
     revals$redraw_largedata <- TRUE
     if(peakData2_dim() > max_cells){
@@ -784,6 +794,7 @@ shinyServer(function(session, input, output) {
   # Depends on action button 'filter_click'
   observeEvent(input$filter_click, {
     shinyjs::show('calc_filter')
+    disable('filter_click')
     on.exit(enable('filter_click'))
     on.exit(hide('calc_filter'))
     # if the data is already filtered start over from the uploaded data
@@ -1317,7 +1328,7 @@ shinyServer(function(session, input, output) {
   
   # Main plotting output #
   output$FxnPlot <- renderPlotly({
-    req(!is.null(input$chooseplots), cancelOutput = FALSE)
+    req(!is.null(input$chooseplots))
     
     # reactive dependencies
     input$update_axes
