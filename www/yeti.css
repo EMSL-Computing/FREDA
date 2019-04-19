@@ -7117,6 +7117,7 @@ input[type="checkbox"] {
 
 
 .attention .selectize-input, .attention .form-control, .attention-upload .input-group{
+  border-radius:4px;
   animation: attention 0.2s linear;
   animation-fill-mode: forwards;
 }

@@ -7,11 +7,6 @@ observeEvent(input$update_boxplot_axes,{
   revals$redraw_largedata <- TRUE
 }, priority = 10)
 
-# inform user if data is large and dynamic plotting is disabled
-observeEvent(peakData2_dim(),{
-  revals$warningmessage_qc <- if(peakData2_dim() > max_cells) "style = 'color:deepskyblue;font-weight:bold'>Dynamic plot disabled for large data.  Press 'Update Boxplot Axes' to display plot." else NULL
-})
-
 # save currently displayed boxplot
 observeEvent(input$add_qc_boxplot,{
   # counter which begins at 1 even if a filter reset has occurred.

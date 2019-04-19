@@ -31,6 +31,8 @@ shinyServer(function(session, input, output) {
   source('helper_functions/summaryPreprocess.R')
   source("helper_functions/renderDownloadPlots.R")
   source("Observers/misc_observers.R", local = TRUE)
+  # Misc Reactive Values:
+  # peakData_dim(), peakData2_dim(), uploaded_data_dim(). The number of cells in e_data of the respective objects
   source('Reactive_Variables/misc_revals.R', local = TRUE)
   
   revals <- reactiveValues(ntables = 0, makeplot = 1, color_by_choices = NULL, axes_choices = NULL, redraw_largedata = FALSE, react_largedata = FALSE,
@@ -49,6 +51,7 @@ shinyServer(function(session, input, output) {
   example_emeta <- read_csv('Data/example12T_emeta.csv') %>% as.data.frame(stringsAsFactors = FALSE)
   calc_opts <- read_csv('calculation_options.csv') %>% as.data.frame(stringsAsFactors = FALSE)
   calc_vars <- read_csv('calculation_variables.csv') %>% as.data.frame(stringsAsFactors = FALSE)
+  # determines when 'large data' options are triggered
   max_cells <- 2000000
   
   #############
@@ -256,28 +259,28 @@ shinyServer(function(session, input, output) {
     if (input$select == 2){
       
       ## Error handling: all drop down columns nonempty and of class 'numeric'
+      
+      # first check that H and C columns are specified and numeric...
       validate(
         need({(input$c_column != 'Select a column') & 
-            (input$h_column != 'Select a column') &
-            (input$n_column != 'Select a column') &
-            (input$o_column != 'Select a column') &
-            (input$s_column != 'Select a column') &
-            (input$p_column != 'Select a column')
+            (input$h_column != 'Select a column')
         }, 
-        'Missing elemental column information. Please double-check drop-down options.')
+        'Hydrogen/carbon columns are required. Please double-check drop-down options.')
       )
       validate(
         need({
           all(is.numeric(Emeta()[,input$c_column])) &
-            all(is.numeric(Emeta()[,input$h_column])) &
-            all(is.numeric(Emeta()[,input$n_column])) &
-            all(is.numeric(Emeta()[,input$o_column])) &
-            all(is.numeric(Emeta()[,input$s_column])) &
-            all(is.numeric(Emeta()[,input$p_column]))
+            all(is.numeric(Emeta()[,input$h_column]))
         }, 
         'One or more elemental columns are non-numeric.')
-        
-      ) # End error handling #
+      )
+      # ...then check that -if- other columns are selected, they are numeric
+      for(col in c('n_column', 'o_column', 's_column', 'p_column')){
+       if(input[[col]] != 'Select a column'){
+         validate(need(is.numeric(Emeta()[,input[[col]]]), 'One or more elemental columns are non-numeric.'))
+       } 
+      }# End error handling #
+      
       # If no C13
       if (input$isotope_yn == 2 | isTRUE(input$iso_info_filter == 2)) {
         # Create peakData object
@@ -286,8 +289,10 @@ shinyServer(function(session, input, output) {
                               fdata_cname = 'SampleId', mass_cname = input$edata_id_col,
                               instrument_type = input$instrument,
                               c_cname = input$c_column, h_cname = input$h_column, 
-                              n_cname = input$n_column, o_cname = input$o_column, 
-                              s_cname = input$s_column, p_cname = input$p_column,
+                              n_cname = if(input$n_column == 'Select a column') NULL else input$n_column,
+                              o_cname = if(input$o_column == 'Select a column') NULL else input$o_column, 
+                              s_cname = if(input$s_column == 'Select a column') NULL else input$s_column, 
+                              p_cname = if(input$p_column == 'Select a column') NULL else input$p_column,
                               check_rows = TRUE, data_scale = input$data_scale)
         
       }
@@ -304,8 +309,10 @@ shinyServer(function(session, input, output) {
                               fdata_cname = 'SampleId', mass_cname = input$edata_id_col, 
                               instrument_type = input$instrument,
                               c_cname = input$c_column, h_cname = input$h_column, 
-                              n_cname = input$n_column, o_cname = input$o_column, 
-                              s_cname = input$s_column, p_cname = input$p_column, 
+                              n_cname = if(input$n_column == 'Select a column') NULL else input$n_column,
+                              o_cname = if(input$o_column == 'Select a column') NULL else input$o_column, 
+                              s_cname = if(input$s_column == 'Select a column') NULL else input$s_column, 
+                              p_cname = if(input$p_column == 'Select a column') NULL else input$p_column,
                               isotopic_cname = input$iso_info_column,
                               isotopic_notation = as.character(input$iso_symbol),
                               check_rows = TRUE, data_scale = input$data_scale)
@@ -316,8 +323,11 @@ shinyServer(function(session, input, output) {
     
     shinyjs::show('upload_success')
     
-    # create nonreactive peakData object
-    revals$peakData2 <- res
+    # create reactive peakData2 object
+    # revals$peakData2 <- res
+    
+    # store peakdata for post-mortem testing
+    test_peakData <<- res
     
     # reset 'removed samples' reval
     revals$removed_samples <- list()
@@ -559,6 +569,9 @@ shinyServer(function(session, input, output) {
         incProgress(1/length(input$tests))
       }
     })
+    
+    # post mortem test object
+    # test_uploaded_data <<- revals$peakData2 
     
     # reset 'removed samples' reval
     revals$removed_samples <- list()
@@ -1335,6 +1348,9 @@ shinyServer(function(session, input, output) {
     input$vk_colors
     input$colorpal
     revals$makeplot #in case vk_colors does not change we still want to redraw the plot.
+    
+    disable('plot_submit')
+    on.exit(enable('plot_submit'))
     
     # for testing if plot actually got updated in test mode
     exportTestValues(plot = NULL, plot_attrs = NULL)

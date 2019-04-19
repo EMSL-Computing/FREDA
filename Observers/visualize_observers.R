@@ -243,6 +243,7 @@ observeEvent(numeric_selected(),{
   }
 })
 
+# show extra options panel if we are doing a comparison plot
 observeEvent(c(input$choose_single, input$chooseplots),{
   cond <- input$choose_single %in% c(3,4) & input$chooseplots != 0
   toggle('js_summary_fxn', condition = cond)

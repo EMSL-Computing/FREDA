@@ -3,11 +3,18 @@ observeEvent(input$top_page,{
   toggleElement("helpbutton", condition = input$top_page %in% c("Upload", "Groups", "Preprocess", "Filter", "Visualize"))
 })
 
-# control drawing of filter plot for large data
+# control drawing of filter plot for large data, show warnings on qc and filter that dynamic plotting is disabled
 observeEvent(peakData2_dim(),{
   if(peakData2_dim() < max_cells){
     revals$redraw_largedata <- TRUE
   }
+  revals$warningmessage_qc$not_dynamic <- if(peakData2_dim() > max_cells) "style = 'color:deepskyblue;font-weight:bold'>Dynamic plot disabled for large data.  Press 'Update Boxplot Axes' to display plot." else NULL
+  revals$warningmessage_filter$not_dynamic <- if(peakData2_dim() > max_cells) "style = 'color:deepskyblue;font-weight:bold'>Dynamic plot disabled for large data.  Table and barplot will be displayed when filters are applied." else NULL
+})
+
+# inform user if data is large and dynamic plotting is disabled
+observeEvent(peakData2_dim(),{
+  revals$warningmessage_qc <- if(peakData2_dim() > max_cells) "style = 'color:deepskyblue;font-weight:bold'>Dynamic plot disabled for large data.  Press 'Update Boxplot Axes' to display plot." else NULL
 })
 
 # debugger observer for filter tab

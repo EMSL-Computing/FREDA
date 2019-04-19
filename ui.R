@@ -277,7 +277,7 @@ shinyUI(tagList(useShinyjs(),
                                               textInput('qc_boxplot_ylab', 'Y-axis'),
                                               textInput('qc_boxplot_title', 'Title'),
                                               actionButton('update_boxplot_axes', "Update Boxplot Axes"),
-                                              br(),
+                                              br(), br(),
                                               uiOutput('warnings_qc')
                                       )
                                     ),

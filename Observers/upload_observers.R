@@ -141,8 +141,7 @@ observeEvent(c(input$c_column, input$h_column, input$n_column,
   
   req(Edata(), Emeta(), input$edata_id_col != "Select one")               
                  
-  elcols <- c(input$c_column, input$h_column, input$n_column, 
-              input$o_column, input$s_column, input$p_column)
+  elcols <- c(input$c_column, input$h_column)
   conditions <- isTRUE(any(elcols == 'Select a column') | any(is.null(elcols)))
   
   if(conditions[1]){
