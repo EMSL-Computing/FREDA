@@ -155,8 +155,10 @@ shinyUI(tagList(useShinyjs(),
                                 tags$hr(),
                                 
                                 # Action button: pressing this creates the peakData object
-                                actionButton('upload_click', 'Process Data', icon = icon("cog"), lib = "glyphicon"),
-                                
+                                splitLayout(
+                                  actionButton('upload_click', 'Process Data', icon = icon("cog"), lib = "glyphicon"),
+                                  hidden(div('Making data object, please wait...', id = 'upload_waiting', class='fadein-out', style='font-weight:bold;color:deepskyblue'))
+                                , cellWidths = c('25%', '75%')),
                                 # Summary panel
                                 hidden(div(id = 'upload_success', style = 'width:75%;margin-top:10px',
                                   wellPanel(style='border-radius:4px',
@@ -228,7 +230,10 @@ shinyUI(tagList(useShinyjs(),
                                   div(class = "adjustdown",uiOutput("which_calcs")),
                                   
                                   # Action button: add test columns with results to peakData2
-                                  disabled(actionButton('preprocess_click', 'Process Data', icon = icon("cog"), lib = "glyphicon")),
+                                  splitLayout(
+                                    disabled(actionButton('preprocess_click', 'Process Data', icon = icon("cog"), lib = "glyphicon")),
+                                    hidden(div('Calculating values, please wait...', id = 'preprocess_waiting', style = 'font-weight:bold;color:deepskyblue', class = 'fadein-out')),
+                                    cellWidths = c('25%', '75%')),
                                   br(),
                                   uiOutput("warnings_preprocess")
                                 ), # End sidebar panel
@@ -427,7 +432,8 @@ shinyUI(tagList(useShinyjs(),
                                 
                                 # Success message if peakData2 filtered successfully
                                 # htmlOutput('filterTest'), 
-                                hidden(div('Applying your filters, please wait...', id = 'calc_filter', style = 'color:deepskyblue;font-weight:bold;margin-bottom:5px')),
+                                hidden(div('Applying your filters, please wait...', id = 'calc_filter', class = 'fadein-out', 
+                                           style = 'color:deepskyblue;font-weight:bold;margin-bottom:5px')),
                                 
                                 # Summary panel: display summary of filters
                                 wellPanel(

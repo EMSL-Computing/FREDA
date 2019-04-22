@@ -193,8 +193,11 @@ shinyServer(function(session, input, output) {
   # Object: Create peakData when Upload Button clicked
   peakData <- eventReactive(input$upload_click, {
     shinyjs::disable('upload_click')
-    on.exit(shinyjs::enable('upload_click'))
-    
+    shinyjs::show('upload_waiting', anim=T)
+    on.exit({
+      shinyjs::enable('upload_click')
+      shinyjs::hide('upload_waiting', anim=T)
+      })
     # Error handling: unique identifier chosen
     validate(need(input$edata_id_col != 'Select one', 'Please select a unique identifier column'),
              need(input$edata_id_col %in% edata_cnames() & input$edata_id_col %in% emeta_cnames(),
@@ -324,10 +327,10 @@ shinyServer(function(session, input, output) {
     shinyjs::show('upload_success')
     
     # create reactive peakData2 object
-    # revals$peakData2 <- res
+    revals$peakData2 <- res
     
     # store peakdata for post-mortem testing
-    test_peakData <<- res
+    # test_peakData <<- res
     
     # reset 'removed samples' reval
     revals$removed_samples <- list()
@@ -544,7 +547,11 @@ shinyServer(function(session, input, output) {
   observeEvent(input$preprocess_click, {
     validate(need(input$tests, message = "Please choose at least one test to calculate"))
     disable('preprocess_click')
-    on.exit(enable('preprocess_click'))
+    shinyjs::show('preprocess_waiting', anim=T)
+    on.exit({
+      enable('preprocess_click')
+      shinyjs::hide('preprocess_waiting', anim=T)
+      })
     
     # If columns have already been calculated, start over from uploaded data
     if (any(attr(revals$peakData2, "cnames") %in% calc_vars$ColumnName)){
@@ -806,10 +813,10 @@ shinyServer(function(session, input, output) {
   # Event: Create filtered nonreactive revals$peakData2 when action button clicked
   # Depends on action button 'filter_click'
   observeEvent(input$filter_click, {
-    shinyjs::show('calc_filter')
+    shinyjs::show('calc_filter', anim = T)
     disable('filter_click')
     on.exit(enable('filter_click'))
-    on.exit(hide('calc_filter'))
+    on.exit(hide('calc_filter', anim = T))
     # if the data is already filtered start over from the uploaded data
     if (any(c("moleculeFilt", "massFilt", "formulaFilt") %in% names(attributes(revals$peakData2)$filters)) | any(grepl("emetaFilt", names(attributes(revals$peakData2)$filters))) | !all(colnames(revals$peakData2$e_data) %in% colnames(uploaded_data()$e_data))){
       revals$peakData2 <- uploaded_data()
@@ -1029,27 +1036,33 @@ shinyServer(function(session, input, output) {
     
     choices <- c('Van Krevelen Plot', 'Kendrick Plot', 'Density Plot', 'Custom Scatter Plot', 'PCOA Plot')
     
-    #disallow kendrick plots if either kmass or kdefect not calculated/present in emeta
+    # disallow kendrick plots if either kmass or kdefect not calculated/present in emeta
     if (is.null(attr(revals$peakData2, "cnames")$kmass_cname) | is.null(attr(revals$peakData2, "cnames")$kdefect_cname)){
       choices <- choices[choices != "Kendrick Plot"]
     }
     
-    #disallow vk plots if o:c or h:c ratios not calculated/present in emeta
+    # disallow vk plots if o:c or h:c ratios not calculated/present in emeta
     if (is.null(attr(revals$peakData2, "cnames")$o2c_cname) | is.null(attr(revals$peakData2, "cnames")$h2c_cname)){
       choices <- choices[choices != "Van Krevelen Plot"]
     }
     
-    #disallow density plots if there are no numeric columns
+    # disallow density plots if there are no numeric columns
     if (!any(sapply(revals$peakData2$e_meta %>% dplyr::select(-one_of(getEDataColName(revals$peakData2))), is.numeric))){
       choices <- choices[choices != c("Density Plot", "Custom Scatter Plot")]
     }
     
+    # disallow custom scatter plot if we have large data
+    if (peakData2_dim() > max_cells){
+      choices <- choices[choices != 'Custom Scatter Plot']
+    }
+    
+    # disallow pcoa plot for 1 sample data
     if (nrow(revals$peakData2$f_data) < 2){
       choices <- choices[choices != 'PCOA Plot']
     }
     
     #if everything is disallowed, give warning and silently stop execution.
-    if (all(choices == 0)) return(tags$p("There is not enough information in the molecular identification file to produce any plots.  Choose more variables to calculate in the preprocess tab or append some metadata to the molecular identification file prior to uploading", style = "color:gray"))
+    if (length(choices) == 0) return(tags$p("There is not enough information in the molecular identification file to produce any plots.  Choose more variables to calculate in the preprocess tab or append some metadata to the molecular identification file prior to uploading", style = "color:gray"))
     
     selectInput('chooseplots', 'Choose a plot type',
                   choices = choices, 

@@ -12,11 +12,6 @@ observeEvent(peakData2_dim(),{
   revals$warningmessage_filter$not_dynamic <- if(peakData2_dim() > max_cells) "style = 'color:deepskyblue;font-weight:bold'>Dynamic plot disabled for large data.  Table and barplot will be displayed when filters are applied." else NULL
 })
 
-# inform user if data is large and dynamic plotting is disabled
-observeEvent(peakData2_dim(),{
-  revals$warningmessage_qc <- if(peakData2_dim() > max_cells) "style = 'color:deepskyblue;font-weight:bold'>Dynamic plot disabled for large data.  Press 'Update Boxplot Axes' to display plot." else NULL
-})
-
 # debugger observer for filter tab
 # observeEvent(revals$redraw_largedata,{
 #   print(paste0('redraw_largedata was flipped to', as.character(revals$redraw_largedata)))
