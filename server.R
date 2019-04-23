@@ -815,8 +815,10 @@ shinyServer(function(session, input, output) {
   observeEvent(input$filter_click, {
     shinyjs::show('calc_filter', anim = T)
     disable('filter_click')
-    on.exit(enable('filter_click'))
-    on.exit(hide('calc_filter', anim = T))
+    on.exit({ 
+      enable('filter_click')
+      hide('calc_filter', anim = T)
+      })
     # if the data is already filtered start over from the uploaded data
     if (any(c("moleculeFilt", "massFilt", "formulaFilt") %in% names(attributes(revals$peakData2)$filters)) | any(grepl("emetaFilt", names(attributes(revals$peakData2)$filters))) | !all(colnames(revals$peakData2$e_data) %in% colnames(uploaded_data()$e_data))){
       revals$peakData2 <- uploaded_data()
@@ -1041,8 +1043,12 @@ shinyServer(function(session, input, output) {
       choices <- choices[choices != "Kendrick Plot"]
     }
     
-    # disallow vk plots if o:c or h:c ratios not calculated/present in emeta
+    # disallow vk plots if o:c or h:c ratios not calculated/present in emeta or only contain zeros/NA's
     if (is.null(attr(revals$peakData2, "cnames")$o2c_cname) | is.null(attr(revals$peakData2, "cnames")$h2c_cname)){
+      choices <- choices[choices != "Van Krevelen Plot"]
+    }
+    else if(any(all(revals$peakData2$e_meta[[attr(revals$peakData2, "cnames")$o2c_cname]] %in% c(0,NA)),
+            all(revals$peakData2$e_meta[[attr(revals$peakData2, "cnames")$h2c_cname]] %in% c(0,NA)))){
       choices <- choices[choices != "Van Krevelen Plot"]
     }
     
