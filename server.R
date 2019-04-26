@@ -814,11 +814,12 @@ shinyServer(function(session, input, output) {
   # Depends on action button 'filter_click'
   observeEvent(input$filter_click, {
     shinyjs::show('calc_filter', anim = T)
-    disable('filter_click')
+    shinyjs::disable('filter_click')
     on.exit({ 
-      enable('filter_click')
-      hide('calc_filter', anim = T)
+      shinyjs::enable('filter_click')
+      shinyjs::hide('calc_filter', anim = T)
       })
+    
     # if the data is already filtered start over from the uploaded data
     if (any(c("moleculeFilt", "massFilt", "formulaFilt") %in% names(attributes(revals$peakData2)$filters)) | any(grepl("emetaFilt", names(attributes(revals$peakData2)$filters))) | !all(colnames(revals$peakData2$e_data) %in% colnames(uploaded_data()$e_data))){
       revals$peakData2 <- uploaded_data()
@@ -920,7 +921,10 @@ shinyServer(function(session, input, output) {
                            actionButton("filter_dismiss", "Review results", width = '75%'),
                            br(),
                            br(),
-                           actionButton("goto_viz", "Continue to Visualization", width = '75%')
+                           actionButton("goto_viz", "Continue to Visualization", width = '75%'),
+                           br(),
+                           br(),
+                           div(uiOutput('filter_modal_wait'))
                     )
                   )
                   ,footer = NULL)
@@ -931,13 +935,15 @@ shinyServer(function(session, input, output) {
   
   }) # End creating revals$peakData2
   
-  #### Main Panel (Filter Tab) ####
-  
-  # Display successMessage
-  # Depends on: successMessage
-  output$filterTest <- renderUI({
-    successMessage()
+  # waiting message within modal dialog for filter tab
+  output$filter_modal_wait <- renderUI({
+    if(peakData2_dim() > max_cells/2){
+      div('Your plots may still be drawing, please wait for them to appear.', style = 'color:grey;font-weight:bold')
+    }
+    else NULL
   })
+  
+  #### Main Panel (Filter Tab) ####
   
   ## Filter tab reactive values
   source("Reactive_Variables/filter_revals.R", local = TRUE)
