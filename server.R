@@ -806,7 +806,7 @@ shinyServer(function(session, input, output) {
   }) # End minobs
   
   output$filter_samples <- renderUI({
-    selectInput('keep_samples', "Keep Samples:", choices = peakData()$f_data[,getFDataColName(peakData())], selected = peakData()$f_data[,getFDataColName(peakData())], multiple = TRUE)
+    selectInput('keep_samples', NULL, choices = peakData()$f_data[,getFDataColName(peakData())], selected = peakData()$f_data[,getFDataColName(peakData())], multiple = TRUE)
   })
   #### Action Button Reactions (Filter Tab) ####
   
@@ -943,10 +943,10 @@ shinyServer(function(session, input, output) {
     else NULL
   })
   
-  # icon control for filter tab collapsible sections
+  ### icon control for filter tab collapsible sections
   output$massfilter_icon <- renderUI({
     req(input$top_page == 'Filter')
-    clicked = if(input$massfilter) div(id = 'ok_massfilt', style = 'color:deepskyblue;display:inline-block', icon('ok', lib='glyphicon')) else NULL
+    clicked = if(input$massfilter) div(id = 'ok_massfilt', style = 'color:deepskyblue;display:inline-block;margin-right:5px', icon('ok', lib='glyphicon')) else NULL
     if('formfilt_collapse' %in% input$filter_sidebar){
       div(
         clicked, 
@@ -963,7 +963,7 @@ shinyServer(function(session, input, output) {
   
   output$samplefilter_icon <- renderUI({
     req(input$top_page == 'Filter')
-    clicked = if(input$samplefilter) div(id = 'ok_samplefilter', style = 'color:deepskyblue;display:inline-block', icon('ok', lib='glyphicon')) else NULL
+    clicked = if(input$samplefilter) div(id = 'ok_samplefilter', style = 'color:deepskyblue;display:inline-block;margin-right:5px', icon('ok', lib='glyphicon')) else NULL
     if('samplefilt_collapse' %in% input$filter_sidebar){
       div(
         clicked, 
@@ -980,7 +980,7 @@ shinyServer(function(session, input, output) {
   
   output$formfilter_icon <- renderUI({
     req(input$top_page == 'Filter')
-    clicked = if(input$formfilter) div(id = 'ok_formfilter', style = 'color:deepskyblue;display:inline-block', icon('ok', lib='glyphicon')) else NULL
+    clicked = if(input$formfilter) div(id = 'ok_formfilter', style = 'color:deepskyblue;display:inline-block;margin-right:5px', icon('ok', lib='glyphicon')) else NULL
     if('formfilt_collapse' %in% input$filter_sidebar){
       div(
         clicked, 
@@ -997,7 +997,7 @@ shinyServer(function(session, input, output) {
   
   output$molfilter_icon <- renderUI({
     req(input$top_page == 'Filter')
-    clicked = if(input$molfilter) div(id = 'ok_molfilter', style = 'color:deepskyblue;display:inline-block', icon('ok', lib='glyphicon')) else NULL
+    clicked = if(input$molfilter) div(id = 'ok_molfilter', style = 'color:deepskyblue;display:inline-block;margin-right:5px', icon('ok', lib='glyphicon')) else NULL
     if('molfilt_collapse' %in% input$filter_sidebar){
       div(
         clicked, 
@@ -1014,7 +1014,7 @@ shinyServer(function(session, input, output) {
   
   output$customfilter_icon <- renderUI({
     req(input$top_page == 'Filter')
-    clicked = if(input$customfilterz) div(id = 'ok_customfilterz', style = 'color:deepskyblue;display:inline-block', icon('ok', lib='glyphicon')) else NULL
+    clicked = if(input$customfilterz) div(id = 'ok_customfilterz', style = 'color:deepskyblue;display:inline-block;margin-right:5px', icon('ok', lib='glyphicon')) else NULL
     if('customfilt_collapse' %in% input$filter_sidebar){
       div(
         clicked, 
@@ -1028,6 +1028,7 @@ shinyServer(function(session, input, output) {
       )
     }
   })
+  #####
   
   #### Main Panel (Filter Tab) ####
   

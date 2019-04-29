@@ -317,7 +317,7 @@ shinyUI(tagList(useShinyjs(),
 
                                 # Checkbox: Mass filter yes/no
                                 #HTML('<h5><b>Mass Filter</b></h5>')
-                                bsCollapse(id = 'filter_sidebar', multiple = TRUE,
+                                bsCollapse(id = 'filter_sidebar', open = 'samplefilt_collapse', multiple = TRUE,
                                   bsCollapsePanel(div('Sample Filter', 
                                                       div(style = "color:deepskyblue;display:inline-block",
                                                            tipify(icon("question-sign", lib = "glyphicon"), 
@@ -327,7 +327,7 @@ shinyUI(tagList(useShinyjs(),
                                                       div(style = 'float:right', uiOutput('samplefilter_icon'))
                                                       ), value = 'samplefilt_collapse',
                                     div(class="adjustdown", 
-                                        checkboxInput('samplefilter', tags$b("Apply this filter", style = "display:inline-block"), value = FALSE)
+                                        checkboxInput('samplefilter', tags$b("Apply this filter, keeping only the following samples:", style = "display:inline-block"), value = FALSE)
                                     ),
                                     
                                     div(id = "js_filter_samples", 
@@ -342,7 +342,7 @@ shinyUI(tagList(useShinyjs(),
                                                                     ),
                                                     div(style = 'float:right', uiOutput('massfilter_icon'))
                                                   ), value = 'massfilt_collapse',
-                                    div(class="adjustdown", checkboxInput('massfilter', tags$b("Apply this filter", style = "display:inline-block"), value = FALSE)
+                                    div(class="adjustdown", checkboxInput('massfilter', tags$b("Apply this filter, removing peaks outside the mass range:", style = "display:inline-block"), value = FALSE)
                                     ),
   
                                     # Numeric: Min/max mass filter
@@ -364,7 +364,7 @@ shinyUI(tagList(useShinyjs(),
                                                       ),
                                                   value = 'molfilt_collapse', 
                                       # Checkbox: Mass filter yes/no
-                                      div(class = "adjustdown", checkboxInput('molfilter', tags$b("Apply this filter", style = "display:inline-block"), value = FALSE)
+                                      div(class = "adjustdown", checkboxInput('molfilter', tags$b("Apply this filter, removing peaks with too few observations: ", style = "display:inline-block"), value = FALSE)
                                       ),   
                                       # Drop-down list: Min/max mass filter
                                       uiOutput('minobs')
@@ -378,7 +378,7 @@ shinyUI(tagList(useShinyjs(),
                                                       div(style = 'float:right', uiOutput('formfilter_icon'))
                                                       ),
                                                   value = 'formfilt_collapse',
-                                    div(class = "adjustdown", checkboxInput('formfilter', tags$b("Apply this filter", style = "display:inline-block"), value = FALSE)
+                                    div(class = "adjustdown", checkboxInput('formfilter', tags$b("Apply this filter, removing peaks without a molecular formula", style = "display:inline-block"), value = FALSE)
                                     )
                                    ),
                                    
@@ -391,7 +391,7 @@ shinyUI(tagList(useShinyjs(),
                                                       div(style = 'float:right', uiOutput('customfilter_icon'))
                                                       ), 
                                                   value = 'customfilt_collapse',
-                                    div(class = "adjustdown", checkboxInput('customfilterz', tags$b("Show dropdowns and apply these filters", style = "display:inline-block"), value = FALSE)
+                                    div(class = "adjustdown", checkboxInput('customfilterz', tags$b("Show dropdowns and apply all specified filters", style = "display:inline-block"), value = FALSE)
                                     ),
                                   
                                     conditionalPanel(id = "custom_cond_panel", condition = "input.customfilterz == true",
