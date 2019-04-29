@@ -317,95 +317,94 @@ shinyUI(tagList(useShinyjs(),
 
                                 # Checkbox: Mass filter yes/no
                                 #HTML('<h5><b>Mass Filter</b></h5>')
-
-                                div(class="adjustdown", checkboxInput('samplefilter', 
-                                                                      tagList(tags$b("Sample Filter", style = "display:inline-block"),
-                                                                              div(style = "color:deepskyblue;display:inline-block",
-                                                                                  tipify(icon("question-sign", lib = "glyphicon"), 
-                                                                                         title = "Retain a subset of all samples", 
-                                                                                         placement = "top", trigger = 'hover')
-                                                                              ) 
-                                                                      ), 
-                                                                      value = FALSE
-                                                        )
-                                ),
-                                
-                                div(id = "js_filter_samples", uiOutput("filter_samples")),
-                                
-                                tags$hr(style = "margin:6px"),
-                                
-                                div(class="adjustdown", checkboxInput('massfilter', 
-                                                                      tagList(tags$b("Mass Filter", style = "display:inline-block"),
-                                                                              div(style = "color:deepskyblue;display:inline-block",
-                                                                                  tipify(icon("question-sign", lib = "glyphicon"), 
-                                                                                        title = "Retain peaks within a mass range specified below", 
-                                                                                        placement = "top", trigger = 'hover')
-                                                                                  ) 
-                                                                            ), 
-                                                                     value = FALSE)
-                                ),
-                                
-                                
-                                # Numeric: Min/max mass filter
-                                splitLayout(
-                                  numericInput('min_mass', 'Minimum Mass value', 
-                                               min = 0, value = 200),
-                                  numericInput('max_mass', "Maximum Mass value", 
-                                               min = 0, value = 900)
-                                ),
-                                
-                                tags$hr(style = "margin:6px"),
-                                
-                                # Checkbox: Mass filter yes/no
-                                div(class = "adjustdown", checkboxInput('molfilter', 
-                                                                        tagList(tags$b("Molecule Filter", style = "display:inline-block"),
-                                                                                div(style = "color:deepskyblue;display:inline-block", 
-                                                                                    tipify(icon("question-sign", lib = "glyphicon"), 
-                                                                                            title = "Retain peaks that are observed in a minimum number of samples, specified below", 
-                                                                                            placement = "top", trigger = 'hover')
-                                                                                    )
-                                                                              ), 
-                                                                        value = FALSE)
-                                ),   
-                                # Drop-down list: Min/max mass filter
-                                uiOutput('minobs'), 
-                                
-                                tags$hr(style = "margin:6px"),
-                                
-                                div(class = "adjustdown", checkboxInput('formfilter', 
-                                                                        tagList(tags$b("Formula Presence Filter", style = "display:inline-block"),
-                                                                                div(style = "color:deepskyblue;display:inline-block",
-                                                                                    tipify(icon("question-sign", lib = "glyphicon"), 
-                                                                                            title = "Retain peaks that have a molecular formula specified or calculated from elemental values", 
-                                                                                            placement = "top", trigger = 'hover')
-                                                                                    )
-                                                                                ), 
-                                                                        value = FALSE)
-                                ),
-                                
-                                tags$hr(style = "margin:6px"),
-                                
-                                div(class = "adjustdown", checkboxInput('customfilterz', 
-                                                                        tagList(tags$b("Implement up to 3 custom filters", style = "display:inline-block"),
-                                                                                div(style = "color:deepskyblue;display:inline-block",
-                                                                                    tipify(icon("question-sign", lib = "glyphicon"), 
-                                                                                           title = "Filter based on up to 3 variables in the post-processed molecular identification file", 
-                                                                                           placement = "top", trigger = 'hover')
-                                                                                )
-                                                                        ), 
-                                                                        value = FALSE)
-                                ),
-                                
+                                bsCollapse(id = 'filter_sidebar', multiple = TRUE,
+                                  bsCollapsePanel(div('Sample Filter', 
+                                                      div(style = "color:deepskyblue;display:inline-block",
+                                                           tipify(icon("question-sign", lib = "glyphicon"), 
+                                                                  title = "Retain a subset of all samples", 
+                                                                  placement = "top", trigger = 'hover')
+                                                        ),
+                                                      div(style = 'float:right', uiOutput('samplefilter_icon'))
+                                                      ), value = 'samplefilt_collapse',
+                                    div(class="adjustdown", 
+                                        checkboxInput('samplefilter', tags$b("Apply this filter", style = "display:inline-block"), value = FALSE)
+                                    ),
+                                    
+                                    div(id = "js_filter_samples", 
+                                        uiOutput("filter_samples")
+                                        )
+                                  ),
+                                  bsCollapsePanel(div('Mass Filter',
+                                                    div(style = "color:deepskyblue;display:inline-block",
+                                                                      tipify(icon("question-sign", lib = "glyphicon"), 
+                                                                             title = "Retain peaks within a mass range specified below", 
+                                                                             placement = "top", trigger = 'hover')
+                                                                    ),
+                                                    div(style = 'float:right', uiOutput('massfilter_icon'))
+                                                  ), value = 'massfilt_collapse',
+                                    div(class="adjustdown", checkboxInput('massfilter', tags$b("Apply this filter", style = "display:inline-block"), value = FALSE)
+                                    ),
+  
+                                    # Numeric: Min/max mass filter
+                                    splitLayout(
+                                      numericInput('min_mass', 'Minimum Mass value', 
+                                                   min = 0, value = 200),
+                                      numericInput('max_mass', "Maximum Mass value", 
+                                                   min = 0, value = 900)
+                                    )
+                                  ),
+                                 
+                                  bsCollapsePanel(div('Molecule Filter', 
+                                                      div(style = "color:deepskyblue;display:inline-block", 
+                                                               tipify(icon("question-sign", lib = "glyphicon"), 
+                                                                      title = "Retain peaks that are observed in a minimum number of samples, specified below", 
+                                                                      placement = "top", trigger = 'hover')
+                                                          ),
+                                                      div(style = 'float:right', uiOutput('molfilter_icon'))
+                                                      ),
+                                                  value = 'molfilt_collapse', 
+                                      # Checkbox: Mass filter yes/no
+                                      div(class = "adjustdown", checkboxInput('molfilter', tags$b("Apply this filter", style = "display:inline-block"), value = FALSE)
+                                      ),   
+                                      # Drop-down list: Min/max mass filter
+                                      uiOutput('minobs')
+                                   ),
+                                  bsCollapsePanel(div('Formula Presence Filter',
+                                                      div(style = "color:deepskyblue;display:inline-block",
+                                                          tipify(icon("question-sign", lib = "glyphicon"), 
+                                                                 title = "Retain peaks that have a molecular formula specified or calculated from elemental values", 
+                                                                 placement = "top", trigger = 'hover')
+                                                          ),
+                                                      div(style = 'float:right', uiOutput('formfilter_icon'))
+                                                      ),
+                                                  value = 'formfilt_collapse',
+                                    div(class = "adjustdown", checkboxInput('formfilter', tags$b("Apply this filter", style = "display:inline-block"), value = FALSE)
+                                    )
+                                   ),
+                                   
+                                  bsCollapsePanel(div('Implement up to 3 custom filters', 
+                                                      div(style = "color:deepskyblue;display:inline-block",
+                                                          tipify(icon("question-sign", lib = "glyphicon"), 
+                                                                 title = "Filter based on up to 3 variables in the post-processed molecular identification file", 
+                                                                 placement = "top", trigger = 'hover')
+                                                        ),
+                                                      div(style = 'float:right', uiOutput('customfilter_icon'))
+                                                      ), 
+                                                  value = 'customfilt_collapse',
+                                    div(class = "adjustdown", checkboxInput('customfilterz', tags$b("Show dropdowns and apply these filters", style = "display:inline-block"), value = FALSE)
+                                    ),
+                                  
+                                    conditionalPanel(id = "custom_cond_panel", condition = "input.customfilterz == true",
+                                                       uiOutput("filter1UI"),
+                                                       uiOutput("customfilter1UI"),  
+                                                       uiOutput("filter2UI"),
+                                                       uiOutput("customfilter2UI"),
+                                                       uiOutput("filter3UI"),
+                                                       uiOutput("customfilter3UI")
+                                                     )
+                                  )
+                                ), # end collapse panel
                                 hr(),
-                                
-                                conditionalPanel(id = "custom_cond_panel", condition = "input.customfilterz == true",
-                                                   uiOutput("filter1UI"),
-                                                   uiOutput("customfilter1UI"),  
-                                                   uiOutput("filter2UI"),
-                                                   uiOutput("customfilter2UI"),
-                                                   uiOutput("filter3UI"),
-                                                   uiOutput("customfilter3UI")
-                                                 ),
                                 
                                 disabled(
                                   fluidRow(
