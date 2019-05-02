@@ -497,7 +497,7 @@ shinyUI(tagList(useShinyjs(),
                                   ),
                                   bsCollapsePanel(div('Save plot and view saved plots', div(style = 'float:right', uiOutput('saveplots_icon'))), value = 'downloads',
                                       div(id = "saveplot_ui", style = 'width:90%;padding-left:5%;',
-                                            div(disabled(actionButton(inputId = "add_plot", width = '100%', label = "Save This Plot for Later Download", icon = icon("save")))),
+                                            div(disabled(actionButton(inputId = "add_plot", width = '100%', label = "Save Current Plot for Later Download", icon = icon("save")))),
                                             div(style = 'margin-top:4px', uiOutput("view_plots"))
                                       )
                                   )

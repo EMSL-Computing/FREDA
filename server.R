@@ -84,6 +84,13 @@ shinyServer(function(session, input, output) {
   source("Observers/upload_observers.R", local = TRUE)
   ###
   
+  ### Minor Upload UI Elements (output$<name>)
+  # num_peaks, num_samples
+  # emeta_text, edata_text, success_upload
+  source('srv_ui_elements/upload_UI_misc.R', local = TRUE)
+  # element selection and C13 sidebar elements
+  source('srv_ui_elements/upload_UI_elements.R', local = TRUE)
+  
   #### Sidebar Panel (Upload Tab) ####
   
   # Drop down list: Get edata unique identifier
@@ -98,95 +105,6 @@ shinyServer(function(session, input, output) {
     selectInput("f_column", "Choose formula column",
                 choices = c('Select one', emeta_cnames()))
   }) # End f_column #
-  
-  ### C H N O S P C13 ###
-  # Drop-down lists: Select which column represents C / H / N / O / etc
-  # First try to locate the column name with a grepl
-  # Note: All require emeta_cnames()
-  output$c_column <- renderUI({
-    selectInput("c_column", "Carbon column:",
-                choices  = c('Select a column', emeta_cnames()),
-                selected = ifelse(grepl("^c$", tolower(emeta_cnames())),
-                                  yes = emeta_cnames()[grepl("^c$", tolower(emeta_cnames()))][1],
-                                  no = 'Select a column'))
-    
-  })
-  
-  output$h_column <- renderUI({
-    
-    selectInput("h_column", "Hydrogen column:",
-                choices  = c('Select a column', emeta_cnames()),
-                selected = ifelse(grepl("^h$", tolower(emeta_cnames())),
-                                  yes = emeta_cnames()[grepl("^h$", tolower(emeta_cnames()))][1],
-                                  no = 'Select a column'))
-    
-  })
-  
-  output$n_column <- renderUI({
-    
-    selectInput("n_column", "Nitrogen column:",
-                choices  = c('Select a column', emeta_cnames()),
-                selected = ifelse(grepl("^n$", tolower(emeta_cnames())),
-                                  yes = emeta_cnames()[grepl("^n$", tolower(emeta_cnames()))][1],
-                                  no = 'Select a column'))
-    
-  })
-  
-  output$o_column <- renderUI({
-    
-    selectInput("o_column", "Oxygen column:",
-                choices  = c('Select a column', emeta_cnames()),
-                selected = ifelse(grepl("^o$", tolower(emeta_cnames())),
-                                  yes = emeta_cnames()[grepl("^o$", tolower(emeta_cnames()))][1],
-                                  no = 'Select a column'))
-    
-  }) 
-  
-  output$s_column <- renderUI({
-    
-    selectInput("s_column", "Sulfur column:",
-                choices  = c('Select a column', emeta_cnames()),
-                selected = ifelse(grepl("^s$", tolower(emeta_cnames())),
-                                  yes = emeta_cnames()[grepl("^s$", tolower(emeta_cnames()))][1],
-                                  no = 'Select a column'))
-    
-  })
-  
-  output$p_column <- renderUI({
-    
-    selectInput("p_column", "Phosphorus column:",
-                choices  = c('Select a column', emeta_cnames()),
-                selected = ifelse(grepl("^p$", tolower(emeta_cnames())),
-                                  yes = emeta_cnames()[grepl("^p$", tolower(emeta_cnames()))][1],
-                                  no = 'Select a column'))
-  })
-  
-  output$iso_info_filter_out <- renderUI({
-    radioGroupButtons(inputId = "iso_info_filter", label = "Filter isotopic peaks?", 
-                choices = list('Yes' = 1,
-                               'No' = 2),
-                selected = 'Yes',
-                justified = TRUE
-    )
-  })
-  output$iso_info_column_out <- renderUI({
-    req(input$iso_info_filter )
-    if (input$iso_info_filter == 1) {
-      selectInput("iso_info_column", "Which column contains isotopic information?",
-                  choices  = c('Select a column' = '0', emeta_cnames()))
-    } else (return(NULL))
-  })
-  
-  output$iso_symbol_out <- renderUI({
-    req(input$iso_info_filter )
-    if (input$iso_info_filter == 1) {
-      textInput("iso_symbol", label = "Enter a symbol denoting isotopic notation:",
-                value = "1")
-    } else (return(NULL))
-  })
-  
-  ### END of CHNOSP DROP DOWN LISTS ###
-  
   
   #### Action Button Reactions (Upload Tab) ####
   
@@ -342,41 +260,8 @@ shinyServer(function(session, input, output) {
     
   }) # End peakData creation
 
-  # display list of warnings pasted on separate lines
-  output$warnings_upload <- renderUI({
-    HTML(lapply(revals$warningmessage_upload, function(el){
-      paste0("<p ", el, "</p>")
-      }) %>%
-      paste(collapse = "")
-      )
-  })
-
   #### Main Panel (Upload Tab) ####
-  
-  # Display success message OR display errors
-  output$success_upload <- renderUI({
-    
-    # Error handling: peakData() must exist
-    req(peakData())
-    
-    # If no errors, show Success message
-    HTML('<h4 style= "color:#1A5276">Your data object is created, and can be manipulated in subsequent tabs.</h4>')
-    
-  }) # End success #
-  
-  # Summary: Display number of peaks and samples
-  output$num_peaks <- renderText({
-    peakData()
-    c('Number of peaks: ', nrow(peakData()$e_data))
-    
-  }) # End num_peaks
-  
-  output$num_samples <- renderText({
-    peakData()
-    c('Number of samples: ', (length(edata_cnames()) - 1))
-    
-  }) # End num_samples # 
-  
+
   # Summary: Display number of peaks with formulas
   output$num_peaks_formula <- renderText({
     
@@ -451,43 +336,6 @@ shinyServer(function(session, input, output) {
     
     
   }) # End num_peaks_formula in summary panel
-  
-  # Display explanation above e_data
-  output$edata_text <- renderUI({
-    
-    # Error handling: Edata() must exist
-    req(Edata())
-    
-    HTML('<h4>Displaying Uploaded Data File</h4>')
-    
-  }) # End edata_text
-  
-  output$head_edata <- DT::renderDT({
-    tmp <- Edata()
-    
-    # coerce logical to character for display purposes.
-    tmp[, which(sapply(tmp, is.logical))] <- as.character(tmp[, which(sapply(tmp, is.logical))])
-    tmp
-  },
-  options = list(scrollX = TRUE))
-  
-  # e_meta display
-  output$head_emeta <- DT::renderDataTable({
-    tmp <- Emeta()
-    
-    # coerce logical to character for display purposes.
-    tmp[, which(sapply(tmp, is.logical))] <- as.character(tmp[, which(sapply(tmp, is.logical))])
-    tmp
-  },
-  options = list(scrollX = TRUE))
-  
-  # Display explanation for e_meta
-  output$emeta_text <- renderUI({
-    
-    req(Emeta())
-    HTML('<h4>Displaying Uploaded Molecular Identification File</h4>')
-    
-  })# End emeta_text
   
   ####### Groups Tab ######
   
@@ -691,17 +539,6 @@ shinyServer(function(session, input, output) {
     )
   })
   
-  # PCOA Axis Selection
-  output$qc_select_x <- renderUI({
-    nsamps <- length(setdiff(sample_names(), revals$removed_samples))
-    pickerInput('pc_x', 'X-axis Principal Component', choices = seq(1,min(nsamps, 5)), selected=1)
-  })
-  
-  output$qc_select_y <- renderUI({
-    nsamps <- length(setdiff(sample_names(), revals$removed_samples))
-    pickerInput('pc_y', 'Y-axis Principal Component', choices = seq(1,min(nsamps, 5)), selected=2)
-  })
-  
   # Boxplots
   output$qc_boxplots <- renderPlotly({
     input$update_boxplot_axes
@@ -752,11 +589,11 @@ shinyServer(function(session, input, output) {
   source("Observers/filter_observers.R", local = TRUE)
   ###
   
-  # filter warnings
-  output$warnings_filter <- renderUI({
-    HTML(lapply(revals$warningmessage_filter, function(el){paste0("<p ", el, "</p>")}) %>%
-      paste(collapse = ""))
-  })
+  # Filter minor UI Elements
+  source('srv_ui_elements/filter_UI_misc.R', local = TRUE)
+  
+  ## Filter tab reactive values
+  source("Reactive_Variables/filter_revals.R", local = TRUE)
   
   # ----- Filter Reset Setup -----# 
   # Keep a reactive copy of the pre-filtered data in case of a filter reset event
@@ -935,106 +772,8 @@ shinyServer(function(session, input, output) {
   
   }) # End creating revals$peakData2
   
-  # waiting message within modal dialog for filter tab
-  output$filter_modal_wait <- renderUI({
-    if(peakData2_dim() > max_cells/2){
-      div('Your plots may still be drawing, please wait for them to appear.', style = 'color:grey;font-weight:bold')
-    }
-    else NULL
-  })
-  
-  ### icon control for filter tab collapsible sections
-  output$massfilter_icon <- renderUI({
-    req(input$top_page == 'Filter')
-    clicked = if(input$massfilter) div(id = 'ok_massfilt', style = 'color:deepskyblue;display:inline-block;margin-right:5px', icon('ok', lib='glyphicon')) else NULL
-    if('formfilt_collapse' %in% input$filter_sidebar){
-      div(
-        clicked, 
-        icon('chevron-up', lib = 'glyphicon')
-      )
-    }
-    else{
-      div(
-        clicked, 
-        icon('chevron-down', lib = 'glyphicon')
-      )
-    }
-  })
-  
-  output$samplefilter_icon <- renderUI({
-    req(input$top_page == 'Filter')
-    clicked = if(input$samplefilter) div(id = 'ok_samplefilter', style = 'color:deepskyblue;display:inline-block;margin-right:5px', icon('ok', lib='glyphicon')) else NULL
-    if('samplefilt_collapse' %in% input$filter_sidebar){
-      div(
-        clicked, 
-        icon('chevron-up', lib = 'glyphicon')
-      )
-    }
-    else{
-      div(
-        clicked, 
-        icon('chevron-down', lib = 'glyphicon')
-      )
-    }
-  })
-  
-  output$formfilter_icon <- renderUI({
-    req(input$top_page == 'Filter')
-    clicked = if(input$formfilter) div(id = 'ok_formfilter', style = 'color:deepskyblue;display:inline-block;margin-right:5px', icon('ok', lib='glyphicon')) else NULL
-    if('formfilt_collapse' %in% input$filter_sidebar){
-      div(
-        clicked, 
-        icon('chevron-up', lib = 'glyphicon')
-        )
-    }
-    else{
-      div(
-        clicked, 
-        icon('chevron-down', lib = 'glyphicon')
-      )
-    }
-  })
-  
-  output$molfilter_icon <- renderUI({
-    req(input$top_page == 'Filter')
-    clicked = if(input$molfilter) div(id = 'ok_molfilter', style = 'color:deepskyblue;display:inline-block;margin-right:5px', icon('ok', lib='glyphicon')) else NULL
-    if('molfilt_collapse' %in% input$filter_sidebar){
-      div(
-        clicked, 
-        icon('chevron-up', lib = 'glyphicon')
-      )
-    }
-    else{
-      div(
-        clicked, 
-        icon('chevron-down', lib = 'glyphicon')
-      )
-    }
-  })
-  
-  output$customfilter_icon <- renderUI({
-    req(input$top_page == 'Filter')
-    clicked = if(input$customfilterz) div(id = 'ok_customfilterz', style = 'color:deepskyblue;display:inline-block;margin-right:5px', icon('ok', lib='glyphicon')) else NULL
-    if('customfilt_collapse' %in% input$filter_sidebar){
-      div(
-        clicked, 
-        icon('chevron-up', lib = 'glyphicon')
-      )
-    }
-    else{
-      div(
-        clicked, 
-        icon('chevron-down', lib = 'glyphicon')
-      )
-    }
-  })
-  #####
-  
   #### Main Panel (Filter Tab) ####
-  
-  ## Filter tab reactive values
-  source("Reactive_Variables/filter_revals.R", local = TRUE)
-  
+
   # Show table from summaryFilt
   # Depends on: summaryFilterDataFrame
   output$summary_filter <- renderTable({
@@ -1117,12 +856,19 @@ shinyServer(function(session, input, output) {
   # g1_samples() and g2_samples()  These store the samples that will be compared during group/sample comparison plots
   source("Reactive_Variables/visualize_revals.R", local = TRUE)
   
-  #### Viztab observers.  Help Button. Dropdown choices, plot clearing, and shinyjs helper functionality###
+  # Viztab observers.  Help Button. Dropdown choices, plot clearing, and shinyjs helper functionality###
   source("Observers/visualize_observers.R", local = TRUE)
-  #####
+  #
+  
+  # Minor UI Elements
+  # Label adjustment and plot download buttons (sidebar)
+  source('srv_ui_elements/visualize_UI_plot_opts.R', local = TRUE)
+  # warnings_visualize: displays warning messages in revals$warningmessage_visualize
+  # chooseplots_icon, axlabs_icon, saveplots_icon: icons for collapse panels
+  source('srv_ui_elements/visualize_UI_misc.R', local = TRUE)
+  #
   
   ## Sidebar Panel ##
-  
   # Plot options, with selections removed if the necessary columns in e_meta are not present.
   output$plot_type <- renderUI({
     input$top_page
@@ -1216,7 +962,8 @@ shinyServer(function(session, input, output) {
     req(input$choose_single != 0, !is.null(input$chooseplots))
     if(input$choose_single == 3){
       choice_diff <- setdiff(names(revals$groups_list), isolate(input$whichGroups2))
-      pickerInput('whichGroups1', HTML("<input type = 'text' id = 'group1_name' placeholder = 'Group 1' style = 'border-style:unset;'/>"),
+      name_label = HTML("<input type = 'text' id = 'group1_name' placeholder = 'Group 1' style = 'border-style:solid;border-width:1px;'/>")
+      pickerInput('whichGroups1', name_label,
               choices = choice_diff,
               selected = if(is.null(isolate(revals$group_1))) choice_diff[1] else isolate(revals$group_1),
               options =  pickerOptions(dropupAuto = FALSE, actionsBox = TRUE))
@@ -1234,7 +981,8 @@ shinyServer(function(session, input, output) {
     req(input$choose_single != 0, !is.null(input$chooseplots))
     if(input$choose_single == 3){
       choice_diff <- setdiff(names(revals$groups_list), isolate(input$whichGroups1))
-      pickerInput("whichGroups2", HTML("<input type = 'text' id = 'group2_name' placeholder = 'Group 2' style = 'border-style:unset;'/>"), 
+      name_label = HTML("<input type = 'text' id = 'group2_name' placeholder = 'Group 2' style = 'border-style:solid;border-width:1px;'/>")
+      pickerInput("whichGroups2", name_label, 
               choices = setdiff(names(revals$groups_list), isolate(input$whichGroups1)),
               selected = if(is.null(isolate(revals$group_2))) choice_diff[2] else isolate(revals$group_2),
               options =  pickerOptions(dropupAuto = FALSE, actionsBox = TRUE))
@@ -1317,25 +1065,6 @@ shinyServer(function(session, input, output) {
   })
   
   #### Main Panel (Visualize Tab) ####
-  
-  # color palette selection
-  output$colorpal_out <- renderUI({
-    choices = c("YlOrRd", "YlGnBu", "YlGn", "RdYlGn")
-    
-    extensions <- lapply(choices, function(choice){
-      tags$img(src = paste0(choice, ".png"), width = "100px", height = "25px")
-    })
-    
-    if (isTRUE(input$chooseplots == "Density Plot")){
-      addClass("js_colorpal", "grey_out")
-      disabled(colored_radiobuttons(inputId = "colorpal", label = "Pick a coloring scheme", inline = TRUE,
-                                         choices = choices, extensions = extensions))
-    }else {
-      removeClass("js_colorpal", "grey_out")
-      colored_radiobuttons(inputId = "colorpal", label = "Pick a coloring scheme", inline = TRUE,
-                               choices = choices, extensions = extensions)
-    }
-  })
   
   # When plot_data() is recalculated, repopulate the dropdowns under the plot.  Specifically vk_colors and custom scatterplot options.
   observeEvent(plot_data(),{
@@ -1462,7 +1191,10 @@ shinyServer(function(session, input, output) {
     revals$makeplot #in case vk_colors does not change we still want to redraw the plot.
     
     disable('plot_submit')
-    on.exit(enable('plot_submit'))
+    on.exit({
+      enable('plot_submit')
+      enable("add_plot")
+      })
     
     # for testing if plot actually got updated in test mode
     exportTestValues(plot = NULL, plot_attrs = NULL)
@@ -1634,10 +1366,7 @@ shinyServer(function(session, input, output) {
     
     # Null assignment bypasses plotly bug
     p$elementId <- NULL
-    
-    # Enable adding plot params
-    enable("add_plot")
-    
+  
     # ___test-export___
     exportTestValues(plot = p, plot_attrs = p$x$attrs[[p$x$cur_data]], plot_layout = p$x$layout, plot_visdat = p$x$visdat[[p$x$cur_data]]())
     
@@ -1648,50 +1377,7 @@ shinyServer(function(session, input, output) {
     return(p)
     
   })
-  
-  # Axis and title label input menus
-  output$title_out <- renderUI({
-    
-    validate(
-      need(!is.null(input$chooseplots), message = "")
-    )
-    textInput(inputId = "title_input", label = "Plot title", value = "")
-  })
-  output$x_axis_out <- renderUI({
-    validate(
-      need(!is.null(input$chooseplots), message = "")
-    )
-    textInput(inputId = "x_axis_input", label = "X axis label", value = plot_defaults()$xlabel)
-  })
-  output$y_axis_out <- renderUI({
-    validate(
-      need(!is.null(input$chooseplots), message = "")
-    )
-    textInput(inputId = "y_axis_input", label = "Y axis label", value = plot_defaults()$ylabel)
-  })
-  
-  # legend input
-  output$legend_title_out <- renderUI({
-    validate(
-      need(!is.null(input$chooseplots), message = "")
-    )
-    if (input$chooseplots == "Density Plot"){
-      addCssClass("js_legend_title_input", "grey_out")
-      disabled(textInput(inputId = "legend_title_input", label = "Legend label", value = ""))
-    }
-    else {
-      removeCssClass("js_legend_title_input", "grey_out")
-      textInput(inputId = "legend_title_input", label = "Legend label", value = "")
-    }
-    
-  })
-  
-  # view plot table button UI
-  output$view_plots <- renderUI({
-    n_plots <- nrow(parmTable$parms[which(rowSums(!is.na(parmTable$parms))!=0),])
-    actionButton(inputId = "view_plots_btn", width = '100%', 
-                 label = sprintf("View Table Info of %i Saved Plots", n_plots), icon = icon("folder-open", lib = "glyphicon"))
-  })
+  # END FXNPLOT
   
   #-------- create a table that stores plotting information -------#
   # the table needs to grow with each click of the download button
@@ -1783,37 +1469,8 @@ shinyServer(function(session, input, output) {
     
   }, priority = 7)
   
-  
-  output$parmsTable <- renderDataTable(parmTable$parms,
-                                       options = list(scrollX = TRUE))
-  
-  # warning messages for viztab
-  output$warnings_visualize <- renderUI({
-    HTML(paste(revals$warningmessage_visualize, collapse = ""))
-  })
-  
-  # icon control for viztab collapsible sections
-  output$chooseplots_icon <- renderUI({
-    req(input$top_page == 'Visualize')
-    if('peakplots' %in% input$viz_sidebar)
-      icon('chevron-up', lib = 'glyphicon')
-    else icon('chevron-down', lib = 'glyphicon')
-  })
-  
-  output$axlabs_icon <- renderUI({
-    req(input$top_page == 'Visualize')
-    if('axlabs' %in% input$viz_sidebar)
-      icon('chevron-up', lib = 'glyphicon')
-    else icon('chevron-down', lib = 'glyphicon')
-  })
-  
-  output$saveplots_icon <- renderUI({
-    req(input$top_page == 'Visualize')
-    if('downloads' %in% input$viz_sidebar)
-      icon('chevron-up', lib = 'glyphicon')
-    else icon('chevron-down', lib = 'glyphicon')
-  })
-  # 
+  # render the above table
+  output$parmsTable <- renderDataTable(parmTable$parms, options = list(scrollX = TRUE))
   
   # End Visualize tab #
   
