@@ -1241,7 +1241,21 @@ shinyServer(function(session, input, output) {
         else colorPal <- NA
         #revals$colorPal <- NA
       }
-      else if(input$choose_single %in% c(3,4) | !(input$vk_colors %in% c("bs1", "bs2"))) colorPal <- NA
+      else if(input$choose_single %in% c(3,4)){
+        pal = switch(input$colorpal,
+                     'default' = c("#a16db8","#7fa453","#cb674a"), 'brg' = c("#0175ee","#fd003d", "green"),
+                     'neutral' = c("#FC8D59","#91CF60","#FFFFBF"), 'bgp' = c('#8377cb','#60a862','#c95798'),
+                     'rgblk' = c('red', 'green', 'black'))
+        
+        # still allow color_inversion, even though it looks weird
+        if (input$flip_colors %% 2 != 0){
+          pal <- rev(pal)
+        }
+         domain <- unique(plot_data()$e_data[,which(grepl('^uniqueness', colnames(plot_data()$e_data)))])
+         domain <- domain[which(!is.na(domain))]
+         colorPal <- scales::col_factor(pal, domain = domain)
+      }
+      else colorPal <- NA # just in case....
       
       
       #----------- Single sample plots ------------#

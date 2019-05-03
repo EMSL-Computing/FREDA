@@ -317,7 +317,9 @@ shinyUI(tagList(useShinyjs(),
 
                                 # Checkbox: Mass filter yes/no
                                 #HTML('<h5><b>Mass Filter</b></h5>')
-                                bsCollapse(id = 'filter_sidebar', open = 'samplefilt_collapse', multiple = TRUE,
+                                bsCollapse(id = 'filter_sidebar', 
+                                           open = c('samplefilt_collapse', 'massfilt_collapse', 'formfilt_collapse', 'molfilt_collapse'), 
+                                           multiple = TRUE,
                                   bsCollapsePanel(div('Sample Filter', 
                                                       div(style = "color:deepskyblue;display:inline-block",
                                                            tipify(icon("question-sign", lib = "glyphicon"), 

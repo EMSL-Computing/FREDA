@@ -235,9 +235,10 @@ observeEvent(numeric_selected(),{
     removeCssClass("js_legend_title_input", "grey_out")
   }
   else if(!numeric_selected()){
-    disable("colorpal")
-    addCssClass("js_colorpal", "grey_out")
-    
+    if(!(input$choose_single %in% c(3,4))){
+      disable("colorpal")
+      addCssClass("js_colorpal", "grey_out") 
+    }
     disable("legend_title_input")
     addCssClass("js_legend_title_input", "grey_out")
   }

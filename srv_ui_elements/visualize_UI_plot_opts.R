@@ -47,11 +47,21 @@ list(
   
   # color palette selection (main panel)
   output$colorpal_out <- renderUI({
-    choices = c("YlOrRd", "YlGnBu", "YlGn", "RdYlGn")
-    
-    extensions <- lapply(choices, function(choice){
-      tags$img(src = paste0(choice, ".png"), width = "100px", height = "25px")
-    })
+    req(input$choose_single)
+    if(!(input$choose_single %in% c(3,4))){
+      choices = c("YlOrRd", "YlGnBu", "YlGn", "RdYlGn")
+      
+      extensions <- lapply(choices, function(choice){
+        tags$img(src = paste0(choice, ".png"), width = "100px", height = "25px")
+      })
+    }
+    else if(input$choose_single %in% c(3,4)){
+      choices = c('default', 'brg', 'neutral', 'bgp', 'rgblk')
+      fnames = c('default.png', 'bl_rd_gn.png', 'neutral.png', 'bl_gn_pnk.png',	'rd_gn_blk.png')
+      extensions <- lapply(fnames, function(fname){
+        tags$img(src = fname, width = "100px", height = "25px")
+      })
+    }
     
     if (isTRUE(input$chooseplots == "Density Plot")){
       addClass("js_colorpal", "grey_out")
