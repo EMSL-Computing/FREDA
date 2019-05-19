@@ -1243,17 +1243,20 @@ shinyServer(function(session, input, output) {
       }
       else if(input$choose_single %in% c(3,4)){
         pal = switch(input$colorpal,
-                     'default' = c("#a16db8","#7fa453","#cb674a"), 'brg' = c("#0175ee","#fd003d", "green"),
-                     'neutral' = c("#FC8D59","#91CF60","#FFFFBF"), 'bgp' = c('#8377cb','#60a862','#c95798'),
-                     'rgblk' = c('red', 'green', 'black'))
+                     'default' = c("#7fa453", "#a16db8", "#cb674a"), 'bpr' = c("#0175ee", '#7030A0', "#fd003d"),
+                     'neutral' = c("#FC8D59", '#7030A0', "#91CF60"), 'bpg' = c('#8377cb', '#c95798', '#60a862'),
+                     'rblkgn' = c('red', 'black', 'green'))
         
         # still allow color_inversion, even though it looks weird
         if (input$flip_colors %% 2 != 0){
           pal <- rev(pal)
         }
-         domain <- unique(plot_data()$e_data[,which(grepl('^uniqueness', colnames(plot_data()$e_data)))])
-         domain <- domain[which(!is.na(domain))]
-         colorPal <- scales::col_factor(pal, domain = domain)
+        
+        pal <- pal[c(1,3,2)] # dont ask
+        
+       domain <- unique(plot_data()$e_data[,which(grepl('^uniqueness', colnames(plot_data()$e_data)))])
+       domain <- domain[which(!is.na(domain))]
+       colorPal <- scales::col_factor(pal, domain = domain)
       }
       else colorPal <- NA # just in case....
       

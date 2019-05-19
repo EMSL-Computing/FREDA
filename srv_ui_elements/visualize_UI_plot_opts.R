@@ -56,8 +56,8 @@ list(
       })
     }
     else if(input$choose_single %in% c(3,4)){
-      choices = c('default', 'brg', 'neutral', 'bgp', 'rgblk')
-      fnames = c('default.png', 'bl_rd_gn.png', 'neutral.png', 'bl_gn_pnk.png',	'rd_gn_blk.png')
+      choices = c('default', 'bpr', 'neutral', 'bpg', 'rblkgn')
+      fnames = c('default.png', 'bl_prp_rd.png', 'neutral.png', 'bl_pnk_gn.png',	'rd_blk_gn.png')
       extensions <- lapply(fnames, function(fname){
         tags$img(src = fname, width = "100px", height = "25px")
       })

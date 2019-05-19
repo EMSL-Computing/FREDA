@@ -155,10 +155,11 @@ shinyUI(tagList(useShinyjs(),
                                 tags$hr(),
                                 
                                 # Action button: pressing this creates the peakData object
-                                splitLayout(
+                                div(
                                   actionButton('upload_click', 'Process Data', icon = icon("cog"), lib = "glyphicon"),
-                                  hidden(div('Making data object, please wait...', id = 'upload_waiting', class='fadein-out', style='font-weight:bold;color:deepskyblue'))
-                                , cellWidths = c('25%', '75%')),
+                                  hidden(div('Making data object, please wait...', id = 'upload_waiting', class='fadein-out', 
+                                             style='font-weight:bold;color:deepskyblue;display:inline'))
+                                  ),
                                 # Summary panel
                                 hidden(div(id = 'upload_success', style = 'width:75%;margin-top:10px',
                                   wellPanel(style='border-radius:4px',
@@ -176,7 +177,7 @@ shinyUI(tagList(useShinyjs(),
                               
                               column(width = 8,
                                 # warnings panel
-                                div(id = "warnings_upload", style = "overflow-y:scroll;max-height:250px", uiOutput("warnings_upload")),
+                                div(id = "warnings_upload", style = "overflow-y:auto;max-height:250px", uiOutput("warnings_upload")),
                                 
                                 tags$hr(),
                                 
@@ -230,10 +231,11 @@ shinyUI(tagList(useShinyjs(),
                                   div(class = "adjustdown",uiOutput("which_calcs")),
                                   
                                   # Action button: add test columns with results to peakData2
-                                  splitLayout(
+                                  div(
                                     disabled(actionButton('preprocess_click', 'Process Data', icon = icon("cog"), lib = "glyphicon")),
-                                    hidden(div('Calculating values, please wait...', id = 'preprocess_waiting', style = 'font-weight:bold;color:deepskyblue', class = 'fadein-out')),
-                                    cellWidths = c('25%', '75%')),
+                                    hidden(div('Calculating values, please wait...', id = 'preprocess_waiting', 
+                                               style = 'font-weight:bold;color:deepskyblue;display:inline', class = 'fadein-out'))
+                                    ),
                                   br(),
                                   uiOutput("warnings_preprocess")
                                 ), # End sidebar panel
@@ -422,7 +424,7 @@ shinyUI(tagList(useShinyjs(),
                                 br(),
                                 br(),
                                 
-                                div(id = "warnings_filter", style = "overflow-y:scroll;max-height:150px", uiOutput("warnings_filter"))
+                                div(id = "warnings_filter", style = "overflow-y:auto;max-height:150px", uiOutput("warnings_filter"))
                               
                               ), # End sidebar panel on Filter tab
                               
@@ -522,14 +524,15 @@ shinyUI(tagList(useShinyjs(),
                                 br(),
                                 br(),
                                 
-                                div(id = "warnings_visualize", style = "overflow-y:scroll;max-height:150px", uiOutput("warnings_visualize"))
+                                div(id = "warnings_visualize", style = "overflow-y:auto;max-height:150px", uiOutput("warnings_visualize"))
                                 
                               )),# End sidebar conditionals on Visualize tab #
                               
                               # Plot panel and axes/color controls.
                               column(8,
+                                inlineCSS("#FxnPlot {width:inherit;}"),
                                 wellPanel(style = "margin-top:-10px",
-                                      div(style = "display:inline-block;outline-style:dotted;outline-width:thin;width:65%:padding:4px",
+                                      div(style = "display:inline-block;outline-style:dotted;outline-width:thin;width:65%;padding:4px",
                                         plotlyOutput('FxnPlot', width = 'auto', height = '600px') %>% 
                                           withSpinner(color = "orange", type = 8)
                                       )
