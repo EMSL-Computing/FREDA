@@ -48,7 +48,7 @@ list(
   # color palette selection (main panel)
   output$colorpal_out <- renderUI({
     req(input$choose_single)
-    if(!(input$choose_single %in% c(3,4))){
+    if(!(input$choose_single %in% c(3,4)) | isTRUE(input$chooseplots == "Density Plot")){
       choices = c("YlOrRd", "YlGnBu", "YlGn", "RdYlGn")
       
       extensions <- lapply(choices, function(choice){
