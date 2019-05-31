@@ -20,6 +20,7 @@ library(shinyjs)
 library(shinyWidgets)
 library(pander)
 library(readr)
+library(plotly)
 
 shinyServer(function(session, input, output) {
   
@@ -1517,7 +1518,7 @@ shinyServer(function(session, input, output) {
     content = function(fname){
       # orig_wd <- getwd()
       # setwd(tempdir())
-      print(tempdir())
+      message(tempdir())
       fs <- vector()
       
       # ____test functionality____
@@ -1569,9 +1570,9 @@ shinyServer(function(session, input, output) {
             path <- paste(tempdir(), "/",gsub("/", "-", parmTable$parms[["File Name"]][i]), ".", input$image_format, sep = "") #create a plot name
             fs <- c(fs, path) # append the new plot to the old plots
             export(revals$plot_list[[i]],
-                   file = paste(tempdir(), "plot",i,".png", sep = ""), zoom = 2) # use webshot to export a screenshot to the opened pdf
+                   file = paste(tempdir(), "/plot",i,".png", sep = ""), zoom = 2) # use webshot to export a screenshot to the opened pdf
             #r <- brick(file.path(getwd(), paste("plot",i,".png", sep = ""))) # create a raster of the screenshot
-            img <- magick::image_read(paste(tempdir(), "plot",i,".png", sep = ""))#attr(r,"file")@name) #turn the raster into an image of selected format
+            img <- magick::image_read(paste(tempdir(), "/plot",i,".png", sep = ""))#attr(r,"file")@name) #turn the raster into an image of selected format
             
             if (isTRUE(getOption("shiny.testmode"))) bitmaps[[i]] <- as.raster(img)
             

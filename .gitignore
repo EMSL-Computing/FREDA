@@ -30,8 +30,6 @@ vignettes/*.pdf
 tests/screenshots/*
 !tests/screenshots/info.txt
 tests/test_*/
-# Docker
-Dockerfile
 #packrat
 /packrat/*
 #random
