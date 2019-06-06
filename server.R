@@ -1532,29 +1532,29 @@ shinyServer(function(session, input, output) {
       withProgress(message = "Writing files...",{
         # option to choose report output format?  need to change inputs in report.R.
         if (input$report_selection == TRUE){
-          fs <- c(fs, paste0(tempdir(), "/report.html"))
-          report(peakData(), revals$peakData2, output_file = paste0(tempdir(), "/report.html"), output_format = "html_document", 
+          fs <- c(fs, file.path(tempdir(), "/report.html"))
+          report(peakData(), revals$peakData2, output_file = file.path(tempdir(), "report.html"), output_format = "html_document", 
                  C13_ID = input$iso_symbol, groups_list = revals$groups_list)
           incProgress(1/total_files)
         }
         
         if ("separate" %in% input$download_selection){
-          fs <- c(fs, paste0(tempdir(), "/FREDA_processed_e_data.csv"), paste0(tempdir(), "/FREDA_processed_e_meta.csv"))
-          write_csv(revals$peakData2$e_data, path = paste0(tempdir(), "/FREDA_processed_e_data.csv"))
-          write_csv(revals$peakData2$e_meta, path = paste0(tempdir(), "/FREDA_processed_e_meta.csv"))
+          fs <- c(fs, file.path(tempdir(), "FREDA_processed_e_data.csv"), file.path(tempdir(), "FREDA_processed_e_meta.csv"))
+          write_csv(revals$peakData2$e_data, path = file.path(tempdir(), "FREDA_processed_e_data.csv"))
+          write_csv(revals$peakData2$e_meta, path = file.path(tempdir(), "FREDA_processed_e_meta.csv"))
           incProgress(1/total_files)
         }
         if ("merged" %in% input$download_selection){
-          fs <- c(fs, paste0(tempdir(), "/FREDA_processed_merged_data.csv"))
+          fs <- c(fs, file.path(tempdir(), "FREDA_processed_merged_data.csv"))
           merged_data <- merge(revals$peakData2$e_data, revals$peakData2$e_meta)
-          write_csv(merged_data, path = paste0(tempdir(), "/FREDA_processed_merged_data.csv"))
+          write_csv(merged_data, path = file.path(tempdir(), "FREDA_processed_merged_data.csv"))
           incProgress(1/total_files)
         }
         if ("group_data" %in% input$download_selection){
           if(length(revals$plot_data) != 0){
             for(i in 1:length(revals$plot_data)){
               if (!is.null(revals$plot_data[[i]])){
-                path <- paste0(tempdir(), "/FREDA_group_data_summary_", gsub("/", "-", parmTable$parms[["File Name"]][i]),".csv")
+                path <- file.path(tempdir(), paste0("/FREDA_group_data_summary_", gsub("/", "-", parmTable$parms[["File Name"]][i]),".csv"))
                 fs <- c(fs, path)
                 write_csv(revals$plot_data[[i]], path = path) 
               }
@@ -1583,9 +1583,9 @@ shinyServer(function(session, input, output) {
           # ___test-export___
           exportTestValues(images_out = digest::digest(bitmaps))
           
-          fs <- c(fs, paste0(tempdir(), "/Plot_key.csv"))
+          fs <- c(fs, file.path(tempdir(), "Plot_key.csv"))
           outtable <- parmTable$parms[rows,]
-          write_csv( outtable, path = paste0(tempdir(), "/Plot_key.csv"))
+          write_csv( outtable, path = file.path(tempdir(), "Plot_key.csv"))
         }
         print(fs)
         

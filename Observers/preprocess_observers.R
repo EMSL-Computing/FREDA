@@ -11,7 +11,7 @@ observeEvent(revals$numeric_cols,{
     summaryPreprocess(isolate(revals$peakData2), revals$numeric_cols) %>%
       datatable(options = list(dom = "t", pageLength = nrow(.))) %>% 
       formatRound(columns, digits = 2)
-  }) 
+  }, server = FALSE) 
   
   # Summary Header
   output$numeric_header <- renderUI(tags$p("Summary Statistics for Numeric Variables"))
@@ -32,7 +32,7 @@ observeEvent(revals$categorical_cols,{
   
   # Call renderTable on each table and assign it to an output ID
   lapply(1:length(table_list), function(i){
-    output[[paste0('Table_',i)]] <- DT::renderDataTable({table_list[[i]]}, options = list(scrollX = TRUE, dom = "t"))
+    output[[paste0('Table_',i)]] <- DT::renderDataTable({table_list[[i]]}, options = list(scrollX = TRUE, dom = "t"), server = FALSE)
   })
   
   # Summary Header

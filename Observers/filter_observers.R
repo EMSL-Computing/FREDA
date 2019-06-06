@@ -37,7 +37,7 @@ lapply(1:3, function(i){
                             numericInput(inputId = paste0("maximum_custom",i), label = "Max", value = max, min = cond_min, max = max, step = 0.01),
                             tagList(
                               br(),
-                              checkboxInput(inputId = paste0("na_custom",i), label = "Keep NAs?", value = ischecked)
+                              div(class = 'adjustdown', style = 'float:right;margin-right:10%', checkboxInput(inputId = paste0("na_custom",i), label = "Keep NAs?", value = ischecked))
                             )
                 )
                 
@@ -52,7 +52,7 @@ lapply(1:3, function(i){
                                           multiple = TRUE, selected = cats, options =  pickerOptions(dropupAuto = FALSE, actionsBox = TRUE)),
                               tagList(
                                 br(),
-                                checkboxInput(inputId = paste0("na_custom",i), label = "Keep NAs?", value = ischecked)
+                                div(class = 'adjustdown', style = 'float:right;margin-right:10%', checkboxInput(inputId = paste0("na_custom",i), label = "Keep NAs?", value = ischecked))
                               )
                   )
                 }
@@ -188,24 +188,27 @@ lapply(1:3, function(i){
   max = paste0("maximum_custom", i)
   col = paste0("custom", i)
   
-  observeEvent(c(input[[min]],input[[max]]), {
-    req(input[[col]] != "Select item")
-    min = min(uploaded_data()$e_meta[, input[[col]]], na.rm = TRUE)
-    max = max(uploaded_data()$e_meta[, input[[col]]], na.rm = TRUE)
-    
-    isolate({
-      cond_min = ifelse(is.null(input[[paste0("minimum_custom",i)]]), min, input[[paste0("minimum_custom",i)]])
-      cond_max = ifelse(is.null(input[[paste0("maximum_custom",i)]]), max, input[[paste0("maximum_custom",i)]])
-    })
-    
-    # specifies bad ranges
-    condition = isTRUE(cond_min >= cond_max)
-    
-    # put up warning and disable filter button
-    toggleCssClass(paste0("js_range_custom", i), "attention", condition = condition)
-    revals$filter_click_disable[[paste0("diable_custom", i)]] <- if(condition) FALSE else TRUE
-    revals$warningmessage_filter$bad_custom_range = if(isTRUE(condition)) "style = 'color:red'>Invalid range for a custom filter" else NULL
-    
+  observeEvent(c(input[[min]],input[[max]], input$customfilterz), {
+    if(input$customfilterz & isTRUE(input[[col]] != "Select item")){
+      min = min(uploaded_data()$e_meta[, input[[col]]], na.rm = TRUE)
+      max = max(uploaded_data()$e_meta[, input[[col]]], na.rm = TRUE)
+      
+      isolate({
+        cond_min = ifelse(is.null(input[[paste0("minimum_custom",i)]]), min, input[[paste0("minimum_custom",i)]])
+        cond_max = ifelse(is.null(input[[paste0("maximum_custom",i)]]), max, input[[paste0("maximum_custom",i)]])
+      })
+      
+      # specifies bad ranges
+      condition = isTRUE(cond_min >= cond_max)
+      
+      # put up warning and disable filter button
+      toggleCssClass(paste0("js_range_custom", i), "attention", condition = condition)
+      revals$filter_click_disable[[paste0("disable_custom", i)]] <- if(condition) FALSE else TRUE
+      revals$warningmessage_filter$bad_custom_range = if(isTRUE(condition)) "style = 'color:red'>Invalid range for a custom filter" else NULL
+    }
+    else {
+      revals$warningmessage_filter$bad_custom_range = NULL
+    }
   })
   
 })
