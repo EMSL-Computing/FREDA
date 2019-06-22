@@ -113,7 +113,7 @@ lapply(1:3, function(i){
   observeEvent(c(input[[paste0("minimum_custom", i)]], input[[paste0("maximum_custom", i)]], 
                  input[[paste0("categorical_custom", i)]], input[[paste0("na_custom", i)]],
                  input$top_page, revals$redraw_largedata), {
-                   req(input[[el]] != "Select item")
+                   req(input[[el]] != "Select item" & !is.null(input[[el]]))
                    
                    revals$redraw_filter_plot <- FALSE
                    

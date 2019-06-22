@@ -1513,7 +1513,7 @@ shinyServer(function(session, input, output) {
   
   #---- processed data download --------#
   output$download_processed_data <- downloadHandler(
-    filename = paste("FREDA_Output_",proc.time(),".zip", sep = ""),
+    filename = paste("FREDA_Output_",proc.time()[1],".zip", sep = ""),
     content = function(fname){
       # orig_wd <- getwd()
       # setwd(tempdir())
@@ -1532,7 +1532,7 @@ shinyServer(function(session, input, output) {
       withProgress(message = "Writing files...",{
         # option to choose report output format?  need to change inputs in report.R.
         if (input$report_selection == TRUE){
-          fs <- c(fs, file.path(tempdir(), "/report.html"))
+          fs <- c(fs, file.path(tempdir(), "report.html"))
           report(peakData(), revals$peakData2, output_file = file.path(tempdir(), "report.html"), output_format = "html_document", 
                  C13_ID = input$iso_symbol, groups_list = revals$groups_list)
           incProgress(1/total_files)
@@ -1554,7 +1554,7 @@ shinyServer(function(session, input, output) {
           if(length(revals$plot_data) != 0){
             for(i in 1:length(revals$plot_data)){
               if (!is.null(revals$plot_data[[i]])){
-                path <- file.path(tempdir(), paste0("/FREDA_group_data_summary_", gsub("/", "-", parmTable$parms[["File Name"]][i]),".csv"))
+                path <- file.path(tempdir(), paste0("FREDA_group_data_summary_", gsub("/", "-", parmTable$parms[["File Name"]][i]),".csv"))
                 fs <- c(fs, path)
                 write_csv(revals$plot_data[[i]], path = path) 
               }
