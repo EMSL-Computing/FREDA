@@ -27,13 +27,13 @@ observeEvent(revals$categorical_cols,{
   # List of tables which will be passed to renderTable()
   table_list <- summaryPreprocess(revals$peakData2, revals$categorical_cols, categorical = TRUE)
   
-  # Reactive variable which lets lapply know how many output ID's to generate depending on number of categorical variables selected
-  revals$ntables <- length(table_list)
-  
   # Call renderTable on each table and assign it to an output ID
   lapply(1:length(table_list), function(i){
     output[[paste0('Table_',i)]] <- DT::renderDataTable({table_list[[i]]}, options = list(scrollX = TRUE, dom = "t"), server = FALSE)
   })
+  
+  # Reactive variable which lets lapply know how many output ID's to generate depending on number of categorical variables selected
+  revals$ntables <- length(table_list)
   
   # Summary Header
   output$cat_header <- renderUI(tags$p("Counts for Categorical Variables"))
@@ -41,7 +41,7 @@ observeEvent(revals$categorical_cols,{
 
 # The renderUI call that takes input from the above observer
 output$categorical_summary <- renderUI({
-  req(revals$categorical_cols)
+  req(revals$ntables)
   
   if(isTRUE(nrow(revals$categorical_cols) == 0)) NULL
   else{
