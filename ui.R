@@ -611,7 +611,10 @@ shinyUI(tagList(useShinyjs(),
                               )
                             ),
                             #verbatimTextOutput('x4'),
-                            disabled(downloadButton('download_processed_data', tags$b('Download Selected Items'), style = "width:45.8333%;margin-left:22.91667%")),
+                            div(style = 'width:75%',
+                              actionButton('makezipfile', label = tags$b('Bundle up all selected items'), icon = icon("briefcase"), lib = "glyphicon", style = 'width:45%'),
+                              disabled(downloadButton('download_processed_data', tags$b('Download bundle'), style = 'width:45%;float:right'))
+                            ),
                             tags$br()
                             
                    ), 

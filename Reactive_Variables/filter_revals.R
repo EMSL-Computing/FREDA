@@ -57,6 +57,7 @@ massfilter_ids <- eventReactive(c(input$massfilter, input$min_mass, input$max_ma
   }
   revals$redraw_filter_plot <- FALSE
   if (input$massfilter){
+    req(length(input$max_mass) > 0, length(input$min_mass) > 0)
     mass_filter(uploaded_data()) %>% 
       dplyr::filter(!!sym(getMassColName(revals$peakData2)) <= input$max_mass, !!sym(getMassColName(revals$peakData2)) >= input$min_mass) %>%
       pluck(getMassColName(revals$peakData2))
@@ -70,6 +71,7 @@ molfilter_ids <- eventReactive(c(input$minobs, input$molfilter, input$keep_sampl
     return(NULL)
   }
   else if (input$molfilter){
+    req(length(input$minobs) > 0)
     # if we are subsampling and samples are selected and the selected samples are in the data
     if(input$samplefilter & length(input$keep_samples) > 0 & length(intersect(colnames(revals$peakData2$e_data), input$keep_samples)) !=0 ){
       uploaded_data() %>% 
