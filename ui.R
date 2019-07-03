@@ -433,9 +433,10 @@ shinyUI(tagList(useShinyjs(),
                                 # Set default width for panel
                                 width = 7,
                                 
-                                # Success message if peakData2 filtered successfully
-                                # htmlOutput('filterTest'), 
+                                # waiting messages for large data during filtering and plot calculation
                                 hidden(div('Applying your filters, please wait...', id = 'calc_filter', class = 'fadein-out', 
+                                           style = 'color:deepskyblue;font-weight:bold;margin-bottom:5px')),
+                                hidden(div('Drawing your plot, please wait...', id = 'draw_large_filter_plot', class = 'fadein-out', 
                                            style = 'color:deepskyblue;font-weight:bold;margin-bottom:5px')),
                                 
                                 # Summary panel: display summary of filters

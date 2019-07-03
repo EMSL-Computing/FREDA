@@ -1,49 +1,48 @@
 ### Summary Panel: Display table summaries of numeric and categorical columns in e_meta ###
 
-# For numeric columns:
-observeEvent(revals$numeric_cols,{
-  req(nrow(revals$numeric_cols) > 0)
-  
-  # Create Table Output
-  output$numeric_summary <- DT::renderDataTable({
+observeEvent(c(revals$numeric_cols, revals$categorical_cols),{
+  if(isTRUE(nrow(revals$numeric_cols) > 0)){
     columns <- summaryPreprocess(isolate(revals$peakData2), revals$numeric_cols) %>% colnames()
     
-    summaryPreprocess(isolate(revals$peakData2), revals$numeric_cols) %>%
-      datatable(options = list(dom = "t", pageLength = nrow(.))) %>% 
-      formatRound(columns, digits = 2)
-  }, server = FALSE) 
+    revals$preprocess_tables$numeric <- summaryPreprocess(isolate(revals$peakData2), revals$numeric_cols) %>%
+                                          datatable(options = list(dom = "t", pageLength = nrow(.))) %>% 
+                                          formatRound(columns, digits = 2)
+  }
   
-  # Summary Header
-  output$numeric_header <- renderUI(tags$p("Summary Statistics for Numeric Variables"))
+  if(isTRUE(nrow(revals$categorical_cols) > 0)){
+    revals$preprocess_tables$categorical <- summaryPreprocess(revals$peakData2, revals$categorical_cols, categorical = TRUE)
+  }
   
 })
 
-# For Categorical Columns
-
-# This observer assigns renderTable calls to various output ID's and passes them to the renderUI call immediately below
-observeEvent(revals$categorical_cols,{
-  req(nrow(revals$categorical_cols) > 0) 
+# For numeric columns:
+observeEvent(revals$preprocess_tables,{
   
-  # List of tables which will be passed to renderTable()
-  table_list <- summaryPreprocess(revals$peakData2, revals$categorical_cols, categorical = TRUE)
+  if(length(revals$preprocess_tables$numeric) > 0){
+    # Create Table Output
+    output$numeric_summary <- DT::renderDataTable({revals$preprocess_tables$numeric}) 
+    
+    # Summary Header
+    output$numeric_header <- renderUI(tags$p("Summary Statistics for Numeric Variables"))
+  }
   
-  # Call renderTable on each table and assign it to an output ID
-  lapply(1:length(table_list), function(i){
-    output[[paste0('Table_',i)]] <- DT::renderDataTable({table_list[[i]]}, options = list(scrollX = TRUE, dom = "t"), server = FALSE)
-  })
-  
-  # Reactive variable which lets lapply know how many output ID's to generate depending on number of categorical variables selected
-  revals$ntables <- length(table_list)
-  
-  # Summary Header
-  output$cat_header <- renderUI(tags$p("Counts for Categorical Variables"))
+  if(length(revals$preprocess_tables$categorical) > 0){
+    for(i in 1:length(revals$preprocess_tables$categorical)){
+      output[[paste0('Table_',i)]] <- DT::renderDataTable({revals$preprocess_tables$categorical[[i]]}, options = list(scrollX = TRUE, dom = "t"))
+      Sys.sleep(0.5)
+    }
+    
+    revals$ntables <- length(revals$preprocess_tables$categorical)
+    
+    output$cat_header <- renderUI(tags$p("Counts for Categorical Variables"))
+  }
 })
 
 # The renderUI call that takes input from the above observer
 output$categorical_summary <- renderUI({
   req(revals$ntables)
   
-  if(isTRUE(nrow(revals$categorical_cols) == 0)) NULL
+  if(isTRUE(nrow(isolate(revals$categorical_cols)) == 0)) NULL
   else{
     tagList(lapply(1:revals$ntables, function(i){
       DT::dataTableOutput(paste0('Table_',i))

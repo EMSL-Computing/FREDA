@@ -324,8 +324,16 @@ observeEvent(input$clear_filters_yes, {
   removeModal()
 })
 
-# Dismiss success message or move to next page?
-observeEvent(input$filter_dismiss,{removeModal()})
+# Dismiss success message, draw large data plots, or move to next page?
+observeEvent(input$filter_dismiss,{
+  removeModal()
+  if(peakData2_dim() > max_cells){
+    shinyjs::show('draw_large_filter_plot')
+    revals$redraw_largedata <- TRUE
+    revals$react_largedata <- !revals$react_largedata
+  }
+})
+
 observeEvent(input$goto_viz,{
   updateTabsetPanel(session, "top_page", selected = "Visualize")
   removeModal()

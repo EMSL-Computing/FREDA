@@ -629,10 +629,6 @@ shinyServer(function(session, input, output) {
   
   observeEvent(input$filter_click, {
     f$clearFilters <- FALSE
-    revals$redraw_largedata <- TRUE
-    if(peakData2_dim() > max_cells){
-      revals$react_largedata <- !revals$react_largedata
-    }
   }, priority = 10)
   
   #### Sidebar Panel (Filter Tab) ####
@@ -682,7 +678,7 @@ shinyServer(function(session, input, output) {
             
             revals$groups_list[inds] <- NULL
         }
-        incProgress(1/n_filters)
+        incProgress(1/n_filters, detail = 'Sample filter done.')
       }else revals$removed_samples <- list()
       
       # Apply mass filter
@@ -696,7 +692,7 @@ shinyServer(function(session, input, output) {
         filterMass <- mass_filter(revals$peakData2)
         revals$peakData2 <- applyFilt(filterMass, revals$peakData2, min_mass = as.numeric(input$min_mass), 
                                max_mass = as.numeric(input$max_mass))
-        incProgress(1/n_filters)
+        incProgress(1/n_filters, detail = 'Mass filter done.')
       }
       
       # Apply molecule filter
@@ -705,14 +701,14 @@ shinyServer(function(session, input, output) {
         # Create and apply molecule filter to nonreactive peakData object
         filterMols <- molecule_filter(revals$peakData2)
         revals$peakData2 <- applyFilt(filterMols, revals$peakData2, min_num = as.integer(input$minobs))
-        incProgress(1/n_filters)
+        incProgress(1/n_filters, detail = 'Molecule filter done.')
       } # End molecule filter if statement
       
       # Apply formula filter
       if (input$formfilter){
         filterForm <- formula_filter(revals$peakData2)
         revals$peakData2 <- applyFilt(filterForm, revals$peakData2)
-        incProgress(1/n_filters)
+        incProgress(1/n_filters, detail = 'Formula filter done.')
       }
       
       # Apply custom filters
@@ -743,7 +739,7 @@ shinyServer(function(session, input, output) {
                                      cats = input[[paste0("categorical_custom",i)]], 
                                      na.rm = !input[[paste0("na_custom",i)]])
             }
-            incProgress(1/n_filters)
+            incProgress(1/n_filters, detail = sprintf('Custom filter %s done', i))
           })
           
         }
@@ -756,13 +752,10 @@ shinyServer(function(session, input, output) {
                            HTML('<h4 style= "color:#1A5276">Your data has been filtered.</h4>
                               <h4 style= "color:#1A5276">The filtered data is stored and will be reset if you re-upload or re-process data.</h4>'),
                            hr(),
-                           actionButton("filter_dismiss", "Review results", width = '75%'),
+                           actionButton("filter_dismiss", "Review Results", width = '75%'),
                            br(),
                            br(),
-                           actionButton("goto_viz", "Continue to Visualization", width = '75%'),
-                           br(),
-                           br(),
-                           div(uiOutput('filter_modal_wait'))
+                           actionButton("goto_viz", "Continue to Visualization", width = '75%')
                     )
                   )
                   ,footer = NULL)
@@ -831,6 +824,8 @@ shinyServer(function(session, input, output) {
     
     # Aesthetic purposes: get max height, divide by 30, use as offset in geom_text
     num_displaced <- round(ggdata_text[1, 2] / 35, digits = -1)
+    
+    shinyjs::hide('draw_large_filter_plot')
     
     # Plot using ggplot2
     ggplot() + geom_bar(aes(x = data_state, 
