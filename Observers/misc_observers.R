@@ -1,16 +1,21 @@
+#uncomment to do postmortem debugging
+# observeEvent(revals$peakData2,{
+#   peakData2 <<- revals$peakData2
+# })
+
 # show/hide button for certain pages
 observeEvent(input$top_page,{
   toggleElement("helpbutton", condition = input$top_page %in% c("Upload", "Groups", "Preprocess", "Filter", "Visualize"))
 })
 
 # control drawing of filter plot for large data, show warnings on qc and filter that dynamic plotting is disabled
-observeEvent(peakData2_dim(),{
-  if(peakData2_dim() <= max_cells){
+observeEvent(uploaded_data_dim(),{
+  if(uploaded_data_dim() <= max_cells){
     revals$redraw_largedata <- TRUE
   }
   
-  revals$warningmessage_qc$not_dynamic <- if(peakData2_dim() > max_cells) "style = 'color:deepskyblue;font-weight:bold'>Dynamic plot disabled for large data.  Press 'Update Boxplot Axes' to display plot." else NULL
-  revals$warningmessage_filter$not_dynamic <- if(peakData2_dim() > max_cells) "style = 'color:deepskyblue;font-weight:bold'>Dynamic plot disabled for large data.  Table and barplot will be displayed when filters are applied." else NULL
+  revals$warningmessage_qc$not_dynamic <- if(uploaded_data_dim() > max_cells) "style = 'color:deepskyblue;font-weight:bold'>Dynamic plot disabled for large data.  Press 'Update Boxplot Axes' to display plot." else NULL
+  revals$warningmessage_filter$not_dynamic <- if(uploaded_data_dim() > max_cells) "style = 'color:deepskyblue;font-weight:bold'>Dynamic plot disabled for large data.  Table and barplot will be displayed upon review." else NULL
 })
 
 # Help Button

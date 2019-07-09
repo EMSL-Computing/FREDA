@@ -223,14 +223,15 @@ observeEvent(input$iso_info_filter,{
     )
 })
 
-# Show success message when peakData() is sucessfully created 
-observeEvent(peakData(),{
-  #Error handling: peakData() must exist
-  req(peakData())
+# Show success message when revals$uploaded_data is sucessfully created 
+observeEvent(revals$uploaded_data,{
+  #Error handling: revals$uploaded_data must exist
+  req(revals$uploaded_data)
+  req(input$top_page == 'Upload')
   
   #___test-export___
   if (isTRUE(getOption("shiny.testmode"))) {
-    revals$peakData_export <- peakData()
+    revals$peakData_export <- revals$uploaded_data
   }
   
   showModal(

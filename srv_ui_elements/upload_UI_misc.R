@@ -1,13 +1,13 @@
 list(
   # Summary: Display number of peaks and samples
   output$num_peaks <- renderText({
-    peakData()
-    c('Number of peaks: ', nrow(peakData()$e_data))
+    revals$uploaded_data
+    c('Number of peaks: ', nrow(revals$uploaded_data$e_data))
     
   }), # End num_peaks
   
   output$num_samples <- renderText({
-    peakData()
+    revals$uploaded_data
     c('Number of samples: ', (length(edata_cnames()) - 1))
     
   }), # End num_samples # 
@@ -15,8 +15,8 @@ list(
   # Display success message OR display errors
   output$success_upload <- renderUI({
     
-    # Error handling: peakData() must exist
-    req(peakData())
+    # Error handling: revals$uploaded_data must exist
+    req(revals$uploaded_data)
     
     # If no errors, show Success message
     HTML('<h4 style= "color:#1A5276">Your data object is created, and can be manipulated in subsequent tabs.</h4>')

@@ -21,14 +21,14 @@
 #' @author Allison Thompson
 #'
 #' @export
-report <- function(uploaded_data, processed_data, output_file=NULL, output_format = 'html_document', ...){
+report <- function(uploaded_data, processed_data, emeta, output_file=NULL, output_format = 'html_document', ...){
   library(rmarkdown)
 
   if(!all(inherits(uploaded_data, "peakData"), inherits(processed_data, "peakData"))){
     stop("One or both of the input data objects are not of class 'peakData'")
   }
 
-  params <- list(upload=uploaded_data, processed = processed_data, ...)
+  params <- list(upload=uploaded_data, processed = processed_data, emeta = emeta, ...)
 
   render("peakData_Report.Rmd", output_file=output_file, output_format = output_format, params=params, envir = new.env())
 

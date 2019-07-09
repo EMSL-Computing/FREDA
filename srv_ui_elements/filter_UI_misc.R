@@ -5,14 +5,6 @@ list(
            paste(collapse = ""))
   }),
   
-  # waiting message within modal dialog for filter tab
-  output$filter_modal_wait <- renderUI({
-    if(peakData2_dim() > max_cells/2){
-      div('Your plots may still be drawing, please wait for them to appear.', style = 'color:grey;font-weight:bold')
-    }
-    else NULL
-  }),
-  
   ### icon control for filter tab collapsible sections
   output$massfilter_icon <- renderUI({
     req(input$top_page == 'Filter')

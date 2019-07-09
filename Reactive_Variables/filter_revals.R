@@ -5,7 +5,7 @@ summaryFilterDataFrame <- eventReactive(revals$reac_filter_plot, {
   req(revals$redraw_largedata, cancelOutput = TRUE)
   print('recalculating summaryfilter dataframe...')
   
-  if(peakData2_dim() > max_cells){
+  if(uploaded_data_dim() > max_cells){
     on.exit(revals$redraw_largedata <- FALSE)
   }
   
@@ -21,7 +21,7 @@ summaryFilterDataFrame <- eventReactive(revals$reac_filter_plot, {
   }
   else customids_to_keep <- NULL
   # Get summary table from sourced file 'summaryFilter.R'
-  df <- summaryFilt(peakData(), sampfilter_ids(), massfilter_ids(), molfilter_ids(), formfilter_ids(), customids_to_keep)
+  df <- summaryFilt(revals$uploaded_data, sampfilter_ids(), massfilter_ids(), molfilter_ids(), formfilter_ids(), customids_to_keep)
   
   return(df)
   
@@ -41,7 +41,7 @@ sampfilter_ids <- eventReactive(c(input$keep_samples, input$samplefilter, input$
       return(NULL)
     }
     else{
-      uploaded_data() %>% 
+      revals$uploaded_data %>% 
         subset(samples = input$keep_samples, check_rows = TRUE) %>%
         {.$e_data} %>%
         pluck(getMassColName(revals$peakData2))
@@ -58,7 +58,7 @@ massfilter_ids <- eventReactive(c(input$massfilter, input$min_mass, input$max_ma
   revals$redraw_filter_plot <- FALSE
   if (input$massfilter){
     req(length(input$max_mass) > 0, length(input$min_mass) > 0)
-    mass_filter(uploaded_data()) %>% 
+    mass_filter(revals$uploaded_data) %>% 
       dplyr::filter(!!sym(getMassColName(revals$peakData2)) <= input$max_mass, !!sym(getMassColName(revals$peakData2)) >= input$min_mass) %>%
       pluck(getMassColName(revals$peakData2))
   }
@@ -74,14 +74,14 @@ molfilter_ids <- eventReactive(c(input$minobs, input$molfilter, input$keep_sampl
     req(length(input$minobs) > 0)
     # if we are subsampling and samples are selected and the selected samples are in the data
     if(input$samplefilter & length(input$keep_samples) > 0 & length(intersect(colnames(revals$peakData2$e_data), input$keep_samples)) !=0 ){
-      uploaded_data() %>% 
+      revals$uploaded_data %>% 
         subset(samples = input$keep_samples, check_rows = TRUE) %>%
         molecule_filter() %>% 
         dplyr::filter(Num_Observations >= as.integer(input$minobs)) %>%
         pluck(getMassColName(revals$peakData2))
     }
     else{
-      molecule_filter(uploaded_data()) %>%
+      molecule_filter(revals$uploaded_data) %>%
         dplyr::filter(Num_Observations >= as.integer(input$minobs)) %>%
         pluck(getMassColName(revals$peakData2))
     }
@@ -95,7 +95,7 @@ formfilter_ids <- eventReactive(c(input$formfilter, input$top_page, revals$react
     return(NULL)
   }
   else if (input$formfilter){
-    formula_filter(uploaded_data()) %>%
+    formula_filter(revals$uploaded_data) %>%
       dplyr::filter(Formula_Assigned == TRUE) %>%
       pluck(getMassColName(revals$peakData2))
   }

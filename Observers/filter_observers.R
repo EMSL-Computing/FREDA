@@ -19,11 +19,11 @@ lapply(1:3, function(i){
               ischecked = ifelse(is.null(isolate(input[[paste0("na_custom",i)]])), FALSE, isolate(input[[paste0("na_custom",i)]]))
   
               # if the filter applies to numeric data, allow inputs for min, max, and keep NA checkbox
-              if (is.numeric(uploaded_data()$e_meta[, isolate(input[[el]])])) {
+              if (is.numeric(revals$uploaded_data$e_meta[, isolate(input[[el]])])) {
   
                 # if no min or max specificed, automatically fill in max, otherwise use value currently specified
-                min = min(uploaded_data()$e_meta[, isolate(input[[el]])], na.rm = TRUE)
-                max = max(uploaded_data()$e_meta[, isolate(input[[el]])], na.rm = TRUE)
+                min = min(revals$uploaded_data$e_meta[, isolate(input[[el]])], na.rm = TRUE)
+                max = max(revals$uploaded_data$e_meta[, isolate(input[[el]])], na.rm = TRUE)
                 
                 # if user has defined min/max, use their values, otherwise default to data min/max
                 isolate({
@@ -42,9 +42,9 @@ lapply(1:3, function(i){
                 )
                 
               # if the filter applies to categorical data, populate a box of options and keep NA checkbox
-              } else if (!is.numeric(uploaded_data()$e_meta[, isolate(input[[el]])]) & input$customfilterz == TRUE) {
+              } else if (!is.numeric(revals$uploaded_data$e_meta[, isolate(input[[el]])]) & input$customfilterz == TRUE) {
   
-                  cats <- unique(uploaded_data()$e_meta[, isolate(input[[el]])]) %>% setdiff(NA)
+                  cats <- unique(revals$uploaded_data$e_meta[, isolate(input[[el]])]) %>% setdiff(NA)
                   
                   splitLayout(id = paste0("js_range_custom", i), cellArgs = list(style = "overflow:visible"),
 
@@ -126,9 +126,9 @@ lapply(1:3, function(i){
                    req(all(!is.null(input[[paste0("minimum_custom", i)]]), !is.null(input[[paste0("maximum_custom", i)]])) | !is.null(input[[paste0("categorical_custom", i)]]))
             
                    # if the filter applies to numeric data, allow inputs for min, max, and keep NA checkbox
-                     if (is.numeric(uploaded_data()$e_meta[, input[[el]]])) {
+                     if (is.numeric(revals$uploaded_data$e_meta[, input[[el]]])) {
                        
-                       revals[[paste0("custom", i, "_ids")]] <- emeta_filter(uploaded_data(), input[[el]]) %>% 
+                       revals[[paste0("custom", i, "_ids")]] <- emeta_filter(revals$uploaded_data, input[[el]]) %>% 
                          # sorry about this filter statement, i swear dplyr is cool
                          filter((emeta_value >= input[[paste0("minimum_custom", i)]] & emeta_value <= input[[paste0("maximum_custom", i)]]) | (is.na(emeta_value) & input[[paste0("na_custom", i)]])) %>%
                          pluck(1) %>% as.character()
@@ -136,9 +136,9 @@ lapply(1:3, function(i){
                        # if the filter applies to categorical data, populate a box of options and keep NA checkbox
                      } 
                      
-                     else if (!is.numeric(uploaded_data()$e_meta[, input[[el]]]) & input$customfilterz == TRUE) {
+                     else if (!is.numeric(revals$uploaded_data$e_meta[, input[[el]]]) & input$customfilterz == TRUE) {
                        
-                       revals[[paste0("custom", i, "_ids")]] <- emeta_filter(uploaded_data(), input[[el]]) %>% 
+                       revals[[paste0("custom", i, "_ids")]] <- emeta_filter(revals$uploaded_data, input[[el]]) %>% 
                          filter(emeta_value %in% input[[paste0("categorical_custom", i)]] | (is.na(emeta_value) & input[[paste0("na_custom", i)]])) %>%
                          pluck(1) %>% as.character()
                      }
@@ -190,8 +190,8 @@ lapply(1:3, function(i){
   
   observeEvent(c(input[[min]],input[[max]], input$customfilterz), {
     if(input$customfilterz & isTRUE(input[[col]] != "Select item")){
-      min = min(uploaded_data()$e_meta[, input[[col]]], na.rm = TRUE)
-      max = max(uploaded_data()$e_meta[, input[[col]]], na.rm = TRUE)
+      min = min(revals$uploaded_data$e_meta[, input[[col]]], na.rm = TRUE)
+      max = max(revals$uploaded_data$e_meta[, input[[col]]], na.rm = TRUE)
       
       isolate({
         cond_min = ifelse(is.null(input[[paste0("minimum_custom",i)]]), min, input[[paste0("minimum_custom",i)]])
@@ -312,7 +312,7 @@ observeEvent(input$clear_filters_yes, {
                                 "Comparisons Method" = NA, check.names = FALSE)
   revals$plot_list <- list()
   revals$plot_data <- list()
-  revals$peakData2 <- uploaded_data()
+  revals$peakData2 <- revals$uploaded_data
   #
   
   # counter to control plot storage indices in case of reset
@@ -327,7 +327,7 @@ observeEvent(input$clear_filters_yes, {
 # Dismiss success message, draw large data plots, or move to next page?
 observeEvent(input$filter_dismiss,{
   removeModal()
-  if(peakData2_dim() > max_cells){
+  if(uploaded_data_dim() > max_cells){
     shinyjs::show('draw_large_filter_plot')
     revals$redraw_largedata <- TRUE
     revals$react_largedata <- !revals$react_largedata

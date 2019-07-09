@@ -4,6 +4,7 @@ output:
   html_document: default
 params:
   upload: NA
+  emeta: NA
   processed: NA
   C13_ID: NA
   groups_list: NA
@@ -17,6 +18,7 @@ knitr::opts_chunk$set(echo = FALSE)
 
 # get parameters passed to report()
 upload <- params$upload
+emeta <- params$emeta
 processed <- params$processed
 c13 <- params$C13_ID
 groups <- params$groups_list
@@ -53,12 +55,13 @@ pct_mis <- mean(upload$e_data[-which(colnames(upload$e_data) == getEDataColName(
 
 Measurements were of the form:  **`r scale`**. 
 
-Metadata columns before processing included the following: 
+The molecular identification file included the following fields before adding additional variables: 
 
 ```{r}
 # get all non-null column names that are not edata_cname, fdata_cname, mass_cname
-temp <- attributes(upload)$cnames[which(!sapply(attributes(upload)$cnames, is.null))]
-temp <- temp[which(!(names(temp) %in% c("edata_cname", "fdata_cname", "mass_cname")))]
+temp <- colnames(emeta[-which(colnames(emeta) == getEDataColName(upload))])
+# temp <- attributes(upload)$cnames[which(!sapply(attributes(upload)$cnames, is.null))]
+# temp <- temp[which(!(names(temp) %in% c("edata_cname", "fdata_cname", "mass_cname")))]
 ```
 
 **`r temp`**
