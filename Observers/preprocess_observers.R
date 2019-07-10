@@ -1,6 +1,9 @@
 ### Summary Panel: Display table summaries of numeric and categorical columns in e_meta ###
 
-observeEvent(c(revals$numeric_cols, revals$categorical_cols),{
+observeEvent(input$preprocess_dismiss,{
+  
+  req(c(revals$numeric_cols, revals$categorical_cols))
+  
   if(isTRUE(nrow(revals$numeric_cols) > 0)){
     columns <- summaryPreprocess(isolate(revals$peakData2), revals$numeric_cols) %>% colnames()
     
@@ -16,7 +19,9 @@ observeEvent(c(revals$numeric_cols, revals$categorical_cols),{
 })
 
 # For numeric columns:
-observeEvent(revals$preprocess_tables,{
+observeEvent(input$preprocess_dismiss,{
+  
+  req(revals$preprocess_tables)
   
   if(length(revals$preprocess_tables$numeric) > 0){
     # Create Table Output
@@ -78,11 +83,15 @@ observeEvent(input$preprocess_click,{
   ) 
 }) # End successMessage
 
-observeEvent(input$preprocess_dismiss,{removeModal()})
+observeEvent(input$preprocess_dismiss,{
+  removeModal()
+  }, priority = 10)
+
 observeEvent(input$goto_filter,{
   updateTabsetPanel(session, "top_page", selected = "Filter")
   removeModal()
 })
+
 observeEvent(input$goto_qc,{
   updateTabsetPanel(session, 'top_page', selected = 'Quality Control')
   removeModal()
