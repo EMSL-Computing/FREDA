@@ -570,6 +570,39 @@ shinyUI(tagList(useShinyjs(),
                             )# end fluidrow
                     ), # End Visualize tab #
                    
+                   ################## Database Mapping Panel ####################
+                   tabPanel('Database Mapping',
+                            fluidRow(style = "display:flex;flex-direction:row;align-items:stretch",
+                                     column(4,
+                                            radioGroupButtons('database_select', 'Select a database', choices = c('MetaCyc', 'Kegg')),
+                                            bsCollapse(id='viz_sidebar', open = c('mappings'), multiple=TRUE, 
+                                                       # Plot Parameters
+                                                       bsCollapsePanel(div('Compounds', div(style = 'float:right', uiOutput('comps_icon'))), value = 'form2comp',
+                                                                       div(class = 'adjustdown', checkboxInput('comp2react_x', 'Get Reactions')),
+                                                                       div(numericInput('maxcomps', 'Maximum Number of Compounds', 10))
+                                                       ),
+                                                       bsCollapsePanel(div('Reactions', div(style = 'float:right', uiOutput('reacts_icon'))), value = 'comp2react',
+                                                                       div(class = 'adjustdown', checkboxInput('comp2react_x', 'Get Reactions')),
+                                                                       div(numericInput('maxreacts', 'Maximum Number of Reactions', 10))
+                                                       ),
+                                                       bsCollapsePanel(div('Pathways', div(style = 'float:right', uiOutput('paths_icon'))), value = 'comp2path',
+                                                                       div(class = 'adjustdown', checkboxInput('comp2path_x', 'Get Pathways')),
+                                                                       div(numericInput('maxpaths', 'Maximum Number of Pathways', 10))
+                                                       ),
+                                                       bsCollapsePanel(div('Modules', div(style = 'float:right', uiOutput('mods_icon'))), value = 'comp2mod',
+                                                                       div(class = 'adjustdown', checkboxInput('react2mod_x', 'Get Modules')),
+                                                                       div(numericInput('maxmods', 'Maximum Number of Modules', 10))
+                                                       )
+                                            ),
+                                            actionButton('create_mapping', 'Perform Mapping')
+                                            ),# column 4
+                                     column(8,
+                                            HTML('-------------')
+                                            ) # column 8
+                                     
+                                     )
+                   ),
+                   
                    ################## Download Panel ##############################################
                    tabPanel('Download',
                             fluidRow(style = "display:flex;flex-direction:row;align-items:stretch",

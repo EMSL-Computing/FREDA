@@ -21,6 +21,8 @@ library(shinyWidgets)
 library(pander)
 library(readr)
 library(plotly)
+# devtools::load_all('~/Documents/git_repos/MetaCycData/')
+# devtools::load_all('~/Documents/git_repos/KeggData/')
 
 shinyServer(function(session, input, output) {
   
@@ -1496,6 +1498,57 @@ shinyServer(function(session, input, output) {
   
   # End Visualize tab #
   
+  ####### Database Tab #######
+  
+  observeEvent(input$create_mapping, {
+    if(!exists('kegg_compounds')){
+      data('kegg_compounds')
+    }
+    
+    forms <- peakData2$e_meta[,getMFColName(peakData2)]
+    
+    comps <- lapply(forms, function(form){
+      if(form %in% kegg_compounds$FORMULA & !is.na(form)){
+        foo <- kegg_compounds %>% filter(FORMULA == form) %>% pluck('COMPOUND')
+        if(10000 > length(foo)){
+          foo
+        }
+        else NA
+      }
+      else NA
+    })
+    
+    if(input$comp2react_x){
+      reactions <- lapply(comps, function(comp){
+        if(any(comp %in% kegg_compounds$COMPOUND)){
+          foo <- kegg_compounds %>% filter(COMPOUND %in% comp) %>% pluck('REACTION')
+          foo <- strsplit(foo, ';')[[1]]
+          if(10000 > length(foo)){
+            foo
+          }
+          else NA
+        }
+        else NA
+      })
+    }
+    
+    if(input$comp2path_x){
+      pathways <- lapply(forms, function(form){
+        if(form %in% kegg_compounds$FORMULA & !is.na(form)){
+          foo <- kegg_compounds %>% filter(FORMULA == form) %>% pluck('PATHWAY')
+          foo <- strsplit(foo, '\n')[[1]]
+          if(10000 > length(foo)){
+            foo
+          }
+          else NA
+        }
+        else NA
+      })
+    }
+   
+    # only maximum number of compound 
+    
+  })
   
   ####### Download Tab #######
   
