@@ -314,6 +314,11 @@ observeEvent(input$vkbounds, {
                       choices = c('Van Krevelen Boundary Set' = 'bs2', revals$color_by_choices[!(revals$color_by_choices %in% c("bs1", "bs2"))]),
                       selected = selected)
   }
+  
+  # still want to redraw if the colors didn't change
+  if(selected == input$vk_colors){
+    revals$makeplot <- -revals$makeplot
+  }
 })
 
 # Observer which stores sample selections so user (me testing the app) doesn't have to re-input
