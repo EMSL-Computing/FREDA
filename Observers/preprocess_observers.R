@@ -64,8 +64,8 @@ observeEvent(input$tests, {
 }, ignoreNULL = FALSE)
 
 # Success dialogs
-observeEvent(input$preprocess_click,{
-  req(revals$peakData2)
+observeEvent(revals$uploaded_data,{
+  req(revals$peakData2, input$top_page == 'Preprocess')
   validate(need(input$tests, message = "Please choose at least one test to calculate"))
   
   showModal(
