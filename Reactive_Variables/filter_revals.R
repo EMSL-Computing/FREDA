@@ -30,6 +30,7 @@ summaryFilterDataFrame <- eventReactive(revals$reac_filter_plot, {
 ### ids which are passed to summaryFilt() to calculate the remaining peaks for table and bar plot
 # removed sample filter ids
 sampfilter_ids <- eventReactive(c(input$keep_samples, input$samplefilter, input$top_page, revals$react_largedata),{
+  req(!is.null(revals$peakData2))
   if(!revals$redraw_largedata){
     return(NULL)
   }
@@ -52,6 +53,7 @@ sampfilter_ids <- eventReactive(c(input$keep_samples, input$samplefilter, input$
 
 # removed mass filter filter ids
 massfilter_ids <- eventReactive(c(input$massfilter, input$min_mass, input$max_mass, input$top_page, revals$react_largedata),{
+  req(!is.null(revals$peakData2))
   if(!revals$redraw_largedata){
     return(NULL)
   }
@@ -67,6 +69,7 @@ massfilter_ids <- eventReactive(c(input$massfilter, input$min_mass, input$max_ma
 
 # removed molecule filter ids
 molfilter_ids <- eventReactive(c(input$minobs, input$molfilter, input$keep_samples, input$samplefilter, input$top_page, revals$react_largedata), {
+  req(!is.null(revals$peakData2))
   if(!revals$redraw_largedata){
     return(NULL)
   }
@@ -91,6 +94,7 @@ molfilter_ids <- eventReactive(c(input$minobs, input$molfilter, input$keep_sampl
 
 # removed formula filter ids
 formfilter_ids <- eventReactive(c(input$formfilter, input$top_page, revals$react_largedata), {
+  req(!is.null(revals$peakData2))
   if(!revals$redraw_largedata){
     return(NULL)
   }

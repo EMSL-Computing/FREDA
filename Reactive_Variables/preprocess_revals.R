@@ -1,13 +1,11 @@
 # Object: display choices for various dropdowns
 emeta_display_choices <- reactive({
-  input$preprocess_click
-  
   # do not allow mass or isotopic info column as options
-  drop_cols <- c(attr(revals$peakData2, "cnames")$mass_cname,
+  drop_cols <- c(attr(revals$uploaded_data, "cnames")$mass_cname,
                  input$iso_info_column)
   
   # get column names 
-  column_choices <- revals$peakData2$e_meta %>% 
+  column_choices <- revals$uploaded_data$e_meta %>% 
     dplyr::select(-one_of(drop_cols)) %>%
     dplyr::select(which(sapply(., function(col){ length(unique(col)) < 12 } ) | sapply(., is.numeric))) %>% #dont include columns with too many categories
     colnames() 

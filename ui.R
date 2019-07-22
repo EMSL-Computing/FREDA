@@ -15,26 +15,17 @@ library(DT)
 library(shinycssloaders)
 library(shinyWidgets)
 
-
-# Define UI for application that draws a histogram
+# Define UI and wrap everything in a taglist that first calls useShinyjs()
 shinyUI(tagList(useShinyjs(),
-                
-                # type = 'text/css',".disabled label.control-label {color:red}")
-                # ,
-                
                 navbarPage(title = (windowTitle = "FREDA"),
                    id = "top_page",
                    theme = "yeti.css",
                    ############# Welcome Panel #########################
                    navbarMenu("Welcome",
-                              # tabPanel(title = "Introduction",
-                              #             includeHTML("./intropage.html")),
                               tabPanel(title = "Introduction", class = "background_FTICR",
                                          includeMarkdown("./Welcome to FREDA.md")),
                               tabPanel(title = "Data Requirements", class = "background_FTICR",
                                        includeMarkdown("./DataRequirements.md"),
-                                       # DT::dataTableOutput("example_meta_table"), # in case we want a preview of the data
-                                       # DT::dataTableOutput("example_data_table"),
                                        div(downloadButton('downloadData', 'Download'), style = "z-index:1000;position:absolute")),
                               tabPanel(title = "Resources", class = "background_FTICR",
                                        HTML('<h4> Resources </h4>')),
@@ -212,7 +203,6 @@ shinyUI(tagList(useShinyjs(),
                             column(8,
                               wellPanel(style = "height:100%",
                                 dataTableOutput("group_table"),
-                                # plotOutput("groups_plot")
                                 actionButton("remove_group", "Remove selected group")
                               )
                             )
@@ -294,7 +284,6 @@ shinyUI(tagList(useShinyjs(),
                                                plotlyOutput("qc_boxplots") %>% withSpinner(color = "orange", type = 8)
                                                ),
                                            br(),
-                                           # div(id='style_qc_x', style='border-style:solid;border-width:1px;margin-top:3px', plotlyOutput("qc_pcoa_plots") %>% withSpinner(color = "orange", type = 8))
                                            div(style = 'margin-left:25%',
                                                actionButton(inputId = "add_qc_boxplot", width = '66%', 
                                                             label = "Save This Plot for Later Download", 
@@ -318,7 +307,6 @@ shinyUI(tagList(useShinyjs(),
                                 width = 5,
 
                                 # Checkbox: Mass filter yes/no
-                                #HTML('<h5><b>Mass Filter</b></h5>')
                                 bsCollapse(id = 'filter_sidebar', 
                                            open = c('samplefilt_collapse', 'massfilt_collapse', 'formfilt_collapse', 'molfilt_collapse'), 
                                            multiple = TRUE,

@@ -98,203 +98,164 @@ shinyServer(function(session, input, output) {
   #### Action Button Reactions (Upload Tab) ####
   
   # Object: Create peakData when upload button or preprocess button clicked
-  observeEvent(c(input$upload_click, input$preprocess_click), {
-    ## Create object on download page ##
-    if(input$top_page == 'Upload'){
+  observeEvent(input$upload_click, {
+    # prevent multiple clicks
+    shinyjs::disable('upload_click')
+    shinyjs::show('upload_waiting', anim=T)
+    on.exit({
+      shinyjs::enable('upload_click')
+      shinyjs::hide('upload_waiting', anim=T)
+      })
+    
+    # Error handling: unique identifier chosen
+    validate(need(input$edata_id_col != 'Select one', 'Please select a unique identifier column'),
+             need(input$edata_id_col %in% edata_cnames() & input$edata_id_col %in% emeta_cnames(),
+                  message = "The chosen ID column does not exist in one or both of the Data/Molecular Identification"))
+    
+    validate(         
+      need(input$select != 0, 'Please select either Formula or Elemental columns'),
+      need(input$isotope_yn != 0, 'Please select yes or no on information for isotopes'),
+      need(sum(!(Edata()[,input$edata_id_col] %in% Emeta()[,input$edata_id_col])) == 0, 
+           'Not all peaks in data file are present in molecular identification file, please add/remove these peaks to emeta / from edata')
       
-      # prevent multiple clicks
-      shinyjs::disable('upload_click')
-      shinyjs::show('upload_waiting', anim=T)
-      on.exit({
-        shinyjs::enable('upload_click')
-        shinyjs::hide('upload_waiting', anim=T)
-        })
+    ) # End error handling #
+    
+    ## If formula column chosen
+    if (input$select == 1) {
       
-      # Error handling: unique identifier chosen
-      validate(need(input$edata_id_col != 'Select one', 'Please select a unique identifier column'),
-               need(input$edata_id_col %in% edata_cnames() & input$edata_id_col %in% emeta_cnames(),
-                    message = "The chosen ID column does not exist in one or both of the Data/Molecular Identification"))
-      
-      validate(         
-        need(input$select != 0, 'Please select either Formula or Elemental columns'),
-        need(input$isotope_yn != 0, 'Please select yes or no on information for isotopes'),
-        need(sum(!(Edata()[,input$edata_id_col] %in% Emeta()[,input$edata_id_col])) == 0, 
-             'Not all peaks in data file are present in molecular identification file, please add/remove these peaks to emeta / from edata')
+      # Error handling: f_column chosen and  (if chosen) is of class 'character'
+      validate(
+        need((input$f_column != 'Select one'),
+             'Please select a formula column'),
+        need({
+          if (input$f_column != 'Select one') 
+            is.character(Emeta()[,input$f_column])
+          else 
+            FALSE
+        }, # End 'need'
+        
+        'Formula column is not a character vector. Please select another.')
         
       ) # End error handling #
-      
-      ## If formula column chosen
-      if (input$select == 1) {
-        
-        # Error handling: f_column chosen and  (if chosen) is of class 'character'
-        validate(
-          need((input$f_column != 'Select one'),
-               'Please select a formula column'),
-          need({
-            if (input$f_column != 'Select one') 
-              is.character(Emeta()[,input$f_column])
-            else 
-              FALSE
-          }, # End 'need'
-          
-          'Formula column is not a character vector. Please select another.')
-          
-        ) # End error handling #
-        tryCatch({
-          revals$warningmessage_upload$makeobject_error <- NULL
-          if (input$isotope_yn == 1 & isTRUE(input$iso_info_filter == 1)) { # If there's C13 # 
-            
-            # Error handling: entered isotopic notation must exist in the isotope information column
-            validate(
-              need(input$iso_info_column != "0", message = "Please choose a column of isotopic information"),
-              need(any(Emeta()[,input$iso_info_column] %in% input$iso_symbol),
-                   'The entered isotopic notation does not match the entries in the chosen isotope information column. Please revise.')
-            ) # End error handling
-            
-            res <- as.peakData(e_data = Edata(), f_data = fdata(),
-                                  e_meta = Emeta(), edata_cname = input$edata_id_col, 
-                                  fdata_cname = 'SampleId', mass_cname = input$edata_id_col, 
-                                  instrument_type = input$instrument,
-                                  mf_cname = input$f_column,
-                                  isotopic_cname = input$iso_info_column,
-                                  isotopic_notation = as.character(input$iso_symbol),
-                                  check_rows = TRUE, data_scale = input$data_scale)
-            
-          } # End C13 / no C13 if statement
-          
-          if (input$isotope_yn == 2 | isTRUE(input$iso_info_filter) != 1) { #no C13
-            # Calculate peakDataData with formula column
-            res <- as.peakData(e_data = Edata(), f_data = fdata(),
-                                  e_meta = Emeta(), edata_cname = input$edata_id_col, 
-                                  fdata_cname = 'SampleId', mass_cname = input$edata_id_col, 
-                                  instrument_type = input$instrument, mf_cname = input$f_column,
-                                  check_rows = TRUE, data_scale = input$data_scale)
-          } 
-        },
-        error = function(e){
-          msg = paste0('Error making your peakData: \n System error: ', e)
-          revals$warningmessage_upload$makeobject_error <<- sprintf("<p style = 'color:red'>%s</p>", msg)
-        })
-      }
-      
-      # If elemental columns chosen
-      if (input$select == 2){
-        
-        ## Error handling: all drop down columns nonempty and of class 'numeric'
-        
-        # first check that H and C columns are specified and numeric...
-        validate(
-          need({(input$c_column != 'Select a column') & 
-              (input$h_column != 'Select a column')
-          }, 
-          'Hydrogen/carbon columns are required. Please double-check drop-down options.')
-        )
-        validate(
-          need({
-            all(is.numeric(Emeta()[,input$c_column])) &
-              all(is.numeric(Emeta()[,input$h_column]))
-          }, 
-          'One or more elemental columns are non-numeric.')
-        )
-        # ...then check that -if- other columns are selected, they are numeric
-        for(col in c('n_column', 'o_column', 's_column', 'p_column')){
-         if(input[[col]] != 'Select a column'){
-           validate(need(is.numeric(Emeta()[,input[[col]]]), 'One or more elemental columns are non-numeric.'))
-         } 
-        }# End error handling #
-        tryCatch({
-          revals$warningmessage_upload$makeobject_error <- NULL
-          # If no C13
-          if (input$isotope_yn == 2 | isTRUE(input$iso_info_filter == 2)) {
-            # Create peakData object
-            res <- as.peakData(e_data = Edata(), f_data = fdata(),
-                                  e_meta = Emeta(), edata_cname = input$edata_id_col, 
-                                  fdata_cname = 'SampleId', mass_cname = input$edata_id_col,
-                                  instrument_type = input$instrument,
-                                  c_cname = input$c_column, h_cname = input$h_column, 
-                                  n_cname = if(input$n_column == 'Select a column') NULL else input$n_column,
-                                  o_cname = if(input$o_column == 'Select a column') NULL else input$o_column, 
-                                  s_cname = if(input$s_column == 'Select a column') NULL else input$s_column, 
-                                  p_cname = if(input$p_column == 'Select a column') NULL else input$p_column,
-                                  check_rows = TRUE, data_scale = input$data_scale)
-            
-          }
-          if (input$isotope_yn == 1 & isTRUE(input$iso_info_filter == 1)) { # If there's C13 # 
-            
-            # Error handling: entered isotopic notation must exist in the isotope information column
-            validate(need(input$iso_info_column != "0", message = "Please choose a column of isotopic information"))
-            validate(need(any(Emeta()[,input$iso_info_column] %in% input$iso_symbol),
-                          'The entered isotopic notation does not match the entries in the chosen isotope information column. Please revise.')
-            ) # End error handling
-            
-            res <- as.peakData(e_data = Edata(), f_data = fdata(),
-                                  e_meta = Emeta(), edata_cname = input$edata_id_col, 
-                                  fdata_cname = 'SampleId', mass_cname = input$edata_id_col, 
-                                  instrument_type = input$instrument,
-                                  c_cname = input$c_column, h_cname = input$h_column, 
-                                  n_cname = if(input$n_column == 'Select a column') NULL else input$n_column,
-                                  o_cname = if(input$o_column == 'Select a column') NULL else input$o_column, 
-                                  s_cname = if(input$s_column == 'Select a column') NULL else input$s_column, 
-                                  p_cname = if(input$p_column == 'Select a column') NULL else input$p_column,
-                                  isotopic_cname = input$iso_info_column,
-                                  isotopic_notation = as.character(input$iso_symbol),
-                                  check_rows = TRUE, data_scale = input$data_scale)
-            
-          } # End C13 / no C13 if statement
-        },
-        error = function(e){
-          msg = paste0('Error making your peakData: \n System error: ', e)
-          revals$warningmessage_upload$makeobject_error <<- sprintf("<p style = 'color:red'>%s</p>", msg)
-        })
-        
-      } # End elemental column if statement
-      
-      if(exists('res')){
-        shinyjs::show('upload_success')
-        
-        # create reactive peakData2 object
-        revals$peakData2 <- res
-        
-        # store peakdata for post-mortem testing
-        # test_peakData <<- res
-        
-        # reset 'removed samples' reval
-        revals$removed_samples <- list()
-        revals$groups_list <- list()
-        updateCollapse(session, 'upload_collapse', close = c('file_upload', 'column_info'))
-        shinyjs::show('ok_idcols')
-        
-        revals$uploaded_data <- res
-      }
-    }
-    # Remake object on preprocess page
-    else if(input$top_page == 'Preprocess'){
-      req(revals$uploaded_data, isolate(input$tests))
-      
-      temp <- revals$uploaded_data
-      
       tryCatch({
-        revals$warningmessage_preprocess$makeobject_error <- NULL
-        for(el in isolate(input$tests)){
-          if(grepl("assign_class", el)){
-            foo <- strsplit(el, ";")[[1]]
-            f <- get(foo[1], envir=asNamespace("ftmsRanalysis"), mode="function")
-            temp <- f(temp, foo[2])
-            temp$e_meta[paste0(foo[2], "_class")] <- gsub(";.*", "", temp$e_meta[,paste0(foo[2], "_class")])
-            
-          }
-          else{
-            f <- get(el, envir=asNamespace("ftmsRanalysis"), mode="function")
-            temp <- f(temp)
-          }
-        }
+        revals$warningmessage_upload$makeobject_error <- NULL
+        if (input$isotope_yn == 1 & isTRUE(input$iso_info_filter == 1)) { # If there's C13 # 
+          
+          # Error handling: entered isotopic notation must exist in the isotope information column
+          validate(
+            need(input$iso_info_column != "0", message = "Please choose a column of isotopic information"),
+            need(any(Emeta()[,input$iso_info_column] %in% input$iso_symbol),
+                 'The entered isotopic notation does not match the entries in the chosen isotope information column. Please revise.')
+          ) # End error handling
+          
+          res <- as.peakData(e_data = Edata(), f_data = fdata(),
+                                e_meta = Emeta(), edata_cname = input$edata_id_col, 
+                                fdata_cname = 'SampleId', mass_cname = input$edata_id_col, 
+                                instrument_type = input$instrument,
+                                mf_cname = input$f_column,
+                                isotopic_cname = input$iso_info_column,
+                                isotopic_notation = as.character(input$iso_symbol),
+                                check_rows = TRUE, data_scale = input$data_scale)
+          
+        } # End C13 / no C13 if statement
+        
+        if (input$isotope_yn == 2 | isTRUE(input$iso_info_filter) != 1) { #no C13
+          # Calculate peakDataData with formula column
+          res <- as.peakData(e_data = Edata(), f_data = fdata(),
+                                e_meta = Emeta(), edata_cname = input$edata_id_col, 
+                                fdata_cname = 'SampleId', mass_cname = input$edata_id_col, 
+                                instrument_type = input$instrument, mf_cname = input$f_column,
+                                check_rows = TRUE, data_scale = input$data_scale)
+        } 
       },
       error = function(e){
-        msg = paste0('Error calculating some of your variables: \n System error: ', e)
-        revals$warningmessage_preprocess$makeobject_error <<- sprintf("<p style = 'color:red'>%s</p>", msg)
+        msg = paste0('Error making your peakData: \n System error: ', e)
+        revals$warningmessage_upload$makeobject_error <<- sprintf("<p style = 'color:red'>%s</p>", msg)
+      })
+    }
+    
+    # If elemental columns chosen
+    if (input$select == 2){
+      
+      ## Error handling: all drop down columns nonempty and of class 'numeric'
+      
+      # first check that H and C columns are specified and numeric...
+      validate(
+        need({(input$c_column != 'Select a column') & 
+            (input$h_column != 'Select a column')
+        }, 
+        'Hydrogen/carbon columns are required. Please double-check drop-down options.')
+      )
+      validate(
+        need({
+          all(is.numeric(Emeta()[,input$c_column])) &
+            all(is.numeric(Emeta()[,input$h_column]))
+        }, 
+        'One or more elemental columns are non-numeric.')
+      )
+      # ...then check that -if- other columns are selected, they are numeric
+      for(col in c('n_column', 'o_column', 's_column', 'p_column')){
+       if(input[[col]] != 'Select a column'){
+         validate(need(is.numeric(Emeta()[,input[[col]]]), 'One or more elemental columns are non-numeric.'))
+       } 
+      }# End error handling #
+      tryCatch({
+        revals$warningmessage_upload$makeobject_error <- NULL
+        # If no C13
+        if (input$isotope_yn == 2 | isTRUE(input$iso_info_filter == 2)) {
+          # Create peakData object
+          res <- as.peakData(e_data = Edata(), f_data = fdata(),
+                                e_meta = Emeta(), edata_cname = input$edata_id_col, 
+                                fdata_cname = 'SampleId', mass_cname = input$edata_id_col,
+                                instrument_type = input$instrument,
+                                c_cname = input$c_column, h_cname = input$h_column, 
+                                n_cname = if(input$n_column == 'Select a column') NULL else input$n_column,
+                                o_cname = if(input$o_column == 'Select a column') NULL else input$o_column, 
+                                s_cname = if(input$s_column == 'Select a column') NULL else input$s_column, 
+                                p_cname = if(input$p_column == 'Select a column') NULL else input$p_column,
+                                check_rows = TRUE, data_scale = input$data_scale)
+          
+        }
+        if (input$isotope_yn == 1 & isTRUE(input$iso_info_filter == 1)) { # If there's C13 # 
+          
+          # Error handling: entered isotopic notation must exist in the isotope information column
+          validate(need(input$iso_info_column != "0", message = "Please choose a column of isotopic information"))
+          validate(need(any(Emeta()[,input$iso_info_column] %in% input$iso_symbol),
+                        'The entered isotopic notation does not match the entries in the chosen isotope information column. Please revise.')
+          ) # End error handling
+          
+          res <- as.peakData(e_data = Edata(), f_data = fdata(),
+                                e_meta = Emeta(), edata_cname = input$edata_id_col, 
+                                fdata_cname = 'SampleId', mass_cname = input$edata_id_col, 
+                                instrument_type = input$instrument,
+                                c_cname = input$c_column, h_cname = input$h_column, 
+                                n_cname = if(input$n_column == 'Select a column') NULL else input$n_column,
+                                o_cname = if(input$o_column == 'Select a column') NULL else input$o_column, 
+                                s_cname = if(input$s_column == 'Select a column') NULL else input$s_column, 
+                                p_cname = if(input$p_column == 'Select a column') NULL else input$p_column,
+                                isotopic_cname = input$iso_info_column,
+                                isotopic_notation = as.character(input$iso_symbol),
+                                check_rows = TRUE, data_scale = input$data_scale)
+          
+        } # End C13 / no C13 if statement
+      },
+      error = function(e){
+        msg = paste0('Error making your peakData: \n System error: ', e)
+        revals$warningmessage_upload$makeobject_error <<- sprintf("<p style = 'color:red'>%s</p>", msg)
       })
       
-      if(!exists('msg')) revals$uploaded_data <- temp
+    } # End elemental column if statement
+    
+    if(exists('res')){
+      shinyjs::show('upload_success')
+      
+      # reset 'removed samples' reval
+      revals$removed_samples <- list()
+      revals$groups_list <- list()
+      updateCollapse(session, 'upload_collapse', close = c('file_upload', 'column_info'))
+      shinyjs::show('ok_idcols')
+      
+      revals$uploaded_data <- res
     }
     
   }) # End peakData creation
@@ -353,9 +314,11 @@ shinyServer(function(session, input, output) {
   #### Action Button reactions ####
   
   ## Action button: Apply calculation functions When action button is clicked
-  # Depends on: revals$peakData2, input$tests
+  # Depends on: revals$uploaded_data, input$tests
   observeEvent(input$preprocess_click, {
     validate(need(input$tests, message = "Please choose at least one test to calculate"))
+    req(!is.null(revals$uploaded_data))
+    
     disable('preprocess_click')
     shinyjs::show('preprocess_waiting', anim=T)
     on.exit({
@@ -363,35 +326,39 @@ shinyServer(function(session, input, output) {
       shinyjs::hide('preprocess_waiting', anim=T)
       })
     
-    # If columns have already been calculated, start over from uploaded data
-    if (any(attr(revals$peakData2, "cnames") %in% calc_vars$ColumnName)){
-      revals$peakData2 <- revals$uploaded_data
-    }
-    
     # Apply all relevant functions
     withProgress(message = "Calculating Values....",{
-      for(el in input$tests){
-        if(grepl("assign_class", el)){
-          foo <- strsplit(el, ";")[[1]]
-          f <- get(foo[1], envir=asNamespace("ftmsRanalysis"), mode="function")
-          revals$peakData2 <- f(revals$peakData2, foo[2])
-          revals$peakData2$e_meta[paste0(foo[2], "_class")] <<- gsub(";.*", "", revals$peakData2$e_meta[,paste0(foo[2], "_class")])
+      
+      temp <- revals$uploaded_data
+      
+      tryCatch({
+        revals$warningmessage_preprocess$makeobject_error <- NULL
+        for(el in isolate(input$tests)){
+          if(grepl("assign_class", el)){
+            foo <- strsplit(el, ";")[[1]]
+            f <- get(foo[1], envir=asNamespace("ftmsRanalysis"), mode="function")
+            temp <- f(temp, foo[2])
+            temp$e_meta[paste0(foo[2], "_class")] <- gsub(";.*", "", temp$e_meta[,paste0(foo[2], "_class")])
+            
+          }
+          else{
+            f <- get(el, envir=asNamespace("ftmsRanalysis"), mode="function")
+            temp <- f(temp)
+          }
           
+          incProgress(1/length(input$tests))
         }
-        else{
-          f <- get(el, envir=asNamespace("ftmsRanalysis"), mode="function")
-          revals$peakData2 <- f(revals$peakData2)
-        }
-        
-        incProgress(1/length(input$tests))
-      }
+      },
+      error = function(e){
+        msg = paste0('Error calculating some of your variables: \n System error: ', e)
+        revals$warningmessage_preprocess$makeobject_error <<- sprintf("<p style = 'color:red'>%s</p>", msg)
+      })
+      
+      if(!exists('msg')) revals$uploaded_data <- temp
     })
     
     # post mortem test object
     # test_uploaded_data <<- revals$peakData2 
-    
-    # reset 'removed samples' reval
-    revals$removed_samples <- list()
     
     if (isTRUE(getOption("shiny.testmode"))) {
       exportTestValues(peakData2 = revals$peakData2)
@@ -402,15 +369,15 @@ shinyServer(function(session, input, output) {
   # Creates two reactive variables for continuous and categorical variables which are used to display separate tables
   # Note: dependent on preprocess click and the user-specified calculations
   observeEvent(input$preprocess_click, {
-    # Error handling: revals$peakData2 must have a non-NULL Kendrick Mass column name
-    #req(!is.null(attr(revals$peakData2, 'cnames')$kmass_cname))
+    # Error handling: revals$uploaded_data must have a non-NULL Kendrick Mass column name
+    #req(!is.null(attr(revals$uploaded_data, 'cnames')$kmass_cname))
     req(input$tests)
     
     # Get csv file of all possible calculation column names
     possible_calc_cnames <- read_csv("calculation_variables.csv") %>% as.data.frame(stringsAsFactors = FALSE)
     
-    # Get column names from revals$peakData2's e_meta
-    actual_cnames <- colnames(revals$peakData2$e_meta)
+    # Get column names from revals$uploaded_data's e_meta
+    actual_cnames <- colnames(revals$uploaded_data$e_meta)
     
     # Find all columns with names that match names for calculated columns
     v_index <- which(possible_calc_cnames[,1] %in% actual_cnames)
@@ -419,12 +386,12 @@ shinyServer(function(session, input, output) {
     intersect <- possible_calc_cnames[v_index,]
     
     # get numeric columns
-    numeric_cols <- revals$peakData2$e_meta %>% 
+    numeric_cols <- revals$uploaded_data$e_meta %>% 
       dplyr::select(which(sapply(.[intersect[,1]], is.numeric))) %>% 
       names()
     
     # get categorical columns
-    categorical_cols <- revals$peakData2$e_meta %>% 
+    categorical_cols <- revals$uploaded_data$e_meta %>% 
       dplyr::select(which(!sapply(.[intersect[,1]], is.numeric))) %>%
       names() 
     
@@ -447,7 +414,7 @@ shinyServer(function(session, input, output) {
           tags$p('I would like to see a histogram/bar-chart across all values of:'),
           selectInput('which_hist', NULL,
                       choices = emeta_display_choices(),
-                      selected = colnames(revals$peakData2$e_meta)[ncol(revals$uploaded_data$e_meta) + 1])
+                      selected = colnames(revals$uploaded_data$e_meta)[ncol(revals$uploaded_data$e_meta) + 1])
         )
       }) 
   })# End which_hist
@@ -468,7 +435,7 @@ shinyServer(function(session, input, output) {
         pluck("DisplayName")
       
       # Plot histogram using plotly
-      p <- plot_ly(x = revals$peakData2$e_meta[,columnName], type = 'histogram') %>%
+      p <- plot_ly(x = revals$uploaded_data$e_meta[,columnName], type = 'histogram') %>%
         layout( title = paste('Observed distribution of', displayName),
                 scene = list(
                   xaxis = list(title = displayName),
@@ -580,9 +547,11 @@ shinyServer(function(session, input, output) {
      selectInput('minobs', "Minimum number observed", choices = seq(1, max(length(input$keep_samples),1), 1), selected = 2)
   }) # End minobs
   
+  # Sample selection for sample filter
   output$filter_samples <- renderUI({
     selectInput('keep_samples', NULL, choices = revals$uploaded_data$f_data[,getFDataColName(revals$uploaded_data)], selected = revals$uploaded_data$f_data[,getFDataColName(revals$uploaded_data)], multiple = TRUE)
   })
+  
   #### Action Button Reactions (Filter Tab) ####
   
   # Event: Create filtered nonreactive revals$peakData2 when action button clicked
@@ -596,116 +565,127 @@ shinyServer(function(session, input, output) {
       })
     
     # if the data is already filtered start over from the uploaded data
-    if (any(c("moleculeFilt", "massFilt", "formulaFilt") %in% names(attributes(revals$peakData2)$filters)) | any(grepl("emetaFilt", names(attributes(revals$peakData2)$filters))) | !all(colnames(revals$peakData2$e_data) %in% colnames(revals$uploaded_data$e_data))){
+    if (any(c("moleculeFilt", "massFilt", "formulaFilt") %in% names(attributes(revals$peakData2)$filters)) | 
+        any(grepl("emetaFilt", names(attributes(revals$peakData2)$filters))) | 
+        !all(colnames(revals$peakData2$e_data) %in% colnames(revals$uploaded_data$e_data))){
       revals$peakData2 <- revals$uploaded_data
     }
     
     n_filters = sum(sapply(list(input$massfilter, input$molfilter, input$samplefilter, input$formfilter, input$custom1, input$custom2, input$custom3), isTRUE))
     
-    withProgress(message = "Applying filters....",{
-      # Apply sample filter
-      if(input$samplefilter){
-        req(length(input$keep_samples) > 0)
-        revals$peakData2 <- subset(revals$peakData2, samples = input$keep_samples, check_rows = TRUE)
-        revals$removed_samples <- c(revals$removed_samples, setdiff(sample_names(), input$keep_samples))
-        
-        # remove empty lists
-        if(length(revals$groups_list) > 0){
-            
-            # get indices of now empty groups
-            inds <- sapply(revals$groups_list, function(el){
-              length(intersect(el, input$keep_samples)) == 0
-            })
-            
-            revals$groups_list[inds] <- NULL
-        }
-        incProgress(1/n_filters, detail = 'Sample filter done.')
-      }else revals$removed_samples <- list()
-      
-      # Apply mass filter
-      if (input$massfilter){
-        
-        # Error handling: Min mass less than max mass, but greater than 0
-        req(input$min_mass < input$max_mass)
-        req(input$min_mass > 0)
-        
-        # Create and apply mass filter to nonreactive peakData object
-        filterMass <- mass_filter(revals$peakData2)
-        revals$peakData2 <- applyFilt(filterMass, revals$peakData2, min_mass = as.numeric(input$min_mass), 
-                               max_mass = as.numeric(input$max_mass))
-        rm(filterMass)
-        incProgress(1/n_filters, detail = 'Mass filter done.')
-      }
-      
-      # Apply molecule filter
-      if (input$molfilter) {
-        
-        # Create and apply molecule filter to nonreactive peakData object
-        filterMols <- molecule_filter(revals$peakData2)
-        revals$peakData2 <- applyFilt(filterMols, revals$peakData2, min_num = as.integer(input$minobs))
-        rm(filterMols)
-        incProgress(1/n_filters, detail = 'Molecule filter done.')
-      } # End molecule filter if statement
-      
-      # Apply formula filter
-      if (input$formfilter){
-        filterForm <- formula_filter(revals$peakData2)
-        revals$peakData2 <- applyFilt(filterForm, revals$peakData2)
-        rm(filterForm)
-        incProgress(1/n_filters, detail = 'Formula filter done.')
-      }
-      
-      # Apply custom filters
-      if (input$customfilterz){
-        
-          #apply the filter for each input
-          for(i in 1:3){
-            
-            #require that a selection has been made for filter i
-            if (input[[paste0("custom",i)]] == "Select item") return(NULL)
-            
-            #make the filter based on selection
-            filter <- emeta_filter(revals$peakData2, input[[paste0("custom",i)]])
-            
-            # if numeric, apply filter with specified max and min values
-            if (is.numeric(revals$peakData2$e_meta[,input[[paste0("custom",i)]]])){
-              req(input[[paste0("minimum_custom",i)]], input[[paste0("maximum_custom", i)]])
-              revals$peakData2 <- applyFilt(filter, revals$peakData2,
-                                     min_val = input[[paste0("minimum_custom",i)]], 
-                                     max_val = input[[paste0("maximum_custom", i)]], 
-                                     na.rm = !input[[paste0("na_custom",i)]])
-              
-            }
-            # else apply with selected categories
-            else if (!is.numeric(revals$peakData2$e_meta[,input[[paste0("custom",i)]]])){
-              req(input[[paste0("categorical_custom",i)]])
-              revals$peakData2 <- applyFilt(filter, revals$peakData2, 
-                                     cats = input[[paste0("categorical_custom",i)]], 
-                                     na.rm = !input[[paste0("na_custom",i)]])
-            }
-            
-            rm(filter)
-            incProgress(1/n_filters, detail = sprintf('Custom filter %s done', i))
-          }
+    tryCatch({
+      revals$warningmessage_filter$apply_fail <- NULL
+      withProgress(message = "Applying filters....",{
+        # Apply sample filter
+        if(input$samplefilter){
+          req(length(input$keep_samples) > 0)
+          revals$peakData2 <- subset(revals$peakData2, samples = input$keep_samples, check_rows = TRUE)
+          revals$removed_samples <- c(revals$removed_samples, setdiff(sample_names(), input$keep_samples))
           
+          # remove empty lists
+          if(length(revals$groups_list) > 0){
+              
+              # get indices of now empty groups
+              inds <- sapply(revals$groups_list, function(el){
+                length(intersect(el, input$keep_samples)) == 0
+              })
+              
+              revals$groups_list[inds] <- NULL
+          }
+          incProgress(1/n_filters, detail = 'Sample filter done.')
+        }else revals$removed_samples <- list()
+        
+        # Apply mass filter
+        if (input$massfilter){
+          
+          # Error handling: Min mass less than max mass, but greater than 0
+          req(input$min_mass < input$max_mass)
+          req(input$min_mass > 0)
+          
+          # Create and apply mass filter to nonreactive peakData object
+          filterMass <- mass_filter(revals$peakData2)
+          revals$peakData2 <- applyFilt(filterMass, revals$peakData2, min_mass = as.numeric(input$min_mass), 
+                                 max_mass = as.numeric(input$max_mass))
+          rm(filterMass)
+          incProgress(1/n_filters, detail = 'Mass filter done.')
         }
+        
+        # Apply molecule filter
+        if (input$molfilter) {
+          
+          # Create and apply molecule filter to nonreactive peakData object
+          filterMols <- molecule_filter(revals$peakData2)
+          revals$peakData2 <- applyFilt(filterMols, revals$peakData2, min_num = as.integer(input$minobs))
+          rm(filterMols)
+          incProgress(1/n_filters, detail = 'Molecule filter done.')
+        } # End molecule filter if statement
+        
+        # Apply formula filter
+        if (input$formfilter){
+          filterForm <- formula_filter(revals$peakData2)
+          revals$peakData2 <- applyFilt(filterForm, revals$peakData2)
+          rm(filterForm)
+          incProgress(1/n_filters, detail = 'Formula filter done.')
+        }
+        
+        # Apply custom filters
+        if (input$customfilterz){
+          
+            #apply the filter for each input
+            for(i in 1:3){
+              
+              #require that a selection has been made for filter i
+              if (input[[paste0("custom",i)]] == "Select item") return(NULL)
+              
+              #make the filter based on selection
+              filter <- emeta_filter(revals$peakData2, input[[paste0("custom",i)]])
+              
+              # if numeric, apply filter with specified max and min values
+              if (is.numeric(revals$peakData2$e_meta[,input[[paste0("custom",i)]]])){
+                req(input[[paste0("minimum_custom",i)]], input[[paste0("maximum_custom", i)]])
+                revals$peakData2 <- applyFilt(filter, revals$peakData2,
+                                       min_val = input[[paste0("minimum_custom",i)]], 
+                                       max_val = input[[paste0("maximum_custom", i)]], 
+                                       na.rm = !input[[paste0("na_custom",i)]])
+                
+              }
+              # else apply with selected categories
+              else if (!is.numeric(revals$peakData2$e_meta[,input[[paste0("custom",i)]]])){
+                req(input[[paste0("categorical_custom",i)]])
+                revals$peakData2 <- applyFilt(filter, revals$peakData2, 
+                                       cats = input[[paste0("categorical_custom",i)]], 
+                                       na.rm = !input[[paste0("na_custom",i)]])
+              }
+              
+              rm(filter)
+              incProgress(1/n_filters, detail = sprintf('Custom filter %s done', i))
+            }
+            
+          }
+      })
+    },error = function(e){
+      filt_msg = paste0('Something went wrong applying your filters \n System error:  ', e)
+      revals$warningmessage_filter$apply_fail <- sprintf("<p style = 'color:red'>%s</p>", filt_msg)
     })
-    # display success modal
-    showModal(
-      modalDialog(title = "Filter Success",
-                  fluidRow(
-                    column(10, align = "center", offset = 1,
-                           HTML('<h4 style= "color:#1A5276">Your data has been filtered.</h4>
-                              <h4 style= "color:#1A5276">The filtered data is stored and will be reset if you re-upload or re-process data.</h4>'),
-                           hr(),
-                           actionButton("filter_dismiss", "Review Results", width = '75%'),
-                           br(),
-                           br(),
-                           actionButton("goto_viz", "Continue to Visualization", width = '75%')
+    
+    if(!exists('filt_msg')){
+      # display success modal
+      showModal(
+        modalDialog(title = "Filter Success",
+                    fluidRow(
+                      column(10, align = "center", offset = 1,
+                             HTML('<h4 style= "color:#1A5276">Your data has been filtered.</h4>
+                                <h4 style= "color:#1A5276">The filtered data is stored and will be reset if you re-upload or re-process data.</h4>'),
+                             hr(),
+                             actionButton("filter_dismiss", "Review Results", width = '75%'),
+                             br(),
+                             br(),
+                             actionButton("goto_viz", "Continue to Visualization", width = '75%')
+                      )
                     )
-                  )
-                  ,footer = NULL)
-    )
+                    ,footer = NULL)
+      )
+    }
     
     #__test-export__
     exportTestValues(peakData2 = revals$peakData2)
@@ -963,6 +943,7 @@ shinyServer(function(session, input, output) {
   
   # selector for summary funcion
   output$summary_fxn_out <- renderUI({
+    req(!(input$choose_single %in% c(1,2)), cancelOutput = T)
     text_pres_fn <- "For a given peak, should the count or proportion of nonmissing values across samples in a group be used to determine whether or not that peak is present/absent within the group"
     text_test <- HTML("<p>Should a G-test or presence absence thresholds be used to determine whether a sample is unique to a particular group?</p><p>Depending on your selection, you will be asked for a presence threshold and a p-value (G-test) or a presence AND absence threshold<p/>") 
     

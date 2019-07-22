@@ -5,15 +5,15 @@ observeEvent(input$preprocess_dismiss,{
   req(c(revals$numeric_cols, revals$categorical_cols))
   
   if(isTRUE(nrow(revals$numeric_cols) > 0)){
-    columns <- summaryPreprocess(isolate(revals$peakData2), revals$numeric_cols) %>% colnames()
+    columns <- summaryPreprocess(isolate(revals$uploaded_data), revals$numeric_cols) %>% colnames()
     
-    revals$preprocess_tables$numeric <- summaryPreprocess(isolate(revals$peakData2), revals$numeric_cols) %>%
+    revals$preprocess_tables$numeric <- summaryPreprocess(isolate(revals$uploaded_data), revals$numeric_cols) %>%
                                           datatable(options = list(dom = "t", pageLength = nrow(.))) %>% 
                                           formatRound(columns, digits = 2)
   }
   
   if(isTRUE(nrow(revals$categorical_cols) > 0)){
-    revals$preprocess_tables$categorical <- summaryPreprocess(revals$peakData2, revals$categorical_cols, categorical = TRUE)
+    revals$preprocess_tables$categorical <- summaryPreprocess(revals$uploaded_data, revals$categorical_cols, categorical = TRUE)
   }
   
 })
@@ -65,14 +65,20 @@ observeEvent(input$tests, {
 
 # Success dialogs
 observeEvent(revals$uploaded_data,{
-  req(revals$peakData2, input$top_page == 'Preprocess')
+  req(revals$uploaded_data, input$top_page == 'Preprocess')
   validate(need(input$tests, message = "Please choose at least one test to calculate"))
+  
+  if(!is.null(attributes(revals$peakData2)$filters)){
+    msg <- "<p style = 'color:red'>You returned to this page after performing filtering, Re-apply filters to update your data</p>"
+  }
+  else msg <- NULL
   
   showModal(
     modalDialog(title = "Preprocess Success",
                 fluidRow(
                   column(10, align = "center", offset = 1,
                          HTML('<h4 style= "color:#1A5276">Your data has been preprocessed.  Calculated variables have been added to the molecular identification file and can be used in subsequent filtering and visualization.</h4>'),
+                         HTML(msg),
                          hr(),
                          actionButton('preprocess_dismiss', 'Review results', width = '75%'),
                          actionButton('goto_qc', 'Go to the QC tab to see some boxplots', style = 'width:75%;margin:5px'),
