@@ -3,10 +3,16 @@
 #   peakData2 <<- revals$peakData2
 # })
 
-# show/hide button for certain pages
+# multipurpose observer for page transitions
 observeEvent(input$top_page,{
   toggleElement("helpbutton", condition = input$top_page %in% c("Upload", "Groups", "Preprocess", "Filter", "Visualize"))
-})
+   
+  if(input$top_page %in% c('Quality Control', 'Filter', 'Visualize')){
+      if(is.null(revals$peakData2)){
+        revals$peakData2 <- revals$uploaded_data
+      }
+  }
+}, priority = 10)
 
 # control drawing of filter plot for large data, show warnings on qc and filter that dynamic plotting is disabled
 observeEvent(uploaded_data_dim(),{

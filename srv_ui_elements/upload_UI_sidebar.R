@@ -1,4 +1,17 @@
 list(
+  # Drop down list: Get edata unique identifier
+  output$edata_id <- renderUI({
+    # Drop down list with options from column names
+    selectInput("edata_id_col", "Choose column with IDs",
+                choices  = c('Select one', edata_cnames()))
+  }), # End edata_id #
+  
+  # Drop-down lists: Choose formula column
+  output$f_column <- renderUI({
+    selectInput("f_column", "Choose formula column",
+                choices = c('Select one', emeta_cnames()))
+  }), # End f_column #
+  
   # Drop-down lists: Select which column represents C / H / N / O / etc
   # First try to locate the column name with a grepl
   # Note: All require emeta_cnames()

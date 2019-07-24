@@ -35,7 +35,7 @@ shinyServer(function(session, input, output) {
   source("helper_functions/renderDownloadPlots.R")
   source("Observers/misc_observers.R", local = TRUE)
   # Misc Reactive Values:
-  # peakData_dim(), peakData2_dim(), uploaded_data_dim(). The number of cells in e_data of the respective objects
+  # peakData2_dim(), uploaded_data_dim(). The number of cells in e_data of the respective objects
   source('Reactive_Variables/misc_revals.R', local = TRUE)
   
   revals <- reactiveValues(ntables = 0, makeplot = 1, color_by_choices = NULL, axes_choices = NULL, redraw_largedata = FALSE, react_largedata = FALSE,
@@ -87,69 +87,60 @@ shinyServer(function(session, input, output) {
   source("Observers/upload_observers.R", local = TRUE)
   ###
   
-  ### Minor Upload UI Elements (output$<name>)
+  #### Main Panel (Upload Tab) ####
+  # Minor upload UI Elements (output$<name>)
   # num_peaks, num_samples
   # emeta_text, edata_text, success_upload
-  source('srv_ui_elements/upload_UI_misc.R', local = TRUE)
-  # element selection and C13 sidebar elements
-  source('srv_ui_elements/upload_UI_elements.R', local = TRUE)
+  source('srv_ui_elements/upload_UI_mainpanel.R', local = TRUE)
   
   #### Sidebar Panel (Upload Tab) ####
-  
-  # Drop down list: Get edata unique identifier
-  output$edata_id <- renderUI({
-    # Drop down list with options from column names
-    selectInput("edata_id_col", "Choose column with IDs",
-                choices  = c('Select one', edata_cnames()))
-  }) # End edata_id #
-  
-  # Drop-down lists: Choose formula column
-  output$f_column <- renderUI({
-    selectInput("f_column", "Choose formula column",
-                choices = c('Select one', emeta_cnames()))
-  }) # End f_column #
+  # element selection and C13 sidebar elements
+  source('srv_ui_elements/upload_UI_sidebar.R', local = TRUE)
   
   #### Action Button Reactions (Upload Tab) ####
   
-  # Object: Create peakData when Upload Button clicked
-  observeEvent(c(input$upload_click, input$preprocess_click), {
-    if(input$top_page == 'Upload'){
-      shinyjs::disable('upload_click')
-      shinyjs::show('upload_waiting', anim=T)
-      on.exit({
-        shinyjs::enable('upload_click')
-        shinyjs::hide('upload_waiting', anim=T)
-        })
-      # Error handling: unique identifier chosen
-      validate(need(input$edata_id_col != 'Select one', 'Please select a unique identifier column'),
-               need(input$edata_id_col %in% edata_cnames() & input$edata_id_col %in% emeta_cnames(),
-                    message = "The chosen ID column does not exist in one or both of the Data/Molecular Identification"))
+  # Object: Create peakData when upload button or preprocess button clicked
+  observeEvent(input$upload_click, {
+    # prevent multiple clicks
+    shinyjs::disable('upload_click')
+    shinyjs::show('upload_waiting', anim=T)
+    on.exit({
+      shinyjs::enable('upload_click')
+      shinyjs::hide('upload_waiting', anim=T)
+      })
+    
+    # Error handling: unique identifier chosen
+    validate(need(input$edata_id_col != 'Select one', 'Please select a unique identifier column'),
+             need(input$edata_id_col %in% edata_cnames() & input$edata_id_col %in% emeta_cnames(),
+                  message = "The chosen ID column does not exist in one or both of the Data/Molecular Identification"))
+    
+    validate(         
+      need(input$select != 0, 'Please select either Formula or Elemental columns'),
+      need(input$isotope_yn != 0, 'Please select yes or no on information for isotopes'),
+      need(sum(!(Edata()[,input$edata_id_col] %in% Emeta()[,input$edata_id_col])) == 0, 
+           'Not all peaks in data file are present in molecular identification file, please add/remove these peaks to emeta / from edata')
       
-      validate(         
-        need(input$select != 0, 'Please select either Formula or Elemental columns'),
-        need(input$isotope_yn != 0, 'Please select yes or no on information for isotopes'),
-        need(sum(!(Edata()[,input$edata_id_col] %in% Emeta()[,input$edata_id_col])) == 0, 
-             'Not all peaks in data file are present in molecular identification file, please add/remove these peaks to emeta / from edata')
+    ) # End error handling #
+    
+    ## If formula column chosen
+    if (input$select == 1) {
+      
+      # Error handling: f_column chosen and  (if chosen) is of class 'character'
+      validate(
+        need((input$f_column != 'Select one'),
+             'Please select a formula column'),
+        need({
+          if (input$f_column != 'Select one') 
+            is.character(Emeta()[,input$f_column])
+          else 
+            FALSE
+        }, # End 'need'
+        
+        'Formula column is not a character vector. Please select another.')
         
       ) # End error handling #
-      
-      ## If formula column chosen
-      if (input$select == 1) {
-        
-        # Error handling: f_column chosen and  (if chosen) is of class 'character'
-        validate(
-          need((input$f_column != 'Select one'),
-               'Please select a formula column'),
-          need({
-            if (input$f_column != 'Select one') 
-              is.character(Emeta()[,input$f_column])
-            else 
-              FALSE
-          }, # End 'need'
-          
-          'Formula column is not a character vector. Please select another.')
-          
-        ) # End error handling #
+      tryCatch({
+        revals$warningmessage_upload$makeobject_error <- NULL
         if (input$isotope_yn == 1 & isTRUE(input$iso_info_filter == 1)) { # If there's C13 # 
           
           # Error handling: entered isotopic notation must exist in the isotope information column
@@ -178,34 +169,40 @@ shinyServer(function(session, input, output) {
                                 instrument_type = input$instrument, mf_cname = input$f_column,
                                 check_rows = TRUE, data_scale = input$data_scale)
         } 
-      }
+      },
+      error = function(e){
+        msg = paste0('Error making your peakData: \n System error: ', e)
+        revals$warningmessage_upload$makeobject_error <<- sprintf("<p style = 'color:red'>%s</p>", msg)
+      })
+    }
+    
+    # If elemental columns chosen
+    if (input$select == 2){
       
-      # If elemental columns chosen
-      if (input$select == 2){
-        
-        ## Error handling: all drop down columns nonempty and of class 'numeric'
-        
-        # first check that H and C columns are specified and numeric...
-        validate(
-          need({(input$c_column != 'Select a column') & 
-              (input$h_column != 'Select a column')
-          }, 
-          'Hydrogen/carbon columns are required. Please double-check drop-down options.')
-        )
-        validate(
-          need({
-            all(is.numeric(Emeta()[,input$c_column])) &
-              all(is.numeric(Emeta()[,input$h_column]))
-          }, 
-          'One or more elemental columns are non-numeric.')
-        )
-        # ...then check that -if- other columns are selected, they are numeric
-        for(col in c('n_column', 'o_column', 's_column', 'p_column')){
-         if(input[[col]] != 'Select a column'){
-           validate(need(is.numeric(Emeta()[,input[[col]]]), 'One or more elemental columns are non-numeric.'))
-         } 
-        }# End error handling #
-        
+      ## Error handling: all drop down columns nonempty and of class 'numeric'
+      
+      # first check that H and C columns are specified and numeric...
+      validate(
+        need({(input$c_column != 'Select a column') & 
+            (input$h_column != 'Select a column')
+        }, 
+        'Hydrogen/carbon columns are required. Please double-check drop-down options.')
+      )
+      validate(
+        need({
+          all(is.numeric(Emeta()[,input$c_column])) &
+            all(is.numeric(Emeta()[,input$h_column]))
+        }, 
+        'One or more elemental columns are non-numeric.')
+      )
+      # ...then check that -if- other columns are selected, they are numeric
+      for(col in c('n_column', 'o_column', 's_column', 'p_column')){
+       if(input[[col]] != 'Select a column'){
+         validate(need(is.numeric(Emeta()[,input[[col]]]), 'One or more elemental columns are non-numeric.'))
+       } 
+      }# End error handling #
+      tryCatch({
+        revals$warningmessage_upload$makeobject_error <- NULL
         # If no C13
         if (input$isotope_yn == 2 | isTRUE(input$iso_info_filter == 2)) {
           # Create peakData object
@@ -243,16 +240,16 @@ shinyServer(function(session, input, output) {
                                 check_rows = TRUE, data_scale = input$data_scale)
           
         } # End C13 / no C13 if statement
-        
-      } # End elemental column if statement
+      },
+      error = function(e){
+        msg = paste0('Error making your peakData: \n System error: ', e)
+        revals$warningmessage_upload$makeobject_error <<- sprintf("<p style = 'color:red'>%s</p>", msg)
+      })
       
+    } # End elemental column if statement
+    
+    if(exists('res')){
       shinyjs::show('upload_success')
-      
-      # create reactive peakData2 object
-      revals$peakData2 <- res
-      
-      # store peakdata for post-mortem testing
-      # test_peakData <<- res
       
       # reset 'removed samples' reval
       revals$removed_samples <- list()
@@ -262,108 +259,9 @@ shinyServer(function(session, input, output) {
       
       revals$uploaded_data <- res
     }
-    else if(input$top_page == 'Preprocess'){
-      # Keep a reactive copy of the pre-filtered data in case of a filter reset event
-      req(revals$uploaded_data, isolate(input$tests))
-      
-      temp <- revals$uploaded_data
-      
-      for(el in isolate(input$tests)){
-        if(grepl("assign_class", el)){
-          foo <- strsplit(el, ";")[[1]]
-          f <- get(foo[1], envir=asNamespace("ftmsRanalysis"), mode="function")
-          temp <- f(temp, foo[2])
-          temp$e_meta[paste0(foo[2], "_class")] <- gsub(";.*", "", temp$e_meta[,paste0(foo[2], "_class")])
-          
-        }
-        else{
-          f <- get(el, envir=asNamespace("ftmsRanalysis"), mode="function")
-          temp <- f(temp)
-        }
-      }
-      
-      revals$uploaded_data <- temp
-    }
     
   }) # End peakData creation
 
-  #### Main Panel (Upload Tab) ####
-
-  # Summary: Display number of peaks with formulas
-  output$num_peaks_formula <- renderText({
-    
-    # Error handling: Require e_meta and others
-    req(Emeta())
-    req(input$select != 0)
-    
-    # Scope: Set up num_rows_formula to edit in if statements
-    num_rows_formula = nrow(Edata())
-    
-    # If f_columns have been identified
-    if (input$select == 1){
-      
-      # Error handling: need formula column
-      req(input$f_column)
-      req(input$f_column != 'Select one')
-      req(is.character(Emeta()[,input$f_column]))
-      
-      # Count all non-NA columns
-      f_column <- Emeta()[,input$f_column]
-      
-      # Count all nonempty and non-NA entries
-      num_rows_formula <- length(which((!is.na(f_column)) & (f_column != "")))
-      
-    } else if (input$select == 2) { # If elemental columns have been identified
-      
-      # Error handling: drop down columns must exist and be numeric
-      req({
-        (input$c_column != 'Select a column') && 
-          (input$h_column != 'Select a column') && 
-          (input$n_column != 'Select a column') &&
-          (input$o_column != 'Select a column') &&
-          (input$s_column != 'Select a column') &&
-          (input$p_column != 'Select a column') &&
-          all(is.numeric(Emeta()[,input$c_column])) &&
-          all(is.numeric(Emeta()[,input$h_column])) &&
-          all(is.numeric(Emeta()[,input$n_column])) &&
-          all(is.numeric(Emeta()[,input$o_column])) &&
-          all(is.numeric(Emeta()[,input$s_column])) &&
-          all(is.numeric(Emeta()[,input$p_column]))
-      }) # End error handling for elemental columns #
-      
-      # Set up list of column names
-      elem_cnames <- c(input$c_column, input$h_column, 
-                       input$n_column, input$o_column, 
-                       input$s_column, input$p_column)
-      
-      # Create data frame of all elemental columns to sum across
-      elem_columns <- data.frame(Emeta()[,elem_cnames])
-      req(input$isotope_yn)
-      req(input$iso_info_filter)
-      # If isotopic information is included and matching entered notation, filter out where isotopes = denoted symbol
-      if (input$isotope_yn == 1 & input$iso_info_filter == 1) {
-        req(input$iso_info_column)
-        validate(need(input$iso_info_column != 0, message = "Please choose a column of isotopic information"))
-        if (any(Emeta()[,input$iso_info_column] %in% input$iso_symbol)) {
-    iso <- Emeta()[,input$iso_info_column]
-    elem_columns <- elem_columns[-(which(as.character(iso) == as.character(input$iso_symbol))),]
-  }
-      }# End if isotopic information is chosen and correctly denoted#
-      
-      # Count all remaining rows with nonzero sums
-      num_rows_formula <- length(which(rowSums(elem_columns) > 0))
-      
-    } # End elemental columns option
-    
-    validate(
-      need(!is.null(revals$uploaded_data), message = "")
-    )
-    # Display number of peaks/rows with formula assigned
-    c('Number of peaks with formulas: ', num_rows_formula)
-    
-    
-  }) # End num_peaks_formula in summary panel
-  
   ####### Groups Tab ######
   
   # sample selection input, depends on sample names in the UI
@@ -418,9 +316,11 @@ shinyServer(function(session, input, output) {
   #### Action Button reactions ####
   
   ## Action button: Apply calculation functions When action button is clicked
-  # Depends on: revals$peakData2, input$tests
+  # Depends on: revals$uploaded_data, input$tests
   observeEvent(input$preprocess_click, {
     validate(need(input$tests, message = "Please choose at least one test to calculate"))
+    req(!is.null(revals$uploaded_data))
+    
     disable('preprocess_click')
     shinyjs::show('preprocess_waiting', anim=T)
     on.exit({
@@ -428,35 +328,39 @@ shinyServer(function(session, input, output) {
       shinyjs::hide('preprocess_waiting', anim=T)
       })
     
-    # If columns have already been calculated, start over from uploaded data
-    if (any(attr(revals$peakData2, "cnames") %in% calc_vars$ColumnName)){
-      revals$peakData2 <- revals$uploaded_data
-    }
-    
     # Apply all relevant functions
     withProgress(message = "Calculating Values....",{
-      for(el in input$tests){
-        if(grepl("assign_class", el)){
-          foo <- strsplit(el, ";")[[1]]
-          f <- get(foo[1], envir=asNamespace("ftmsRanalysis"), mode="function")
-          revals$peakData2 <- f(revals$peakData2, foo[2])
-          revals$peakData2$e_meta[paste0(foo[2], "_class")] <<- gsub(";.*", "", revals$peakData2$e_meta[,paste0(foo[2], "_class")])
+      
+      temp <- revals$uploaded_data
+      
+      tryCatch({
+        revals$warningmessage_preprocess$makeobject_error <- NULL
+        for(el in isolate(input$tests)){
+          if(grepl("assign_class", el)){
+            foo <- strsplit(el, ";")[[1]]
+            f <- get(foo[1], envir=asNamespace("ftmsRanalysis"), mode="function")
+            temp <- f(temp, foo[2])
+            temp$e_meta[paste0(foo[2], "_class")] <- gsub(";.*", "", temp$e_meta[,paste0(foo[2], "_class")])
+            
+          }
+          else{
+            f <- get(el, envir=asNamespace("ftmsRanalysis"), mode="function")
+            temp <- f(temp)
+          }
           
+          incProgress(1/length(input$tests))
         }
-        else{
-          f <- get(el, envir=asNamespace("ftmsRanalysis"), mode="function")
-          revals$peakData2 <- f(revals$peakData2)
-        }
-        
-        incProgress(1/length(input$tests))
-      }
+      },
+      error = function(e){
+        msg = paste0('Error calculating some of your variables: \n System error: ', e)
+        revals$warningmessage_preprocess$makeobject_error <<- sprintf("<p style = 'color:red'>%s</p>", msg)
+      })
+      
+      if(!exists('msg')) revals$uploaded_data <- temp
     })
     
     # post mortem test object
     # test_uploaded_data <<- revals$peakData2 
-    
-    # reset 'removed samples' reval
-    revals$removed_samples <- list()
     
     if (isTRUE(getOption("shiny.testmode"))) {
       exportTestValues(peakData2 = revals$peakData2)
@@ -467,15 +371,15 @@ shinyServer(function(session, input, output) {
   # Creates two reactive variables for continuous and categorical variables which are used to display separate tables
   # Note: dependent on preprocess click and the user-specified calculations
   observeEvent(input$preprocess_click, {
-    # Error handling: revals$peakData2 must have a non-NULL Kendrick Mass column name
-    #req(!is.null(attr(revals$peakData2, 'cnames')$kmass_cname))
+    # Error handling: revals$uploaded_data must have a non-NULL Kendrick Mass column name
+    #req(!is.null(attr(revals$uploaded_data, 'cnames')$kmass_cname))
     req(input$tests)
     
     # Get csv file of all possible calculation column names
     possible_calc_cnames <- read_csv("calculation_variables.csv") %>% as.data.frame(stringsAsFactors = FALSE)
     
-    # Get column names from revals$peakData2's e_meta
-    actual_cnames <- colnames(revals$peakData2$e_meta)
+    # Get column names from revals$uploaded_data's e_meta
+    actual_cnames <- colnames(revals$uploaded_data$e_meta)
     
     # Find all columns with names that match names for calculated columns
     v_index <- which(possible_calc_cnames[,1] %in% actual_cnames)
@@ -484,12 +388,12 @@ shinyServer(function(session, input, output) {
     intersect <- possible_calc_cnames[v_index,]
     
     # get numeric columns
-    numeric_cols <- revals$peakData2$e_meta %>% 
+    numeric_cols <- revals$uploaded_data$e_meta %>% 
       dplyr::select(which(sapply(.[intersect[,1]], is.numeric))) %>% 
       names()
     
     # get categorical columns
-    categorical_cols <- revals$peakData2$e_meta %>% 
+    categorical_cols <- revals$uploaded_data$e_meta %>% 
       dplyr::select(which(!sapply(.[intersect[,1]], is.numeric))) %>%
       names() 
     
@@ -512,7 +416,7 @@ shinyServer(function(session, input, output) {
           tags$p('I would like to see a histogram/bar-chart across all values of:'),
           selectInput('which_hist', NULL,
                       choices = emeta_display_choices(),
-                      selected = colnames(revals$peakData2$e_meta)[ncol(revals$uploaded_data$e_meta) + 1])
+                      selected = colnames(revals$uploaded_data$e_meta)[ncol(revals$uploaded_data$e_meta) + 1])
         )
       }) 
   })# End which_hist
@@ -533,7 +437,7 @@ shinyServer(function(session, input, output) {
         pluck("DisplayName")
       
       # Plot histogram using plotly
-      p <- plot_ly(x = revals$peakData2$e_meta[,columnName], type = 'histogram') %>%
+      p <- plot_ly(x = revals$uploaded_data$e_meta[,columnName], type = 'histogram') %>%
         layout( title = paste('Observed distribution of', displayName),
                 scene = list(
                   xaxis = list(title = displayName),
@@ -645,9 +549,11 @@ shinyServer(function(session, input, output) {
      selectInput('minobs', "Minimum number observed", choices = seq(1, max(length(input$keep_samples),1), 1), selected = 2)
   }) # End minobs
   
+  # Sample selection for sample filter
   output$filter_samples <- renderUI({
     selectInput('keep_samples', NULL, choices = revals$uploaded_data$f_data[,getFDataColName(revals$uploaded_data)], selected = revals$uploaded_data$f_data[,getFDataColName(revals$uploaded_data)], multiple = TRUE)
   })
+  
   #### Action Button Reactions (Filter Tab) ####
   
   # Event: Create filtered nonreactive revals$peakData2 when action button clicked
@@ -661,116 +567,127 @@ shinyServer(function(session, input, output) {
       })
     
     # if the data is already filtered start over from the uploaded data
-    if (any(c("moleculeFilt", "massFilt", "formulaFilt") %in% names(attributes(revals$peakData2)$filters)) | any(grepl("emetaFilt", names(attributes(revals$peakData2)$filters))) | !all(colnames(revals$peakData2$e_data) %in% colnames(revals$uploaded_data$e_data))){
+    if (any(c("moleculeFilt", "massFilt", "formulaFilt") %in% names(attributes(revals$peakData2)$filters)) | 
+        any(grepl("emetaFilt", names(attributes(revals$peakData2)$filters))) | 
+        !all(colnames(revals$peakData2$e_data) %in% colnames(revals$uploaded_data$e_data))){
       revals$peakData2 <- revals$uploaded_data
     }
     
     n_filters = sum(sapply(list(input$massfilter, input$molfilter, input$samplefilter, input$formfilter, input$custom1, input$custom2, input$custom3), isTRUE))
     
-    withProgress(message = "Applying filters....",{
-      # Apply sample filter
-      if(input$samplefilter){
-        req(length(input$keep_samples) > 0)
-        revals$peakData2 <- subset(revals$peakData2, samples = input$keep_samples, check_rows = TRUE)
-        revals$removed_samples <- c(revals$removed_samples, setdiff(sample_names(), input$keep_samples))
-        
-        # remove empty lists
-        if(length(revals$groups_list) > 0){
-            
-            # get indices of now empty groups
-            inds <- sapply(revals$groups_list, function(el){
-              length(intersect(el, input$keep_samples)) == 0
-            })
-            
-            revals$groups_list[inds] <- NULL
-        }
-        incProgress(1/n_filters, detail = 'Sample filter done.')
-      }else revals$removed_samples <- list()
-      
-      # Apply mass filter
-      if (input$massfilter){
-        
-        # Error handling: Min mass less than max mass, but greater than 0
-        req(input$min_mass < input$max_mass)
-        req(input$min_mass > 0)
-        
-        # Create and apply mass filter to nonreactive peakData object
-        filterMass <- mass_filter(revals$peakData2)
-        revals$peakData2 <- applyFilt(filterMass, revals$peakData2, min_mass = as.numeric(input$min_mass), 
-                               max_mass = as.numeric(input$max_mass))
-        rm(filterMass)
-        incProgress(1/n_filters, detail = 'Mass filter done.')
-      }
-      
-      # Apply molecule filter
-      if (input$molfilter) {
-        
-        # Create and apply molecule filter to nonreactive peakData object
-        filterMols <- molecule_filter(revals$peakData2)
-        revals$peakData2 <- applyFilt(filterMols, revals$peakData2, min_num = as.integer(input$minobs))
-        rm(filterMols)
-        incProgress(1/n_filters, detail = 'Molecule filter done.')
-      } # End molecule filter if statement
-      
-      # Apply formula filter
-      if (input$formfilter){
-        filterForm <- formula_filter(revals$peakData2)
-        revals$peakData2 <- applyFilt(filterForm, revals$peakData2)
-        rm(filterForm)
-        incProgress(1/n_filters, detail = 'Formula filter done.')
-      }
-      
-      # Apply custom filters
-      if (input$customfilterz){
-        
-          #apply the filter for each input
-          for(i in 1:3){
-            
-            #require that a selection has been made for filter i
-            if (input[[paste0("custom",i)]] == "Select item") return(NULL)
-            
-            #make the filter based on selection
-            filter <- emeta_filter(revals$peakData2, input[[paste0("custom",i)]])
-            
-            # if numeric, apply filter with specified max and min values
-            if (is.numeric(revals$peakData2$e_meta[,input[[paste0("custom",i)]]])){
-              req(input[[paste0("minimum_custom",i)]], input[[paste0("maximum_custom", i)]])
-              revals$peakData2 <- applyFilt(filter, revals$peakData2,
-                                     min_val = input[[paste0("minimum_custom",i)]], 
-                                     max_val = input[[paste0("maximum_custom", i)]], 
-                                     na.rm = !input[[paste0("na_custom",i)]])
-              
-            }
-            # else apply with selected categories
-            else if (!is.numeric(revals$peakData2$e_meta[,input[[paste0("custom",i)]]])){
-              req(input[[paste0("categorical_custom",i)]])
-              revals$peakData2 <- applyFilt(filter, revals$peakData2, 
-                                     cats = input[[paste0("categorical_custom",i)]], 
-                                     na.rm = !input[[paste0("na_custom",i)]])
-            }
-            
-            rm(filter)
-            incProgress(1/n_filters, detail = sprintf('Custom filter %s done', i))
-          }
+    tryCatch({
+      revals$warningmessage_filter$apply_fail <- NULL
+      withProgress(message = "Applying filters....",{
+        # Apply sample filter
+        if(input$samplefilter){
+          req(length(input$keep_samples) > 0)
+          revals$peakData2 <- subset(revals$peakData2, samples = input$keep_samples, check_rows = TRUE)
+          revals$removed_samples <- c(revals$removed_samples, setdiff(sample_names(), input$keep_samples))
           
+          # remove empty lists
+          if(length(revals$groups_list) > 0){
+              
+              # get indices of now empty groups
+              inds <- sapply(revals$groups_list, function(el){
+                length(intersect(el, input$keep_samples)) == 0
+              })
+              
+              revals$groups_list[inds] <- NULL
+          }
+          incProgress(1/n_filters, detail = 'Sample filter done.')
+        }else revals$removed_samples <- list()
+        
+        # Apply mass filter
+        if (input$massfilter){
+          
+          # Error handling: Min mass less than max mass, but greater than 0
+          req(input$min_mass < input$max_mass)
+          req(input$min_mass > 0)
+          
+          # Create and apply mass filter to nonreactive peakData object
+          filterMass <- mass_filter(revals$peakData2)
+          revals$peakData2 <- applyFilt(filterMass, revals$peakData2, min_mass = as.numeric(input$min_mass), 
+                                 max_mass = as.numeric(input$max_mass))
+          rm(filterMass)
+          incProgress(1/n_filters, detail = 'Mass filter done.')
         }
+        
+        # Apply molecule filter
+        if (input$molfilter) {
+          
+          # Create and apply molecule filter to nonreactive peakData object
+          filterMols <- molecule_filter(revals$peakData2)
+          revals$peakData2 <- applyFilt(filterMols, revals$peakData2, min_num = as.integer(input$minobs))
+          rm(filterMols)
+          incProgress(1/n_filters, detail = 'Molecule filter done.')
+        } # End molecule filter if statement
+        
+        # Apply formula filter
+        if (input$formfilter){
+          filterForm <- formula_filter(revals$peakData2)
+          revals$peakData2 <- applyFilt(filterForm, revals$peakData2)
+          rm(filterForm)
+          incProgress(1/n_filters, detail = 'Formula filter done.')
+        }
+        
+        # Apply custom filters
+        if (input$customfilterz){
+          
+            #apply the filter for each input
+            for(i in 1:3){
+              
+              #require that a selection has been made for filter i
+              if (input[[paste0("custom",i)]] == "Select item") return(NULL)
+              
+              #make the filter based on selection
+              filter <- emeta_filter(revals$peakData2, input[[paste0("custom",i)]])
+              
+              # if numeric, apply filter with specified max and min values
+              if (is.numeric(revals$peakData2$e_meta[,input[[paste0("custom",i)]]])){
+                req(input[[paste0("minimum_custom",i)]], input[[paste0("maximum_custom", i)]])
+                revals$peakData2 <- applyFilt(filter, revals$peakData2,
+                                       min_val = input[[paste0("minimum_custom",i)]], 
+                                       max_val = input[[paste0("maximum_custom", i)]], 
+                                       na.rm = !input[[paste0("na_custom",i)]])
+                
+              }
+              # else apply with selected categories
+              else if (!is.numeric(revals$peakData2$e_meta[,input[[paste0("custom",i)]]])){
+                req(input[[paste0("categorical_custom",i)]])
+                revals$peakData2 <- applyFilt(filter, revals$peakData2, 
+                                       cats = input[[paste0("categorical_custom",i)]], 
+                                       na.rm = !input[[paste0("na_custom",i)]])
+              }
+              
+              rm(filter)
+              incProgress(1/n_filters, detail = sprintf('Custom filter %s done', i))
+            }
+            
+          }
+      })
+    },error = function(e){
+      filt_msg = paste0('Something went wrong applying your filters \n System error:  ', e)
+      revals$warningmessage_filter$apply_fail <- sprintf("<p style = 'color:red'>%s</p>", filt_msg)
     })
-    # display success modal
-    showModal(
-      modalDialog(title = "Filter Success",
-                  fluidRow(
-                    column(10, align = "center", offset = 1,
-                           HTML('<h4 style= "color:#1A5276">Your data has been filtered.</h4>
-                              <h4 style= "color:#1A5276">The filtered data is stored and will be reset if you re-upload or re-process data.</h4>'),
-                           hr(),
-                           actionButton("filter_dismiss", "Review Results", width = '75%'),
-                           br(),
-                           br(),
-                           actionButton("goto_viz", "Continue to Visualization", width = '75%')
+    
+    if(!exists('filt_msg')){
+      # display success modal
+      showModal(
+        modalDialog(title = "Filter Success",
+                    fluidRow(
+                      column(10, align = "center", offset = 1,
+                             HTML('<h4 style= "color:#1A5276">Your data has been filtered.</h4>
+                                <h4 style= "color:#1A5276">The filtered data is stored and will be reset if you re-upload or re-process data.</h4>'),
+                             hr(),
+                             actionButton("filter_dismiss", "Review Results", width = '75%'),
+                             br(),
+                             br(),
+                             actionButton("goto_viz", "Continue to Visualization", width = '75%')
+                      )
                     )
-                  )
-                  ,footer = NULL)
-    )
+                    ,footer = NULL)
+      )
+    }
     
     #__test-export__
     exportTestValues(peakData2 = revals$peakData2)
@@ -1028,6 +945,7 @@ shinyServer(function(session, input, output) {
   
   # selector for summary funcion
   output$summary_fxn_out <- renderUI({
+    req(!(input$choose_single %in% c(1,2)), cancelOutput = T)
     text_pres_fn <- "For a given peak, should the count or proportion of nonmissing values across samples in a group be used to determine whether or not that peak is present/absent within the group"
     text_test <- HTML("<p>Should a G-test or presence absence thresholds be used to determine whether a sample is unique to a particular group?</p><p>Depending on your selection, you will be asked for a presence threshold and a p-value (G-test) or a presence AND absence threshold<p/>") 
     
@@ -1205,187 +1123,186 @@ shinyServer(function(session, input, output) {
     
     # for testing if plot actually got updated in test mode
     exportTestValues(plot = NULL, plot_attrs = NULL)
-    
-    if (isolate(v$clearPlot)){
-      return(NULL)
-    } 
-    else {
-      # Make sure a plot stype selection has been chosen
-      validate(need(input$choose_single != 0, message = "Please select plotting criteria"))
-      
-      revals$legendTitle = ifelse(isolate(is.null(input$legend_title_input) || (input$legend_title_input == "")),
-                           yes = names(isolate(revals$color_by_choices[revals$color_by_choices == input$vk_colors])),
-                           no = isolate(input$legend_title_input)
-      )
-      
-      # Apply custom color scale if numeric is selected
-      if (isolate(numeric_selected()) & !(input$vk_colors %in% c("bs1", "bs2"))){
-        diverging_options = c("RdYlGn")
-        pal <- RColorBrewer::brewer.pal(n = 9, input$colorpal)
+    isolate({  
+      if (v$clearPlot){
+        return(NULL)
+      } 
+      else {
+        # Make sure a plot stype selection has been chosen
+        validate(need(input$choose_single != 0, message = "Please select plotting criteria"))
         
-        # diverging_options specify color palletes that look weird if they are truncated: [3:9], only truncate the 'normal' ones
-        if (!(input$colorpal %in% diverging_options)){
-          pal <- RColorBrewer::brewer.pal(n = 9, input$colorpal)[3:9]
-        }
-        
-        # flip the color scale on button click
-        if (input$flip_colors %% 2 != 0){
-          pal <- rev(pal)
-        }
-        
-        # get domain and obtain color pallette function
-        domain = range(plot_data()$e_meta[,input$vk_colors], na.rm = TRUE)
-        colorPal <- scales::col_numeric(pal, domain)
-        #revals$colorPal <- paste(paste(pal, collapse = ","), paste(domain, collapse = ","), sep = ":")
-      }
-      else if(!(input$choose_single %in% c(3,4)) & !(input$vk_colors %in% c("bs1", "bs2"))){
-        # if there are too many categories, warn user and provide color palette
-        if(length(unique(plot_data()$e_meta[, input$vk_colors])) > 12){
-          ramp <- colorRampPalette(RColorBrewer::brewer.pal(12, "Set3"))
-          pal <- ramp(length(unique(plot_data()$e_meta[, input$vk_colors])))
-          colorPal <- scales::col_factor(pal, domain = unique(plot_data()$e_meta[, input$vk_colors]))
-        }
-        else colorPal <- NA
-        #revals$colorPal <- NA
-      }
-      else if(input$choose_single %in% c(3,4)){
-        pal = switch(input$colorpal,
-                     'default' = c("#7fa453", "#a16db8", "#cb674a"), 'bpr' = c("#0175ee", '#7030A0', "#fd003d"),
-                     'neutral' = c("#FC8D59", '#7030A0', "#91CF60"), 'bpg' = c('#8377cb', '#c95798', '#60a862'),
-                     'rblkgn' = c('red', 'black', 'green'))
-        
-        # still allow color_inversion, even though it looks weird
-        if (input$flip_colors %% 2 != 0){
-          pal <- rev(pal)
-        }
-        
-        pal <- pal[c(1,3,2)] # dont ask
-        
-       domain <- unique(plot_data()$e_data[,which(grepl('^uniqueness', colnames(plot_data()$e_data)))])
-       domain <- domain[which(!is.na(domain))]
-       colorPal <- scales::col_factor(pal, domain = domain)
-      }
-      else colorPal <- NA # just in case....
-      
-      
-      #----------- Single sample plots ------------#
-      #-------Kendrick Plot-----------# 
-      if (input$chooseplots == 'Kendrick Plot') {
-        validate(need(!is.null(input$whichSamples) | !(is.null(isolate(g1_samples())) & is.null(isolate(g2_samples()))), message = "Please select at least 1 sample"))
-        p <- kendrickPlot(isolate(plot_data()), colorCName = input$vk_colors, colorPal = colorPal,
-                          xlabel = isolate(input$x_axis_input), ylabel = isolate(input$y_axis_input),
-                          title = isolate(input$title_input),legendTitle = revals$legendTitle)
-        
-        if (input$vk_colors %in% c('bs1', 'bs2')) {
-          p <- kendrickPlot(isolate(plot_data()), vkBoundarySet = input$vk_colors,
-                            xlabel = isolate(input$x_axis_input), ylabel = isolate(input$y_axis_input),
-                            title = isolate(input$title_input),legendTitle = revals$legendTitle)
-        } else {
-          # if color selection doesn't belong to a boundary, color by test
-          p <- kendrickPlot(isolate(plot_data()), colorCName = input$vk_colors, colorPal = colorPal,
-                            xlabel = isolate(input$x_axis_input), ylabel = isolate(input$y_axis_input),
-                            title = isolate(input$title_input),legendTitle = revals$legendTitle)
-        }
-      }
-      #-------VanKrevelen Plot--------#
-      if (input$chooseplots == 'Van Krevelen Plot') {
-        validate(need(!is.null(input$whichSamples) | !(is.null(isolate(g1_samples())) & is.null(isolate(g2_samples()))), message = "Please select at least 1 sample"))
-        if (input$vkbounds == 0) { #no bounds
-          # if no boundary lines, leave the option to color by boundary
-          if (input$vk_colors %in% c('bs1', 'bs2')) {
-            p <- vanKrevelenPlot(isolate(plot_data()), showVKBounds = FALSE, vkBoundarySet = input$vk_colors,
-                                 xlabel = isolate(input$x_axis_input), ylabel = isolate(input$y_axis_input),
-                                 title = isolate(input$title_input),legendTitle = revals$legendTitle)
-          } else {
-            # if no boundary lines and color selection doesn't belong to a boundary, color by test
-            p <- vanKrevelenPlot(isolate(plot_data()), showVKBounds = FALSE, colorCName = input$vk_colors, colorPal = colorPal,
-                                 xlabel = isolate(input$x_axis_input), ylabel = isolate(input$y_axis_input),
-                                 title = isolate(input$title_input),legendTitle = revals$legendTitle)
-          }
-        } else {
-          # if boundary lines, allow a color by boundary class 
-          if (input$vk_colors %in% c('bs1', 'bs2')) {
-            p <- vanKrevelenPlot(isolate(plot_data()), vkBoundarySet = input$vkbounds, showVKBounds = TRUE,
-                                 xlabel = isolate(input$x_axis_input), ylabel = isolate(input$y_axis_input),
-                                 title = isolate(input$title_input),legendTitle = revals$legendTitle)
-          } else {
-            # if boundary lines and color isn't a boundary class
-            p <- vanKrevelenPlot(isolate(plot_data()), vkBoundarySet = input$vkbounds, showVKBounds = TRUE, 
-                                 colorCName = input$vk_colors, colorPal = colorPal,
-                                 xlabel = isolate(input$x_axis_input), ylabel = isolate(input$y_axis_input),
-                                 title = isolate(input$title_input),legendTitle = revals$legendTitle)
-          }
-        }
-      }
-      
-      #--------- Density Plot --------#
-      if (input$chooseplots == 'Density Plot') {
-        validate(need(!is.null(input$whichSamples) | !(is.null(isolate(g1_samples())) & is.null(isolate(g2_samples()))), message = "Please select at least 1 sample"),
-                 need(!is.na(input$vk_colors), message = "Please select a variable")
+        revals$legendTitle = ifelse(is.null(input$legend_title_input) || (input$legend_title_input == ""),
+                             yes = names(revals$color_by_choices[revals$color_by_choices == input$vk_colors]),
+                             no = input$legend_title_input
         )
         
-        # sample/group inputs depending on whether or not we are doing a comparison of groups
-        if (input$choose_single %in% c(3,4)){
-          samples = FALSE
-          groups = unique(isolate(attr(plot_data(), "group_DF")$Group))
+        # Apply custom color scale if numeric is selected
+        if (numeric_selected() & !(input$vk_colors %in% c("bs1", "bs2"))){
+          diverging_options = c("RdYlGn")
+          pal <- RColorBrewer::brewer.pal(n = 9, input$colorpal)
+          
+          # diverging_options specify color palletes that look weird if they are truncated: [3:9], only truncate the 'normal' ones
+          if (!(input$colorpal %in% diverging_options)){
+            pal <- RColorBrewer::brewer.pal(n = 9, input$colorpal)[3:9]
+          }
+          
+          # flip the color scale on button click
+          if (input$flip_colors %% 2 != 0){
+            pal <- rev(pal)
+          }
+          
+          # get domain and obtain color pallette function
+          domain = range(plot_data()$e_meta[,input$vk_colors], na.rm = TRUE)
+          colorPal <- scales::col_numeric(pal, domain)
+          #revals$colorPal <- paste(paste(pal, collapse = ","), paste(domain, collapse = ","), sep = ":")
         }
-        else if (input$choose_single == 2){
-          samples = input$whichSamples
-          groups = "Group"
+        else if(!(input$choose_single %in% c(3,4)) & !(input$vk_colors %in% c("bs1", "bs2"))){
+          # if there are too many categories, warn user and provide color palette
+          if(length(unique(plot_data()$e_meta[, input$vk_colors])) > 12){
+            ramp <- colorRampPalette(RColorBrewer::brewer.pal(12, "Set3"))
+            pal <- ramp(length(unique(plot_data()$e_meta[, input$vk_colors])))
+            colorPal <- scales::col_factor(pal, domain = unique(plot_data()$e_meta[, input$vk_colors]))
+          }
+          else colorPal <- NA
+          #revals$colorPal <- NA
         }
-        else if (input$choose_single == 1){
-          samples = input$whichSamples
-          groups = FALSE
+        else if(input$choose_single %in% c(3,4)){
+          pal = switch(input$colorpal,
+                       'default' = c("#7fa453", "#a16db8", "#cb674a"), 'bpr' = c("#0175ee", '#7030A0', "#fd003d"),
+                       'neutral' = c("#FC8D59", '#7030A0', "#91CF60"), 'bpg' = c('#8377cb', '#c95798', '#60a862'),
+                       'rblkgn' = c('red', 'black', 'green'))
+          
+          # still allow color_inversion, even though it looks weird
+          if (input$flip_colors %% 2 != 0){
+            pal <- rev(pal)
+          }
+          
+          pal <- pal[c(1,3,2)] # dont ask
+          
+         domain <- unique(plot_data()$e_data[,which(grepl('^uniqueness', colnames(plot_data()$e_data)))])
+         domain <- domain[which(!is.na(domain))]
+         colorPal <- scales::col_factor(pal, domain = domain)
+        }
+        else colorPal <- NA # just in case....
+        
+        #----------- Single sample plots ------------#
+        #-------Kendrick Plot-----------# 
+        if (input$chooseplots == 'Kendrick Plot') {
+          validate(need(!is.null(input$whichSamples) | !(is.null(g1_samples()) & is.null(g2_samples())), message = "Please select at least 1 sample"))
+          p <- kendrickPlot(plot_data(), colorCName = input$vk_colors, colorPal = colorPal,
+                            xlabel = input$x_axis_input, ylabel = input$y_axis_input,
+                            title = input$title_input,legendTitle = revals$legendTitle)
+          
+          if (input$vk_colors %in% c('bs1', 'bs2')) {
+            p <- kendrickPlot(plot_data(), vkBoundarySet = input$vk_colors,
+                              xlabel = input$x_axis_input, ylabel = input$y_axis_input,
+                              title = input$title_input,legendTitle = revals$legendTitle)
+          } else {
+            # if color selection doesn't belong to a boundary, color by test
+            p <- kendrickPlot(plot_data(), colorCName = input$vk_colors, colorPal = colorPal,
+                              xlabel = input$x_axis_input, ylabel = input$y_axis_input,
+                              title = input$title_input,legendTitle = revals$legendTitle)
+          }
+        }
+        #-------VanKrevelen Plot--------#
+        if (input$chooseplots == 'Van Krevelen Plot') {
+          validate(need(!is.null(input$whichSamples) | !(is.null(g1_samples()) & is.null(g2_samples())), message = "Please select at least 1 sample"))
+          if (input$vkbounds == 0) { #no bounds
+            # if no boundary lines, leave the option to color by boundary
+            if (input$vk_colors %in% c('bs1', 'bs2')) {
+              p <- vanKrevelenPlot(plot_data(), showVKBounds = FALSE, vkBoundarySet = input$vk_colors,
+                                   xlabel = input$x_axis_input, ylabel = input$y_axis_input,
+                                   title = input$title_input,legendTitle = revals$legendTitle)
+            } else {
+              # if no boundary lines and color selection doesn't belong to a boundary, color by test
+              p <- vanKrevelenPlot(plot_data(), showVKBounds = FALSE, colorCName = input$vk_colors, colorPal = colorPal,
+                                   xlabel = input$x_axis_input, ylabel = input$y_axis_input,
+                                   title = input$title_input,legendTitle = revals$legendTitle)
+            }
+          } else {
+            # if boundary lines, allow a color by boundary class 
+            if (input$vk_colors %in% c('bs1', 'bs2')) {
+              p <- vanKrevelenPlot(plot_data(), vkBoundarySet = input$vkbounds, showVKBounds = TRUE,
+                                   xlabel = input$x_axis_input, ylabel = input$y_axis_input,
+                                   title = input$title_input,legendTitle = revals$legendTitle)
+            } else {
+              # if boundary lines and color isn't a boundary class
+              p <- vanKrevelenPlot(plot_data(), vkBoundarySet = input$vkbounds, showVKBounds = TRUE, 
+                                   colorCName = input$vk_colors, colorPal = colorPal,
+                                   xlabel = input$x_axis_input, ylabel = input$y_axis_input,
+                                   title = input$title_input,legendTitle = revals$legendTitle)
+            }
+          }
         }
         
-        # if x axis input field is empty, get the display name of the color_by_choices vector index that equals vk_colors, otherwise use what the user typed
-        xlabel = ifelse(isolate(is.null(input$x_axis_input) || input$x_axis_input == ""),
-                        yes = names(revals$color_by_choices[revals$color_by_choices == input$vk_colors]),
-                        no = isolate(input$x_axis_input))
+        #--------- Density Plot --------#
+        if (input$chooseplots == 'Density Plot') {
+          validate(need(!is.null(input$whichSamples) | !(is.null(g1_samples()) & is.null(g2_samples())), message = "Please select at least 1 sample"),
+                   need(!is.na(input$vk_colors), message = "Please select a variable")
+          )
+          
+          # sample/group inputs depending on whether or not we are doing a comparison of groups
+          if (input$choose_single %in% c(3,4)){
+            samples = FALSE
+            groups = unique(attr(plot_data(), "group_DF")$Group)
+          }
+          else if (input$choose_single == 2){
+            samples = input$whichSamples
+            groups = "Group"
+          }
+          else if (input$choose_single == 1){
+            samples = input$whichSamples
+            groups = FALSE
+          }
+          
+          # if x axis input field is empty, get the display name of the color_by_choices vector index that equals vk_colors, otherwise use what the user typed
+          xlabel = ifelse(is.null(input$x_axis_input) || input$x_axis_input == "",
+                          yes = names(revals$color_by_choices[revals$color_by_choices == input$vk_colors]),
+                          no = input$x_axis_input)
+          
+          p <- densityPlot(plot_data(),variable = input$vk_colors, samples = samples, groups = groups,
+                           plot_hist = ifelse(input$choose_single == 1, TRUE, FALSE), 
+                           xlabel = xlabel, ylabel = input$y_axis_input, title = input$title_input)
+        }
         
-        p <- densityPlot(isolate(plot_data()),variable = input$vk_colors, samples = samples, groups = groups,
-                         plot_hist = ifelse(input$choose_single == 1, TRUE, FALSE), 
-                         xlabel = xlabel, ylabel = isolate(input$y_axis_input), title = isolate(input$title_input))
+        #---------- Custom Scatter Plot --------#
+        if (input$chooseplots == 'Custom Scatter Plot'){
+          validate(need(!is.null(input$whichSamples), message = "Please select at least 1 sample"),
+                   need(!is.na(input$vk_colors), message = "Please select a variable to color by"))
+          req(!is.null(input$scatter_x), !is.null(input$scatter_y), !("" %in% c(input$scatter_x, input$scatter_y)))
+          
+          p <- scatterPlot(plot_data(), input$scatter_x, input$scatter_y, colorCName = input$vk_colors, colorPal = colorPal,
+                           xlabel = ifelse(is.null(input$x_axis_input) | (input$x_axis_input == ""), 
+                                                   yes = names(revals$color_by_choices[revals$color_by_choices == input$scatter_x]), 
+                                                   no = input$x_axis_input), 
+                           ylabel = ifelse(is.null(input$y_axis_input) | (input$y_axis_input == ""), 
+                                                   yes = names(revals$color_by_choices[revals$color_by_choices == input$scatter_y]), 
+                                                   no = input$y_axis_input),
+                           title = input$title_input, legendTitle = revals$legendTitle)
+          
+        }
+        #----------- PCOA Plot ----------#
+        if(input$chooseplots==('PCOA Plot')){
+          # maximum of 5 pcs or the number of samples - 2 (#columns - ID column - 1)
+          xlabel = ifelse(is.null(input$x_axis_input) | (input$x_axis_input == ""), 
+                                  yes = paste0('PC ', input$scatter_x), 
+                                  no = input$x_axis_input)
+          ylabel = ifelse(is.null(input$y_axis_input) | (input$y_axis_input == ""), 
+                                  yes = paste0('PC ', input$scatter_y), 
+                                  no = input$y_axis_input)
+          
+          pcs <- getPrincipalCoordinates(plot_data(), n_dims = min(5, ncol(plot_data()$e_data)-2), dist_metric = input$choose_dist)
+          p <- plotPrincipalCoordinates(pcs, title = input$title_input, x=as.numeric(input$scatter_x), y=as.numeric(input$scatter_y), 
+                                        xlabel = xlabel, ylabel=ylabel,
+                                        ftmsObj = plot_data(), size = 10)
+        }
       }
-      
-      #---------- Custom Scatter Plot --------#
-      if (input$chooseplots == 'Custom Scatter Plot'){
-        validate(need(!is.null(input$whichSamples), message = "Please select at least 1 sample"),
-                 need(!is.na(input$vk_colors), message = "Please select a variable to color by"))
-        req(!is.null(input$scatter_x), !is.null(input$scatter_y), !("" %in% c(input$scatter_x, input$scatter_y)))
-        
-        p <- scatterPlot(isolate(plot_data()), input$scatter_x, input$scatter_y, colorCName = input$vk_colors, colorPal = colorPal,
-                         xlabel = isolate(ifelse(is.null(input$x_axis_input) | (input$x_axis_input == ""), 
-                                                 yes = names(revals$color_by_choices[revals$color_by_choices == input$scatter_x]), 
-                                                 no = input$x_axis_input)), 
-                         ylabel = isolate(ifelse(is.null(input$y_axis_input) | (input$y_axis_input == ""), 
-                                                 yes = names(revals$color_by_choices[revals$color_by_choices == input$scatter_y]), 
-                                                 no = input$y_axis_input)),
-                         title = isolate(input$title_input), legendTitle = revals$legendTitle)
-        
-      }
-      #----------- PCOA Plot ----------#
-      if(input$chooseplots==('PCOA Plot')){
-        # maximum of 5 pcs or the number of samples - 2 (#columns - ID column - 1)
-        xlabel = isolate(ifelse(is.null(input$x_axis_input) | (input$x_axis_input == ""), 
-                                yes = paste0('PC ', input$scatter_x), 
-                                no = input$x_axis_input))
-        ylabel = isolate(ifelse(is.null(input$y_axis_input) | (input$y_axis_input == ""), 
-                                yes = paste0('PC ', input$scatter_y), 
-                                no = input$y_axis_input))
-        
-        pcs <- getPrincipalCoordinates(plot_data(), n_dims = min(5, ncol(plot_data()$e_data)-2), dist_metric = isolate(input$choose_dist))
-        p <- plotPrincipalCoordinates(pcs, title = isolate(input$title_input), x=as.numeric(input$scatter_x), y=as.numeric(input$scatter_y), 
-                                      xlabel = xlabel, ylabel=ylabel,
-                                      ftmsObj = plot_data(), size = 10)
-      }
-    }
-    
+    })
     # Axes Options
     f <- list(family = "Arial", size = 18, color = "#7f7f7f")
     
     x <- y <- list(titlefont = f)
-    
+  
     p <- p %>% layout(xaxis = x, yaxis = y, titlefont = f)
     
     # Null assignment bypasses plotly bug
@@ -1398,8 +1315,13 @@ shinyServer(function(session, input, output) {
     
     revals$current_plot <- p
     
-    return(p)
+    # use webGL for large plots
+    if(peakData2_dim() > max_cells & !(input$chooseplots == 'Density Plot')){
+      p <- p %>% layout(margin = list(b = 50, l = 75)) # I dont know why but webGL crops axes titles, must reset
+      p <- toWebGL(p)
+    }
     
+    return(p)
   })
   # END FXNPLOT
   
@@ -1572,6 +1494,11 @@ shinyServer(function(session, input, output) {
   # observer which write files to temp directory in preparation for download
   # this needs to be outside the downloadhandler to get around the server timing out on long downloads
   observeEvent(input$makezipfile,{
+    disable('makezipfile')
+    on.exit({
+      enable('makezipfile')
+    })
+    
     print(tempdir())
     fs <- vector()
     
@@ -1603,6 +1530,7 @@ shinyServer(function(session, input, output) {
         fs <- c(fs, file.path(tempdir(), "FREDA_processed_merged_data.csv"))
         merged_data <- merge(revals$peakData2$e_data, revals$peakData2$e_meta)
         write_csv(merged_data, path = file.path(tempdir(), "FREDA_processed_merged_data.csv"))
+        rm(merged_data)
         incProgress(1/total_files, detail = 'Merged file done..')
       }
       if ("group_data" %in% input$download_selection){
@@ -1624,13 +1552,13 @@ shinyServer(function(session, input, output) {
           path <- paste(tempdir(), "/",gsub("/", "-", parmTable$parms[["File Name"]][i]), ".", input$image_format, sep = "") #create a plot name
           fs <- c(fs, path) # append the new plot to the old plots
           export(revals$plot_list[[i]],
-                 file = paste(tempdir(), "plot",i,".png", sep = ""), zoom = 2) # use webshot to export a screenshot to the opened pdf
+                 file = path, zoom = ifelse(peakData2_dim() < max_cells, 2, 1)) # use webshot to export a screenshot to the opened pdf
           #r <- brick(file.path(getwd(), paste("plot",i,".png", sep = ""))) # create a raster of the screenshot
-          img <- magick::image_read(paste(tempdir(), "plot",i,".png", sep = ""))#attr(r,"file")@name) #turn the raster into an image of selected format
+          # img <- magick::image_read(paste(tempdir(), "plot",i,".png", sep = ""))#attr(r,"file")@name) #turn the raster into an image of selected format
           
-          if (isTRUE(getOption("shiny.testmode"))) bitmaps[[i]] <- as.raster(img)
+          # if (isTRUE(getOption("shiny.testmode"))) bitmaps[[i]] <- as.raster(img)
           
-          image_write(img, path = path, format = input$image_format) #write the image
+          #image_write(img, path = path, format = input$image_format) #write the image
           incProgress(1/total_files, detail = sprintf('Plot %s done..', i))
           #rsvg::rsvg_svg(img, file = path)
         }
