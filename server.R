@@ -21,6 +21,7 @@ library(shinyWidgets)
 library(pander)
 library(readr)
 library(plotly)
+
 # devtools::load_all('~/Documents/git_repos/MetaCycData/')
 # devtools::load_all('~/Documents/git_repos/KeggData/')
 
@@ -1426,47 +1427,126 @@ shinyServer(function(session, input, output) {
     if(!exists('kegg_compounds')){
       data('kegg_compounds')
     }
+    # input$stop_at
     
-    forms <- peakData2$e_meta[,getMFColName(peakData2)]
+    # get list of all formulae and subset kegg_compounds to identified formulae
+    forms <- peakData2$e_meta %>% 
+      filter(!is.na(!!rlang::sym(getMFColName(peakData2)))) %>% 
+      dplyr::rename(FORMULA = !!rlang::sym(getMFColName(peakData2))) %>%
+      select(FORMULA)
     
-    comps <- lapply(forms, function(form){
-      if(form %in% kegg_compounds$FORMULA & !is.na(form)){
-        foo <- kegg_compounds %>% filter(FORMULA == form) %>% pluck('COMPOUND')
-        if(10000 > length(foo)){
-          foo
+    # peaks to compounds
+    kegg_sub <- forms %>% 
+      left_join(kegg_compounds, by = 'FORMULA') %>% 
+      filter(!is.na(COMPOUND) | !is.na(REACTION)) %>%
+      as_tibble() %>%
+      select(COMPOUND, REACTION, FORMULA, URL)
+    
+    # compounds to reactions
+    if(input$comp2react){
+      kegg_sub <- kegg_sub %>% 
+        mutate(REACTION = strsplit(REACTION, ';'))
+    }
+    
+    # compounds to modules
+    if(input$which_tags){
+      kegg_sub <- kegg_sub %>%
+        left_join(kegg_compound_module_map %>%
+                    enframe(name = 'COMPOUND', value = 'MODULE')) %>%
+        mutate(MODULE = map_if(MODULE, is.null, ~c(NA)))
+    }
+    
+    # modules to pathways
+    if(input$which_tags){
+      tempfun = function(x){
+        if(!all(is.na(x))){
+          kegg_module_pathway_map[x] %>% list()
+        }
+        else x
+      }
+      
+     kegg_sub <- kegg_sub %>% 
+        mutate(PATHWAY = map(MODULE, tempfun))
+    }
+    
+    if(which_unique == 'REACTION'){
+      kegg_sub <- kegg_sub %>% 
+        unnest(REACTION, .drop = F) %>%
+        mutate(MODULE = map(MODULE, paste, collapse = ';'),
+               PATHWAY = map(PATHWAY, function(x){x %>% unlist() %>% unname() %>% unique() %>% paste(collapse = ';')}))
+    }
+    
+    if(which_unique == 'MODULE'){
+      kegg_sub <- kegg_sub %>%
+        unnest(MODULE, .drop = F) %>%
+        mutate(PATHWAY = map(PATHWAY, function(x){x[[1]] %>% unlist() %>% unname() %>% unique() %>% paste(collapse = ';')}),
+               REACTION = map(REACTION, paste, collapse = ';'))
+    }
+    
+    if(which_unique == 'PATHWAY'){
+      tempfun = function(x,y){
+        if(!all(is.na(y))){
+          if(!all(is.na(x))){
+            y[[1]][[x]]
+          }
+          else NA
         }
         else NA
       }
-      else NA
-    })
-    
-    if(input$comp2react_x){
-      reactions <- lapply(comps, function(comp){
-        if(any(comp %in% kegg_compounds$COMPOUND)){
-          foo <- kegg_compounds %>% filter(COMPOUND %in% comp) %>% pluck('REACTION')
-          foo <- strsplit(foo, ';')[[1]]
-          if(10000 > length(foo)){
-            foo
-          }
-          else NA
+      
+      tempfun = function(x){
+        if(!all(is.na(x))){
+          kegg_module_pathway_map[x] %>% list()
         }
-        else NA
-      })
+        else x
+      }
+      
+      kegg_sub <- kegg_sub %>%
+        mutate(REACTION = map(REACTION, paste, collapse = ';'))%>%
+        unnest(MODULE, .drop = F) %>%
+        mutate(PATHWAY = map2(MODULE, PATHWAY, tempfun)) %>% 
+        unnest(PATHWAY, .drop = F)
     }
     
-    if(input$comp2path_x){
-      pathways <- lapply(forms, function(form){
-        if(form %in% kegg_compounds$FORMULA & !is.na(form)){
-          foo <- kegg_compounds %>% filter(FORMULA == form) %>% pluck('PATHWAY')
-          foo <- strsplit(foo, '\n')[[1]]
-          if(10000 > length(foo)){
-            foo
-          }
-          else NA
-        }
-        else NA
-      })
-    }
+    # comps <- lapply(forms, function(form){
+    #   if(form %in% kegg_compounds$FORMULA & !is.na(form)){
+    #     foo <- kegg_compounds %>% filter(FORMULA == form) %>% pluck('COMPOUND')
+    #     if(10000 > length(foo)){
+    #       foo
+    #     }
+    #     else NA
+    #   }
+    #   else NA
+    # })
+    
+    # get reactions
+    # if(input$comp2react_x){
+    #   reactions <- lapply(comps, function(comp){
+    #     if(any(comp %in% kegg_compounds$COMPOUND)){
+    #       foo <- kegg_compounds %>% filter(COMPOUND %in% comp) %>% pluck('REACTION')
+    #       foo <- strsplit(foo, ';')[[1]]
+    #       if(10000 > length(foo)){
+    #         foo
+    #       }
+    #       else NA
+    #     }
+    #     else NA
+    #   })
+    # }
+    # 
+    # if(input$comp2path_x){
+    #   pathways <- lapply(forms, function(form){
+    #     if(form %in% kegg_compounds$FORMULA & !is.na(form)){
+    #       foo <- kegg_compounds %>% filter(FORMULA == form) %>% pluck('PATHWAY')
+    #       foo <- strsplit(foo, '\n')[[1]]
+    #       if(10000 > length(foo)){
+    #         foo
+    #       }
+    #       else NA
+    #     }
+    #     else NA
+    #   })
+    # }
    
     # only maximum number of compound 
     
