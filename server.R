@@ -1423,67 +1423,140 @@ shinyServer(function(session, input, output) {
   
   ####### Database Tab #######
   
+  output$which_unique <- renderUI({
+    choices = c('None', 'Modules' = 'MODULE', 'Reactions' = 'REACTION', 'Pathways' = 'PATHWAY')
+    chosen_vars <- c(T, input$comp2mod_x, input$comp2react_x, input$mod2path_x)
+    choices = choices[chosen_vars]
+    
+    pickerInput('which_unique', NULL, 
+                choices = choices,
+                multiple = FALSE)
+  })
+  
+  output$kegg_table <- renderDT(revals$kegg_table,
+                                options = list(scrollX = TRUE, pageLength = 15),
+                                server = TRUE, escape = FALSE)
+  
+  # create the mapping on button click
   observeEvent(input$create_mapping, {
+    disable('create_mapping')
+    on.exit({
+      enable('creating_mapping')
+    })
+    
+    req(revals$peakData2, !is.null(attr(revals$peakData2, 'cnames')$mf_cname))
+    
+    # path for un-listing elements of column PATHWAY, which is sometimes created as a list-of-lists column
+    unnest_paths = function(comp,pathway_list){
+      if(!all(is.na(pathway_list))){
+        if(!all(is.na(comp))){
+          # the elements of the column will be a list-of-lists, with sublists named after each compound
+          pathway_list[[1]][[comp]]
+        }
+        else NA
+      }
+      else NA
+    }
+    
     if(!exists('kegg_compounds')){
       data('kegg_compounds')
     }
-    # input$stop_at
     
     # get list of all formulae and subset kegg_compounds to identified formulae
-    forms <- peakData2$e_meta %>% 
-      filter(!is.na(!!rlang::sym(getMFColName(peakData2)))) %>% 
-      dplyr::rename(FORMULA = !!rlang::sym(getMFColName(peakData2))) %>%
-      select(FORMULA)
+    forms <- revals$peakData2$e_meta %>% 
+      filter(!is.na(!!rlang::sym(getMFColName(revals$peakData2)))) %>% 
+      dplyr::rename(FORMULA = !!rlang::sym(getMFColName(revals$peakData2))) %>%
+      dplyr::select(getEDataColName(revals$peakData2), FORMULA)
     
     # peaks to compounds
     kegg_sub <- forms %>% 
       left_join(kegg_compounds, by = 'FORMULA') %>% 
       filter(!is.na(COMPOUND) | !is.na(REACTION)) %>%
       as_tibble() %>%
-      select(COMPOUND, REACTION, FORMULA, URL)
+      dplyr::select(COMPOUND, REACTION, FORMULA, URL) %>%
+      mutate(URL = paste0("<a href='",URL,"' target='_blank'>", 'compound link</a>'))
     
     # compounds to reactions
-    if(input$comp2react){
-      kegg_sub <- kegg_sub %>% 
-        mutate(REACTION = strsplit(REACTION, ';'))
+    if(input$comp2react_x){
+      kegg_sub <- kegg_sub %>% rowwise() %>%
+        mutate(REACTION = ifelse(length(strsplit(REACTION, ';')[[1]]) > input$maxreacts,
+                                 yes = NA,
+                                 no = strsplit(REACTION, ';')[[1]]))
     }
     
     # compounds to modules
-    if(input$which_tags){
+    if(input$comp2mod_x){
+      tempfun <- function(x, maxlen){
+        is.null(x) | length(x) > maxlen
+      }
+      
       kegg_sub <- kegg_sub %>%
         left_join(kegg_compound_module_map %>%
                     enframe(name = 'COMPOUND', value = 'MODULE')) %>%
-        mutate(MODULE = map_if(MODULE, is.null, ~c(NA)))
+        ungroup() %>%
+        mutate(MODULE = map_if(MODULE, ~tempfun(.x, input$maxcomps), ~c(NA)))
     }
     
     # modules to pathways
-    if(input$which_tags){
-      tempfun = function(x){
+    if(input$mod2path_x){
+      req(input$comp2mod_x)
+      
+      tempfun = function(x, maxlen){
         if(!all(is.na(x))){
-          kegg_module_pathway_map[x] %>% list()
+          temp <- kegg_module_pathway_map[x]
+          temp <- temp[which(lapply(temp, length) <= maxlen)]
+          ifelse(length(temp) > 0, temp, NA)
         }
         else x
       }
       
      kegg_sub <- kegg_sub %>% 
-        mutate(PATHWAY = map(MODULE, tempfun))
+        mutate(PATHWAY = map(MODULE, ~tempfun(.x, input$maxpaths)))
     }
     
-    if(which_unique == 'REACTION'){
+    # Remove entries with more than specified number of 
+    
+    
+    # conditional block which unnests calculated columns based on unique row selection
+    if(input$which_unique == 'None'){
+      if('REACTION' %in% colnames(kegg_sub)){
+        kegg_sub <- kegg_sub %>% mutate(REACTION = map(REACTION, paste, collapse = ';'))
+      }
+      if('MODULE' %in% colnames(kegg_sub)){
+        kegg_sub <- kegg_sub %>% mutate(MODULE = map(MODULE, paste, collapse = ';'))
+      }
+      if('PATHWAY' %in% colnames(kegg_sub)){
+        kegg_sub <- kegg_sub %>% mutate(PATHWAY = map(PATHWAY, function(x){x[[1]] %>% unlist() %>% unname() %>% unique() %>% paste(collapse = ';')}))
+      }
+    }
+    else if(input$which_unique == 'REACTION'){
       kegg_sub <- kegg_sub %>% 
-        unnest(REACTION, .drop = F) %>%
-        mutate(MODULE = map(MODULE, paste, collapse = ';'),
-               PATHWAY = map(PATHWAY, function(x){x %>% unlist() %>% unname() %>% unique() %>% paste(collapse = ';')}))
+        unnest(REACTION, .drop = F)
+      
+      if('MODULE' %in% colnames(kegg_sub)){
+        kegg_sub <- kegg_sub %>% mutate(MODULE = map(MODULE, paste, collapse = ';'))
+      }
+      
+      if('PATHWAY' %in% colnames(kegg_sub)){
+        kegg_sub <- kegg_sub %>% mutate(PATHWAY = map(PATHWAY, function(x){x %>% unlist() %>% unname() %>% unique() %>% paste(collapse = ';')}))
+      }
     }
-    
-    if(which_unique == 'MODULE'){
+    else if(input$which_unique == 'MODULE'){
       kegg_sub <- kegg_sub %>%
-        unnest(MODULE, .drop = F) %>%
-        mutate(PATHWAY = map(PATHWAY, function(x){x[[1]] %>% unlist() %>% unname() %>% unique() %>% paste(collapse = ';')}),
-               REACTION = map(REACTION, paste, collapse = ';'))
-    }
+        unnest(MODULE, .drop = F)
+      
+      if('PATHWAY' %in% colnames(kegg_sub)){
+        kegg_sub <- kegg_sub %>% 
+          mutate(PATHWAY = map2(MODULE, PATHWAY, unnest_paths)) %>% 
+          mutate(PATHWAY = map(PATHWAY, function(x){x[[1]] %>% unlist() %>% unname() %>% unique() %>% paste(collapse = ';')}))
+      }
+      
+      if('REACTION' %in% colnames(kegg_sub)){
+        kegg_sub <- kegg_sub %>% mutate(REACTION = map(REACTION, paste, collapse = ';'))
+      }
     
-    if(which_unique == 'PATHWAY'){
+    }
+    else if(input$which_unique == 'PATHWAY'){
       tempfun = function(x,y){
         if(!all(is.na(y))){
           if(!all(is.na(x))){
@@ -1494,61 +1567,19 @@ shinyServer(function(session, input, output) {
         else NA
       }
       
-      tempfun = function(x){
-        if(!all(is.na(x))){
-          kegg_module_pathway_map[x] %>% list()
-        }
-        else x
+      if('REACTION' %in% colnames(kegg_sub)){
+        kegg_sub <- kegg_sub %>%
+          mutate(REACTION = map(REACTION, paste, collapse = ';'))
       }
       
       kegg_sub <- kegg_sub %>%
-        mutate(REACTION = map(REACTION, paste, collapse = ';'))%>%
         unnest(MODULE, .drop = F) %>%
-        mutate(PATHWAY = map2(MODULE, PATHWAY, tempfun)) %>% 
+        mutate(PATHWAY = map2(MODULE, PATHWAY, unnest_paths)) %>% 
         unnest(PATHWAY, .drop = F)
     }
     
-    # comps <- lapply(forms, function(form){
-    #   if(form %in% kegg_compounds$FORMULA & !is.na(form)){
-    #     foo <- kegg_compounds %>% filter(FORMULA == form) %>% pluck('COMPOUND')
-    #     if(10000 > length(foo)){
-    #       foo
-    #     }
-    #     else NA
-    #   }
-    #   else NA
-    # })
-    
-    # get reactions
-    # if(input$comp2react_x){
-    #   reactions <- lapply(comps, function(comp){
-    #     if(any(comp %in% kegg_compounds$COMPOUND)){
-    #       foo <- kegg_compounds %>% filter(COMPOUND %in% comp) %>% pluck('REACTION')
-    #       foo <- strsplit(foo, ';')[[1]]
-    #       if(10000 > length(foo)){
-    #         foo
-    #       }
-    #       else NA
-    #     }
-    #     else NA
-    #   })
-    # }
-    # 
-    # if(input$comp2path_x){
-    #   pathways <- lapply(forms, function(form){
-    #     if(form %in% kegg_compounds$FORMULA & !is.na(form)){
-    #       foo <- kegg_compounds %>% filter(FORMULA == form) %>% pluck('PATHWAY')
-    #       foo <- strsplit(foo, '\n')[[1]]
-    #       if(10000 > length(foo)){
-    #         foo
-    #       }
-    #       else NA
-    #     }
-    #     else NA
-    #   })
-    # }
-   
-    # only maximum number of compound 
+    inspect_kegg <<- kegg_sub
+    revals$kegg_table <- kegg_sub
     
   })
   
