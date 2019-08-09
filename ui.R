@@ -561,35 +561,56 @@ shinyUI(tagList(useShinyjs(),
                    ################## Database Mapping Panel ####################
                    tabPanel('Database Mapping',
                             fluidRow(style = "display:flex;flex-direction:row;align-items:stretch",
-                                     column(4,
-                                            radioGroupButtons('database_select', 'Select a database', choices = c('MetaCyc', 'Kegg')),
-                                            bsCollapse(id='viz_sidebar', open = c('mappings'), multiple=TRUE, 
-                                                       # Plot Parameters
-                                                       bsCollapsePanel(div('Compounds', div(style = 'float:right', uiOutput('comps_icon'))), value = 'form2comp',
-                                                                       div(class = 'adjustdown', checkboxInput('comp2react_x', 'Get Reactions')),
-                                                                       div(numericInput('maxcomps', 'Maximum Number of Compounds', 10))
-                                                       ),
-                                                       bsCollapsePanel(div('Reactions', div(style = 'float:right', uiOutput('reacts_icon'))), value = 'comp2react',
-                                                                       div(class = 'adjustdown', checkboxInput('comp2react_x', 'Get Reactions')),
-                                                                       div(numericInput('maxreacts', 'Maximum Number of Reactions', 10))
-                                                       ),
-                                                       bsCollapsePanel(div('Pathways', div(style = 'float:right', uiOutput('paths_icon'))), value = 'comp2path',
-                                                                       div(class = 'adjustdown', checkboxInput('comp2path_x', 'Get Pathways')),
-                                                                       div(numericInput('maxpaths', 'Maximum Number of Pathways', 10))
-                                                       ),
-                                                       bsCollapsePanel(div('Modules', div(style = 'float:right', uiOutput('mods_icon'))), value = 'comp2mod',
-                                                                       div(class = 'adjustdown', checkboxInput('react2mod_x', 'Get Modules')),
-                                                                       div(numericInput('maxmods', 'Maximum Number of Modules', 10))
-                                                       )
-                                            ),
-                                            actionButton('create_mapping', 'Perform Mapping')
-                                            ),# column 4
-                                     column(8,
-                                            HTML('-------------')
-                                            ) # column 8
-                                     
-                                     )
-                   ),
+                               column(4,
+                                  radioGroupButtons('database_select', 'Select a database', choices = c('Kegg', 'MetaCyc')),
+                                  bsCollapse(id='viz_sidebar', open = c('mappings'), multiple=TRUE, 
+                                     bsCollapsePanel('Choose which mappings to calculate', value = 'mappings',
+                                         # reactions
+                                         #div('Reactions', div(style = 'float:right', uiOutput('reacts_icon'))),
+                                         fluidRow(
+                                           column(6,div(class = 'adjustdown', checkboxInput('comp2react', 'Get Reactions'))),
+                                           column(6,div(numericInput('maxreacts', 'Maximum Number of Reactions', Inf)))
+                                         ),
+                                         hr(),
+                                         #div('Modules', div(style = 'float:right', uiOutput('mods_icon'))),
+                                         fluidRow(
+                                            column(6,div(class = 'adjustdown', checkboxInput('react2mod', 'Get Modules'))),
+                                            column(6,div(numericInput('maxmods', 'Maximum Number of Modules', Inf)))
+                                         ),
+                                         hr(),
+                                         #div('Pathways', div(style = 'float:right', uiOutput('paths_icon'))),
+                                         fluidRow(
+                                           column(6,div(class = 'adjustdown', checkboxInput('mod2path', 'Get Pathways'))),
+                                           column(6,div(numericInput('maxpaths', 'Maximum Number of Pathways', Inf)))
+                                         ),
+                                         hr(),
+                                         tags$p('Make unique rows for which variable?'),
+                                         div( 
+                                          div(style='display:inline-block', 
+                                            uiOutput('which_unique')
+                                          ),
+                                          actionButton('create_mapping', 'Perform Mapping')
+                                          )
+                                      )
+                                    )
+                                ),# column 4
+                               column(8,
+                                      bsCollapse(id = 'database_tables_parent_collapse', open = 'database_tables',
+                                                 bsCollapsePanel('Table Preview', value = 'database_tables',
+                                                                 div(id = "toggle_table",
+                                                                            div(style = 'float:left;margin-top:10px;margin-right:10px;font-weight:bold', "Display dataset:"),
+                                                                            radioGroupButtons('which_table', choices = c('Kegg'=1, 'MetaCyc'=2))
+                                                                 ), 
+                                                                 uiOutput('conditional_database_table')
+                                                   ),
+                                                 bsCollapsePanel('----', value = 'database_plots',
+                                                                 #uiOutput('upload_boxplots')
+                                                                 HTML('WHOA THERE! CLOSE THIS TAB!')
+                                                  )
+                                                 )# parent collapse
+                                      ) # column 8
+                               )#fluidrow
+                   ),#tabpanel
                    
                    ################## Download Panel ##############################################
                    tabPanel('Download',

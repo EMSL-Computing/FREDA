@@ -1,13 +1,18 @@
 #uncomment to do postmortem debugging
+
 # observeEvent(revals$peakData2,{
 #   peakData2 <<- revals$peakData2
 # })
 
+# observeEvent(revals, {
+#   revals_postmortem <<- reactiveValuesToList(revals)
+# })
+
 # multipurpose observer for page transitions
 observeEvent(input$top_page,{
-  toggleElement("helpbutton", condition = input$top_page %in% c("Upload", "Groups", "Preprocess", "Filter", "Visualize"))
+  toggleElement("helpbutton", condition = input$top_page %in% c("Upload", "Groups", "Preprocess", "Filter", "Visualize", 'Database Mapping'))
    
-  if(input$top_page %in% c('Quality Control', 'Filter', 'Visualize')){
+  if(input$top_page %in% c('Quality Control', 'Filter', 'Visualize', 'Database Mapping')){
       if(is.null(revals$peakData2)){
         revals$peakData2 <- revals$uploaded_data
       }
