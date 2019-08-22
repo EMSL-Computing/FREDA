@@ -5,14 +5,21 @@
 
 # multipurpose observer for page transitions
 observeEvent(input$top_page,{
-  toggleElement("helpbutton", condition = input$top_page %in% c("Upload", "Groups", "Preprocess", "Filter", "Visualize"))
+  toggleElement('helpbutton', condition = input$top_page %in% c('Upload', 'Groups', 'Preprocess', 'Filter', 'Visualize', 'Download', 'Database Mapping', 'Quality Control'))
    
   if(input$top_page %in% c('Quality Control', 'Filter', 'Visualize')){
       if(is.null(revals$peakData2)){
         revals$peakData2 <- revals$uploaded_data
       }
   }
+  
+  toggleElement('datareqs_video', condition = input$top_page == 'data_requirements')
 }, priority = 10)
+
+# show data requirements video on welcome page
+# observeEvent(input$welcome_menu,{
+#   toggleElement('datareqs_video', condition = input$welcome_menu == 'data_requirements')
+# })
 
 # control drawing of filter plot for large data, show warnings on qc and filter that dynamic plotting is disabled
 observeEvent(uploaded_data_dim(),{
@@ -24,18 +31,26 @@ observeEvent(uploaded_data_dim(),{
   revals$warningmessage_filter$not_dynamic <- if(uploaded_data_dim() > max_cells) "style = 'color:deepskyblue;font-weight:bold'>Dynamic plot disabled for large data.  Table and barplot will be displayed upon review." else NULL
 })
 
+video_footer <- function(id, url){
+  tagList(
+    bsButton(id, 'Video Walkthrough', onclick =paste0("window.open('", url, "', '_blank')"), style = 'info', icon = icon('facetime-video', lib = 'glyphicon')),
+    modalButton("Dismiss")
+  )
+}
+
 # Help Button
 observeEvent(input$helpbutton,{
   if(input$top_page == "Upload"){
     showModal(
       modalDialog("",
-                  tags$p("The purpose of this page is to upload your data and specify its structure, which at mininum must adhere to the description 
-                         in the 'Data Requirements' section of the Welcome dropdown"),
+                  tags$h4(tags$b("Upload your data and specify its structure")),
                   br(),
                   tags$p("Generally, the steps involved are:"),
-                  HTML("<ul>
-                          <li>Browse to and select your data file and molecular identification file in the first and second upload prompts respectively.</li>
-                          <li>Indicate the column, contained in both files, which contains the ID's for each peak.</li>
+                  HTML("<ol>
+                          <li>Browse to and select your data file from the first download prompt.</li>
+                          <li>Browse to and select your molecular identification file from the second download prompt.</li>
+                          <li>In the 'Choose column with ID's' dropdown, indicate the column (contained in both files) which contains the ID's for each peak.</li>
+                          <li>(Optional) Indicate the instrument used to generate your data, and the scale your data is on.</li>
                           <li>Indicate whether your molecular identification file contains elemental or full formula columns.</li>
                               <ul>
                                   <li>If you select Elemental Columns, 6 dropdowns will appear asking for which columns contain elemental information; FREDA will attempt to auto-populate them</li>
@@ -43,7 +58,8 @@ observeEvent(input$helpbutton,{
                               </ul>
                           <li>Indicate whether or not there is isotopic information contained in the molecular identification file. (If you select no, proceed to click 'Process Data'.</li>
                           <li>If you selected yes, identify whether you would like to filter isotopic peaks, which column contains this information, and the symbol which identifies presence.  Then hit 'Process Data'</li>
-                       </ul>")
+                       </ol>"),
+                  footer = video_footer('upload_video', 'https://youtu.be/MYccEwz67K4')
                   )
     )
     
@@ -51,14 +67,15 @@ observeEvent(input$helpbutton,{
   else if (input$top_page == "Groups"){
     showModal(
       modalDialog("",
-                  tags$p("This tab is used to define groups of samples\n"),
+                  tags$h4(tags$b("Define groups of samples\n")),
                   br(),
                   tags$p("On the left panel, input a name for your group, select the samples to include, and click 'add this group'.\n
                        A table entry will appear on the right panel.  You can select a row of that table and click 'Remove selected group' to remove the 
                        group."),
-                  br(),
-                  tags$p("Groups are allowed to share samples, but there will be a warning under the side panel if you want to avoid this.
-                         Plotting of overlapping groups is disallowed.")
+                  br(), br(),
+                  tags$p("Groups are allowed to share samples, there will be a warning under the side panel if you want to avoid this.
+                         Plotting of overlapping groups is not allowed in some cases."),
+                  footer = video_footer('groups_video', 'https://youtu.be/zyJADBxw3rA')
                     )
                   )
     
@@ -66,20 +83,22 @@ observeEvent(input$helpbutton,{
   else if(input$top_page == "Preprocess"){
       showModal(
         modalDialog("",
-                    tags$p("Here you can tell FREDA to compute certain values based on your input data.  The result of these calculations will be appended
-                           to your molecular identification file and can be used as filtering variables in the next tab.\n"),
-                    br(),
-                    HTML("<p> Check boxes to select which values you want calculated and then hit 'Process Data'.  
-                         <span style = font-weight:bold>Element ratios are selected by default as they are required to produce Van-Krevelen
-                         and Kendrick plots.</span>  \n Table summaries and an interactive histogram/bar chart of the values you selected will be generated.<p>")
+                    tags$h4(tags$b("Have FREDA compute additional values of interest")),
+                    tags$p("Check boxes to select which values you want calculated and then hit 'Process Data'.",
+                            br(),br(), 
+                            "The result of these calculations will be appended to your molecular identification file and can be used as filtering variables in the next tab.\n",
+                           tags$span(style = 'font-weight:bold', 'Element ratios are selected by default as they are required to produce Van-Krevelen and Kendrick plots.'),
+                           'Table summaries and an interactive histogram/bar chart of the values you selected will be generated.'
+                           ),
+                    footer = video_footer('preprocess_video', 'https://youtu.be/h99fuBt3Tc8')
                     )
                 )
   }
   else if(input$top_page == "Filter"){
       showModal(
         modalDialog("",
-                    tags$p("This page allows you to filter the data by various metrics.\n 
-                           The default options are to:"),
+                    tags$h4(tags$b("Filter the data by samples or by variables")), 
+                    tags$p("The default options are to:"),
                     tags$ul(
                       tags$li("Retain certain samples and drop the rest (Sample Filter)."),
                       tags$li("Retain peaks within a mass range (Mass Filter)"),
@@ -88,41 +107,73 @@ observeEvent(input$helpbutton,{
                     ),
                     tags$p("Additionally, one can filter by up to three variables contained in the molecular identification file.\n
                            As you select options, a plot will update showing the remaining observations after the application of each filter.\n"),
-                    tags$p("Check boxes to select which filters to apply, specify filtering criteria by a range for numeric data or a selection of values for categorical data and then click 'Filter Data'"))
+                    tags$p("Check boxes to select which filters to apply, specify filtering criteria by a range for numeric data or a selection of values for categorical data and then click 'Filter Data'"),
+                    footer = video_footer('filter_video', 'https://youtu.be/zgRizald6x8')
+                    )
               )
+  }
+  else if(input$top_page == "Quality Control"){
+    showModal(
+      modalDialog("",
+                  tags$h4(tags$b("Inspect and save boxplots of your data")), 
+                  tags$p("This is a simple page to review boxplots and summary statistics of your data."),
+                  tags$p("Select samples and axes options and click 'Update Boxplot Axes' to draw a new plot."),
+                  tags$p("Underneath the plot window you can save the currently displayed plot"),
+                  footer = video_footer('filter_video', 'https://youtu.be/9r68469sDmE')
+      )
+    )
   }
   else if(input$top_page == "Visualize"){    
       showModal(
         modalDialog("",
-                    
+                    tags$h4(tags$b('Generate plots from your processed data')),
+                    br(),
                     HTML(
-                      "<div><p>This page is used to generate plots from your processed data.  Roughly from top to bottom on the left panel, do the following:</p>
-                          <ul>
+                      "<div><p>Roughly from top to bottom on the left panel, do the following:</p>
+                          <ol>
                             <li>Select the type of plot you want to generate.</li>
-                            <li>Choose whether you would like to plot a single sample, multiple samples, or a comparison of two samples/groups</li>
-                            <ul>
-                              <li>If you selected a single sample, a dropdown will appear asking you to specify which one.</li>
-                              <li>If you selected multiple samples by group, the same dropdown will appear.  Select samples that should be grouped.  <b>One</b> group will be created with the samples you specify.</li>
-                              <li>If you selected a comparison of groups or a comparison of two samples, two dropdowns will appear.  Select samples or groups that you want to perform a comparison on.
-                                  Further, there will be dropdowns requesting how you would like to compare the two groups.</li>
-                            </ul>
+                            <li>Choose whether you would like to plot a <b>single sample, multiple samples, or a comparison of two samples/groups</b>
+                              <ul>
+                                <li>If you selected a single sample, a dropdown will appear asking you to specify which one.</li>
+                                <li>If you selected multiple samples by group, the same dropdown will appear.  Select samples that should be grouped.  <b>One</b> group will be created with the samples you specify.</li>
+                                <li>If you selected a comparison of groups or a comparison of two samples, two dropdowns will appear.  Select samples or groups that you want to perform a comparison on.
+                                    Further, there will be dropdowns requesting how you would like to compare the two groups.</li>
+                              </ul>
+                            </li>
                             <li>If desired, specify axis and title labels and hit 'Generate Plot'</li>
-                          </ul>
+                          </ol>
                           
                       </div>"
                       
                     ),
-                    
-                    tags$p("A plot will appear and can be customized to color by certain calculated values.  
-                           Van Krevelen boundaries can be displayed for VK-plots.
-                           Custom scatterplots will allow for selection of arbitrary x and y axes."),
-                    tags$p("If you want to change plot labels without recalculating the plot, you can hit 'Update Labels' instead of 'Generate Plot'"),
                     hr(),
-                    tags$p("Certain menu options may 'grey out' during navigation, indicating disabled functionality for a plot type, 
-                           or because certain values were not calculated during preprocessing")
-                    
+                    tags$p("A plot will appear and can be customized by selection menus beneath."),
+                    tags$p("Plots can be saved and reviewed in the 'Savee plot and view saved plots' collapsible sidebar"),
+                    footer = video_footer('visualize_video', 'https://youtu.be/fONBzKCyyiA')
                     )
                 )
+  }
+  else if(input$top_page == "Database"){
+    showModal(
+      modalDialog("",
+                  tags$h4(tags$b("Map your observed peak masses to compounds, reactions, modules, and pathways/superpathways.\n")),
+                  br(),
+                  tags$p('UNDER CONSTRUCTION'),
+                  footer = video_footer('database_video', 'http://google.com')
+                  )
+                  )
+  }
+  else if(input$top_page == "Download"){
+    showModal(
+      modalDialog("",
+                  tags$h4(tags$b("Download plots, .csv's and a report of the results of your FREDA session.")),
+                  br(),
+                  tags$p('Check boxes to tell FREDA to include the described file in your download'),
+                  tags$p('If you created plots, a table will be displayed giving information on them.  The rows of this table can be selected, which tells FREDA that they should be included in the download.'),
+                  tags$p('Once you are satisfied with your selection, click "Bundle up all selected items" which will prepare them for download.  Then click "Download bundle" to download all items as a compressed .zip file.'),
+                  footer = video_footer('download_video', 'https://youtu.be/qL-XlK8s80s')
+      )
+    )
   }
   
 })

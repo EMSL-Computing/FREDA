@@ -549,6 +549,7 @@ shinyServer(function(session, input, output) {
   
   # Sample selection for sample filter
   output$filter_samples <- renderUI({
+    req(revals$uploaded_data)
     selectInput('keep_samples', NULL, choices = revals$uploaded_data$f_data[,getFDataColName(revals$uploaded_data)], selected = revals$uploaded_data$f_data[,getFDataColName(revals$uploaded_data)], multiple = TRUE)
   })
   

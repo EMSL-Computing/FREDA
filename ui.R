@@ -23,8 +23,15 @@ shinyUI(tagList(useShinyjs(),
                    ############# Welcome Panel #########################
                    navbarMenu("Welcome",
                               tabPanel(title = "Introduction", class = "background_FTICR",
-                                         includeMarkdown("./Welcome to FREDA.md")),
-                              tabPanel(title = "Data Requirements", class = "background_FTICR",
+                                         includeMarkdown("./Welcome to FREDA.md"),
+                                          hr(),
+                                          div(style = "z-index:1000;position:absolute",
+                                            bsButton('all_tutorials', 'See a playlist of video tutorials', 
+                                                     onclick = "window.open('https://www.youtube.com/watch?v=uU5Q7r_pEGM&list=PLvozcBqO8i7wsMWo5PnOREX0sHSk3mAjE', '_blank')", 
+                                                     style = 'info', icon = icon('facetime-video', lib = 'glyphicon'))
+                                          )
+                                       ),
+                              tabPanel(title = "Data Requirements", class = "background_FTICR", value = 'data_requirements',
                                        includeMarkdown("./DataRequirements.md"),
                                        div(downloadButton('downloadData', 'Download'), style = "z-index:1000;position:absolute")),
                               tabPanel(title = "Resources", class = "background_FTICR",
@@ -566,7 +573,7 @@ shinyUI(tagList(useShinyjs(),
                                          tags$h4(icon("table", "fa-2x"), tags$b("Processed Data")),
                                          checkboxGroupInput("download_selection", label = "Check Download Selection",
                                                              choices = c('Data File as one .csv and Molecular Identification File as another .csv' = "separate",
-                                                                         'merged Data File and Molecular Identification File as a single .csv' = "merged",
+                                                                         'Merged Data File and Molecular Identification File as a single .csv' = "merged",
                                                                          'Data summaries for grouped plots' = "group_data"),
                                                              width = "80%")
                                           )
@@ -617,7 +624,14 @@ shinyUI(tagList(useShinyjs(),
                             
                    )
     ),
-    div(id = "js_helpbutton", style = "position:absolute;top:3px;right:16px;z-index:1000", hidden(bsButton("helpbutton", "How do I use this page?", style = "info")))
+    div(id = "js_helpbutton", style = "position:absolute;top:3px;right:16px;z-index:1000", 
+        tagList(
+          hidden(bsButton("helpbutton", "How do I use this page?", style = "info")),
+          hidden(bsButton('datareqs_video', 'Data requirements tutorial', 
+                   onclick = "window.open('https://youtu.be/uU5Q7r_pEGM', '_blank')", 
+                   style = 'info', icon = icon('facetime-video', lib = 'glyphicon')))
+        )
+    )
   )
 )
 
