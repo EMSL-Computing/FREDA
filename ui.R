@@ -590,7 +590,8 @@ shinyUI(tagList(useShinyjs(),
                                             uiOutput('which_unique')
                                           ),
                                           actionButton('create_mapping', 'Perform Mapping')
-                                          )
+                                          ),
+                                         uiOutput('warnings_database')
                                       )
                                     )
                                 ),# column 4

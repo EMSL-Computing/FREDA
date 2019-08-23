@@ -44,7 +44,7 @@ shinyServer(function(session, input, output) {
                            plot_data_export = NULL, peakData_export = NULL, redraw_filter_plot = TRUE, reac_filter_plot = TRUE,
                            group_1 = NULL, group_2 = NULL, single_group = NULL, single_sample = NULL, whichSample1 = NULL, whichSample2 = NULL, 
                            warningmessage_upload = list(upload = "style = 'color:deepskyblue'>Upload data and molecular identification files described in 'Data Requirements' on the previous page."),
-                           warningmessage_visualize = list(), warningmessage_filter = list(), warningmessage_preprocess = list(), warningmessage_groups = list(), warningmessage_qc = list(),
+                           warningmessage_visualize = list(), warningmessage_filter = list(), warningmessage_preprocess = list(), warningmessage_groups = list(), warningmessage_qc = list(), warningmessage_database = list(),
                            current_plot = NULL, plot_list = list(), plot_data = list(), reset_counter = 0, current_qc_boxplot = NULL,
                            chooseplots = NULL, filter_click_disable = list(init = TRUE), peakData2 = NULL, 
                            groups_list = list(), removed_samples = list())
@@ -1487,238 +1487,269 @@ shinyServer(function(session, input, output) {
     maxpaths <- ifelse(is.na(input$maxpaths) | is_empty(input$maxpaths), Inf, input$maxpaths)
     
     ######## KEGG #########
-    
-    if(input$database_select == 'Kegg'){
-      if(!exists('kegg_compounds')){
-        data('kegg_compounds')
-      }
-      
-      # get list of all formulae and subset kegg_compounds to identified formulae
-      forms <- revals$peakData2$e_meta %>% 
-        filter(!is.na(!!rlang::sym(getMFColName(revals$peakData2)))) %>% 
-        dplyr::rename(FORMULA = !!rlang::sym(getMFColName(revals$peakData2))) %>%
-        dplyr::select(getEDataColName(revals$peakData2), FORMULA)
-      
-      # peaks to compounds
-      kegg_sub <- forms %>% 
-        left_join(kegg_compounds, by = 'FORMULA') %>% 
-        filter(!is.na(COMPOUND) | !is.na(REACTION)) %>%
-        tibble::as_tibble() %>%
-        dplyr::select(getEDataColName(revals$peakData2), COMPOUND, FORMULA, URL) %>%
-        mutate(URL = paste0("<a href='",URL,"' target='_blank'>", 'compound link</a>'))
-      
-      ### Three conditionals, each which add a column where each row element is a list of all related 
-      
-      if(input$comp2react){
-        kegg_sub <- kegg_sub %>% 
-          mutate(REACTION = map(COMPOUND, newcol_from_mapping, maxlen = maxreacts, map_list = 'kegg_compound_reaction_map'))
-      }
-      
-      # compounds to modules
-      if(input$react2mod){
-        req(input$comp2react)
-        kegg_sub <- kegg_sub %>% 
-          mutate(MODULE = map(REACTION, newcol_from_mapping, maxlen = maxmods, map_list = 'kegg_reaction_module_map'))
-      }
-      
-      # modules to pathways
-      if(input$mod2path){
-        req(input$react2mod, input$comp2react)
-        kegg_sub <- kegg_sub %>% 
-          mutate(PATHWAY = map(MODULE, newcol_from_mapping, maxlen = maxpaths, map_list = 'kegg_module_pathway_map'))
-      }
-      
-      ## conditional block which unnests calculated columns based on unique row selection
-      # If none, simply create semicolon separated values of the elements in the three list columns
-      if(input$which_unique == 'None'){
-        if('REACTION' %in% colnames(kegg_sub)){
-          kegg_sub <- kegg_sub %>% mutate(REACTION = map(REACTION, list2semicolon))
-        }
-        if('MODULE' %in% colnames(kegg_sub)){
-          kegg_sub <- kegg_sub %>% mutate(MODULE = map(MODULE, list2semicolon))
-        }
-        if('PATHWAY' %in% colnames(kegg_sub)){
-          kegg_sub <- kegg_sub %>% mutate(PATHWAY = map(PATHWAY, list2semicolon))
-        }
-      }
-      # Unnests REACTION and creates ;-collapsed versions of MODULE and PATHWAY
-      else if(input$which_unique == 'REACTION'){
-        kegg_sub <- kegg_sub %>% 
-          tidyr::unnest(REACTION, .drop = F) %>% 
-          tidyr::unnest(REACTION, .drop = F)
-        
-        if('MODULE' %in% colnames(kegg_sub)){
-          kegg_sub <- kegg_sub %>% mutate(MODULE = map(MODULE, list2semicolon))
+    tryCatch({
+      if(input$database_select == 'Kegg'){
+        if(!exists('kegg_compounds')){
+          data('kegg_compounds')
         }
         
-        if('PATHWAY' %in% colnames(kegg_sub)){
-          kegg_sub <- kegg_sub %>% mutate(PATHWAY = map(PATHWAY, list2semicolon))
+        # get list of all formulae and subset kegg_compounds to identified formulae
+        forms <- revals$peakData2$e_meta %>% 
+          filter(!is.na(!!rlang::sym(getMFColName(revals$peakData2)))) %>% 
+          dplyr::rename(FORMULA = !!rlang::sym(getMFColName(revals$peakData2))) %>%
+          dplyr::select(getEDataColName(revals$peakData2), FORMULA)
+        
+        # peaks to compounds
+        kegg_sub <- forms %>% 
+          left_join(kegg_compounds, by = 'FORMULA') %>% 
+          filter(!is.na(COMPOUND) | !is.na(REACTION)) %>%
+          tibble::as_tibble() %>%
+          dplyr::select(getEDataColName(revals$peakData2), COMPOUND, FORMULA, URL) %>%
+          mutate(URL = paste0("<a href='",URL,"' target='_blank'>", 'compound link</a>'))
+        
+        ### Three conditionals, each which add a column where each row element is a list of all related 
+        
+        if(input$comp2react){
+          kegg_sub <- kegg_sub %>% 
+            mutate(REACTION = map(COMPOUND, newcol_from_mapping, maxlen = maxreacts, map_list = 'kegg_compound_reaction_map'))
         }
-      }
-      # Unnests REACTION and MODULE and creates ;-collapsed versions of PATHWAY
-      else if(input$which_unique == 'MODULE'){
-        if('REACTION' %in% colnames(kegg_sub)){
-          kegg_sub <- kegg_sub %>%
+        
+        # compounds to modules
+        if(input$react2mod){
+          req(input$comp2react)
+          kegg_sub <- kegg_sub %>% 
+            mutate(MODULE = map(REACTION, newcol_from_mapping, maxlen = maxmods, map_list = 'kegg_reaction_module_map'))
+        }
+        
+        # modules to pathways
+        if(input$mod2path){
+          req(input$react2mod, input$comp2react)
+          kegg_sub <- kegg_sub %>% 
+            mutate(PATHWAY = map(MODULE, newcol_from_mapping, maxlen = maxpaths, map_list = 'kegg_module_pathway_map'))
+        }
+        
+        ## conditional block which unnests calculated columns based on unique row selection
+        # If none, simply create semicolon separated values of the elements in the three list columns
+        if(input$which_unique == 'None'){
+          if('REACTION' %in% colnames(kegg_sub)){
+            kegg_sub <- kegg_sub %>% mutate(REACTION = map(REACTION, list2semicolon))
+          }
+          if('MODULE' %in% colnames(kegg_sub)){
+            kegg_sub <- kegg_sub %>% mutate(MODULE = map(MODULE, list2semicolon))
+          }
+          if('PATHWAY' %in% colnames(kegg_sub)){
+            kegg_sub <- kegg_sub %>% mutate(PATHWAY = map(PATHWAY, list2semicolon))
+          }
+        }
+        # Unnests REACTION and creates ;-collapsed versions of MODULE and PATHWAY
+        else if(input$which_unique == 'REACTION'){
+          kegg_sub <- kegg_sub %>% 
             tidyr::unnest(REACTION, .drop = F) %>% 
             tidyr::unnest(REACTION, .drop = F)
+          
+          if('MODULE' %in% colnames(kegg_sub)){
+            kegg_sub <- kegg_sub %>% mutate(MODULE = map(MODULE, list2semicolon))
+          }
+          
+          if('PATHWAY' %in% colnames(kegg_sub)){
+            kegg_sub <- kegg_sub %>% mutate(PATHWAY = map(PATHWAY, list2semicolon))
+          }
+          
+          # Display EC numbers if unique reactions
+          kegg_sub <- kegg_sub %>% left_join(kegg_reactions %>% dplyr::select(REACTION, ENZYME))
+          
+        }
+        # Unnests REACTION and MODULE and creates ;-collapsed versions of PATHWAY
+        else if(input$which_unique == 'MODULE'){
+          if('REACTION' %in% colnames(kegg_sub)){
+            kegg_sub <- kegg_sub %>%
+              tidyr::unnest(REACTION, .drop = F) %>% 
+              tidyr::unnest(REACTION, .drop = F)
+          }
+          
+          if('MODULE' %in% colnames(kegg_sub)){
+            kegg_sub <- kegg_sub %>%
+              mutate(MODULE = map2(REACTION, MODULE, unnest_by_key)) %>%
+              tidyr::unnest(MODULE, .drop = F) %>% 
+              tidyr::unnest(MODULE, .drop = F)
+          }
+          
+          if('PATHWAY' %in% colnames(kegg_sub)){
+            kegg_sub <- kegg_sub %>%
+              mutate(PATHWAY = map2(MODULE, PATHWAY, unnest_by_key)) %>% 
+              mutate(PATHWAY = map(PATHWAY, list2semicolon))
+          }
+          
+          # display class if modules are selected as unique
+          kegg_sub <- kegg_sub %>% 
+            left_join(kegg_modules %>% dplyr::select(MODULE, CLASS)) %>% 
+            rowwise() %>% 
+            mutate(CLASS = strsplit(CLASS, '\n')[[1]] %>% # get first row
+                     {strsplit(.,';')[[1]]} %>% # split by semicolons
+                     .[[length(.)]]) # get LAST element of semicolon separated list
         }
         
-        if('MODULE' %in% colnames(kegg_sub)){
-          kegg_sub <- kegg_sub %>%
-            mutate(MODULE = map2(REACTION, MODULE, unnest_by_key)) %>%
-            tidyr::unnest(MODULE, .drop = F) %>% 
-            tidyr::unnest(MODULE, .drop = F)
+        # Unnests everything
+        else if(input$which_unique == 'PATHWAY'){
+          
+          if('REACTION' %in% colnames(kegg_sub)){
+            kegg_sub <- kegg_sub %>%
+              tidyr::unnest(REACTION, .drop = F) %>% 
+              tidyr::unnest(REACTION, .drop = F)
+          }
+          
+          if('MODULE' %in% colnames(kegg_sub)){
+            kegg_sub <- kegg_sub %>%
+              mutate(MODULE = map2(REACTION, MODULE, unnest_by_key)) %>%
+              tidyr::unnest(MODULE, .drop = F) %>% 
+              tidyr::unnest(MODULE, .drop = F)
+          }
+          
+          if('PATHWAY' %in% colnames(kegg_sub)){
+            kegg_sub <- kegg_sub %>%
+              mutate(PATHWAY = map2(MODULE, PATHWAY, unnest_by_key)) %>%
+              tidyr::unnest(PATHWAY, .drop = F) %>% 
+              tidyr::unnest(PATHWAY, .drop = F)
+          }
+          
+          # display 'NAME' column if pathways are selected
+          kegg_sub <- kegg_sub %>% 
+            left_join(kegg_pathways %>% dplyr::select(PATHWAY, NAME))
+          
         }
+        # postmortem debugging
+        # inspect_kegg <<- kegg_sub
+  
+        # tidy columns
+        column_order <- c(getEDataColName(revals$peakData2), 'COMPOUND', 'FORMULA', 'URL', 'REACTION', 'ENZYME', 'MODULE', 'CLASS', 'PATHWAY', 'NAME')
+        column_order <- column_order[which(column_order %in% colnames(kegg_sub))]
         
-        if('PATHWAY' %in% colnames(kegg_sub)){
-          kegg_sub <- kegg_sub %>%
-            mutate(PATHWAY = map2(MODULE, PATHWAY, unnest_by_key)) %>% 
-            mutate(PATHWAY = map(PATHWAY, list2semicolon))
-        }
-      
+        revals$kegg_table <- kegg_sub %>% dplyr::select(column_order)
+        updateRadioGroupButtons(session, 'which_table', selected = 1)
       }
-      # Unnests everything
-      else if(input$which_unique == 'PATHWAY'){
+      
+      #####################
+      ###### METACYC ######
+      #####################
+      
+      else if(input$database_select == 'MetaCyc'){
+        if(!exists('mc_compounds')){
+          data('mc_compounds')
+        }
         
-        if('REACTION' %in% colnames(kegg_sub)){
-          kegg_sub <- kegg_sub %>%
+        # map peaks to compounds
+        mc_sub <- revals$peakData2 %>% 
+          mapPeaksToCompounds() %>%
+          {dplyr::select(.$e_meta, getEDataColName(revals$peakData2), getEDataColName(.), getCompoundColName(.))} %>%
+          tibble::as_tibble()
+        
+        # compounds to reactions
+        if(input$comp2react){
+          mc_sub <- mc_sub %>% 
+            mutate(REACTION = map(Compound, newcol_from_mapping, maxlen = maxreacts, 'mc_compound_reaction_map'))
+        }
+        
+        if(input$react2mod){
+          req(input$comp2react)
+          mc_sub <- mc_sub %>% 
+            mutate(MODULE = map(REACTION, newcol_from_mapping, maxlen = maxmods, map_list = 'mc_reaction_module_map'))
+        }
+        
+        if(input$mod2path){
+          req(input$comp2react, input$react2mod)
+          mc_sub <- mc_sub %>%
+            mutate(SUPERPATHWAY = map(MODULE, newcol_from_mapping, maxlen = maxpaths, map_list = 'mc_module_superpathway_map'))
+        }
+        
+        ## unnest block (MetaCyc)
+        
+        if(input$which_unique == 'None'){
+          if('REACTION' %in% colnames(mc_sub)){
+            mc_sub <- mc_sub %>% mutate(REACTION = map(REACTION, list2semicolon))
+          }
+          if('MODULE' %in% colnames(mc_sub)){
+            mc_sub <- mc_sub %>% mutate(MODULE = map(MODULE, list2semicolon))
+          }
+          if('SUPERPATHWAY' %in% colnames(mc_sub)){
+            mc_sub <- mc_sub %>% mutate(SUPERPATHWAY = map(SUPERPATHWAY, list2semicolon))
+          }
+        }
+        # Unnests REACTION and creates ;-collapsed versions of MODULE and SUPERPATHWAY
+        else if(input$which_unique == 'REACTION'){
+          mc_sub <- mc_sub %>% 
             tidyr::unnest(REACTION, .drop = F) %>% 
             tidyr::unnest(REACTION, .drop = F)
+          
+          if('MODULE' %in% colnames(mc_sub)){
+            mc_sub <- mc_sub %>% mutate(MODULE = map(MODULE, list2semicolon))
+          }
+          
+          if('SUPERPATHWAY' %in% colnames(mc_sub)){
+            mc_sub <- mc_sub %>% mutate(SUPERPATHWAY = map(SUPERPATHWAY, list2semicolon))
+          }
+        }
+        # Unnests REACTION and MODULE and creates ;-collapsed versions of SUPERPATHWAY
+        else if(input$which_unique == 'MODULE'){
+          if('REACTION' %in% colnames(mc_sub)){
+            mc_sub <- mc_sub %>%
+              tidyr::unnest(REACTION, .drop = F) %>% 
+              tidyr::unnest(REACTION, .drop = F)
+          }
+          
+          if('MODULE' %in% colnames(mc_sub)){
+            mc_sub <- mc_sub %>%
+              mutate(MODULE = map2(REACTION, MODULE, unnest_by_key)) %>%
+              tidyr::unnest(MODULE, .drop = F) %>% 
+              tidyr::unnest(MODULE, .drop = F)
+          }
+          
+          if('SUPERPATHWAY' %in% colnames(mc_sub)){
+            mc_sub <- mc_sub %>%
+              mutate(SUPERPATHWAY = map2(MODULE, SUPERPATHWAY, unnest_by_key)) %>% 
+              mutate(SUPERPATHWAY = map(SUPERPATHWAY, list2semicolon))
+          }
+          
+        }
+        # Unnests everything
+        else if(input$which_unique == 'SUPERPATHWAY'){
+          
+          if('REACTION' %in% colnames(mc_sub)){
+            mc_sub <- mc_sub %>%
+              tidyr::unnest(REACTION, .drop = F) %>% 
+              tidyr::unnest(REACTION, .drop = F)
+          }
+          
+          if('MODULE' %in% colnames(mc_sub)){
+            mc_sub <- mc_sub %>%
+              mutate(MODULE = map2(REACTION, MODULE, unnest_by_key)) %>%
+              tidyr::unnest(MODULE, .drop = F) %>% 
+              tidyr::unnest(MODULE, .drop = F)
+          }
+          
+          if('SUPERPATHWAY' %in% colnames(mc_sub)){
+            mc_sub <- mc_sub %>%
+              mutate(SUPERPATHWAY = map2(MODULE, SUPERPATHWAY, unnest_by_key)) %>%
+              tidyr::unnest(SUPERPATHWAY, .drop = F) %>% 
+              tidyr::unnest(SUPERPATHWAY, .drop = F)
+          }
         }
         
-        if('MODULE' %in% colnames(kegg_sub)){
-          kegg_sub <- kegg_sub %>%
-            mutate(MODULE = map2(REACTION, MODULE, unnest_by_key)) %>%
-            tidyr::unnest(MODULE, .drop = F) %>% 
-            tidyr::unnest(MODULE, .drop = F)
-        }
-        
-        if('PATHWAY' %in% colnames(kegg_sub)){
-          kegg_sub <- kegg_sub %>%
-            mutate(PATHWAY = map2(MODULE, PATHWAY, unnest_by_key)) %>%
-            tidyr::unnest(PATHWAY, .drop = F) %>% 
-            tidyr::unnest(PATHWAY, .drop = F)
-        }
-      }
-      # postmortem debugging
-      # inspect_kegg <<- kegg_sub
-      revals$kegg_table <- kegg_sub
-      updateRadioGroupButtons(session, 'which_table', selected = 1)
-    }
-    
-    #####################
-    ###### METACYC ######
-    #####################
-    
-    else if(input$database_select == 'MetaCyc'){
-      if(!exists('mc_compounds')){
-        data('mc_compounds')
-      }
-      
-      # map peaks to compounds
-      mc_sub <- revals$peakData2 %>% 
-        mapPeaksToCompounds() %>%
-        {dplyr::select(.$e_meta, getEDataColName(revals$peakData2), getEDataColName(.), getCompoundColName(.))} %>%
-        tibble::as_tibble()
-      
-      # compounds to reactions
-      if(input$comp2react){
-        mc_sub <- mc_sub %>% 
-          mutate(REACTION = map(Compound, newcol_from_mapping, maxlen = maxreacts, 'mc_compound_reaction_map'))
-      }
-      
-      if(input$react2mod){
-        req(input$comp2react)
-        mc_sub <- mc_sub %>% 
-          mutate(MODULE = map(REACTION, newcol_from_mapping, maxlen = maxmods, map_list = 'mc_reaction_module_map'))
-      }
-      
-      if(input$mod2path){
-        req(input$comp2react, input$react2mod)
-        mc_sub <- mc_sub %>%
-          mutate(SUPERPATHWAY = map(MODULE, newcol_from_mapping, maxlen = maxpaths, map_list = 'mc_module_superpathway_map'))
-      }
-      
-      ## unnest block (MetaCyc)
-      
-      if(input$which_unique == 'None'){
-        if('REACTION' %in% colnames(mc_sub)){
-          mc_sub <- mc_sub %>% mutate(REACTION = map(REACTION, list2semicolon))
-        }
-        if('MODULE' %in% colnames(mc_sub)){
-          mc_sub <- mc_sub %>% mutate(MODULE = map(MODULE, list2semicolon))
-        }
-        if('SUPERPATHWAY' %in% colnames(mc_sub)){
-          mc_sub <- mc_sub %>% mutate(SUPERPATHWAY = map(SUPERPATHWAY, list2semicolon))
-        }
-      }
-      # Unnests REACTION and creates ;-collapsed versions of MODULE and SUPERPATHWAY
-      else if(input$which_unique == 'REACTION'){
-        mc_sub <- mc_sub %>% 
-          tidyr::unnest(REACTION, .drop = F) %>% 
-          tidyr::unnest(REACTION, .drop = F)
-        
-        if('MODULE' %in% colnames(mc_sub)){
-          mc_sub <- mc_sub %>% mutate(MODULE = map(MODULE, list2semicolon))
-        }
-        
-        if('SUPERPATHWAY' %in% colnames(mc_sub)){
-          mc_sub <- mc_sub %>% mutate(SUPERPATHWAY = map(SUPERPATHWAY, list2semicolon))
-        }
-      }
-      # Unnests REACTION and MODULE and creates ;-collapsed versions of SUPERPATHWAY
-      else if(input$which_unique == 'MODULE'){
-        if('REACTION' %in% colnames(mc_sub)){
-          mc_sub <- mc_sub %>%
-            tidyr::unnest(REACTION, .drop = F) %>% 
-            tidyr::unnest(REACTION, .drop = F)
-        }
-        
-        if('MODULE' %in% colnames(mc_sub)){
-          mc_sub <- mc_sub %>%
-            mutate(MODULE = map2(REACTION, MODULE, unnest_by_key)) %>%
-            tidyr::unnest(MODULE, .drop = F) %>% 
-            tidyr::unnest(MODULE, .drop = F)
-        }
-        
-        if('SUPERPATHWAY' %in% colnames(mc_sub)){
-          mc_sub <- mc_sub %>%
-            mutate(SUPERPATHWAY = map2(MODULE, SUPERPATHWAY, unnest_by_key)) %>% 
-            mutate(SUPERPATHWAY = map(SUPERPATHWAY, list2semicolon))
-        }
+        revals$mc_table <- mc_sub
+        updateRadioGroupButtons(session, 'which_table', selected = 2)
         
       }
-      # Unnests everything
-      else if(input$which_unique == 'SUPERPATHWAY'){
-        
-        if('REACTION' %in% colnames(mc_sub)){
-          mc_sub <- mc_sub %>%
-            tidyr::unnest(REACTION, .drop = F) %>% 
-            tidyr::unnest(REACTION, .drop = F)
-        }
-        
-        if('MODULE' %in% colnames(mc_sub)){
-          mc_sub <- mc_sub %>%
-            mutate(MODULE = map2(REACTION, MODULE, unnest_by_key)) %>%
-            tidyr::unnest(MODULE, .drop = F) %>% 
-            tidyr::unnest(MODULE, .drop = F)
-        }
-        
-        if('SUPERPATHWAY' %in% colnames(mc_sub)){
-          mc_sub <- mc_sub %>%
-            mutate(SUPERPATHWAY = map2(MODULE, SUPERPATHWAY, unnest_by_key)) %>%
-            tidyr::unnest(SUPERPATHWAY, .drop = F) %>% 
-            tidyr::unnest(SUPERPATHWAY, .drop = F)
-        }
-      }
-      
-      revals$mc_table <- mc_sub
-      updateRadioGroupButtons(session, 'which_table', selected = 2)
-      
-    }
+    },
+    error = function(e){
+      msg = paste0('Error creating the kegg mapping: \n System error: ', e)
+      revals$warningmessage_database$mapping_error <<- sprintf("<p style = 'color:red'>%s</p>", msg)
+    })
     
     updateCollapse(session, 'database_tables_parent_collapse', open = 'database_tables')
     
+  })
+  
+  output$warnings_database <- renderUI({
+    HTML(paste(revals$warningmessage_database, collapse = ""))
   })
   
   ####### Download Tab #######
