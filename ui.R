@@ -589,7 +589,7 @@ shinyUI(tagList(useShinyjs(),
                                           div(style='display:inline-block', 
                                             uiOutput('which_unique')
                                           ),
-                                          actionButton('create_mapping', 'Perform Mapping')
+                                          bsButton('create_mapping', 'Perform Mapping', style = 'info')
                                           ),
                                          uiOutput('warnings_database')
                                       )
@@ -598,9 +598,10 @@ shinyUI(tagList(useShinyjs(),
                                column(8,
                                       bsCollapse(id = 'database_tables_parent_collapse', open = 'database_tables',
                                                  bsCollapsePanel('Table Preview', value = 'database_tables',
-                                                                 div(id = "toggle_table",
-                                                                            div(style = 'float:left;margin-top:10px;margin-right:10px;font-weight:bold', "Display dataset:"),
-                                                                            radioGroupButtons('which_table', choices = c('Kegg'=1, 'MetaCyc'=2))
+                                                                 span(id = "toggle_table",
+                                                                            div(style = 'display:inline-block;margin-top:10px;margin-right:10px;font-weight:bold', "Display dataset:"),
+                                                                            div(style = 'display:inline-block', radioGroupButtons('which_table', choices = c('Kegg'=1, 'MetaCyc'=2))),
+                                                                            div(style = 'display:inline-block', bsButton('save_db_table', 'Save current table', style = 'info'))
                                                                  ), 
                                                                  uiOutput('conditional_database_table')
                                                    ),
