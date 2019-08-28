@@ -7081,9 +7081,27 @@ input[type="checkbox"] {
   font-weight:bold;
 }
 
-.shiny-input-container .bootstrap-select, .shiny-input-container .dropdown-toggle {
-  background-color:#e7e7e7;
-  border-radius:4px;
+/* 
+####################
+ADDED BY YOURS TRULY
+####################
+*/
+
+/*
+misc. style adjustments
+*/
+.adjustdown input{
+  top:5px;
+}
+
+.top_element {
+  z-index:1000;
+  position:absolute;
+}
+
+.squeezesplitlayout .form-control{
+  margin-left:3px;
+  width:95%;
 }
 
 .grey_out {
@@ -7096,6 +7114,9 @@ input[type="checkbox"] {
   background-color:rgba(0,0,0,0.1);
 }
 
+/*
+Welcome page background
+*/
 .background_FTICR h1{
   margin:-15px;
   background-color:rgba(0,0,0,0.1);
@@ -7103,6 +7124,7 @@ input[type="checkbox"] {
 }
 
 .background_FTICR:after{
+    z-index:-1;
     content:'';
     background:url('./FTICR.jpg');
     background-repeat: repeat-y;
@@ -7115,6 +7137,13 @@ input[type="checkbox"] {
     opacity:0.15;
 }
 
+/*
+Button/selection highlighters and styles
+*/
+.shiny-input-container .bootstrap-select, .shiny-input-container .dropdown-toggle {
+  background-color:#e7e7e7;
+  border-radius:4px;
+}
 
 .attention .selectize-input, .attention .form-control, .attention-upload .input-group{
   border-radius:4px;
@@ -7150,6 +7179,17 @@ input[type="checkbox"] {
   animation-direction:alternate;
 }
 
+.blue_btn{
+  border-radius:5px;
+  border-style:unset;
+  color:white;
+  background-color:#5bc0de;
+}
+
+/*
+Button Animations
+*/
+
 @keyframes clicked{
   from{box-shadow: 0 0 0 0 rgba(0,191,255,1);}
   to{box-shadow: 0 0 1px 5px rgba(0,191,255,0);}
@@ -7173,6 +7213,7 @@ input[type="checkbox"] {
   }
 }
 
+
 .img-hor img{
         -moz-transform: scaleX(-1);
         -o-transform: scaleX(-1);
@@ -7180,16 +7221,6 @@ input[type="checkbox"] {
         transform: scaleX(-1);
         filter: FlipH;
         -ms-filter: "FlipH";
-}
-
-
-.adjustdown input{
-  top:5px;
-}
-
-.squeezesplitlayout .form-control{
-  margin-left:3px;
-  width:95%;
 }
 
 #FxnPlot .main-svg:nth-of-type(2){

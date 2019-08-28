@@ -23,21 +23,21 @@ shinyUI(tagList(useShinyjs(),
                    ############# Welcome Panel #########################
                    navbarMenu("Welcome",
                               tabPanel(title = "Introduction", class = "background_FTICR",
-                                         includeMarkdown("./Welcome to FREDA.md"),
-                                          hr(),
-                                          div(style = "z-index:1000;position:absolute",
-                                            bsButton('all_tutorials', 'See a playlist of video tutorials', 
-                                                     onclick = "window.open('https://www.youtube.com/watch?v=uU5Q7r_pEGM&list=PLvozcBqO8i7wsMWo5PnOREX0sHSk3mAjE', '_blank')", 
-                                                     style = 'info', icon = icon('facetime-video', lib = 'glyphicon'))
-                                          )
+                                        includeMarkdown("./Welcome to FREDA.md"),
+                                        h4(tags$b('Citing FREDA')),
+                                        tags$p('A publication is forthcoming for FREDA.  In the meantime, we ask that you cite FREDA by url', tags$b('(https://msc-viz.emsl.pnnl.gov/FREDA/)'),'for any figures or analysis included in a publication or report.'),
+                                        hr(),
+                                        br(),
+                                        bsButton('all_tutorials', 'See a playlist of video tutorials', 
+                                                 onclick = "window.open('https://www.youtube.com/watch?v=uU5Q7r_pEGM&list=PLvozcBqO8i7wsMWo5PnOREX0sHSk3mAjE', '_blank')", 
+                                                 style = 'info', icon = icon('facetime-video', lib = 'glyphicon'))
                                        ),
                               tabPanel(title = "Data Requirements", class = "background_FTICR", value = 'data_requirements',
                                        includeMarkdown("./DataRequirements.md"),
-                                       div(downloadButton('downloadData', 'Download'), style = "z-index:1000;position:absolute")),
-                              tabPanel(title = "Resources", class = "background_FTICR",
-                                       HTML('<h4> Resources </h4>')),
-                              tabPanel(title = "Contact", class = "background_FTICR",
-                                       HTML('<h4> Contact </h4>'))
+                                       downloadButton('downloadData', 'Download')),
+                              tabPanel(title = "Resources/Contact", class = "background_FTICR",
+                                       includeMarkdown('resources_and_contact.md')
+                                       )
                    ),
                    ################## Upload Panel #######################################
                    tabPanel("Upload",
@@ -600,7 +600,7 @@ shinyUI(tagList(useShinyjs(),
                                        ),
                                        column(width = 3,
                                               radioButtons(inputId = "image_format", label = "Select an image format",
-                                                           choices = c( "png", "pdf", "tiff"), selected = "png")
+                                                           choices = c( "png", "pdf", "jpeg"), selected = "png")
                                        )
                                      )
                                      )
