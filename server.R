@@ -150,8 +150,7 @@ shinyServer(function(session, input, output) {
           
           res <- as.peakData(e_data = Edata(), f_data = fdata(),
                                 e_meta = Emeta(), edata_cname = input$edata_id_col, 
-                                fdata_cname = 'SampleId', mass_cname = input$edata_id_col, 
-                                instrument_type = input$instrument,
+                                fdata_cname = 'SampleId', mass_cname = input$edata_id_col,
                                 mf_cname = input$f_column,
                                 isotopic_cname = input$iso_info_column,
                                 isotopic_notation = as.character(input$iso_symbol),
@@ -163,8 +162,8 @@ shinyServer(function(session, input, output) {
           # Calculate peakDataData with formula column
           res <- as.peakData(e_data = Edata(), f_data = fdata(),
                                 e_meta = Emeta(), edata_cname = input$edata_id_col, 
-                                fdata_cname = 'SampleId', mass_cname = input$edata_id_col, 
-                                instrument_type = input$instrument, mf_cname = input$f_column,
+                                fdata_cname = 'SampleId', mass_cname = input$edata_id_col,
+                                mf_cname = input$f_column,
                                 check_rows = TRUE, data_scale = input$data_scale)
         } 
       },
@@ -207,7 +206,6 @@ shinyServer(function(session, input, output) {
           res <- as.peakData(e_data = Edata(), f_data = fdata(),
                                 e_meta = Emeta(), edata_cname = input$edata_id_col, 
                                 fdata_cname = 'SampleId', mass_cname = input$edata_id_col,
-                                instrument_type = input$instrument,
                                 c_cname = input$c_column, h_cname = input$h_column, 
                                 n_cname = if(input$n_column == 'Select a column') NULL else input$n_column,
                                 o_cname = if(input$o_column == 'Select a column') NULL else input$o_column, 
@@ -226,8 +224,7 @@ shinyServer(function(session, input, output) {
           
           res <- as.peakData(e_data = Edata(), f_data = fdata(),
                                 e_meta = Emeta(), edata_cname = input$edata_id_col, 
-                                fdata_cname = 'SampleId', mass_cname = input$edata_id_col, 
-                                instrument_type = input$instrument,
+                                fdata_cname = 'SampleId', mass_cname = input$edata_id_col,
                                 c_cname = input$c_column, h_cname = input$h_column, 
                                 n_cname = if(input$n_column == 'Select a column') NULL else input$n_column,
                                 o_cname = if(input$o_column == 'Select a column') NULL else input$o_column, 

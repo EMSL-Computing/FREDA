@@ -52,6 +52,11 @@ Double bond equivalent, also known as the degree of unsaturation. Calculated as:
 
 $1 + C - O - S - 0.5*(N + P + H)$ [Koch \& Dittmar, 2006](https://onlinelibrary.wiley.com/doi/abs/10.1002/rcm.2386)$^1$ [Erratum](https://onlinelibrary.wiley.com/doi/full/10.1002/rcm.7433)$^2$ 
 
+**DBE-AI:** 
+
+The minimum number of C-C double bonds plus rings in a common molecular structure containing heteroatoms.
+
+$1+C-O-S-\frac{1}{2}H$ [Koch \& Dittmar, 2006](https://onlinelibrary.wiley.com/doi/abs/10.1002/rcm.2386)$^1$ [Erratum](https://onlinelibrary.wiley.com/doi/full/10.1002/rcm.7433)$^2$
 
 **DBE-O:** 
 
@@ -90,7 +95,7 @@ See Gibbs Free Energy
 
 **Gibbs Free Energy:** 
 
-Cox Gibbs Free Energy. Calculated as:
+Gibbs free energy of the carbon oxidation half reaction under standard conditions. Calculated as:
 $60.3 - 28.5*NOSC$ [LaRowe \& Van Cappellen, 2011](https://www.sciencedirect.com/science/article/pii/S0016703711000378)$^6$ 
 
 <hr></hr>

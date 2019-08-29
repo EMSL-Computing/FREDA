@@ -50,7 +50,6 @@ observeEvent(input$helpbutton,{
                           <li>Browse to and select your data file from the first download prompt.</li>
                           <li>Browse to and select your molecular identification file from the second download prompt.</li>
                           <li>In the 'Choose column with ID's' dropdown, indicate the column (contained in both files) which contains the ID's for each peak.</li>
-                          <li>(Optional) Indicate the instrument used to generate your data, and the scale your data is on.</li>
                           <li>Indicate whether your molecular identification file contains elemental or full formula columns.</li>
                               <ul>
                                   <li>If you select Elemental Columns, 6 dropdowns will appear asking for which columns contain elemental information; FREDA will attempt to auto-populate them</li>

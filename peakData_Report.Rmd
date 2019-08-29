@@ -8,6 +8,8 @@ params:
   processed: NA
   C13_ID: NA
   groups_list: NA
+bibliography: report_refs.bib
+nocite: '@*'
 ---
 
 ```{r setup, include=FALSE}
@@ -51,7 +53,7 @@ scale <- switch(attributes(upload)$data_info$data_scale,
 pct_mis <- mean(upload$e_data[-which(colnames(upload$e_data) == getEDataColName(upload))] == 0)
 ```
 
-**`r pct_mis*100`**% of the observations in the data file were missing.
+**`r round(pct_mis*100, 2)`**% of the observations in the data file were missing.
 
 Measurements were of the form:  **`r scale`**. 
 
@@ -94,9 +96,17 @@ kable(data.frame("Value" = selection_names, "Column Selected" = selection_values
 
 ```{r}
 if(length(groups) > 0){
-  groups_df <- data.frame("Group Name" = names(groups), "Samples" = sapply(groups, paste, collapse = " | "), check.names = FALSE)
-  rownames(groups_df) <- NULL
-  kable(groups_df, align = c('l', 'c'))
+  groups_df <- data.frame("Group Name" = names(groups), "Samples" = sapply(groups, paste, collapse = '&nbsp|&nbsp'), check.names = FALSE)
+  
+  # scrollable elements for samples
+  groups_df <- groups_df %>% 
+    mutate_at('Samples', function(x){paste0('<div style="width:500px;overflow-x:auto;display:inline-block;">', x, '</div>')})
+  
+  DT::datatable(groups_df, options = list(
+    columnDefs = list(list(className = 'dt-center', targets = '_all')),
+    scrollX = TRUE
+    ), escape = FALSE, rownames = FALSE
+  )
 }
 ```
 
@@ -221,6 +231,8 @@ The following filters were applied to the data:
 ***
 
 After all preprocessing steps, **`r nrow(processed$f_data)` samples** and measurements for **`r nrow(processed$e_data)` peaks** remained.
+
+***
 
 <!-- ### **References** -->
 <!-- <div id = 'refs'></div> -->
