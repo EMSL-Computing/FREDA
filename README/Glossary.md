@@ -12,7 +12,7 @@
 
 **Aromaticity:**
 
-$\frac{1 + C - O - S - 0.5*(N + P + H)}{C - O - S - N - P}$ When the numerator or denominator is $\leq 0$, aromaticity is 0. When aromaticity $> 0.5$ a compound is considered not aromatic, $0.5 \leq$ aromaticity $< 0.67$ a compound is aromatic, and when aromaticity $\geq 0.67$ a compound is a condensed aromatic. [Koch \& Dittmar, 2006](https://onlinelibrary.wiley.com/doi/abs/10.1002/rcm.2386)$^1$ [Erratum](https://onlinelibrary.wiley.com/doi/full/10.1002/rcm.7433)$^2$ 
+$\frac{1 + C - O - S - 0.5*(N + P + H)}{C - O - S - N - P}$ When the numerator or denominator is $\leq 0$, aromaticity is 0. When aromaticity $> 0.5$ a compound is considered not aromatic, $0.5 \leq$ aromaticity $< 0.67$ a compound is aromatic, and when aromaticity $\geq 0.67$ a compound is a condensed aromatic. [Koch \& Dittmar, 2006](#1)$^1$ [Erratum](#2)$^2$ 
 
 <hr></hr>
 <a name="B"></a>
@@ -20,11 +20,11 @@ $\frac{1 + C - O - S - 0.5*(N + P + H)}{C - O - S - N - P}$ When the numerator o
  
 **Boundary Set 1:**  
 
-Rules for assigning a compound class to each mass, where possible, based Oxygen:Carbon and Hydrogen:Carbon ratios. [Kim et al., 2003](https://pubs.acs.org/doi/abs/10.1021/ac034415p)$^3$ modified by [Bailey et al., 2017](https://www.sciencedirect.com/science/article/pii/S0038071716306447)$^4$
+Rules for assigning a compound class to each mass, where possible, based Oxygen:Carbon and Hydrogen:Carbon ratios. [Kim et al., 2003](#3)$^3$
 
 **Boundary Set 2:** 
 
-Rules for assigning a compound class to each mass, where possible, based Oxygen:Carbon, Hydrogen:Carbon, Nitrogen:Carbon, Phosphorus:Carbon ratios, elemental counts, and mass. [Rivas-Ubach et al., 2018](https://pubs.acs.org/doi/abs/10.1021/acs.analchem.8b00529)$^5$
+Modification of Boundary Set 1 as specified in [Bailey et al., 2017](#4)$^4$
 
 **BS1/bs1:** 
 
@@ -50,18 +50,18 @@ chemical element Carbon
 
 Double bond equivalent, also known as the degree of unsaturation. Calculated as:
 
-$1 + C - O - S - 0.5*(N + P + H)$ [Koch \& Dittmar, 2006](https://onlinelibrary.wiley.com/doi/abs/10.1002/rcm.2386)$^1$ [Erratum](https://onlinelibrary.wiley.com/doi/full/10.1002/rcm.7433)$^2$ 
+$1 + C - O - S - 0.5*(N + P + H)$ [Koch \& Dittmar, 2006](#1)$^1$ [Erratum](#2)$^2$ 
 
 **DBE-AI:** 
 
 The minimum number of C-C double bonds plus rings in a common molecular structure containing heteroatoms.
 
-$1+C-O-S-\frac{1}{2}H$ [Koch \& Dittmar, 2006](https://onlinelibrary.wiley.com/doi/abs/10.1002/rcm.2386)$^1$ [Erratum](https://onlinelibrary.wiley.com/doi/full/10.1002/rcm.7433)$^2$
+$1+C-O-S-\frac{1}{2}H$ [Koch \& Dittmar, 2006](#1)$^1$ [Erratum](#2)$^2$
 
 **DBE-O:** 
 
 Double bond equivalent minus oxygen, an alternative way of calculating DBE. Calculated as:
-$1 + C - O - S - 0.5*(N + P + H) - O$ [Koch \& Dittmar, 2006](https://onlinelibrary.wiley.com/doi/abs/10.1002/rcm.2386)$^1$ [Erratum](https://onlinelibrary.wiley.com/doi/full/10.1002/rcm.7433)$^2$ 
+$1 + C - O - S - 0.5*(N + P + H) - O$ [Koch \& Dittmar, 2006](#1)$^1$ [Erratum](#2)$^2$ 
 
 <hr></hr>
 <a name="E"></a> 
@@ -96,7 +96,7 @@ See Gibbs Free Energy
 **Gibbs Free Energy:** 
 
 Gibbs free energy of the carbon oxidation half reaction under standard conditions. Calculated as:
-$60.3 - 28.5*NOSC$ [LaRowe \& Van Cappellen, 2011](https://www.sciencedirect.com/science/article/pii/S0016703711000378)$^6$ 
+$60.3 - 28.5*NOSC$ [LaRowe \& Van Cappellen, 2011](#6)$^6$ 
 
 <hr></hr>
 <a name="H"></a> 
@@ -126,11 +126,11 @@ Hydrogen to carbon ratio
 
 **Kendrick Defect:** 
 
-Kendrick Defect = Nominal Kendrick Mass - Kendrick Mass [Hughey et al., 2001](https://pubs.acs.org/doi/pdf/10.1021/ac010560w)$^8$
+Kendrick Defect = Nominal Kendrick Mass - Kendrick Mass [Hughey et al., 2001](#8)$^8$
 
 **Kendrick Mass:** 
 
-$IUPAC mass*(14/14.01565)$, where IUPAC mass is based on the 12C atomic mass as exactly 12 Da. [Hughey et al., 2001](https://pubs.acs.org/doi/pdf/10.1021/ac010560w)$^8$
+$IUPAC mass*(14/14.01565)$, where IUPAC mass is based on the 12C atomic mass as exactly 12 Da. [Hughey et al., 2001](#8)$^8$
 
 **Kendrick Plot:** 
 
@@ -151,7 +151,7 @@ Analytic technique that measures masses within a sample using ionization
 
 **Modified Aromaticity:** 
 
-$\frac{1 + C - 0.5O - S - 0.5*(N + P + H)}{C - 0.5*O - S - N - P}$. When the numerator or denominator is $\leq 0$, modified aromaticity is 0. When modified aromaticity $> 0.5$ a compound is considered not aromatic, $0.5 \leq$ modified aromaticity $< 0.67$ a compound is aromatic, and when modified aromaticity $\geq 0.67$ a compound is a condensed aromatic. [Koch \& Dittmar, 2006](https://onlinelibrary.wiley.com/doi/abs/10.1002/rcm.2386)$^1$ [Erratum](https://onlinelibrary.wiley.com/doi/full/10.1002/rcm.7433)$^2$ 
+$\frac{1 + C - 0.5O - S - 0.5*(N + P + H)}{C - 0.5*O - S - N - P}$. When the numerator or denominator is $\leq 0$, modified aromaticity is 0. When modified aromaticity $> 0.5$ a compound is considered not aromatic, $0.5 \leq$ modified aromaticity $< 0.67$ a compound is aromatic, and when modified aromaticity $\geq 0.67$ a compound is a condensed aromatic. [Koch \& Dittmar, 2006](#1)$^1$ [Erratum](#2)$^2$ 
 
 <hr></hr>
 <a name="N"></a>
@@ -172,7 +172,7 @@ Nitrogen to Phosphorous ratio
 **NOSC:** 
 
 Nominal oxidation state of carbon. Calculated as:
-$-(\frac{4C + H - 3N - 2O + 5P - 2S}{C}) + 4$ [Koch \& Dittmar, 2006](https://onlinelibrary.wiley.com/doi/abs/10.1002/rcm.2386)$^1$ [Erratum](https://onlinelibrary.wiley.com/doi/full/10.1002/rcm.7433)$^2$ 
+$-(\frac{4C + H - 3N - 2O + 5P - 2S}{C}) + 4$ [Koch \& Dittmar, 2006](#1)$^1$ [Erratum](#2)$^2$ 
 
 <hr></hr>
 <a name="O"></a>
@@ -260,19 +260,27 @@ Plot of H:C (y-axis) vs O:C (x-axis); also see O:C and H:C
 --------------------------  
 ### References and Resources  
 
+<a name="1"></a>
 $^1$ Koch, B. P., & Dittmar, T. (2006). From mass to structure: an aromaticity index for high‐resolution mass data of natural organic matter. Rapid communications in mass spectrometry, 20(5), 926-932. 
 
+<a name="2"></a>
 $^2$ Errata: Koch, B. P., & Dittmar, T. (2016). From mass to structure: an aromaticity index for high-resolution mass data of natural organic matter. Rapid communications in mass spectrometry, 30(1), 250. DOI: 10.1002/rcm.7433
 
+<a name="3"></a>
 $^3$ Kim, S., Kramer, R. W., & Hatcher, P. G. (2003). Graphical method for analysis of ultrahigh-resolution broadband mass spectra of natural organic matter, the van Krevelen diagram. Analytical Chemistry, 75(20), 5336-5344.
 
+<a name="4"></a>
 $^4$ Bailey, V. L., Smith, A. P., Tfaily, M., Fansler, S. J., & Bond-Lamberty, B. (2017). Differences in soluble organic carbon chemistry in pore waters sampled from different pore size domains. Soil Biology and Biochemistry, 107, 133-143.
 
+<a name="5"></a>
 $^5$ Rivas-Ubach, A., Liu, Y., Bianchi, T. S., Toliċ, N., Jansson, C., & Paša-Tolić, L. (2018). Moving beyond the van Krevelen diagram: A new stoichiometric approach for compound classification in organisms. Analytical chemistry. DOI: 10.1021/acs.analchem.8b00529
 
+<a name="6"></a>
 $^6$ LaRowe and Van Cappellen, 2011, "Degradation of natural organic matter: A thermodynamic analysis". Geochimica et Cosmochimica Acta. 75.
 
+<a name="7"></a>
 $^7$ https://www.fridakahlo.org
 
+<a name="8"></a>
 $^8$ Hughey, C. A., Hendrickson, C. L., Rodgers, R. P., Marshall, A. G., & Qian, K. (2001). Kendrick mass defect spectrum: a compact visual analysis for ultrahigh-resolution broadband mass spectra. Analytical Chemistry, 73(19), 4676-4681.
 

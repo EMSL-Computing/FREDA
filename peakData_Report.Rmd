@@ -9,7 +9,8 @@ params:
   C13_ID: NA
   groups_list: NA
 bibliography: report_refs.bib
-nocite: '@*'
+nocite: |
+  @Koch_2006, @Hughey_2001, @Kim_2003, @Koch_2016_erratum, @LAROWE20112030, @Rivas_Ubach_2018, @BAILEY2017133
 ---
 
 ```{r setup, include=FALSE}
