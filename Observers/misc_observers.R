@@ -4,9 +4,10 @@
 #   peakData2 <<- revals$peakData2
 # })
 
-# observeEvent(revals, {
-#   revals_postmortem <<- reactiveValuesToList(revals)
-# })
+observeEvent(c(reactiveValuesToList(revals), reactiveValuesToList(tables)), {
+  revals_postmortem <<- reactiveValuesToList(revals)
+  tables_postmortem <<- reactiveValuesToList(tables)
+})
 
 # multipurpose observer for page transitions
 observeEvent(input$top_page,{

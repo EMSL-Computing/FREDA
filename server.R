@@ -51,7 +51,7 @@ shinyServer(function(session, input, output) {
                            chooseplots = NULL, filter_click_disable = list(init = TRUE), peakData2 = NULL, 
                            groups_list = list(), removed_samples = list())
   
-  tables <- reactiveValues(mapping_tables = list())
+  tables <- reactiveValues(mapping_tables = list(), saved_db_info = data.frame('Tables' = character(0), 'No. Rows' = character(0), 'Column Names' = character(0), check.names = F, stringsAsFactors = F))
   
   exportTestValues(plot_data = revals$plot_data_export, peakData = revals$peakData_export, color_choices = revals$color_by_choices)
   ######## Welcome Tab #############
@@ -1430,58 +1430,7 @@ shinyServer(function(session, input, output) {
   ####### Database Tab #######
   
   source('./Observers/database_observers.R', local = TRUE)
-  
-  # determine which variable(s) to make a unique row for each
-  output$which_unique <- renderUI({
-    choices = c('None', 'Reactions' = 'REACTION', 'Modules' = 'MODULE', 'Pathways' = 'PATHWAY')
-    chosen_vars <- c(T, input$comp2react_x, input$react2mod_x, input$mod2path_x)
-    choices = choices[chosen_vars]
-    
-    pickerInput('which_unique', NULL, 
-                choices = choices,
-                multiple = FALSE)
-  })
-  
-  # KeggData table output
-  output$kegg_table <- renderDT({
-      req(!is.null(revals$kegg_table), cancelOutput = TRUE)
-      temp <- revals$kegg_table
-      target_columns = which(colnames(temp) %in% c('MODULE', 'REACTION', 'PATHWAY'))
-      temp <- temp %>%
-        mutate_at(target_columns, function(x){paste0('<div style="width:200px;overflow-x:auto">', x, '</div>')})
-      temp
-    },
-    options = list(scrollX = TRUE, 
-                   pageLength = 15, 
-                   columnDefs = list(list(width = '200px', targets = '_all'))),
-    server = TRUE, escape = FALSE)
-  
-  # MetaCyc table output
-  output$mc_table <- renderDT({
-      req(!is.null(revals$mc_table), cancelOutput = TRUE)
-      temp <- revals$mc_table
-      target_columns = which(colnames(temp) %in% c('MODULE', 'REACTION', 'SUPERPATHWAY'))
-      temp <- temp %>%
-        mutate_at(target_columns, function(x){paste0('<div style="width:200px;overflow-x:auto">', x, '</div>')})
-      temp
-    },
-    options = list(scrollX = TRUE, 
-                   pageLength = 15, 
-                   columnDefs = list(list(width = '200px', targets = '_all'))),
-    server = TRUE, escape = FALSE)
-  
-  output$conditional_database_table <- renderUI({
-    if(input$which_table == 1){
-      DTOutput('kegg_table')
-    }
-    else if(input$which_table == 2){
-      DTOutput('mc_table')
-    }
-  })
-  
-  output$warnings_database <- renderUI({
-    HTML(paste(revals$warningmessage_database, collapse = ""))
-  })
+  source('./srv_ui_elements/database_UI.R', local = TRUE)
   
   ####### Download Tab #######
   
@@ -1541,7 +1490,7 @@ shinyServer(function(session, input, output) {
           
           write_csv(table_out, path = file.path(tempdir(), paste0(name,'.csv')))
         }
-        
+        # 
         rm(table_out)
       }
       

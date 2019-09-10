@@ -150,7 +150,7 @@ observeEvent(input$create_mapping, {
       column_order <- c(getEDataColName(revals$peakData2), 'COMPOUND', 'FORMULA', 'URL', 'REACTION', 'ENZYME', 'MODULE', 'CLASS', 'PATHWAY', 'NAME')
       column_order <- column_order[which(column_order %in% colnames(kegg_sub))]
       
-      revals$kegg_table <- kegg_sub %>% dplyr::select(column_order)
+      tables$kegg_table <- kegg_sub %>% dplyr::select(column_order)
       updateRadioGroupButtons(session, 'which_table', selected = 1)
     }
     
@@ -260,7 +260,7 @@ observeEvent(input$create_mapping, {
         }
       }
       
-      revals$mc_table <- mc_sub
+      tables$mc_table <- mc_sub
       updateRadioGroupButtons(session, 'which_table', selected = 2)
       
     }
@@ -274,13 +274,36 @@ observeEvent(input$create_mapping, {
   
 })
 
+####### MODAL FUNCTIONALITY #######
+
+# show modal with table info
+observeEvent(input$view_db_tables, {
+  showModal(
+    modalDialog(
+      tagList(
+        tags$h3('Select a table to see a preview:'),
+        DTOutput('saved_db_table'), # info on saved tables
+        hr(),
+        DTOutput('selected_db_table') # display selected table
+      ),
+      footer = tagList(
+        div(style = 'float:left', 
+            bsButton('remove_db_table', 'Remove selected table', icon = icon('remove'))
+        ),
+        modalButton("Dismiss")
+      ),
+      size = 'l'
+    )
+  )
+})
+
 # save tables to a list, maximum 5 allowed
 observeEvent(input$save_db_table, {
   
   # display warning message and retun NULL if they've stored too many tables
   revals$warningmessage_database$too_many_tables <- NULL
   
-  if(length(tables$mapping_tables) > 5){
+  if(length(tables$mapping_tables) >= 5){
     msg = paste0('Maximum of 5 tables, please remove some of your saved tables')
     revals$warningmessage_database$too_many_tables <<- sprintf("<p style = 'color:red'>%s</p>", msg)
     return(NULL)
@@ -289,10 +312,26 @@ observeEvent(input$save_db_table, {
   kegg_or_mc <- ifelse(input$which_table == 1, 'Kegg', 'Metacyc')
   table_name = sprintf('%s Table %s', kegg_or_mc, input$save_db_table)
   
-  if(input$which_table == 1 & !is.null(revals$kegg_table)){
-    tables$mapping_tables[[table_name]] <- revals$kegg_table
+  if(input$which_table == 1 & !is.null(tables$kegg_table)){
+    tables$mapping_tables[[table_name]] <- tables$kegg_table
+    tables$saved_db_info[nrow(tables$saved_db_info) + 1,] <- c(table_name, nrow(tables$kegg_table), paste(colnames(tables$kegg_table), collapse = ';')) 
   }
-  else if(input$which_table == 2 & !is.null(revals$mc_table)){
-    tables$mapping_tables[[table_name]] <- revals$mc_table
+  else if(input$which_table == 2 & !is.null(tables$mc_table)){
+    tables$mapping_tables[[table_name]] <- tables$mc_table
+    tables$saved_db_info[nrow(tables$saved_db_info) + 1,] <- c(table_name, nrow(tables$mc_table), paste(colnames(tables$mc_table), collapse = ';'))
   }
 })
+
+# remove the selected database table on button click
+# need to remove the entry tables$saved_db_info and the corresponding table in tables$mapping_tables
+observeEvent(input$remove_db_table, {
+  req(length(input$saved_db_table_rows_selected) > 0)
+  table_name = tables$saved_db_info[input$saved_db_table_rows_selected,'Tables']
+  
+  tables$saved_db_info <- tables$saved_db_info %>% filter(Tables != table_name)
+  tables$mapping_tables[[table_name]] <- NULL
+})
+
+################
+
+

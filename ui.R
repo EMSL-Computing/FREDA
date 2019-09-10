@@ -601,7 +601,9 @@ shinyUI(tagList(useShinyjs(),
                                                                  span(id = "toggle_table",
                                                                             div(style = 'display:inline-block;margin-top:10px;margin-right:10px;font-weight:bold', "Display dataset:"),
                                                                             div(style = 'display:inline-block', radioGroupButtons('which_table', choices = c('Kegg'=1, 'MetaCyc'=2))),
-                                                                            div(style = 'display:inline-block', bsButton('save_db_table', 'Save current table', style = 'info'))
+                                                                            div(style = 'display:inline-block', bsButton('save_db_table', 'Save current table', style = 'info')),
+                                                                            div(style = 'display:inline-block', bsButton('view_db_tables', uiOutput('n_saved_db_tables'), style = 'info'))
+                                                                      
                                                                  ), 
                                                                  uiOutput('conditional_database_table')
                                                    ),
