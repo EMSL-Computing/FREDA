@@ -605,7 +605,7 @@ shinyUI(tagList(useShinyjs(),
                                                                  ), 
                                                                  uiOutput('conditional_database_table')
                                                    ),
-                                                 bsCollapsePanel('----', value = 'database_plots',
+                                                 bsCollapsePanel('Summary Plot', value = 'database_plots',
                                                                  #uiOutput('upload_boxplots')
                                                                  HTML('WHOA THERE! CLOSE THIS TAB!')
                                                   )
@@ -622,15 +622,16 @@ shinyUI(tagList(useShinyjs(),
                                          tags$h4(icon("table", "fa-2x"), tags$b("Processed Data")),
                                          checkboxGroupInput("download_selection", label = "Check Download Selection",
                                                              choices = c('Data File as one .csv and Molecular Identification File as another .csv' = "separate",
-                                                                         'merged Data File and Molecular Identification File as a single .csv' = "merged",
+                                                                         'Merged Data File and Molecular Identification File as a single .csv' = "merged",
                                                                          'Data summaries for grouped plots' = "group_data"),
                                                              width = "80%")
                                           )
                               ),
                               column(width = 5,
                                      wellPanel(style = "height:100%",
-                                          tags$h4(icon("align-left", "fa-2x"), tags$b("Summary Report")),
-                                          checkboxInput("report_selection", label = "Download a summary of preprocessing and filtering", value = TRUE)
+                                          tags$h4(icon("align-left", "fa-2x"), tags$b("Summary Report and Database Mapping Tables")),
+                                          checkboxInput("report_selection", label = "Download a summary of preprocessing and filtering", value = TRUE),
+                                          checkboxInput("download_mappings", label = "Download Database Mapping Tables", value = FALSE)
                                         )
                                      )
                             ),

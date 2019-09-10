@@ -22,8 +22,10 @@ library(pander)
 library(readr)
 library(plotly)
 
-# devtools::load_all('~/Documents/git_repos/MetaCycData/')
-# devtools::load_all('~/Documents/git_repos/KeggData/')
+# library(keggData)
+# library(MetaCycData)
+devtools::load_all('~/Documents/git_repos/MetaCycData/')
+devtools::load_all('~/Documents/git_repos/KeggData/')
 
 shinyServer(function(session, input, output) {
   
@@ -316,6 +318,7 @@ shinyServer(function(session, input, output) {
   output$warnings_preprocess <- renderUI({
     HTML(paste(revals$warningmessage_preprocess, collapse = ""))
   })
+  
   
   #### Action Button reactions ####
   
@@ -1526,6 +1529,20 @@ shinyServer(function(session, input, output) {
         report(revals$uploaded_data, revals$peakData2, Emeta(), output_file = file.path(tempdir(), "report.html"), output_format = "html_document", 
                C13_ID = input$iso_symbol, groups_list = revals$groups_list)
         incProgress(1/total_files, detail = 'HTML report done..')
+      }
+      
+      # kegg tables
+      if (input$download_mappings) {
+        for(name in names(tables$mapping_tables)){
+          fs <- c(fs, file.path(tempdir(), name))
+          
+          # must convert list columns to character
+          table_out <- tables$mapping_tables[[name]] %>% mutate_if(is.list, as.character)
+          
+          write_csv(table_out, path = file.path(tempdir(), paste0(name,'.csv')))
+        }
+        
+        rm(table_out)
       }
       
       if ("separate" %in% input$download_selection & !is.null(revals$peakData2)){

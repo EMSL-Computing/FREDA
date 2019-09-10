@@ -82,7 +82,9 @@ observeEvent(input$create_mapping, {
         }
         
         # Display EC numbers if unique reactions
-        kegg_sub <- kegg_sub %>% left_join(kegg_reactions %>% dplyr::select(REACTION, ENZYME))
+        kegg_sub <- kegg_sub %>% 
+          left_join(kegg_reactions %>% dplyr::select(REACTION, ENZYME)) %>% 
+          mutate(ENZYME = gsub('[[:space:]]+', ';', ENZYME))
         
       }
       # Unnests REACTION and MODULE and creates ;-collapsed versions of PATHWAY
@@ -143,8 +145,6 @@ observeEvent(input$create_mapping, {
           left_join(kegg_pathways %>% dplyr::select(PATHWAY, NAME))
         
       }
-      # postmortem debugging
-      # inspect_kegg <<- kegg_sub
       
       # tidy columns
       column_order <- c(getEDataColName(revals$peakData2), 'COMPOUND', 'FORMULA', 'URL', 'REACTION', 'ENZYME', 'MODULE', 'CLASS', 'PATHWAY', 'NAME')
@@ -274,13 +274,25 @@ observeEvent(input$create_mapping, {
   
 })
 
-# save tables to a list, maximum 3 allowed
+# save tables to a list, maximum 5 allowed
 observeEvent(input$save_db_table, {
-  req(length(tables$mapping_tables) < 5)
+  
+  # display warning message and retun NULL if they've stored too many tables
+  revals$warningmessage_database$too_many_tables <- NULL
+  
+  if(length(tables$mapping_tables) > 5){
+    msg = paste0('Maximum of 5 tables, please remove some of your saved tables')
+    revals$warningmessage_database$too_many_tables <<- sprintf("<p style = 'color:red'>%s</p>", msg)
+    return(NULL)
+  }
+  
+  kegg_or_mc <- ifelse(input$which_table == 1, 'Kegg', 'Metacyc')
+  table_name = sprintf('%s Table %s', kegg_or_mc, input$save_db_table)
+  
   if(input$which_table == 1 & !is.null(revals$kegg_table)){
-    tables$mapping_tables[[length(tables$mapping_tables)+1]] <- revals$kegg_table
+    tables$mapping_tables[[table_name]] <- revals$kegg_table
   }
   else if(input$which_table == 2 & !is.null(revals$mc_table)){
-    tables$mapping_tables[[length(tables$mapping_tables)+1]] <- revals$mc_table
+    tables$mapping_tables[[table_name]] <- revals$mc_table
   }
 })
