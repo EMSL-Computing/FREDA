@@ -22,10 +22,11 @@ library(pander)
 library(readr)
 library(plotly)
 
+# uncomment either library() or load_all() if you need to load kegg
 # library(keggData)
 # library(MetaCycData)
-devtools::load_all('~/Documents/git_repos/MetaCycData/')
-devtools::load_all('~/Documents/git_repos/KeggData/')
+# devtools::load_all('~/Documents/git_repos/MetaCycData/')
+# devtools::load_all('~/Documents/git_repos/KeggData/')
 
 shinyServer(function(session, input, output) {
   
@@ -1483,7 +1484,7 @@ shinyServer(function(session, input, output) {
       # kegg tables
       if (input$download_mappings) {
         for(name in names(tables$mapping_tables)){
-          fs <- c(fs, file.path(tempdir(), name))
+          fs <- c(fs, file.path(tempdir(), paste0(name,'.csv')))
           
           # must convert list columns to character
           table_out <- tables$mapping_tables[[name]] %>% mutate_if(is.list, as.character)

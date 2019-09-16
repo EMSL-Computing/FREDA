@@ -596,7 +596,7 @@ shinyUI(tagList(useShinyjs(),
                                     )
                                 ),# column 4
                                column(8,
-                                      bsCollapse(id = 'database_tables_parent_collapse', open = 'database_tables',
+                                      bsCollapse(id = 'database_tables_parent_collapse', open = 'database_tables', multiple = TRUE,
                                                  bsCollapsePanel('Table Preview', value = 'database_tables',
                                                                  span(id = "toggle_table",
                                                                             div(style = 'display:inline-block;margin-top:10px;margin-right:10px;font-weight:bold', "Display dataset:"),
@@ -607,9 +607,10 @@ shinyUI(tagList(useShinyjs(),
                                                                  ), 
                                                                  uiOutput('conditional_database_table')
                                                    ),
-                                                 bsCollapsePanel('Summary Plot', value = 'database_plots',
-                                                                 #uiOutput('upload_boxplots')
-                                                                 HTML('WHOA THERE! CLOSE THIS TAB!')
+                                                 bsCollapsePanel('Summary Counts', value = 'database_plots',
+                                                                 DTOutput('mapping_summary'),
+                                                                 splitLayout(plotlyOutput('kegg_barplot'),
+                                                                             plotlyOutput('mc_barplot'))
                                                   )
                                                  )# parent collapse
                                       ) # column 8
