@@ -22,6 +22,12 @@ library(pander)
 library(readr)
 library(plotly)
 
+# uncomment either library() or load_all() if you need to load kegg
+# library(keggData)
+# library(MetaCycData)
+# devtools::load_all('~/Documents/git_repos/MetaCycData/')
+# devtools::load_all('~/Documents/git_repos/KeggData/')
+
 shinyServer(function(session, input, output) {
   
   # onStop(function() rm(revals$peakData2, pos = 1))
@@ -31,6 +37,7 @@ shinyServer(function(session, input, output) {
   source('helper_functions/summaryFilter.R') 
   source('helper_functions/summaryPreprocess.R')
   source("helper_functions/renderDownloadPlots.R")
+  source('helper_functions/database_utils.R')
   source("Observers/misc_observers.R", local = TRUE)
   # Misc Reactive Values:
   # peakData2_dim(), uploaded_data_dim(). The number of cells in e_data of the respective objects
@@ -40,10 +47,12 @@ shinyServer(function(session, input, output) {
                            plot_data_export = NULL, peakData_export = NULL, redraw_filter_plot = TRUE, reac_filter_plot = TRUE,
                            group_1 = NULL, group_2 = NULL, single_group = NULL, single_sample = NULL, whichSample1 = NULL, whichSample2 = NULL, 
                            warningmessage_upload = list(upload = "style = 'color:deepskyblue'>Upload data and molecular identification files described in 'Data Requirements' on the previous page."),
-                           warningmessage_visualize = list(), warningmessage_filter = list(), warningmessage_preprocess = list(), warningmessage_groups = list(), warningmessage_qc = list(),
+                           warningmessage_visualize = list(), warningmessage_filter = list(), warningmessage_preprocess = list(), warningmessage_groups = list(), warningmessage_qc = list(), warningmessage_database = list(),
                            current_plot = NULL, plot_list = list(), plot_data = list(), reset_counter = 0, current_qc_boxplot = NULL,
                            chooseplots = NULL, filter_click_disable = list(init = TRUE), peakData2 = NULL, 
                            groups_list = list(), removed_samples = list())
+  
+  tables <- reactiveValues(mapping_tables = list(), saved_db_info = data.frame('Tables' = character(0), 'No. Rows' = character(0), 'Column Names' = character(0), check.names = F, stringsAsFactors = F))
   
   exportTestValues(plot_data = revals$plot_data_export, peakData = revals$peakData_export, color_choices = revals$color_by_choices)
   ######## Welcome Tab #############
@@ -307,6 +316,7 @@ shinyServer(function(session, input, output) {
   output$warnings_preprocess <- renderUI({
     HTML(paste(revals$warningmessage_preprocess, collapse = ""))
   })
+  
   
   #### Action Button reactions ####
   
@@ -1416,6 +1426,10 @@ shinyServer(function(session, input, output) {
   
   # End Visualize tab #
   
+  ####### Database Tab #######
+  
+  source('./Observers/database_observers.R', local = TRUE)
+  source('./srv_ui_elements/database_UI.R', local = TRUE)
   
   ####### Download Tab #######
   
@@ -1463,6 +1477,20 @@ shinyServer(function(session, input, output) {
         report(revals$uploaded_data, revals$peakData2, Emeta(), output_file = file.path(tempdir(), "report.html"), output_format = "html_document", 
                C13_ID = input$iso_symbol, groups_list = revals$groups_list)
         incProgress(1/total_files, detail = 'HTML report done..')
+      }
+      
+      # kegg tables
+      if (input$download_mappings) {
+        for(name in names(tables$mapping_tables)){
+          fs <- c(fs, file.path(tempdir(), paste0(name,'.csv')))
+          
+          # must convert list columns to character
+          table_out <- tables$mapping_tables[[name]] %>% mutate_if(is.list, as.character)
+          
+          write_csv(table_out, path = file.path(tempdir(), paste0(name,'.csv')))
+        }
+        # 
+        rm(table_out)
       }
       
       if ("separate" %in% input$download_selection & !is.null(revals$peakData2)){
