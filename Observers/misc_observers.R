@@ -4,10 +4,15 @@
 #   peakData2 <<- revals$peakData2
 # })
 
-observeEvent(c(reactiveValuesToList(revals), reactiveValuesToList(tables)), {
-  revals_postmortem <<- reactiveValuesToList(revals)
-  tables_postmortem <<- reactiveValuesToList(tables)
-})
+# observeEvent(c(reactiveValuesToList(revals), reactiveValuesToList(tables)), {
+#   revals_postmortem <<- reactiveValuesToList(revals)
+#   tables_postmortem <<- reactiveValuesToList(tables)
+# })
+
+observeEvent(input$top_page,{
+  toggleElement("js_saveplot", condition = input$top_page %in% c("Upload", "Groups", "Preprocess", "Quality Control", 'Filter', 'Visualize', 'Database Mapping'))
+  
+}, priority = 10, ignoreInit = FALSE)
 
 # multipurpose observer for page transitions
 observeEvent(input$top_page,{

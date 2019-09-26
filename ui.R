@@ -672,6 +672,12 @@ shinyUI(tagList(useShinyjs(),
     ),
     div(id = "js_helpbutton", style = "position:absolute;top:3px;right:16px;z-index:1000", 
         tagList(
+          hidden(
+            div(id = "js_saveplot", style = 'float:left;margin-right:3px', 
+                bsButton("viewplots", 'View Saved Plots', style = "info"),
+                bsButton("saveplot", "Save Last Plot", style = "info")
+                )
+            ),
           hidden(bsButton("helpbutton", "How do I use this page?", style = "info")),
           hidden(bsButton('datareqs_video', 'Data requirements tutorial', 
                    onclick = "window.open('https://youtu.be/uU5Q7r_pEGM', '_blank')", 
