@@ -8,6 +8,7 @@ list(
     input$update_axes
     input$vk_colors
     input$colorpal
+    input$vkbounds
     revals$makeplot #in case vk_colors does not change we still want to redraw the plot.
     
     disable('plot_submit')

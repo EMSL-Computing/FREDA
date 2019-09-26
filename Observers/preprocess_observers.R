@@ -117,7 +117,7 @@ observeEvent(input$preprocess_dismiss,{
                                           datatable(options = list(dom = "t", pageLength = nrow(.))) %>% 
                                           formatRound(columns, digits = 2)
   }
-  
+
   if(isTRUE(nrow(revals$categorical_cols) > 0)){
     revals$preprocess_tables$categorical <- summaryPreprocess(revals$uploaded_data, revals$categorical_cols, categorical = TRUE)
   }
@@ -136,12 +136,12 @@ observeEvent(input$preprocess_dismiss,{
     # Summary Header
     output$numeric_header <- renderUI(tags$p("Summary Statistics for Numeric Variables"))
   }
-  
+
   if(length(revals$preprocess_tables$categorical) > 0){
-    for(i in 1:length(revals$preprocess_tables$categorical)){
+    lapply(1:length(revals$preprocess_tables$categorical), function(i){
       output[[paste0('Table_',i)]] <- DT::renderDataTable({revals$preprocess_tables$categorical[[i]]}, options = list(scrollX = TRUE, dom = "t"))
       Sys.sleep(0.5)
-    }
+    })
     
     revals$ntables <- length(revals$preprocess_tables$categorical)
     
