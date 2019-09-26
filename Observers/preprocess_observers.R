@@ -1,3 +1,109 @@
+## Action button: Apply calculation functions When action button is clicked
+# Depends on: revals$uploaded_data, input$tests
+observeEvent(input$preprocess_click, {
+  validate(need(input$tests, message = "Please choose at least one test to calculate"))
+  req(!is.null(revals$uploaded_data))
+  
+  disable('preprocess_click')
+  shinyjs::show('preprocess_waiting', anim=T)
+  on.exit({
+    enable('preprocess_click')
+    shinyjs::hide('preprocess_waiting', anim=T)
+  })
+  
+  # Apply all relevant functions
+  withProgress(message = "Calculating Values....",{
+    
+    temp <- revals$uploaded_data
+    
+    tryCatch({
+      revals$warningmessage_preprocess$makeobject_error <- NULL
+      for(el in isolate(input$tests)){
+        if(grepl("assign_class", el)){
+          foo <- strsplit(el, ";")[[1]]
+          f <- get(foo[1], envir=asNamespace("ftmsRanalysis"), mode="function")
+          temp <- f(temp, foo[2])
+          temp$e_meta[paste0(foo[2], "_class")] <- gsub(";.*", "", temp$e_meta[,paste0(foo[2], "_class")])
+          
+        }
+        else{
+          f <- get(el, envir=asNamespace("ftmsRanalysis"), mode="function")
+          temp <- f(temp)
+        }
+        
+        incProgress(1/length(input$tests))
+      }
+    },
+    error = function(e){
+      msg = paste0('Error calculating some of your variables: \n System error: ', e)
+      revals$warningmessage_preprocess$makeobject_error <<- sprintf("<p style = 'color:red'>%s</p>", msg)
+    })
+    
+    if(!exists('msg')) revals$uploaded_data <- temp
+  })
+  
+  # post mortem test object
+  # test_uploaded_data <<- revals$peakData2 
+  
+  if (isTRUE(getOption("shiny.testmode"))) {
+    exportTestValues(peakData2 = revals$peakData2)
+  }
+  
+}, priority = 10) # End action button event
+
+# Creates two reactive variables for continuous and categorical variables which are used to display separate tables
+# Note: dependent on preprocess click and the user-specified calculations
+observeEvent(input$preprocess_click, {
+  # Error handling: revals$uploaded_data must have a non-NULL Kendrick Mass column name
+  #req(!is.null(attr(revals$uploaded_data, 'cnames')$kmass_cname))
+  req(input$tests)
+  
+  # Get csv file of all possible calculation column names
+  possible_calc_cnames <- read_csv("calculation_variables.csv") %>% as.data.frame(stringsAsFactors = FALSE)
+  
+  # Get column names from revals$uploaded_data's e_meta
+  actual_cnames <- colnames(revals$uploaded_data$e_meta)
+  
+  # Find all columns with names that match names for calculated columns
+  v_index <- which(possible_calc_cnames[,1] %in% actual_cnames)
+  
+  # Save calculation column names from above and their display names 
+  intersect <- possible_calc_cnames[v_index,]
+  
+  # get numeric columns
+  numeric_cols <- revals$uploaded_data$e_meta %>% 
+    dplyr::select(which(sapply(.[intersect[,1]], is.numeric))) %>% 
+    names()
+  
+  # get categorical columns
+  categorical_cols <- revals$uploaded_data$e_meta %>% 
+    dplyr::select(which(!sapply(.[intersect[,1]], is.numeric))) %>%
+    names() 
+  
+  #set reactive variables for observers
+  revals$numeric_cols <- intersect %>% filter(ColumnName %in% numeric_cols)
+  revals$categorical_cols <- intersect %>% filter(ColumnName %in% categorical_cols)
+  
+}) 
+
+#### Main Panel ####
+
+# Drop down list: potential histogram options
+observeEvent(input$preprocess_dismiss, {
+  output$which_hist_out <- renderUI({
+    # Error handling: input csv of calculations variables required
+    req(calc_vars, revals$numeric_cols, revals$categorical_cols)
+    
+    tagList(
+      hr(),
+      tags$p('I would like to see a histogram/bar-chart across all values of:'),
+      selectInput('which_hist', NULL,
+                  choices = emeta_display_choices(),
+                  selected = colnames(revals$uploaded_data$e_meta)[ncol(revals$uploaded_data$e_meta) + 1])
+    )
+  }) 
+})# End which_hist
+
 ### Summary Panel: Display table summaries of numeric and categorical columns in e_meta ###
 
 observeEvent(input$preprocess_dismiss,{

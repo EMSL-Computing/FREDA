@@ -1,9 +1,217 @@
-# plot selection update on page change
-observeEvent(input$top_page, {
-  req(input$top_page == "Visualize")
-  updateRadioGroupButtons(session, inputId = "chooseplots", selected = revals$chooseplots)
-  revals$chooseplots <- input$chooseplots
-}, priority = 10)
+
+### REACTIVE PLOT OPTIONS BELOW MAIN PLOT WINDOW ###
+
+# When plot_data() is recalculated, repopulate the dropdowns under the plot.  Specifically vk_colors and custom scatterplot options.
+observeEvent(plot_data(),{
+  
+  # store test value
+  if (isTRUE(getOption("shiny.testmode"))) {
+    revals$plot_data_export <- plot_data()
+  }
+  
+  ## ifelse block determines how to populate vk_colors dropdown
+  
+  # Density plots care not for choose_single!!!!
+  if (input$chooseplots == "Density Plot"){
+    numeric_cols <- which(sapply(plot_data()$e_meta %>% 
+                                   dplyr::select(one_of(emeta_display_choices())), is.numeric))
+    color_by_choices <- emeta_display_choices()[numeric_cols]
+  }
+  else if (input$choose_single == 1){
+    color_by_choices <- emeta_display_choices()
+    
+    if (input$chooseplots == "Van Krevelen Plot"){
+      color_by_choices <- switch(input$vkbounds,
+                                 'bs1' = c('Van Krevelen Boundary Set' = 'bs1', color_by_choices),
+                                 'bs2' = c('Van Krevelen Boundary Set' = 'bs2', color_by_choices),
+                                 "0" = c('Van Krevelen Boundary Set 1' = 'bs1', 'Van Krevelen Boundary Set 2' = 'bs2', color_by_choices))
+    }
+  }
+  else if (input$choose_single == 2) {
+    
+    # create vector of color choices by combining unique elements from e_data and e_meta
+    edata_colors <- plot_data()$e_data %>% dplyr::select(-one_of(getEDataColName(plot_data()))) %>% colnames()
+    color_by_choices <- c(edata_colors[!(edata_colors %in% emeta_display_choices())], emeta_display_choices())
+    
+  } else if (input$choose_single %in% c(3,4)) {
+    color_by_choices <- c("Group membership" = input$summary_fxn)
+  }
+  
+  # Give default names to unnamed choices
+  names(color_by_choices) <- sapply(1:length(color_by_choices), function(i){
+    ifelse(names(color_by_choices[i]) == "" | is.null(names(color_by_choices[i])),
+           yes = color_by_choices[i],
+           no = names(color_by_choices[i]))
+  })
+  
+  # if statements which prevent plot from resetting colors/axes when plot is redrawn.
+  selected = color_by_choices[1]
+  
+  if (input$vk_colors %in% color_by_choices){
+    selected <- input$vk_colors
+  }
+  
+  selected_x = color_by_choices[color_by_choices != selected][1]
+  selected_y = color_by_choices[!(color_by_choices %in% c(selected, selected_x))][1]
+  
+  if ((input$scatter_x %in% color_by_choices) & (input$scatter_y %in% color_by_choices)){
+    selected_x <- input$scatter_x
+    selected_y <- input$scatter_y
+  }
+  
+  # Density Colors
+  if (input$chooseplots == 'Density Plot') {
+    updateSelectInput(session, 'vk_colors', 'Plot Distribution of Variable:', 
+                      choices = color_by_choices,
+                      selected = selected)
+  }
+  
+  # Kendrick Colors
+  if (input$chooseplots == 'Kendrick Plot') {
+    updateSelectInput(session, 'vk_colors', 'Color by:',
+                      choices = color_by_choices,
+                      selected = selected)
+  }
+  
+  # Van Krevelen Colors
+  if (input$chooseplots == 'Van Krevelen Plot') {
+    updateSelectInput(session, 'vk_colors', 'Color by:',
+                      choices = color_by_choices,
+                      selected = selected)
+  }
+  
+  if (input$chooseplots %in% c('Custom Scatter Plot', 'PCOA Plot')) {
+    # allow only numeric columns for the axes but keep categorical coloring options
+    numeric_cols <- which(sapply(full_join(plot_data()$e_meta, plot_data()$e_data) %>% dplyr::select(color_by_choices), is.numeric))
+    
+    # maintain exclusivity of colorby and x-y variables only in scatterplot
+    if(input$chooseplots == 'Custom Scatter Plot'){
+      axes_choices <- revals$axes_choices <- color_by_choices[numeric_cols]
+      
+      updateSelectInput(session, 'scatter_x', "Horizontal axis variable:",
+                        choices = axes_choices[!(axes_choices %in% c(input$scatter_y, input$vk_colors))],
+                        selected = selected_x)
+      updateSelectInput(session, "scatter_y", "Vertical axis variable:",
+                        choices = axes_choices[!(axes_choices %in% c(input$scatter_x, input$vk_colors))],
+                        selected = selected_y)
+      updateSelectInput(session, 'vk_colors', 'Color  by:',
+                        choices = color_by_choices[!(color_by_choices %in% c(input$scatter_x, input$scatter_y))],
+                        selected = selected)
+    }
+    else if(input$chooseplots == 'PCOA Plot'){
+      axes_choices <- 1:min(5, ncol(revals$peakData2$e_data)-2)
+      names(axes_choices) <- paste0('PC', axes_choices)
+      selected_x <- 1
+      selected_y <- 2
+    }
+  }
+  
+  revals$color_by_choices <- color_by_choices
+  
+  # The dropdown value will not be updated if this if statement's condition is true, force re-execution of plotting in this case with a reactive var
+  if (input$vk_colors %in% color_by_choices){
+    revals$makeplot <- -revals$makeplot
+  }
+  
+}, priority = 9)
+#
+
+##########################################
+##### ADDING PLOTS TO DOWNLOAD QUEUE #####
+##########################################
+
+# the table needs to grow with each click of the download button
+parmTable <- reactiveValues()
+# need to initialize the table and fill in values
+parmTable$parms <- data.frame("File Name" = NA, "Plot Type" = NA, "Sample Type" = NA, "Group 1 Samples" = NA, "Group 2 Samples" = NA, "Boundary Set" = NA,
+                              "Color By Variable" = NA, "X Variable" = NA, "Y Variable" = NA, "Presence Threshold" = NA, "Absence Threshold" = NA, "P-Value" = NA,
+                              "Comparisons Method" = NA, check.names = FALSE)
+
+# add the plot on button click
+observeEvent(input$add_plot, {
+  
+  # counter which begins at 1 even if a filter reset has occurred.
+  ind <- input$add_plot + input$add_qc_boxplot - revals$reset_counter
+  
+  # initialize a new line
+  newLine <- data.frame(FileName = NA, PlotType = NA, SampleType = NA, Group_1_Samples = NA,  Group_2_Samples = NA, BoundarySet = NA,
+                        ColorBy = NA, x_var = NA, y_var = NA, pres_thresh = NA, absn_thresh = NA, pval = NA, compfn = NA)
+  
+  # fill values to a position depending on input$add_plot
+  
+  # which type of plot
+  newLine$FileName <- ifelse(is.na(input$title_input) | input$title_input == '', paste0('Plot_', ind), paste0('Plot_', ind, '_', input$title_input))
+  newLine$PlotType <- input$chooseplots
+  # Single or Multiple Samples
+  newLine$SampleType <- ifelse(input$chooseplots == "PCOA Plot", 'None',
+                               switch(as.character(input$choose_single), '1' = 'Single Sample', '2' = 'Single Group of Samples', '3' = 'Comparison of Two Groups', '4' = 'Comparison of Two Samples')
+  )
+  # Sample(s) in The first group (depends on input$choose_single to decide if this is a single or multiple sample list)
+  newLine$Group_1_Samples <- ifelse(input$choose_single %in% c(1,2), yes = paste(input$whichSamples, collapse = ','), no = paste(g1_samples(), collapse = ','))
+  # Sample(s) in the second group. Automatically NA if input$choose_single is single sample or single group
+  newLine$Group_2_Samples <- ifelse(input$choose_single %in% c(3,4), yes =  paste(g2_samples() , collapse = ','), no = 'None')
+  # Boundary set borders to use (NA for non-Van Krevelen plots)
+  newLine$BoundarySet <- ifelse(input$chooseplots == 'Van Krevelen Plot', yes = ifelse(input$vkbounds == 0, 'None', input$vkbounds), no = 'None')
+  newLine$ColorBy <- ifelse(input$chooseplots == 'PCOA Plot', 'None', input$vk_colors)
+  newLine$x_var <- input$scatter_x
+  newLine$y_var <- input$scatter_y
+  
+  newLine$x_var <- switch(input$chooseplots, 'Van Krevelen Plot' = 'O:C Ratio', 'Kendrick Plot' = 'Kendrick Mass', 
+                          'Density Plot' = input$vk_colors, 'Custom Scatter Plot' = input$scatter_x,
+                          'PCOA Plot' = paste0('Principal Component ', input$scatter_x))
+  newLine$y_var <- switch(input$chooseplots, 'Van Krevelen Plot' = 'H:C Ratio', 'Kendrick Plot' = 'Kendrick Defect', 
+                          'Density Plot' = 'Density', 'Custom Scatter Plot' = input$scatter_y,
+                          'PCOA Plot' = paste0('Principal Component ', input$scatter_y))
+  
+  
+  newLine$compfn <- ifelse(isTRUE(input$choose_single %in% c(3,4)) & isTRUE(input$summary_fxn != ""), 
+                           switch(input$summary_fxn,
+                                  "select_none" = "None", 
+                                  "uniqueness_gtest" = "G test", 
+                                  "uniqueness_nsamps" = "Presence/absence thresholds",
+                                  "uniqueness_prop" = "Presence/absence thresholds"),
+                           no = "None")
+  
+  # special storage options for single and two-group plots
+  if (input$choose_single == 2){
+    # store edata_result of summarizeGroups()
+    revals$plot_data[[ind]] <- plot_data()$e_data 
+  }
+  
+  if (input$choose_single %in% c(3,4)){
+    # store edata result of summarizeGroupComparisons()
+    revals$plot_data[[ind]] <- plot_data()$e_data 
+    
+    # parameters specific to group comparison plots
+    newLine$pres_thresh <- input$pres_thresh
+    newLine$absn_thresh <- input$absn_thresh
+    newLine$pval <- input$pval
+  }
+  
+  # Prettified colnames
+  colnames(newLine) <- c("File Name", "Plot Type", "Sample Type", "Group 1 Samples", "Group 2 Samples", "Boundary Set",
+                         "Color By Variable", "X Variable", "Y Variable", "Presence Threshold", "Absence Threshold", "P-Value", "Comparisons Method")
+  
+  if (ind == 1) {
+    # replace the existing line on the first click
+    parmTable$parms[ind, ] <- newLine
+    exportTestValues(parmTable_1 = parmTable$parms)
+  } else {
+    # concat every new line after
+    parmTable$parms <- rbind(parmTable$parms, newLine)
+    exportTestValues(parmTable_1 = parmTable$parms)
+  }
+  
+  # store the current plot in a reactiveValue for later download
+  revals$plot_list[[ind]] <- revals$current_plot
+  
+  # dont save the plot twice
+  disable('add_plot')
+  
+}, priority = 7)
+
+# render the above table
+output$parmsTable <- renderDataTable(parmTable$parms, options = list(scrollX = TRUE))
 
 # display modal dialog of saved plot info
 observeEvent(input$view_plots_btn,{
@@ -19,6 +227,22 @@ observeEvent(input$add_plot,{
   Sys.sleep(0.6)
   removeCssClass("view_plots", "pulse")
 })
+
+########################
+#### END ADD PLOTS #####
+########################
+########################
+
+##############################################
+##### shinyjs helpers and dynamic input updaters
+##############################################
+
+# plot selection update on page change
+observeEvent(input$top_page, {
+  req(input$top_page == "Visualize")
+  updateRadioGroupButtons(session, inputId = "chooseplots", selected = revals$chooseplots)
+  revals$chooseplots <- input$chooseplots
+}, priority = 10)
 
 # shinyjs helpers and reactive value storage for selection inputs
 observeEvent(c(input$top_page, input$chooseplots, input$choose_single, input$whichSamples, 
@@ -40,8 +264,6 @@ observeEvent(c(input$top_page, input$chooseplots, input$choose_single, input$whi
    
     revals$chooseplots <- input$chooseplots
   })
-
-
 
 # helpers for summary functions
 observeEvent(c(input$top_page, input$choose_single, g1_samples(), g2_samples(),

@@ -1,3 +1,163 @@
+# Main:  Create peakData when upload button or preprocess button clicked
+observeEvent(input$upload_click, {
+  # prevent multiple clicks
+  shinyjs::disable('upload_click')
+  shinyjs::show('upload_waiting', anim=T)
+  on.exit({
+    shinyjs::enable('upload_click')
+    shinyjs::hide('upload_waiting', anim=T)
+  })
+  
+  # Error handling: unique identifier chosen
+  validate(need(input$edata_id_col != 'Select one', 'Please select a unique identifier column'),
+           need(input$edata_id_col %in% edata_cnames() & input$edata_id_col %in% emeta_cnames(),
+                message = "The chosen ID column does not exist in one or both of the Data/Molecular Identification"))
+  
+  validate(         
+    need(input$select != 0, 'Please select either Formula or Elemental columns'),
+    need(input$isotope_yn != 0, 'Please select yes or no on information for isotopes'),
+    need(sum(!(Edata()[,input$edata_id_col] %in% Emeta()[,input$edata_id_col])) == 0, 
+         'Not all peaks in data file are present in molecular identification file, please add/remove these peaks to emeta / from edata')
+    
+  ) # End error handling #
+  
+  ## If formula column chosen
+  if (input$select == 1) {
+    
+    # Error handling: f_column chosen and  (if chosen) is of class 'character'
+    validate(
+      need((input$f_column != 'Select one'),
+           'Please select a formula column'),
+      need({
+        if (input$f_column != 'Select one') 
+          is.character(Emeta()[,input$f_column])
+        else 
+          FALSE
+      }, # End 'need'
+      
+      'Formula column is not a character vector. Please select another.')
+      
+    ) # End error handling #
+    tryCatch({
+      revals$warningmessage_upload$makeobject_error <- NULL
+      if (input$isotope_yn == 1 & isTRUE(input$iso_info_filter == 1)) { # If there's C13 # 
+        
+        # Error handling: entered isotopic notation must exist in the isotope information column
+        validate(
+          need(input$iso_info_column != "0", message = "Please choose a column of isotopic information"),
+          need(any(Emeta()[,input$iso_info_column] %in% input$iso_symbol),
+               'The entered isotopic notation does not match the entries in the chosen isotope information column. Please revise.')
+        ) # End error handling
+        
+        res <- as.peakData(e_data = Edata(), f_data = fdata(),
+                           e_meta = Emeta(), edata_cname = input$edata_id_col, 
+                           fdata_cname = 'SampleId', mass_cname = input$edata_id_col,
+                           mf_cname = input$f_column,
+                           isotopic_cname = input$iso_info_column,
+                           isotopic_notation = as.character(input$iso_symbol),
+                           check_rows = TRUE, data_scale = input$data_scale)
+        
+      } # End C13 / no C13 if statement
+      
+      if (input$isotope_yn == 2 | isTRUE(input$iso_info_filter) != 1) { #no C13
+        # Calculate peakDataData with formula column
+        res <- as.peakData(e_data = Edata(), f_data = fdata(),
+                           e_meta = Emeta(), edata_cname = input$edata_id_col, 
+                           fdata_cname = 'SampleId', mass_cname = input$edata_id_col,
+                           mf_cname = input$f_column,
+                           check_rows = TRUE, data_scale = input$data_scale)
+      } 
+    },
+    error = function(e){
+      msg = paste0('Error making your peakData: \n System error: ', e)
+      revals$warningmessage_upload$makeobject_error <<- sprintf("<p style = 'color:red'>%s</p>", msg)
+    })
+  }
+  
+  # If elemental columns chosen
+  if (input$select == 2){
+    
+    ## Error handling: all drop down columns nonempty and of class 'numeric'
+    
+    # first check that H and C columns are specified and numeric...
+    validate(
+      need({(input$c_column != 'Select a column') & 
+          (input$h_column != 'Select a column')
+      }, 
+      'Hydrogen/carbon columns are required. Please double-check drop-down options.')
+    )
+    validate(
+      need({
+        all(is.numeric(Emeta()[,input$c_column])) &
+          all(is.numeric(Emeta()[,input$h_column]))
+      }, 
+      'One or more elemental columns are non-numeric.')
+    )
+    # ...then check that -if- other columns are selected, they are numeric
+    for(col in c('n_column', 'o_column', 's_column', 'p_column')){
+      if(input[[col]] != 'Select a column'){
+        validate(need(is.numeric(Emeta()[,input[[col]]]), 'One or more elemental columns are non-numeric.'))
+      } 
+    }# End error handling #
+    tryCatch({
+      revals$warningmessage_upload$makeobject_error <- NULL
+      # If no C13
+      if (input$isotope_yn == 2 | isTRUE(input$iso_info_filter == 2)) {
+        # Create peakData object
+        res <- as.peakData(e_data = Edata(), f_data = fdata(),
+                           e_meta = Emeta(), edata_cname = input$edata_id_col, 
+                           fdata_cname = 'SampleId', mass_cname = input$edata_id_col,
+                           c_cname = input$c_column, h_cname = input$h_column, 
+                           n_cname = if(input$n_column == 'Select a column') NULL else input$n_column,
+                           o_cname = if(input$o_column == 'Select a column') NULL else input$o_column, 
+                           s_cname = if(input$s_column == 'Select a column') NULL else input$s_column, 
+                           p_cname = if(input$p_column == 'Select a column') NULL else input$p_column,
+                           check_rows = TRUE, data_scale = input$data_scale)
+        
+      }
+      if (input$isotope_yn == 1 & isTRUE(input$iso_info_filter == 1)) { # If there's C13 # 
+        
+        # Error handling: entered isotopic notation must exist in the isotope information column
+        validate(need(input$iso_info_column != "0", message = "Please choose a column of isotopic information"))
+        validate(need(any(Emeta()[,input$iso_info_column] %in% input$iso_symbol),
+                      'The entered isotopic notation does not match the entries in the chosen isotope information column. Please revise.')
+        ) # End error handling
+        
+        res <- as.peakData(e_data = Edata(), f_data = fdata(),
+                           e_meta = Emeta(), edata_cname = input$edata_id_col, 
+                           fdata_cname = 'SampleId', mass_cname = input$edata_id_col,
+                           c_cname = input$c_column, h_cname = input$h_column, 
+                           n_cname = if(input$n_column == 'Select a column') NULL else input$n_column,
+                           o_cname = if(input$o_column == 'Select a column') NULL else input$o_column, 
+                           s_cname = if(input$s_column == 'Select a column') NULL else input$s_column, 
+                           p_cname = if(input$p_column == 'Select a column') NULL else input$p_column,
+                           isotopic_cname = input$iso_info_column,
+                           isotopic_notation = as.character(input$iso_symbol),
+                           check_rows = TRUE, data_scale = input$data_scale)
+        
+      } # End C13 / no C13 if statement
+    },
+    error = function(e){
+      msg = paste0('Error making your peakData: \n System error: ', e)
+      revals$warningmessage_upload$makeobject_error <<- sprintf("<p style = 'color:red'>%s</p>", msg)
+    })
+    
+  } # End elemental column if statement
+  
+  if(exists('res')){
+    shinyjs::show('upload_success')
+    
+    # reset 'removed samples' reval
+    revals$removed_samples <- list()
+    revals$groups_list <- list()
+    updateCollapse(session, 'upload_collapse', close = c('file_upload', 'column_info'))
+    shinyjs::show('ok_idcols')
+    
+    revals$uploaded_data <- res
+  }
+  
+}) # End peakData creation
+
 # if edata is big, warn the user and prevent plotting of filter barplot
 observeEvent(Edata(),{
   if(prod(dim(Edata()[,-1])) > max_cells){

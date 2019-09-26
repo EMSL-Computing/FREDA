@@ -1,3 +1,141 @@
+# Event: Create filtered nonreactive revals$peakData2 when action button clicked
+# Depends on action button 'filter_click'
+observeEvent(input$filter_click, {
+  shinyjs::show('calc_filter', anim = T)
+  shinyjs::disable('filter_click')
+  on.exit({ 
+    shinyjs::enable('filter_click')
+    shinyjs::hide('calc_filter', anim = T)
+  })
+  
+  # if the data is already filtered start over from the uploaded data
+  if (any(c("moleculeFilt", "massFilt", "formulaFilt") %in% names(attributes(revals$peakData2)$filters)) | 
+      any(grepl("emetaFilt", names(attributes(revals$peakData2)$filters))) | 
+      !all(colnames(revals$peakData2$e_data) %in% colnames(revals$uploaded_data$e_data))){
+    revals$peakData2 <- revals$uploaded_data
+  }
+  
+  n_filters = sum(sapply(list(input$massfilter, input$molfilter, input$samplefilter, input$formfilter, input$custom1, input$custom2, input$custom3), isTRUE))
+  
+  tryCatch({
+    revals$warningmessage_filter$apply_fail <- NULL
+    withProgress(message = "Applying filters....",{
+      # Apply sample filter
+      if(input$samplefilter){
+        req(length(input$keep_samples) > 0)
+        revals$peakData2 <- subset(revals$peakData2, samples = input$keep_samples, check_rows = TRUE)
+        revals$removed_samples <- c(revals$removed_samples, setdiff(sample_names(), input$keep_samples))
+        
+        # remove empty lists
+        if(length(revals$groups_list) > 0){
+          
+          # get indices of now empty groups
+          inds <- sapply(revals$groups_list, function(el){
+            length(intersect(el, input$keep_samples)) == 0
+          })
+          
+          revals$groups_list[inds] <- NULL
+        }
+        incProgress(1/n_filters, detail = 'Sample filter done.')
+      }else revals$removed_samples <- list()
+      
+      # Apply mass filter
+      if (input$massfilter){
+        
+        # Error handling: Min mass less than max mass, but greater than 0
+        req(input$min_mass < input$max_mass)
+        req(input$min_mass > 0)
+        
+        # Create and apply mass filter to nonreactive peakData object
+        filterMass <- mass_filter(revals$peakData2)
+        revals$peakData2 <- applyFilt(filterMass, revals$peakData2, min_mass = as.numeric(input$min_mass), 
+                                      max_mass = as.numeric(input$max_mass))
+        rm(filterMass)
+        incProgress(1/n_filters, detail = 'Mass filter done.')
+      }
+      
+      # Apply molecule filter
+      if (input$molfilter) {
+        
+        # Create and apply molecule filter to nonreactive peakData object
+        filterMols <- molecule_filter(revals$peakData2)
+        revals$peakData2 <- applyFilt(filterMols, revals$peakData2, min_num = as.integer(input$minobs))
+        rm(filterMols)
+        incProgress(1/n_filters, detail = 'Molecule filter done.')
+      } # End molecule filter if statement
+      
+      # Apply formula filter
+      if (input$formfilter){
+        filterForm <- formula_filter(revals$peakData2)
+        revals$peakData2 <- applyFilt(filterForm, revals$peakData2)
+        rm(filterForm)
+        incProgress(1/n_filters, detail = 'Formula filter done.')
+      }
+      
+      # Apply custom filters
+      if (input$customfilterz){
+        
+        #apply the filter for each input
+        for(i in 1:3){
+          
+          #require that a selection has been made for filter i
+          if (input[[paste0("custom",i)]] == "Select item") return(NULL)
+          
+          #make the filter based on selection
+          filter <- emeta_filter(revals$peakData2, input[[paste0("custom",i)]])
+          
+          # if numeric, apply filter with specified max and min values
+          if (is.numeric(revals$peakData2$e_meta[,input[[paste0("custom",i)]]])){
+            req(input[[paste0("minimum_custom",i)]], input[[paste0("maximum_custom", i)]])
+            revals$peakData2 <- applyFilt(filter, revals$peakData2,
+                                          min_val = input[[paste0("minimum_custom",i)]], 
+                                          max_val = input[[paste0("maximum_custom", i)]], 
+                                          na.rm = !input[[paste0("na_custom",i)]])
+            
+          }
+          # else apply with selected categories
+          else if (!is.numeric(revals$peakData2$e_meta[,input[[paste0("custom",i)]]])){
+            req(input[[paste0("categorical_custom",i)]])
+            revals$peakData2 <- applyFilt(filter, revals$peakData2, 
+                                          cats = input[[paste0("categorical_custom",i)]], 
+                                          na.rm = !input[[paste0("na_custom",i)]])
+          }
+          
+          rm(filter)
+          incProgress(1/n_filters, detail = sprintf('Custom filter %s done', i))
+        }
+        
+      }
+    })
+  },error = function(e){
+    filt_msg = paste0('Something went wrong applying your filters \n System error:  ', e)
+    revals$warningmessage_filter$apply_fail <- sprintf("<p style = 'color:red'>%s</p>", filt_msg)
+  })
+  
+  if(!exists('filt_msg')){
+    # display success modal
+    showModal(
+      modalDialog(title = "Filter Success",
+                  fluidRow(
+                    column(10, align = "center", offset = 1,
+                           HTML('<h4 style= "color:#1A5276">Your data has been filtered.</h4>
+                                <h4 style= "color:#1A5276">The filtered data is stored and will be reset if you re-upload or re-process data.</h4>'),
+                           hr(),
+                           actionButton("filter_dismiss", "Review Results", width = '75%'),
+                           br(),
+                           br(),
+                           actionButton("goto_viz", "Continue to Visualization", width = '75%')
+                           )
+                  )
+                  ,footer = NULL)
+    )
+  }
+  
+  #__test-export__
+  exportTestValues(peakData2 = revals$peakData2)
+  
+}) # End creating revals$peakData2
+
 # creates three observers, one for each custom filter column selection dropdown
 lapply(1:3, function(i){
   
@@ -244,6 +382,17 @@ observe({
   cond = all(unlist(revals$filter_click_disable))
   toggleState("filter_click", condition = cond)
 })
+
+# ----- Filter Reset Setup -----# 
+# f$clearFilters simply allows/denies the destruction of filters and plots, and the rest of data to pre-filtered state.
+f <- reactiveValues(clearFilters = FALSE)
+observeEvent(input$clear_filters_yes, {
+  f$clearFilters <- TRUE
+}, priority = 10)
+
+observeEvent(input$filter_click, {
+  f$clearFilters <- FALSE
+}, priority = 10)
 
 #-------- Reset Activity -------#
 # Allow a 'reset' that restores the uploaded object and unchecks the filter
