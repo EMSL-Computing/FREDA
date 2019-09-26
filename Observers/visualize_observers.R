@@ -515,30 +515,35 @@ observeEvent(input$summary_fxn,{
 })
 
 # Control coloring choices depending on vk bounds selection
+# NOTE:  fxnplot does NOT redraw when input$vkbounds is invalidated.  The dependency is entirely through revals$makeplot
 observeEvent(input$vkbounds, {
-  req(isTRUE(input$choose_single == 1) & isTRUE(input$chooseplots == "Van Krevelen Plot"))
-
-  if(input$vkbounds == 0){
-    selected <- if(input$vk_colors %in% c("bs1", "bs2")) NULL else input$vk_colors
-    updateSelectInput(session, "vk_colors", 
-                      choices = c('Van Krevelen Boundary Set 1' = 'bs1','Van Krevelen Boundary Set 2' = 'bs2', revals$color_by_choices[!(revals$color_by_choices %in% c("bs1", "bs2"))]),
-                      selected = input$vk_colors)
+  req(isTRUE(input$chooseplots == "Van Krevelen Plot"))
+  if(isTRUE(input$choose_single == 1)){
+    if(input$vkbounds == 0){
+      selected <- input$vk_colors
+      updateSelectInput(session, "vk_colors", 
+                        choices = c('Van Krevelen Boundary Set 1' = 'bs1','Van Krevelen Boundary Set 2' = 'bs2', revals$color_by_choices[!(revals$color_by_choices %in% c("bs1", "bs2"))]),
+                        selected = input$vk_colors)
+    }
+    else if(input$vkbounds == 'bs1'){
+      selected <- if(input$vk_colors == "bs2") NULL else input$vk_colors
+      updateSelectInput(session, "vk_colors", 
+                        choices = c('Van Krevelen Boundary Set' = 'bs1', revals$color_by_choices[!(revals$color_by_choices %in% c("bs1", "bs2"))]),
+                        selected = selected)
+    }
+    else if(input$vkbounds == "bs2"){
+      selected <- if(input$vk_colors == "bs1") NULL else input$vk_colors
+      updateSelectInput(session, "vk_colors", 
+                        choices = c('Van Krevelen Boundary Set' = 'bs2', revals$color_by_choices[!(revals$color_by_choices %in% c("bs1", "bs2"))]),
+                        selected = selected)
+    }
+    
+    # still want to redraw if the colors didn't change, fxnplot does NOT invalidate on input$vkbounds
+    if(isTRUE(selected == input$vk_colors)){
+      revals$makeplot <- -revals$makeplot
+    }
   }
-  else if(input$vkbounds == 'bs1'){
-    selected <- if(input$vk_colors == "bs2") NULL else input$vk_colors
-    updateSelectInput(session, "vk_colors", 
-                      choices = c('Van Krevelen Boundary Set' = 'bs1', revals$color_by_choices[!(revals$color_by_choices %in% c("bs1", "bs2"))]),
-                      selected = selected)
-  }
-  else if(input$vkbounds == "bs2"){
-    selected <- if(input$vk_colors == "bs1") NULL else input$vk_colors
-    updateSelectInput(session, "vk_colors", 
-                      choices = c('Van Krevelen Boundary Set' = 'bs2', revals$color_by_choices[!(revals$color_by_choices %in% c("bs1", "bs2"))]),
-                      selected = selected)
-  }
-  
-  # still want to redraw if the colors didn't change
-  if(selected == input$vk_colors){
+  else if(isTRUE(input$choose_single > 1)){
     revals$makeplot <- -revals$makeplot
   }
 })
