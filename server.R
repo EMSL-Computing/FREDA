@@ -34,6 +34,9 @@ library(MetaCycData)
 # devtools::load_all('~/Documents/git_repos/KeggData/')
 
 shinyServer(function(session, input, output) {
+  # static objects
+  dt_checkmark <- '<span class="glyphicon glyphicon-ok" style="color:deepskyblue"></span>'
+  dt_minus <- '<span class="glyphicon glyphicon-minus"></span>'
   
   # onStop(function() rm(revals$peakData2, pos = 1))
   Sys.setenv(R_ZIPCMD="/usr/bin/zip")
@@ -41,11 +44,11 @@ shinyServer(function(session, input, output) {
   source('helper_functions/selection_addons.R')
   source('helper_functions/summaryFilter.R') 
   source('helper_functions/summaryPreprocess.R')
-  source("helper_functions/renderDownloadPlots.R")
   source('helper_functions/database_utils.R')
   
-  # observers which do not act on a single tab
-  source("Observers/misc_observers.R", local = TRUE)
+  # observers and UI elements which operate across tabs
+  source("Observers/global_observers.R", local = TRUE)
+  source('srv_ui_elements/global_UI.R', local = TRUE)
   
   # Misc Reactive Values:
   # peakData2_dim(), uploaded_data_dim(). The number of cells in e_data of the respective objects
@@ -55,12 +58,18 @@ shinyServer(function(session, input, output) {
                            plot_data_export = NULL, peakData_export = NULL, redraw_filter_plot = TRUE, reac_filter_plot = TRUE,
                            group_1 = NULL, group_2 = NULL, single_group = NULL, single_sample = NULL, whichSample1 = NULL, whichSample2 = NULL, 
                            warningmessage_upload = list(upload = "style = 'color:deepskyblue'>Upload data and molecular identification files described in 'Data Requirements' on the previous page."),
-                           warningmessage_visualize = list(), warningmessage_filter = list(), warningmessage_preprocess = list(), warningmessage_groups = list(), warningmessage_qc = list(), warningmessage_database = list(),
                            current_plot = NULL, plot_list = list(), plot_data = list(), reset_counter = 0, current_qc_boxplot = NULL,
                            chooseplots = NULL, filter_click_disable = list(init = TRUE), peakData2 = NULL, 
                            groups_list = list(), removed_samples = list())
   
+  plots <- reactiveValues(last_plot = NULL, plot_list = list(), plot_data = list(),
+                          plot_table = data.frame("File Name" = character(0), 'Download?' = character(0), "Plot Type" = character(0), "Sample Type" = character(0), "Group 1 Samples" = character(0), 
+                                                  "Group 2 Samples" = character(0), "Boundary Set" = character(0), "Color By Variable" = character(0), "X Variable" = character(0), 
+                                                  "Y Variable" = character(0), "Presence Threshold" = character(0), "Absence Threshold" = character(0), "P-Value" = character(0),
+                                                   "Comparisons Method" = character(0), check.names = FALSE, stringsAsFactors = FALSE))
+  
   tables <- reactiveValues(mapping_tables = list(), saved_db_info = data.frame('Tables' = character(0), 'No. Rows' = character(0), 'Column Names' = character(0), check.names = F, stringsAsFactors = F))
+  
   
   exportTestValues(plot_data = revals$plot_data_export, peakData = revals$peakData_export, color_choices = revals$color_by_choices)
   

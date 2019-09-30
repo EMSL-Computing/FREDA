@@ -116,123 +116,6 @@ observeEvent(plot_data(),{
 }, priority = 9)
 #
 
-##########################################
-##### ADDING PLOTS TO DOWNLOAD QUEUE #####
-##########################################
-
-# the table needs to grow with each click of the download button
-parmTable <- reactiveValues()
-# need to initialize the table and fill in values
-parmTable$parms <- data.frame("File Name" = NA, "Plot Type" = NA, "Sample Type" = NA, "Group 1 Samples" = NA, "Group 2 Samples" = NA, "Boundary Set" = NA,
-                              "Color By Variable" = NA, "X Variable" = NA, "Y Variable" = NA, "Presence Threshold" = NA, "Absence Threshold" = NA, "P-Value" = NA,
-                              "Comparisons Method" = NA, check.names = FALSE)
-
-# add the plot on button click
-observeEvent(input$add_plot, {
-  
-  # counter which begins at 1 even if a filter reset has occurred.
-  ind <- input$add_plot + input$add_qc_boxplot - revals$reset_counter
-  
-  # initialize a new line
-  newLine <- data.frame(FileName = NA, PlotType = NA, SampleType = NA, Group_1_Samples = NA,  Group_2_Samples = NA, BoundarySet = NA,
-                        ColorBy = NA, x_var = NA, y_var = NA, pres_thresh = NA, absn_thresh = NA, pval = NA, compfn = NA)
-  
-  # fill values to a position depending on input$add_plot
-  
-  # which type of plot
-  newLine$FileName <- ifelse(is.na(input$title_input) | input$title_input == '', paste0('Plot_', ind), paste0('Plot_', ind, '_', input$title_input))
-  newLine$PlotType <- input$chooseplots
-  # Single or Multiple Samples
-  newLine$SampleType <- ifelse(input$chooseplots == "PCOA Plot", 'None',
-                               switch(as.character(input$choose_single), '1' = 'Single Sample', '2' = 'Single Group of Samples', '3' = 'Comparison of Two Groups', '4' = 'Comparison of Two Samples')
-  )
-  # Sample(s) in The first group (depends on input$choose_single to decide if this is a single or multiple sample list)
-  newLine$Group_1_Samples <- ifelse(input$choose_single %in% c(1,2), yes = paste(input$whichSamples, collapse = ','), no = paste(g1_samples(), collapse = ','))
-  # Sample(s) in the second group. Automatically NA if input$choose_single is single sample or single group
-  newLine$Group_2_Samples <- ifelse(input$choose_single %in% c(3,4), yes =  paste(g2_samples() , collapse = ','), no = 'None')
-  # Boundary set borders to use (NA for non-Van Krevelen plots)
-  newLine$BoundarySet <- ifelse(input$chooseplots == 'Van Krevelen Plot', yes = ifelse(input$vkbounds == 0, 'None', input$vkbounds), no = 'None')
-  newLine$ColorBy <- ifelse(input$chooseplots == 'PCOA Plot', 'None', input$vk_colors)
-  newLine$x_var <- input$scatter_x
-  newLine$y_var <- input$scatter_y
-  
-  newLine$x_var <- switch(input$chooseplots, 'Van Krevelen Plot' = 'O:C Ratio', 'Kendrick Plot' = 'Kendrick Mass', 
-                          'Density Plot' = input$vk_colors, 'Custom Scatter Plot' = input$scatter_x,
-                          'PCOA Plot' = paste0('Principal Component ', input$scatter_x))
-  newLine$y_var <- switch(input$chooseplots, 'Van Krevelen Plot' = 'H:C Ratio', 'Kendrick Plot' = 'Kendrick Defect', 
-                          'Density Plot' = 'Density', 'Custom Scatter Plot' = input$scatter_y,
-                          'PCOA Plot' = paste0('Principal Component ', input$scatter_y))
-  
-  
-  newLine$compfn <- ifelse(isTRUE(input$choose_single %in% c(3,4)) & isTRUE(input$summary_fxn != ""), 
-                           switch(input$summary_fxn,
-                                  "select_none" = "None", 
-                                  "uniqueness_gtest" = "G test", 
-                                  "uniqueness_nsamps" = "Presence/absence thresholds",
-                                  "uniqueness_prop" = "Presence/absence thresholds"),
-                           no = "None")
-  
-  # special storage options for single and two-group plots
-  if (input$choose_single == 2){
-    # store edata_result of summarizeGroups()
-    revals$plot_data[[ind]] <- plot_data()$e_data 
-  }
-  
-  if (input$choose_single %in% c(3,4)){
-    # store edata result of summarizeGroupComparisons()
-    revals$plot_data[[ind]] <- plot_data()$e_data 
-    
-    # parameters specific to group comparison plots
-    newLine$pres_thresh <- input$pres_thresh
-    newLine$absn_thresh <- input$absn_thresh
-    newLine$pval <- input$pval
-  }
-  
-  # Prettified colnames
-  colnames(newLine) <- c("File Name", "Plot Type", "Sample Type", "Group 1 Samples", "Group 2 Samples", "Boundary Set",
-                         "Color By Variable", "X Variable", "Y Variable", "Presence Threshold", "Absence Threshold", "P-Value", "Comparisons Method")
-  
-  if (ind == 1) {
-    # replace the existing line on the first click
-    parmTable$parms[ind, ] <- newLine
-    exportTestValues(parmTable_1 = parmTable$parms)
-  } else {
-    # concat every new line after
-    parmTable$parms <- rbind(parmTable$parms, newLine)
-    exportTestValues(parmTable_1 = parmTable$parms)
-  }
-  
-  # store the current plot in a reactiveValue for later download
-  revals$plot_list[[ind]] <- revals$current_plot
-  
-  # dont save the plot twice
-  disable('add_plot')
-  
-}, priority = 7)
-
-# render the above table
-output$parmsTable <- renderDataTable(parmTable$parms, options = list(scrollX = TRUE))
-
-# display modal dialog of saved plot info
-observeEvent(input$view_plots_btn,{
-  showModal(modalDialog(
-    dataTableOutput("parmsTable")
-    )
-  )
-})
-
-# animate the saved plots button to indicate your plot was saved
-observeEvent(input$add_plot,{
-  addCssClass("view_plots", "pulse")
-  Sys.sleep(0.6)
-  removeCssClass("view_plots", "pulse")
-})
-
-########################
-#### END ADD PLOTS #####
-########################
-########################
-
 ##############################################
 ##### shinyjs helpers and dynamic input updaters
 ##############################################
@@ -339,10 +222,8 @@ observeEvent(c(input$top_page, input$choose_single, g1_samples(), g2_samples(),
 
 # logical reactive value that clears the plot if a new type is selected
 v <- reactiveValues(clearPlot = TRUE)
-observeEvent(c(input$chooseplots, input$choose_single, input$whichSamples, 
-               g1_samples(), g2_samples()), {
+observeEvent(c(input$chooseplots, input$choose_single, input$whichSamples, g1_samples(), g2_samples()), {
   v$clearPlot <- TRUE
-  disable("add_plot")
 }, priority = 10)
 observeEvent(input$plot_submit, {
   v$clearPlot <- FALSE

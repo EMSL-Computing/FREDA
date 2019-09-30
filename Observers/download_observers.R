@@ -8,15 +8,11 @@ observeEvent(input$makezipfile,{
   
   print(tempdir())
   fs <- vector()
-  
-  # ____test functionality____
-  # if in testmode just select all rows since shinytest doesn't recognize row selection for parmsTable2
-  if (isTRUE(getOption("shiny.testmode"))){
-    rows <- 1:nrow(parmTable$parms)
-  }
-  else rows <- input$parmsTable2_rows_selected
+
   #
-  total_files <- sum(c(input$report_selection, length(input$download_selection), length(rows))) + 1
+  total_files <- sum(c(input$report_selection, input$download_mappings, length(input$download_selection), length(plots$plot_table))) + 1
+  
+  plots_marked_for_death <- which(plots$plot_table[,2] == dt_checkmark) 
   
   withProgress(message = "Writing files: ",{
     # option to choose report output format?  need to change inputs in report.R.
@@ -34,8 +30,8 @@ observeEvent(input$makezipfile,{
         
         # must convert list columns to character
         table_out <- tables$mapping_tables[[name]] %>% mutate_if(is.list, as.character)
-        
         write_csv(table_out, path = file.path(tempdir(), paste0(name,'.csv')))
+        incProgress(1/total_files, detail = sprintf('%s done..', name))
       }
       # 
       rm(table_out)
@@ -55,46 +51,34 @@ observeEvent(input$makezipfile,{
       incProgress(1/total_files, detail = 'Merged file done..')
     }
     if ("group_data" %in% input$download_selection){
-      if(length(revals$plot_data) != 0){
-        for(i in 1:length(revals$plot_data)){
-          if (!is.null(revals$plot_data[[i]])){
-            path <- file.path(tempdir(), paste0("FREDA_group_data_summary_", gsub("/", "-", parmTable$parms[["File Name"]][i]),".csv"))
-            fs <- c(fs, path)
-            write_csv(revals$plot_data[[i]], path = path) 
-          }
+      if(length(plots$plot_data) != 0){
+        for(name in names(plots$plot_data)){
+          path <- file.path(tempdir(), paste0("FREDA_group_data_summary_", gsub("/", "-", name),".csv"))
+          fs <- c(fs, path)
+          write_csv(plots$plot_data[[name]], path = path) 
         }
       }
       incProgress(1/total_files, detail = 'Group plot summaries done..')
     }
     
-    if (length(rows) > 0) {
-      bitmaps <- list()
-      for (i in rows) {
-        path <- paste(tempdir(), "/",gsub("/", "-", parmTable$parms[["File Name"]][i]), ".", input$image_format, sep = "") #create a plot name
-        fs <- c(fs, path) # append the new plot to the old plots
-        export(revals$plot_list[[i]],
-               file = path, zoom = ifelse(peakData2_dim() < max_cells, 2, 1)) # use webshot to export a screenshot to the opened pdf
-        #r <- brick(file.path(getwd(), paste("plot",i,".png", sep = ""))) # create a raster of the screenshot
-        # img <- magick::image_read(paste(tempdir(), "plot",i,".png", sep = ""))#attr(r,"file")@name) #turn the raster into an image of selected format
-        
-        # if (isTRUE(getOption("shiny.testmode"))) bitmaps[[i]] <- as.raster(img)
-        
-        #image_write(img, path = path, format = input$image_format) #write the image
-        incProgress(1/total_files, detail = sprintf('Plot %s done..', i))
-        #rsvg::rsvg_svg(img, file = path)
-      }
-      
-      # ___test-export___
-      exportTestValues(images_out = digest::digest(bitmaps))
-      
-      fs <- c(fs, file.path(tempdir(), "Plot_key.csv"))
-      outtable <- parmTable$parms[rows,]
-      write_csv( outtable, path = file.path(tempdir(), "Plot_key.csv"))
+    if(length(plots_marked_for_death) > 0){
+      for(i in plots_marked_for_death){
+        plot_key = plots$plot_table[i, 1]
+        path = file.path(tempdir(), paste0(plot_key, '.', input$image_format))
+        fs <- c(fs, path)
+
+        if(inherits(plots$plot_list[[plot_key]], 'plotly')){
+          export(plots$plot_list[[plot_key]], file = path, zoom = 2)
+        }
+        else if(inherits(plots$plot_list[[plot_key]], 'ggplot')){
+          ggsave(path, plots$plot_list[[plot_key]])
+        }
+        incProgress(1/total_files, detail = sprintf('Plot: %s done..', plot_key))
+     }
     }
+    
     print(fs)
     revals$fs <- fs
-    
-    # setwd(orig_wd)
   })
 })
 

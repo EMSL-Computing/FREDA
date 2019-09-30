@@ -13,7 +13,6 @@ list(
     disable('plot_submit')
     on.exit({
       enable('plot_submit')
-      enable("add_plot")
     })
     
     # for testing if plot actually got updated in test mode
@@ -209,6 +208,7 @@ list(
     # inspect <<- p
     
     revals$current_plot <- p
+    plots$last_plot <- p
     
     # use webGL for large plots
     if(peakData2_dim() > max_cells & !(input$chooseplots == 'Density Plot')){
@@ -257,13 +257,6 @@ list(
       textInput(inputId = "legend_title_input", label = "Legend label", value = "")
     }
     
-  }),
-  
-  # view plot table button UI
-  output$view_plots <- renderUI({
-    n_plots <- nrow(parmTable$parms[which(rowSums(!is.na(parmTable$parms))!=0),])
-    actionButton(inputId = "view_plots_btn", width = '100%', 
-                 label = sprintf("View Table Info of %i Saved Plots", n_plots), icon = icon("folder-open", lib = "glyphicon"))
   }),
   
   # color palette selection (main panel)

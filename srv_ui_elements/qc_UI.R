@@ -45,9 +45,7 @@ list(
     else p <- plot(temp_peakData2, xlabel=isolate(input$qc_boxplot_xlab), ylabel=isolate(input$qc_boxplot_ylab), 
                    title = isolate(input$qc_boxplot_title), colorBy=color_by) %>% layout(margin = list(b = 100), xaxis = list(tickangle = 45))
     
-    revals$current_qc_boxplot <- p
-    enable('add_qc_boxplot')
-    shinyjs::hide('qc_download_ok')
+    plots$last_plot <- p
     
     p
   }),

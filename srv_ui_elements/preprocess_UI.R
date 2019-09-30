@@ -43,6 +43,8 @@ list(
       #____test export_____
       exportTestValues(preprocess_hist = p, hist_attrs = p$x$attrs[[p$x$cur_data]], hist_layout = p$x$layout, hist_visdat = p$x$visdat[[p$x$cur_data]]())
       
+      plots$last_plot <- p
+      
       return(p)
     })
     

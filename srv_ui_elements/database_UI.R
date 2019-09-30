@@ -101,27 +101,33 @@ list(
   # kegg barplot
   output$kegg_barplot <- renderPlotly({
     req(tables$kegg_table, revals$peakData2)
-    tables$kegg_table %>% 
-      group_by(!!rlang::sym(getMassColName(revals$peakData2))) %>% 
-      mutate(n = n()) %>% 
-      slice(1) %>% 
-      plot_ly(x = ~n, type = 'histogram') %>% 
-      layout(title = 'Histogram of number of matching Metacyc compounds', 
-             xaxis = list(title = 'Database elements peak maps to'), 
-             yaxis = list(title = 'Number of peaks'))
+    p <- tables$kegg_table %>% 
+          group_by(!!rlang::sym(getMassColName(revals$peakData2))) %>% 
+          mutate(n = n()) %>% 
+          slice(1) %>% 
+          plot_ly(x = ~n, type = 'histogram') %>% 
+          layout(title = 'Histogram of number of matching Metacyc compounds', 
+                 xaxis = list(title = 'Database elements peak maps to'), 
+                 yaxis = list(title = 'Number of peaks'))
+    
+    plots$last_plot <- p
+    
   }),
   
   # mc barplot
   output$mc_barplot <- renderPlotly({
     req(tables$mc_table, revals$peakData2)
-    tables$mc_table %>% 
-      group_by(!!rlang::sym(getMassColName(revals$peakData2))) %>% 
-      mutate(n = n()) %>% 
-      slice(1) %>% 
-      plot_ly(x = ~n, type = 'histogram') %>% 
-      layout(title = 'Histogram of number of matching Metacyc compounds', 
-             xaxis = list(title = 'Database elements peak maps to'), 
-             yaxis = list(title = 'Number of peaks'))
+    p <- tables$mc_table %>% 
+          group_by(!!rlang::sym(getMassColName(revals$peakData2))) %>% 
+          mutate(n = n()) %>% 
+          slice(1) %>% 
+          plot_ly(x = ~n, type = 'histogram') %>% 
+          layout(title = 'Histogram of number of matching Metacyc compounds', 
+                 xaxis = list(title = 'Database elements peak maps to'), 
+                 yaxis = list(title = 'Number of peaks'))
+    
+    plots$last_plot <- p
+    
   }),
   
   output$warnings_database <- renderUI({

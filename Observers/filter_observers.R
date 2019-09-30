@@ -456,16 +456,17 @@ observeEvent(input$clear_filters_yes, {
   }
   
   # reset parameter table, plot_list, and group plot data.  revert to pre-filtered data
-  parmTable$parms <- data.frame("File Name" = NA, "Plot Type" = NA, "Sample Type" = NA, "Group 1 Samples" = NA, "Group 2 Samples" = NA, "Boundary Set" = NA,
-                                "Color By Variable" = NA, "X Variable" = NA, "Y Variable" = NA, "Presence Threshold" = NA, "Absence Threshold" = NA, "P-Value" = NA,
-                                "Comparisons Method" = NA, check.names = FALSE)
-  revals$plot_list <- list()
-  revals$plot_data <- list()
+  plots$plot_table <- data.frame("File Name" = character(0), 'Download?' = character(0), "Plot Type" = character(0), "Sample Type" = character(0), "Group 1 Samples" = character(0), 
+                                 "Group 2 Samples" = character(0), "Boundary Set" = character(0), "Color By Variable" = character(0), "X Variable" = character(0), 
+                                 "Y Variable" = character(0), "Presence Threshold" = character(0), "Absence Threshold" = character(0), "P-Value" = character(0),
+                                 "Comparisons Method" = character(0), check.names = FALSE, stringsAsFactors = FALSE)
+  plots$plot_list <- list()
+  plots$plot_data <- list()
   revals$peakData2 <- revals$uploaded_data
   #
   
   # counter to control plot storage indices in case of reset
-  revals$reset_counter <- input$add_plot+input$add_qc_boxplot
+  revals$reset_counter <- input$saveplot
   
   # reset 'removed samples' reval
   revals$removed_samples <- list()

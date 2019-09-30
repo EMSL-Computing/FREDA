@@ -274,15 +274,8 @@ shinyUI(tagList(useShinyjs(),
                                     column(8,
                                       wellPanel(style = 'height:100%',
                                            div(id='style_qc_boxplots', style='border-style:solid;border-width:1px;padding-top:5px', 
-                                               plotlyOutput("qc_boxplots") %>% withSpinner(color = "orange", type = 8)
-                                               ),
-                                           br(),
-                                           div(style = 'margin-left:25%',
-                                               actionButton(inputId = "add_qc_boxplot", width = '66%', 
-                                                            label = "Save This Plot for Later Download", 
-                                                            icon = icon("save")),
-                                               hidden(div(id = 'qc_download_ok', style = 'float:right',icon('ok', lib='glyphicon'), "Current plot saved"))
-                                            )
+                                                plotlyOutput("qc_boxplots") %>% withSpinner(color = "orange", type = 8)
+                                               )
                                            )
                                     )
                             ),
@@ -480,18 +473,10 @@ shinyUI(tagList(useShinyjs(),
                                         uiOutput("x_axis_out"),
                                         uiOutput("y_axis_out")
                                       )
-                                  ),
-                                  bsCollapsePanel(div('Save plot and view saved plots', div(style = 'float:right', uiOutput('saveplots_icon'))), value = 'downloads',
-                                      div(id = "saveplot_ui", style = 'width:90%;padding-left:5%;',
-                                            div(disabled(actionButton(inputId = "add_plot", width = '100%', label = "Save Current Plot for Later Download", icon = icon("save")))),
-                                            div(style = 'margin-top:4px', uiOutput("view_plots"))
-                                      )
                                   )
                                 ),
                                       
-                                    
-                                # Seperate buttons to generate plot or simply update labels without recalculating data
-                                
+                                # Separate buttons to generate plot or simply update labels without recalculating data
                                 disabled(
                                   fluidRow(
                                     column(width = 6,
@@ -642,7 +627,7 @@ shinyUI(tagList(useShinyjs(),
                                      tags$h5(tags$b("Select figures by row. When clicked, the download selection will highlight.")),
                                      fluidRow(
                                        column(width = 9,
-                                              dataTableOutput("parmsTable2")
+                                              dataTableOutput("download_plot_table")
                                        ),
                                        column(width = 3,
                                               radioButtons(inputId = "image_format", label = "Select an image format",
@@ -671,18 +656,14 @@ shinyUI(tagList(useShinyjs(),
                    )
     ),
     div(id = "js_helpbutton", style = "position:absolute;top:3px;right:16px;z-index:1000", 
-        tagList(
-          hidden(
-            div(id = "js_saveplot", style = 'float:left;margin-right:3px', 
-                bsButton("viewplots", 'View Saved Plots', style = "info"),
-                bsButton("saveplot", "Save Last Plot", style = "info")
-                )
-            ),
+          hidden(div(id = "js_saveplot", style = 'float:left;margin-right:3px', 
+                bsButton("viewplots", uiOutput('viewplots_label', style = 'float:left;margin-right:10px'), style = "info", icon = icon("folder-open", lib = "glyphicon"))
+                )),
+          hidden(bsButton("saveplot", span(style = 'float:left;margin-right:10px', "Save Last Plot"), style = "info", icon = icon("save", lib = "glyphicon"))),
           hidden(bsButton("helpbutton", "How do I use this page?", style = "info")),
           hidden(bsButton('datareqs_video', 'Data requirements tutorial', 
                    onclick = "window.open('https://youtu.be/uU5Q7r_pEGM', '_blank')", 
                    style = 'info', icon = icon('facetime-video', lib = 'glyphicon')))
-        )
     )
   )
 )

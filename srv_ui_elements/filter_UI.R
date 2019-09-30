@@ -61,16 +61,15 @@ list(
     shinyjs::hide('draw_large_filter_plot')
     
     # Plot using ggplot2
-    ggplot() + geom_bar(aes(x = data_state, 
-                            y = value, 
-                            fill = variable), data = ggdata_barplot, stat = 'identity') +
-      theme_bw(base_size = 16) + geom_text(data = ggdata_text, 
-                                           aes(x = data_state, 
-                                               y = sum_peaks + num_displaced, 
-                                               label = dispText), size = 6) + 
-      scale_fill_brewer(name = 'Peak Type', labels = c('Formulae Assigned', 
-                                                       'Formulae Unassigned'), palette="Blues") + 
-      labs(x = 'Data State', y = 'Number of peaks') 
+    p <- ggplot() + geom_bar(data = ggdata_barplot, aes(x = data_state, y = value, fill = variable), stat = 'identity') +
+          theme_bw(base_size = 16) + 
+          geom_text(data = ggdata_text, aes(x = data_state, y = sum_peaks + num_displaced, label = dispText), size = 6) + 
+          scale_fill_brewer(name = 'Peak Type', labels = c('Formulae Assigned', 'Formulae Unassigned'), palette="Blues") + 
+          labs(x = 'Data State', y = 'Number of peaks') 
+    
+    plots$last_plot <- p
+    
+    p
     
   }), # End barplot_filter #
   

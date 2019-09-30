@@ -1,18 +1,175 @@
 #uncomment to do postmortem debugging
 
-# observeEvent(revals$peakData2,{
-#   peakData2 <<- revals$peakData2
-# })
+observeEvent(revals$peakData2,{
+  peakData2 <<- revals$peakData2
+})
 
-# observeEvent(c(reactiveValuesToList(revals), reactiveValuesToList(tables)), {
-#   revals_postmortem <<- reactiveValuesToList(revals)
-#   tables_postmortem <<- reactiveValuesToList(tables)
-# })
+observeEvent(c(reactiveValuesToList(revals), reactiveValuesToList(tables)), {
+  revals_postmortem <<- reactiveValuesToList(revals)
+  tables_postmortem <<- reactiveValuesToList(tables)
+})
+
+observeEvent(reactiveValuesToList(plots), {
+  plots_postmortem <<- reactiveValuesToList(plots)
+})
 
 observeEvent(input$top_page,{
-  toggleElement("js_saveplot", condition = input$top_page %in% c("Upload", "Groups", "Preprocess", "Quality Control", 'Filter', 'Visualize', 'Database Mapping'))
+  condition = input$top_page %in% c("Upload", "Groups", "Preprocess", "Quality Control", 'Filter', 'Visualize', 'Database Mapping')
+  toggleElement("viewplots", condition = condition)
+  toggleElement('saveplot', condition = condition)
   
 }, priority = 10, ignoreInit = FALSE)
+
+# # store the current plot in a list of all plots
+observeEvent(input$saveplot, {
+  req(!is.null(plots$last_plot))
+  
+  # keeps plot names unique
+  ind <- input$saveplot - revals$reset_counter
+  
+  # initialize a new line
+  newLine <- data.frame(FileName = NA, Download = dt_checkmark, PlotType = NA, SampleType = NA, Group_1_Samples = NA,  Group_2_Samples = NA, BoundarySet = NA,
+                        ColorBy = NA, x_var = NA, y_var = NA, pres_thresh = NA, absn_thresh = NA, pval = NA, compfn = NA, stringsAsFactors = FALSE)
+  
+
+  if(input$top_page == 'Visualize'){  
+    # which type of plot
+    newLine$FileName <- ifelse(is.na(input$title_input) | input$title_input == '', paste0('Plot_', ind), paste0('Plot_', ind, '_', input$title_input))
+    newLine$PlotType <- input$chooseplots
+    # Single or Multiple Samples
+    newLine$SampleType <- ifelse(input$chooseplots == "PCOA Plot", 'None',
+                                 switch(as.character(input$choose_single), '1' = 'Single Sample', '2' = 'Single Group of Samples', '3' = 'Comparison of Two Groups', '4' = 'Comparison of Two Samples')
+    )
+    # Sample(s) in The first group (depends on input$choose_single to decide if this is a single or multiple sample list)
+    newLine$Group_1_Samples <- ifelse(input$choose_single %in% c(1,2), yes = paste(input$whichSamples, collapse = ','), no = paste(g1_samples(), collapse = ','))
+    # Sample(s) in the second group. Automatically NA if input$choose_single is single sample or single group
+    newLine$Group_2_Samples <- ifelse(input$choose_single %in% c(3,4), yes =  paste(g2_samples() , collapse = ','), no = 'None')
+    # Boundary set borders to use (NA for non-Van Krevelen plots)
+    newLine$BoundarySet <- ifelse(input$chooseplots == 'Van Krevelen Plot', yes = ifelse(input$vkbounds == 0, 'None', input$vkbounds), no = 'None')
+    newLine$ColorBy <- ifelse(input$chooseplots == 'PCOA Plot', 'None', input$vk_colors)
+    newLine$x_var <- input$scatter_x
+    newLine$y_var <- input$scatter_y
+    
+    newLine$x_var <- switch(input$chooseplots, 'Van Krevelen Plot' = 'O:C Ratio', 'Kendrick Plot' = 'Kendrick Mass', 
+                            'Density Plot' = input$vk_colors, 'Custom Scatter Plot' = input$scatter_x,
+                            'PCOA Plot' = paste0('Principal Component ', input$scatter_x))
+    newLine$y_var <- switch(input$chooseplots, 'Van Krevelen Plot' = 'H:C Ratio', 'Kendrick Plot' = 'Kendrick Defect', 
+                            'Density Plot' = 'Density', 'Custom Scatter Plot' = input$scatter_y,
+                            'PCOA Plot' = paste0('Principal Component ', input$scatter_y))
+    
+    
+    newLine$compfn <- ifelse(isTRUE(input$choose_single %in% c(3,4)) & isTRUE(input$summary_fxn != ""), 
+                             switch(input$summary_fxn,
+                                    "select_none" = "None", 
+                                    "uniqueness_gtest" = "G test", 
+                                    "uniqueness_nsamps" = "Presence/absence thresholds",
+                                    "uniqueness_prop" = "Presence/absence thresholds"),
+                             no = "None")
+    
+    # special storage options for single and two-group plots
+    if (input$choose_single == 2){
+      # store edata_result of summarizeGroups()
+      plots$plot_data[[newLine$FileName]] <- plot_data()$e_data 
+    }
+    
+    if (input$choose_single %in% c(3,4)){
+      # store edata result of summarizeGroupComparisons()
+      plots$plot_data[[newLine$FileName]] <- plot_data()$e_data 
+      
+      # parameters specific to group comparison plots
+      newLine$pres_thresh <- input$pres_thresh
+      newLine$absn_thresh <- input$absn_thresh
+      newLine$pval <- input$pval
+    }
+  }
+  else if(input$top_page == 'Quality Control'){
+    # which type of plot
+    newLine$FileName <- ifelse(is.na(input$qc_boxplot_title) | input$qc_boxplot_title == '', paste0('Plot_', ind), paste0('Plot', ind, '_', input$qc_boxplot_title))
+    newLine$PlotType <- paste0('QC boxplot with scale:  ', input$qc_plot_scale)
+    
+    # Sample(s) in The first group (depends on input$choose_single to decide if this is a single or multiple sample list)
+    newLine$Group_1_Samples <- if(!is.null(input$qc_select_groups)) (revals$groups_list[input$qc_select_groups] %>% unlist() %>% unique() %>% setdiff(revals$removed_samples) %>% paste(collapse=', ')) else 'All Samples'
+    
+  }
+  else{
+    newLine$FileName <- sprintf('Plot_%s:%s_tab', ind, input$top_page)
+  }
+  
+  plots$plot_table[nrow(plots$plot_table) + 1,] <- newLine
+  
+  # store the current plot in a reactiveValue for later download
+  plots$plot_list[[newLine$FileName]] <- plots$last_plot
+  
+  # wooooo css
+  addCssClass("viewplots", "pulse_bow")
+  Sys.sleep(0.6)
+  removeCssClass("viewplots", "pulse_bow")
+  
+})
+
+# display modal dialog of saved plot info
+observeEvent(input$viewplots,{
+  showModal(modalDialog(
+    DTOutput("modal_plot_table"),
+    uiOutput('modal_plot'),
+    
+    footer = tagList(
+      #div(disabled(actionButton(inputId = "add_plot", width = '100%', label = "Save Current Plot for Later Download", icon = icon("save"))))
+      div(style = 'float:left', 
+          bsButton('mark_plot', 'Select/de-select for download', icon = icon('minus')),
+          bsButton('remove_plot', 'Remove selected plot', icon = icon('remove')),
+          bsButton('download_plots', 'Download selected plots')
+      ),
+      modalButton("Dismiss")
+    ),
+    size = 'l')
+  )
+})
+
+# update button text for adding/removing from download queue
+observeEvent(c(input$modal_plot_table_rows_selected, input$download_plot_table_rows_selected),{
+  cond = plots$plot_table[input$modal_plot_table_rows_selected,2] == dt_minus
+  cond_download = plots$plot_table[input$download_plot_table_rows_selected,2] == dt_minus
+  
+  if(isTRUE(cond)){
+    updateButton(session, 'mark_plot', icon = icon('plus'))
+  }
+  else{
+    updateButton(session, 'mark_plot', icon = icon('minus'))
+  }
+  
+  if(isTRUE(cond_download)){
+    updateButton(session, 'mark_plot_download', icon = icon('plus'))
+  }
+  else{
+    updateButton(session, 'mark_plot_download', icon = icon('minus'))
+  }
+  
+})
+
+# remove or add a plot from the download queue
+observeEvent(input$mark_plot,{
+  req(length(input$modal_plot_table_rows_selected) > 0)
+  cond = plots$plot_table[input$modal_plot_table_rows_selected,2] == dt_minus
+  
+  if(cond){
+    plots$plot_table[input$modal_plot_table_rows_selected,2] <- dt_checkmark
+  }
+  else{
+    plots$plot_table[input$modal_plot_table_rows_selected,2] <- dt_minus
+  }
+})
+
+# remove the selected plot on button click
+# need to remove the entry plots$plot_table and the corresponding plot in plots$allplots
+observeEvent(input$remove_plot, {
+  req(length(input$modal_plot_table_rows_selected) > 0)
+  plot_name = plots$plot_table[input$modal_plot_table_rows_selected,1]
+  
+  plots$plot_table <- plots$plot_table %>% filter(`File Name` != plot_name)
+  plots$plot_list[[plot_name]] <- NULL
+  plots$plot_data[[plot_name]] <- NULL
+})
 
 # multipurpose observer for page transitions
 observeEvent(input$top_page,{
@@ -26,6 +183,11 @@ observeEvent(input$top_page,{
   
   toggleElement('datareqs_video', condition = input$top_page == 'data_requirements')
 }, priority = 10)
+
+observeEvent(input$top_page,{
+  toggleElement("js_saveplot", condition = input$top_page %in% c("Upload", "Groups", "Preprocess", "Quality Control", 'Filter', 'Visualize', 'Database Mapping'))
+  
+}, priority = 10, ignoreInit = FALSE)
 
 # show data requirements video on welcome page
 # observeEvent(input$welcome_menu,{
@@ -187,70 +349,3 @@ observeEvent(input$helpbutton,{
   }
   
 })
-
-# # Help text
-# observeEvent(input$filter_help,{
-#   showModal(
-#     modalDialog("",
-#                 tags$p("This page allows you to filter the data by various metrics.\n 
-#                        The default options are to:", style = "color:CornFlowerBlue"),
-#                 tags$ul(
-#                   tags$li("Retain peaks within a mass range (Mass Filter)"),
-#                   tags$li("Retain peaks that appear a minimum number of times across all samples (Molecule Filter)"),
-#                   tags$li("Retain peaks that have elemental information - either elemental columns or a full formula column (Formula Filter)"),
-#                   style = "color:CornFlowerBlue"
-#                 ),
-#                 tags$p("Additionally, one can filter by up to three variables contained in the molecular identification file.\n
-#                        As you select options, a plot will update showing the remaining observations after the application of each filter.\n",
-#                        style = "color:CornFlowerBlue"),
-#                 tags$p("Check boxes to select which filters to apply, specify filtering criteria by a range for numeric data or a selection of values for categorical data and then click 'Filter Data'",
-#                        style = "color:CornFlowerBlue"))
-#     )
-# })
-# 
-# # Help Button
-# observeEvent(input$visualize_help,{
-#   showModal(
-#     modalDialog("",
-#                 tags$p("This page is used to generate plots from your processed data.  In order from top to bottom on the left panel, do the following:\n",
-#                        style = "color:CornFlowerBlue"),
-#                 tags$ul(
-#                   tags$li("Select the type of plot you want to generate."),
-#                   tags$li("Choose whether you would like to plot a single sample, multiple samples, or a comparison of groups"),
-#                   tags$li("If you selected a single sample, specify which one.  If you selected multiple samples by group, select samples that 
-#                           should be grouped. If you selected a comparison of groups, two group dropdowns will appear; select samples that
-#                           you want included in each of the two groups"),
-#                   tags$li("If desired, specify axis and title labels and hit 'Generate Plot'\n"),
-#                   
-#                   style = "color:CornFlowerBlue"),
-#                 tags$p("A plot will appear and can be customized to color by certain calculated values.  
-#                        Van Krevelen boundaries can be displayed for VK-plots.
-#                        Custom scatterplots will allow for selection of arbitrary x and y axes.", style = "color:CornFlowerBlue"),
-#                 hr(),
-#                 tags$p("Certain menu options may 'grey_out' during navigation, indicating disabled functionality for a plot type, 
-#                        or because certain values were not calculated during preprocessing")
-#     )
-#   )
-# })
-
-# tags$p("This page is used to generate plots from your processed data.  In order from top to bottom on the left panel, do the following:\n",
-#        style = "color:CornFlowerBlue"),
-# tags$ul(
-#   tags$li("Select the type of plot you want to generate."),
-#   tags$li("Choose whether you would like to plot a single sample, multiple samples, or a comparison of groups"),
-#   tags$ul(
-#     tags$li("If you selected a single sample, specify which one."),
-#     tags$li("If you selected multiple samples by group, select samples that should be grouped.  Specifically, one group will be created with the samples you specify"),
-#     tags$li("If you selected a comparison of groups, two group dropdowns will appear; select samples that you want included in each of the two groups.<br/>
-#             Further, there will be dropdowns requesting how you would like to compare the two groups.  The options allow you to specify how one should determine presence/absence of a peak
-#             within a group, how uniqueness should be determined (by simple presence/absence or using a G-test), and the thresholds/p-values used in the comparisons")
-#   ),
-#   tags$li("If desired, specify axis and title labels and hit 'Generate Plot'\n"),
-#   
-#   style = "color:CornFlowerBlue"),
-# tags$p("A plot will appear and can be customized to color by certain calculated values.  
-#        Van Krevelen boundaries can be displayed for VK-plots.
-#        Custom scatterplots will allow for selection of arbitrary x and y axes.", style = "color:CornFlowerBlue"),
-# hr(),
-# tags$p("Certain menu options may 'grey_out' during navigation, indicating disabled functionality for a plot type, 
-#        or because certain values were not calculated during preprocessing")
