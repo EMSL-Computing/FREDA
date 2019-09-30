@@ -92,3 +92,37 @@ observeEvent(revals$fs, {
   toggleState("download_processed_data", condition = download_condition)
   
 }, ignoreNULL = FALSE)
+
+### Plots
+
+# remove or add a plot from the download queue
+observeEvent(input$mark_plot_download,{
+  req(length(input$download_plot_table_rows_selected) > 0)
+  cond = plots$plot_table[input$download_plot_table_rows_selected,2] == dt_minus
+  
+  if(cond){
+    plots$plot_table[input$download_plot_table_rows_selected,2] <- dt_checkmark
+  }
+  else{
+    plots$plot_table[input$download_plot_table_rows_selected,2] <- dt_minus
+  }
+})
+
+# remove the selected plot on button click
+# need to remove the entry plots$plot_table and the corresponding plot in plots$allplots
+observeEvent(input$remove_plot_download, {
+  req(length(input$download_plot_table_rows_selected) > 0)
+  plot_name = plots$plot_table[input$download_plot_table_rows_selected,1]
+  
+  plots$plot_table <- plots$plot_table %>% filter(`File Name` != plot_name)
+  plots$plot_list[[plot_name]] <- NULL
+  plots$plot_data[[plot_name]] <- NULL
+})
+
+
+###
+
+# store separate table for the download page because js is picky
+observeEvent(plots$plot_table,{
+  plots$plot_table_download <- plots$plot_table
+})

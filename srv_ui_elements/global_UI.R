@@ -31,10 +31,10 @@ list(
     ind <- input$modal_plot_table_rows_selected
     plot_name <- plots$plot_table[ind, 1]
     if(inherits(plots$plot_list[[plot_name]], 'plotly')){
-      plotlyOutput('modal_plotly')
+      plotlyOutput('modal_plotly', width = 'auto', height = '400px')
     }
     else if(inherits(plots$plot_list[[plot_name]], 'ggplot')){
-      plotOutput('modal_ggplot')
+      plotOutput('modal_ggplot', width = 'auto', height = '400px')
     } 
   })
 )

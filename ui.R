@@ -620,20 +620,27 @@ shinyUI(tagList(useShinyjs(),
                               column(width = 11,
                                      wellPanel(
                                        fluidRow(
-                                       column(width = 2,
+                                          column(width = 2,
                                               tags$h4(icon("image", "fa-2x"), tags$b("Figures"))
-                                       )
-                                     ),
-                                     tags$h5(tags$b("Select figures by row. When clicked, the download selection will highlight.")),
-                                     fluidRow(
-                                       column(width = 9,
-                                              dataTableOutput("download_plot_table")
+                                          )
                                        ),
-                                       column(width = 3,
-                                              radioButtons(inputId = "image_format", label = "Select an image format",
-                                                           choices = c( "png", "pdf", "jpeg"), selected = "png")
+                                       tags$h5(tags$b("Select figures by row. When clicked, the download selection will highlight.")),
+                                       fluidRow(
+                                         column(width = 5,
+                                                DTOutput("download_plot_table")
+                                         ),
+                                         column(width = 7,
+                                                uiOutput('download_plot')
+                                         )
+                                       ),
+                                       div( 
+                                           bsButton('mark_plot_download', 'Select/de-select for download', icon = icon('minus')),
+                                           bsButton('remove_plot_download', 'Remove selected plot', icon = icon('remove')),
+                                           div(style = 'display:inline-block;margin-left:3px;vertical-align:top',
+                                            radioButtons(inputId = "image_format", label = "Select an image format",
+                                                        choices = c( "png", "pdf", "jpeg"), selected = "png", inline = TRUE)
+                                           )
                                        )
-                                     )
                                      )
                               )
                             ),
