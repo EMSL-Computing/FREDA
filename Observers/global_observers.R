@@ -110,6 +110,7 @@ observeEvent(input$saveplot, {
 # display modal dialog of saved plot info
 observeEvent(input$viewplots,{
   showModal(modalDialog(
+    tags$h4('Click on a row to view a plot.  You can select/deselect a plot for inclusion in the final download (Download Tab).'),
     DTOutput("modal_plot_table"),
     uiOutput('modal_plot'),
     
@@ -117,8 +118,7 @@ observeEvent(input$viewplots,{
       #div(disabled(actionButton(inputId = "add_plot", width = '100%', label = "Save Current Plot for Later Download", icon = icon("save"))))
       div(style = 'float:left', 
           bsButton('mark_plot', 'Select/de-select for download', icon = icon('minus')),
-          bsButton('remove_plot', 'Remove selected plot', icon = icon('remove')),
-          bsButton('download_plots', 'Download selected plots')
+          bsButton('remove_plot', 'Remove selected plot', icon = icon('remove'))
       ),
       modalButton("Dismiss")
     ),

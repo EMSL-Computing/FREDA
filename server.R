@@ -58,8 +58,7 @@ shinyServer(function(session, input, output) {
                            plot_data_export = NULL, peakData_export = NULL, redraw_filter_plot = TRUE, reac_filter_plot = TRUE,
                            group_1 = NULL, group_2 = NULL, single_group = NULL, single_sample = NULL, whichSample1 = NULL, whichSample2 = NULL, 
                            warningmessage_upload = list(upload = "style = 'color:deepskyblue'>Upload data and molecular identification files described in 'Data Requirements' on the previous page."),
-                           current_plot = NULL, plot_list = list(), plot_data = list(), reset_counter = 0, current_qc_boxplot = NULL,
-                           chooseplots = NULL, filter_click_disable = list(init = TRUE), peakData2 = NULL, 
+                           reset_counter = 0, chooseplots = NULL, filter_click_disable = list(init = TRUE), peakData2 = NULL, 
                            groups_list = list(), removed_samples = list())
   
   plots <- reactiveValues(last_plot = NULL, plot_list = list(), plot_data = list(),
