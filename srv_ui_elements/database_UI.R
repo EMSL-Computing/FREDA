@@ -114,6 +114,8 @@ list(
     
     plots$last_plot <- p
     
+    toWebGL(p)
+    
   }),
   
   # mc barplot
@@ -131,6 +133,8 @@ list(
                  yaxis = list(title = 'Number of peaks'))
     
     plots$last_plot <- p
+    
+    toWebGL(p)
     
   }),
   

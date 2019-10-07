@@ -15,7 +15,7 @@ list(
     req(length(input$modal_plot_table_rows_selected) > 0, cancelOutput = TRUE)
     ind <- input$modal_plot_table_rows_selected
     plot_name <- plots$plot_table[ind, 1]
-    return(plots$plot_list[[plot_name]])
+    return(toWebGL(plots$plot_list[[plot_name]]))
   }), 
   
   output$modal_ggplot <- renderPlot({
@@ -31,10 +31,10 @@ list(
     ind <- input$modal_plot_table_rows_selected
     plot_name <- plots$plot_table[ind, 1]
     if(inherits(plots$plot_list[[plot_name]], 'plotly')){
-      plotlyOutput('modal_plotly', width = 'auto', height = '400px')
+      plotlyOutput('modal_plotly', width = 'auto', height = '500px')
     }
     else if(inherits(plots$plot_list[[plot_name]], 'ggplot')){
-      plotOutput('modal_ggplot', width = 'auto', height = '400px')
+      plotOutput('modal_ggplot', width = 'auto', height = '500px')
     } 
   })
 )

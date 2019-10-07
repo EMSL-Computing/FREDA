@@ -45,7 +45,7 @@ list(
       
       plots$last_plot <- p
       
-      return(p)
+      return(toWebGL(p))
     })
     
   }) # End process_hist

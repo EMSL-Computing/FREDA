@@ -210,11 +210,8 @@ list(
     revals$current_plot <- p
     plots$last_plot <- p
     
-    # use webGL for large plots
-    if(peakData2_dim() > max_cells & !(input$chooseplots == 'Density Plot')){
-      p <- p %>% layout(margin = list(b = 50, l = 75)) # I dont know why but webGL crops axes titles, must reset
-      p <- toWebGL(p)
-    }
+    p <- p %>% layout(margin = list(b = 50, l = 75)) # I dont know why but webGL crops axes titles, must reset
+    p <- toWebGL(p)
     
     return(p)
   }),

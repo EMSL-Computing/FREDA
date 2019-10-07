@@ -47,7 +47,7 @@ list(
     
     plots$last_plot <- p
     
-    p
+    toWebGL(p)
   }),
   
   # qc warnings
