@@ -1,12 +1,4 @@
 
-library(plotly)
-library(shiny)
-library(shinyBS)
-library(shinyjs)
-library(DT)
-library(shinycssloaders)
-library(shinyWidgets)
-
 # Define UI and wrap everything in a taglist that first calls useShinyjs()
 shinyUI(tagList(useShinyjs(),
                 navbarPage(title = (windowTitle = "FREDA"),
@@ -540,7 +532,8 @@ shinyUI(tagList(useShinyjs(),
                    tabPanel('Database Mapping',
                             fluidRow(style = "display:flex;flex-direction:row;align-items:stretch",
                                column(4,
-                                  radioGroupButtons('database_select', 'Select a database', choices = c('Kegg', 'MetaCyc')),
+                                  div(style = 'float:left;font-weight:bold;margin-top:10px;margin-right:10px', 'Select a Database'),
+                                  radioGroupButtons('database_select', choices = c('Kegg', 'MetaCyc')),
                                   bsCollapse(id='viz_sidebar', open = c('mappings'), multiple=TRUE, 
                                      bsCollapsePanel('Choose which mappings to calculate', value = 'mappings',
                                          # reactions
@@ -574,21 +567,22 @@ shinyUI(tagList(useShinyjs(),
                                     )
                                 ),# column 4
                                column(8,
+                                      span(id = "toggle_table",
+                                           div(style = 'display:inline-block;margin-top:10px;margin-right:10px;font-weight:bold', "Display results:"),
+                                           div(style = 'display:inline-block', radioGroupButtons('which_table', choices = c('Kegg'=1, 'MetaCyc'=2))),
+                                           div(style = 'display:inline-block', bsButton('save_db_table', 'Save current table', style = 'info')),
+                                           div(style = 'display:inline-block', bsButton('view_db_tables', uiOutput('n_saved_db_tables'), style = 'info'))
+                                           
+                                      ),
                                       bsCollapse(id = 'database_tables_parent_collapse', open = 'database_tables', multiple = TRUE,
                                                  bsCollapsePanel('Table Preview', value = 'database_tables',
-                                                                 span(id = "toggle_table",
-                                                                            div(style = 'display:inline-block;margin-top:10px;margin-right:10px;font-weight:bold', "Display dataset:"),
-                                                                            div(style = 'display:inline-block', radioGroupButtons('which_table', choices = c('Kegg'=1, 'MetaCyc'=2))),
-                                                                            div(style = 'display:inline-block', bsButton('save_db_table', 'Save current table', style = 'info')),
-                                                                            div(style = 'display:inline-block', bsButton('view_db_tables', uiOutput('n_saved_db_tables'), style = 'info'))
-                                                                      
-                                                                 ), 
                                                                  uiOutput('conditional_database_table')
                                                    ),
                                                  bsCollapsePanel('Summary Counts', value = 'database_plots',
                                                                  DTOutput('mapping_summary'),
-                                                                 splitLayout(plotlyOutput('kegg_barplot'),
-                                                                             plotlyOutput('mc_barplot'))
+                                                                 uiOutput('conditional_database_barplot')
+                                                                 # splitLayout(plotlyOutput('kegg_barplot'),
+                                                                 #             plotlyOutput('mc_barplot'))
                                                   )
                                                  )# parent collapse
                                       ) # column 8

@@ -10,29 +10,6 @@ options(shiny.maxRequestSize=250*1024^2, ch.dir = TRUE)
 # Uncomment for error checking on server
 #options(shiny.sanitize.errors = FALSE)
 
-library(shiny)
-library(ftmsRanalysis)
-library(ggplot2)
-library(reshape2)
-library(webshot)
-library(htmlwidgets)
-library(dplyr)
-library(raster)
-library(magick)
-library(purrr)
-library(shinyBS)
-library(shinyjs)
-library(shinyWidgets)
-library(pander)
-library(readr)
-library(plotly)
-
-# uncomment either library() or load_all() if you need to load kegg
-library(KeggData)
-library(MetaCycData)
-# devtools::load_all('~/Documents/git_repos/MetaCycData/')
-# devtools::load_all('~/Documents/git_repos/KeggData/')
-
 shinyServer(function(session, input, output) {
   # static objects
   dt_checkmark <- '<span class="glyphicon glyphicon-ok" style="color:deepskyblue"></span>'

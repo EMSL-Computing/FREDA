@@ -32,7 +32,7 @@ list(
     temp
   },
   options = list(scrollX = TRUE, 
-                 pageLength = 15, 
+                 pageLength = 10, 
                  columnDefs = list(list(width = '200px', targets = '_all'))),
   server = TRUE, escape = FALSE),
   
@@ -46,7 +46,7 @@ list(
     temp
   },
   options = list(scrollX = TRUE, 
-                 pageLength = 15, 
+                 pageLength = 10, 
                  columnDefs = list(list(width = '200px', targets = '_all'))),
   server = TRUE, escape = FALSE),
   
@@ -101,7 +101,27 @@ list(
   # kegg barplot
   output$kegg_barplot <- renderPlotly({
     req(tables$kegg_table, revals$peakData2)
+    input$which_table
+    
     p <- tables$kegg_table %>% 
+          group_by(!!rlang::sym(getMassColName(revals$peakData2))) %>% 
+          mutate(n = n()) %>% 
+          slice(1) %>% 
+          plot_ly(x = ~n, type = 'histogram') %>% 
+          layout(title = 'Histogram of number of matching Kegg compounds', 
+                 xaxis = list(title = 'Database elements peak maps to'), 
+                 yaxis = list(title = 'Number of peaks'))
+    
+    plots$last_plot <- p
+    
+  }),
+  
+  # mc barplot
+  output$mc_barplot <- renderPlotly({
+    req(tables$mc_table, revals$peakData2)
+    input$which_table
+    
+    p <- tables$mc_table %>% 
           group_by(!!rlang::sym(getMassColName(revals$peakData2))) %>% 
           mutate(n = n()) %>% 
           slice(1) %>% 
@@ -114,20 +134,14 @@ list(
     
   }),
   
-  # mc barplot
-  output$mc_barplot <- renderPlotly({
-    req(tables$mc_table, revals$peakData2)
-    p <- tables$mc_table %>% 
-          group_by(!!rlang::sym(getMassColName(revals$peakData2))) %>% 
-          mutate(n = n()) %>% 
-          slice(1) %>% 
-          plot_ly(x = ~n, type = 'histogram') %>% 
-          layout(title = 'Histogram of number of matching Metacyc compounds', 
-                 xaxis = list(title = 'Database elements peak maps to'), 
-                 yaxis = list(title = 'Number of peaks'))
-    
-    plots$last_plot <- p
-    
+  # conditionally display barplot for kegg or metacyc
+  output$conditional_database_barplot <- renderUI({
+    if(input$which_table == 1){
+      plotlyOutput('kegg_barplot')
+    }
+    else if(input$which_table == 2){
+      plotlyOutput('mc_barplot')
+    }
   }),
   
   output$warnings_database <- renderUI({

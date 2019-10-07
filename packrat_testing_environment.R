@@ -33,7 +33,7 @@ packrat::on()
 # - don't automatically load the things in external.packages on startup (personal preference)
 # - local.repos = directories of package sources (e.g. local clone of ftms_viz repo if you need ftmsRanalysis)
 packrat::set_opts(external.packages=c("stringi", "plogr", "BH", "devtools", "roxygen2", "rgdal"),
-                  ignored.packages = c('testthat'),
+                  ignored.packages = c('testthat', 'KeggData', 'MetaCycData'),
                   load.external.packages.on.startup=FALSE,
                   local.repos= localDir)
 

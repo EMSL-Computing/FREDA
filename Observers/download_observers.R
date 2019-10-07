@@ -71,7 +71,7 @@ observeEvent(input$makezipfile,{
           export(plots$plot_list[[plot_key]], file = path, zoom = 2)
         }
         else if(inherits(plots$plot_list[[plot_key]], 'ggplot')){
-          ggsave(path, plots$plot_list[[plot_key]])
+          ggsave(path, plots$plot_list[[plot_key]], width = 12, height = 6, units = 'in')
         }
         incProgress(1/total_files, detail = sprintf('Plot: %s done..', plot_key))
      }

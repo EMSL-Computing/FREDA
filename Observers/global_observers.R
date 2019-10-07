@@ -1,23 +1,26 @@
 #uncomment to do postmortem debugging
 
-observeEvent(revals$peakData2,{
-  peakData2 <<- revals$peakData2
-})
+# observeEvent(revals$peakData2,{
+#   peakData2 <<- revals$peakData2
+# })
+# 
+# observeEvent(c(reactiveValuesToList(revals), reactiveValuesToList(tables)), {
+#   revals_postmortem <<- reactiveValuesToList(revals)
+#   tables_postmortem <<- reactiveValuesToList(tables)
+# })
+# 
+# observeEvent(reactiveValuesToList(plots), {
+#   plots_postmortem <<- reactiveValuesToList(plots)
+# })
 
-observeEvent(c(reactiveValuesToList(revals), reactiveValuesToList(tables)), {
-  revals_postmortem <<- reactiveValuesToList(revals)
-  tables_postmortem <<- reactiveValuesToList(tables)
-})
+#
 
-observeEvent(reactiveValuesToList(plots), {
-  plots_postmortem <<- reactiveValuesToList(plots)
-})
-
+# display buttons depending on page selection 
 observeEvent(input$top_page,{
   condition = input$top_page %in% c("Upload", "Groups", "Preprocess", "Quality Control", 'Filter', 'Visualize', 'Database Mapping')
   toggleElement("viewplots", condition = condition)
   toggleElement('saveplot', condition = condition)
-  
+
 }, priority = 10, ignoreInit = FALSE)
 
 # # store the current plot in a list of all plots
