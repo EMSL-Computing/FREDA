@@ -44,6 +44,7 @@ list(
   # Plot bar chart
   # Depends on: summaryFilterDataFrame
   output$barplot_filter <- renderPlot({
+    summaryFilterDataFrame()
     req(isolate(revals$redraw_filter_plot) == TRUE | (isolate(uploaded_data_dim()) > max_cells))
     
     filter_inds <- c(TRUE, isolate(input$samplefilter) & length(isolate(input$keep_samples)) > 0, isolate(input$massfilter), isolate(input$molfilter), isolate(input$formfilter), 
