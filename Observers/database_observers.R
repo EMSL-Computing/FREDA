@@ -320,6 +320,11 @@ observeEvent(input$save_db_table, {
     tables$mapping_tables[[table_name]] <- tables$mc_table
     tables$saved_db_info[nrow(tables$saved_db_info) + 1,] <- c(table_name, nrow(tables$mc_table), paste(colnames(tables$mc_table), collapse = ';'))
   }
+  
+  addCssClass("view_db_tables", "pulse_bow")
+  Sys.sleep(0.6)
+  removeCssClass("view_db_tables", "pulse_bow")
+  
 })
 
 # remove the selected database table on button click
