@@ -16,7 +16,7 @@ list(
   # First try to locate the column name with a grepl
   # Note: All require emeta_cnames()
   output$c_column <- renderUI({
-    selectInput("c_column", "Carbon column:",
+    selectInput("c_column", "Carbon:",
                 choices  = c('Select a column', emeta_cnames()),
                 selected = ifelse(grepl("^c$", tolower(emeta_cnames())),
                                   yes = emeta_cnames()[grepl("^c$", tolower(emeta_cnames()))][1],
@@ -26,7 +26,7 @@ list(
   
   output$h_column <- renderUI({
     
-    selectInput("h_column", "Hydrogen column:",
+    selectInput("h_column", "Hydrogen:",
                 choices  = c('Select a column', emeta_cnames()),
                 selected = ifelse(grepl("^h$", tolower(emeta_cnames())),
                                   yes = emeta_cnames()[grepl("^h$", tolower(emeta_cnames()))][1],
@@ -36,7 +36,7 @@ list(
   
   output$n_column <- renderUI({
     
-    selectInput("n_column", "Nitrogen column:",
+    selectInput("n_column", "Nitrogen:",
                 choices  = c('Select a column', emeta_cnames()),
                 selected = ifelse(grepl("^n$", tolower(emeta_cnames())),
                                   yes = emeta_cnames()[grepl("^n$", tolower(emeta_cnames()))][1],
@@ -46,7 +46,7 @@ list(
   
   output$o_column <- renderUI({
     
-    selectInput("o_column", "Oxygen column:",
+    selectInput("o_column", "Oxygen:",
                 choices  = c('Select a column', emeta_cnames()),
                 selected = ifelse(grepl("^o$", tolower(emeta_cnames())),
                                   yes = emeta_cnames()[grepl("^o$", tolower(emeta_cnames()))][1],
@@ -56,7 +56,7 @@ list(
   
   output$s_column <- renderUI({
     
-    selectInput("s_column", "Sulfur column:",
+    selectInput("s_column", "Sulfur:",
                 choices  = c('Select a column', emeta_cnames()),
                 selected = ifelse(grepl("^s$", tolower(emeta_cnames())),
                                   yes = emeta_cnames()[grepl("^s$", tolower(emeta_cnames()))][1],
@@ -66,7 +66,7 @@ list(
   
   output$p_column <- renderUI({
     
-    selectInput("p_column", "Phosphorus column:",
+    selectInput("p_column", "Phosphorus:",
                 choices  = c('Select a column', emeta_cnames()),
                 selected = ifelse(grepl("^p$", tolower(emeta_cnames())),
                                   yes = emeta_cnames()[grepl("^p$", tolower(emeta_cnames()))][1],

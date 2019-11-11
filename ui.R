@@ -24,7 +24,7 @@ shinyUI(tagList(useShinyjs(),
                                        )
                    ),
                    ################## Upload Panel #######################################
-                   tabPanel("Upload",
+                   tabPanel(div("Upload", icon('upload')), value = 'Upload',
                             fluidRow(
                               ## Sidebar panel on Upload tab ##
                               column(width = 4,
@@ -92,7 +92,7 @@ shinyUI(tagList(useShinyjs(),
                                     
                                     inlineCSS('#element_select button {width:100%}'),
                                     hidden(div(id = "element_select", style = 'width:92.5%;margin-left:2.5%;border-radius:4px',
-                                      dropdownButton(inputId = "element_dropdown", circle = FALSE, label = "Specify Elemental Count Columns",
+                                      dropdownButton(inputId = "element_dropdown", circle = FALSE, label = "Specify Elemental Count Columns", width = '100%',
                                         fluidRow(
                                           column(width = 4,
                                                  uiOutput("c_column"), 
@@ -172,7 +172,7 @@ shinyUI(tagList(useShinyjs(),
                             )), # End Upload tab
                    
                    ################## Groups Panel ###############################################
-                   tabPanel("Groups",
+                   tabPanel(div("Groups", icon('th-large', lib = 'glyphicon')), value = 'Groups',
                           fluidRow(style = "display:flex;flex-direction:row;align-items:stretch",
                             column(4,
                               wellPanel(style = "height:100%",
@@ -196,7 +196,7 @@ shinyUI(tagList(useShinyjs(),
                           actionButton("goto_preprocess_main", "Continue to preprocess tab")
                    ),
                    ################## Preprocess Panel ###############################################
-                     tabPanel("Preprocess",
+                     tabPanel(div("Preprocess", icon('cogs')), value = 'Preprocess',
                               
                               sidebarLayout(
                                 
@@ -248,7 +248,7 @@ shinyUI(tagList(useShinyjs(),
                               )), # End Preprocess tab #
                    
                    ##################### QUALITY CONTROL PANEL ###########################
-                   tabPanel("Quality Control",
+                   tabPanel(div("Quality Control", icon('chart-bar')), value = 'Quality Control',
                             fluidRow(style = 'display:flex;flex-direction:row;align-items:stretch',
                                     column(4,
                                       wellPanel(style = 'height:100%',
@@ -276,7 +276,7 @@ shinyUI(tagList(useShinyjs(),
                     ),
 
                    ################## Filter Panel ##############################################
-                   tabPanel("Filter",
+                   tabPanel(div("Filter", icon('filter')), value = 'Filter',
                             
                             sidebarLayout(
                               sidebarPanel(
@@ -417,7 +417,7 @@ shinyUI(tagList(useShinyjs(),
                             )), # End Filter tab
                    
                    ################## Visualize Panel ###############################################
-                   tabPanel("Visualize",
+                   tabPanel(div("Visualize", icon('eye-open', lib = 'glyphicon')), value = 'Visualize',
                             
                             fluidRow(
                               # Sidebar Panel
@@ -496,40 +496,43 @@ shinyUI(tagList(useShinyjs(),
                                           withSpinner(color = "orange", type = 8)
                                       )
                                 ),
-
-                                # color and van-krevelen bounds dropdowns
-                                fluidRow(
-                                  column(width = 4, class = "grey_out", id = "js_vk_colors",
-                                         disabled(selectInput("vk_colors", "Color by:", choices = NULL, selected = NULL))
-                                         ),
-                                  column(width = 4, class = "grey_out", id = "js_vkbounds",
-                                         disabled(selectInput('vkbounds', 'Display Van Krevelen boundary set:',
-                                                     choices = c('BS1' = 'bs1', 'BS2' = 'bs2', 'None' = 0),
-                                                     selected = 'bs1'))
-                                         )
-                                ),
                                 
-                                # x and y axis variable dropdowns for custom scatter plot
-                                fluidRow(
-                                  column(width = 4, class = "grey_out", id = "js_scatter_x",
-                                         disabled(selectInput("scatter_x", "Horizontal axis variable:", choices = NULL, selected = NULL))
-                                        ),
-                                  column(width = 4, class = "grey_out", id = "js_scatter_y",
-                                         disabled(selectInput("scatter_y", "Vertical axis variable:", choices = NULL, selected = NULL))
-                                        )
-                                ),
+                                # plot options
+                                wellPanel(
+                                  # color and van-krevelen bounds dropdowns
+                                  fluidRow(
+                                    column(width = 4, class = "grey_out", id = "js_vk_colors",
+                                           disabled(selectInput("vk_colors", "Color by:", choices = NULL, selected = NULL))
+                                           ),
+                                    column(width = 4, class = "grey_out", id = "js_vkbounds",
+                                           disabled(selectInput('vkbounds', 'Display Van Krevelen boundary set:',
+                                                       choices = c('BS1' = 'bs1', 'BS2' = 'bs2', 'None' = 0),
+                                                       selected = 'bs1'))
+                                           )
+                                  ),
                                 
-                                # color pallete options and button to flip colorscale direction
-                                inlineCSS("#js_colorpal img{margin-top:-9px;}"),
-                                tags$div(id = "js_colorpal", uiOutput("colorpal_out"), style = "display:inline-block"),
-                                actionButton("flip_colors", "Invert color scale", style = "display:inline-block")
+                                  # x and y axis variable dropdowns for custom scatter plot
+                                  fluidRow(
+                                    column(width = 4, class = "grey_out", id = "js_scatter_x",
+                                           disabled(selectInput("scatter_x", "Horizontal axis variable:", choices = NULL, selected = NULL))
+                                          ),
+                                    column(width = 4, class = "grey_out", id = "js_scatter_y",
+                                           disabled(selectInput("scatter_y", "Vertical axis variable:", choices = NULL, selected = NULL))
+                                          )
+                                  ),
+                                  
+                                  # color pallete options and button to flip colorscale direction
+                                  inlineCSS("#js_colorpal img{margin-top:-9px;}"),
+                                  tags$div(id = "js_colorpal", uiOutput("colorpal_out"), style = "display:inline-block"),
+                                  actionButton("flip_colors", "Invert color scale", style = "display:inline-block")
+                                  )
                                 )# End main panel on Visualize tab #
                               
                             )# end fluidrow
                     ), # End Visualize tab #
                    
                    ################## Database Mapping Panel ####################
-                   tabPanel('Database Mapping',
+                   tabPanel(div('Database Mapping', icon('th-list', lib = 'glyphicon')), value = 'Database Mapping',
                             fluidRow(style = "display:flex;flex-direction:row;align-items:stretch",
                                column(4,
                                   div(style = 'float:left;font-weight:bold;margin-top:10px;margin-right:10px', 'Select a Database'),
@@ -590,7 +593,7 @@ shinyUI(tagList(useShinyjs(),
                    ),#tabpanel
                    
                    ################## Download Panel ##############################################
-                   tabPanel('Download',
+                   tabPanel(div('Download', icon('download')), value = 'Download',
                             fluidRow(style = "display:flex;flex-direction:row;align-items:stretch",
                               column(width = 6,
                                 wellPanel(style = "height:100%",
@@ -648,7 +651,7 @@ shinyUI(tagList(useShinyjs(),
                    ), 
                    
                    ################## Glossary Panel ##############################################
-                   tabPanel('Glossary',
+                   tabPanel(div('Glossary', icon('question-sign', lib = 'glyphicon')), value = 'Glossary',
                             #mainPanel(
                             #includeHTML("./README/Glossary.html")
                             withMathJax(includeMarkdown("./README/Glossary.md"))

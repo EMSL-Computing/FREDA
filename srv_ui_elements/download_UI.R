@@ -16,7 +16,7 @@ list(
     req(length(input$download_plot_table_rows_selected) > 0, cancelOutput = TRUE)
     ind <- input$download_plot_table_rows_selected
     plot_name <- plots$plot_table[ind, 1]
-    return(toWebGL(plots$plot_list[[plot_name]]))
+    return(plots$plot_list[[plot_name]])
   }),
   
   # display the selected plot from the modal table, depending on what type of plot is selected
