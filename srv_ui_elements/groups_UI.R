@@ -2,7 +2,11 @@ list(
   # sample names selector based on the sample names of revals$uploaded_data
   output$group_samples <- renderUI({
     validate(need(sample_names(), message = "Upload data before defining groups"))
-    pickerInput("group_samples", "Samples to include in this group:", choices = sample_names(), 
+    req(!is.null(input$group_regex))
+    # filter sample names
+    inds = grepl(input$group_regex, sample_names())
+    
+    pickerInput("group_samples", "Samples to include in this group:", choices = sample_names()[inds], 
                 options =  pickerOptions(dropupAuto = FALSE, actionsBox = TRUE), multiple = TRUE)
   }),
   

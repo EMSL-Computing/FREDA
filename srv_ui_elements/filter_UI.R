@@ -85,7 +85,9 @@ list(
   # Sample selection for sample filter
   output$filter_samples <- renderUI({
     req(revals$uploaded_data)
-    selectInput('keep_samples', NULL, choices = revals$uploaded_data$f_data[,getFDataColName(revals$uploaded_data)], selected = revals$uploaded_data$f_data[,getFDataColName(revals$uploaded_data)], multiple = TRUE)
+    inds = grepl(input$filter_regex, revals$uploaded_data$f_data[,getFDataColName(revals$uploaded_data)])
+    subset = revals$uploaded_data$f_data[,getFDataColName(revals$uploaded_data)][inds]
+    selectInput('keep_samples', NULL, choices = revals$uploaded_data$f_data[,getFDataColName(revals$uploaded_data)], selected = subset, multiple = TRUE)
   }),
   
   ### icon control for filter tab collapsible sections

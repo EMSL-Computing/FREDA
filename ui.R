@@ -178,7 +178,10 @@ shinyUI(tagList(useShinyjs(),
                               wellPanel(style = "height:100%",
                                     tags$h4("Define a Group"),
                                     div(id = "js_group_name", textInput("group_name", "Name of this group:")),
-                                    uiOutput("group_samples"),
+                                    fluidRow(
+                                      column(6, uiOutput("group_samples")),
+                                      column(6, textInput("group_regex", "Search sample names"))
+                                    ),
                                     actionButton("add_group", "Add this group"),
                                     br(),
                                     br(),
@@ -302,7 +305,8 @@ shinyUI(tagList(useShinyjs(),
                                     
                                     div(id = "js_filter_samples", 
                                         uiOutput("filter_samples")
-                                        )
+                                        ),
+                                    textInput('filter_regex', 'Search sample names')
                                   ),
                                   bsCollapsePanel(div('Mass Filter',
                                                     div(style = "color:deepskyblue;display:inline-block",
