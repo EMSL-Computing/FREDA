@@ -17,9 +17,16 @@ observeEvent(input$makezipfile,{
   withProgress(message = "Writing files: ",{
     # option to choose report output format?  need to change inputs in report.R.
     if (input$report_selection == TRUE & !is.null(revals$peakData2)){
-      fs <- c(fs, file.path(tempdir(), "report.html"))
-      report(revals$uploaded_data, revals$peakData2, Emeta(), output_file = file.path(tempdir(), "report.html"), output_format = "html_document", 
-             C13_ID = input$iso_symbol, groups_list = revals$groups_list)
+      tryCatch({
+        fs <- c(fs, file.path(tempdir(), "report.html"))
+        report(revals$uploaded_data, revals$peakData2, Emeta(), output_file = file.path(tempdir(), "report.html"), output_format = "html_document", 
+             C13_ID = input$iso_symbol, groups_list = revals$groups_list, db_tables_info = tables$saved_db_info)
+        },
+      error = function(e){
+        msg = paste0('Error creating report: \n System error: ', e)
+        revals$warningmessage_download$report_error <<- msg
+        msg
+      })
       incProgress(1/total_files, detail = 'HTML report done..')
     }
     

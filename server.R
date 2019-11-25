@@ -17,6 +17,16 @@ shinyServer(function(session, input, output) {
   
   # onStop(function() rm(revals$peakData2, pos = 1))
   Sys.setenv(R_ZIPCMD="/usr/bin/zip")
+  
+  # source error handling file if exists, will be a script with observers that store objects that will show up the workspace after disconnect, like so:
+  # observeEvent(c(objects$omicsData, objects$omicsData_2),{
+  #   omicsData_postmortem <<- objects$omicsData
+  #   omicsData_2_postmortem <<- objects$omicsData_2
+  # })
+  tryCatch({
+    source('store_postmortem_objects.R', local = TRUE)
+  }, error = function(e) message('Not storing postmortem objects'))
+  
   # Source various helper functions
   source('helper_functions/selection_addons.R')
   source('helper_functions/summaryFilter.R') 

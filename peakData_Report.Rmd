@@ -8,10 +8,13 @@ params:
   processed: NA
   C13_ID: NA
   groups_list: NA
+  db_tables_info: NA
 bibliography: report_refs.bib
 nocite: |
   @Koch_2006, @Hughey_2001, @Kim_2003, @Koch_2016_erratum, @LAROWE20112030, @Rivas_Ubach_2018, @BAILEY2017133
 ---
+<!-- For testing using postmortem objects: -->
+<!-- report(revals_postmortem$uploaded_data, revals_postmortem$peakData2, emeta, output_file = 'testreport', C13_ID = '1', groups_list = revals_postmortem$groups_list, db_tables_info = tables_postmortem$saved_db_info) -->
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = FALSE)
@@ -25,6 +28,7 @@ emeta <- params$emeta
 processed <- params$processed
 c13 <- params$C13_ID
 groups <- params$groups_list
+dbinfo <- params$db_tables_info
 
 library(dplyr)
 library(kableExtra)
@@ -37,7 +41,7 @@ panderOptions('knitr.auto.asis', FALSE)
 calc_cols <- read.csv("calculation_variables.csv", stringsAsFactors = FALSE)
 ```
 
-###**Input Data Summary**###
+###**Input Data**###
 
 Your data started with **`r nrow(upload$f_data)` samples** and measurements for **`r nrow(upload$e_data)` peaks**.
 
@@ -60,20 +64,19 @@ Measurements were of the form:  **`r scale`**.
 
 The molecular identification file included the following fields before adding additional variables: 
 
-```{r}
+```{r original columns}
 # get all non-null column names that are not edata_cname, fdata_cname, mass_cname
 temp <- colnames(emeta[-which(colnames(emeta) == getEDataColName(upload))])
 # temp <- attributes(upload)$cnames[which(!sapply(attributes(upload)$cnames, is.null))]
 # temp <- temp[which(!(names(temp) %in% c("edata_cname", "fdata_cname", "mass_cname")))]
+tags$b(paste(temp, collapse=', '))
 ```
-
-**`r temp`**
 
 ****
 
 The following column selections were made for mass, isotopic notation/symbol , molecule form and/or elemental counts:
 
-```{r}
+```{r column selections}
 # display names
 selection_names <- c("Mass", "Isotopic Notation/Symbol", "Molecule Formula", "Carbon", "Hydrogen", "Oxygen", "Nitrogen", "Phosphorus")
 
@@ -93,33 +96,40 @@ kable(data.frame("Value" = selection_names, "Column Selected" = selection_values
 
 ****
 
-`r if(length(groups) > 0) "###**Groups**###"`
-
-```{r}
+```{r groups}
 if(length(groups) > 0){
+  
   groups_df <- data.frame("Group Name" = names(groups), "Samples" = sapply(groups, paste, collapse = '&nbsp|&nbsp'), check.names = FALSE)
   
   # scrollable elements for samples
   groups_df <- groups_df %>% 
     mutate_at('Samples', function(x){paste0('<div style="width:500px;overflow-x:auto;display:inline-block;">', x, '</div>')})
   
-  DT::datatable(groups_df, options = list(
-    columnDefs = list(list(className = 'dt-center', targets = '_all')),
-    scrollX = TRUE
-    ), escape = FALSE, rownames = FALSE
+  tagList(
+    tags$h3(tags$b('Groups')),
+    DT::datatable(groups_df, options = list(
+        columnDefs = list(list(className = 'dt-center', targets = '_all')),
+        scrollX = TRUE, dom = 't'
+      ), escape = FALSE, rownames = FALSE, height = '100%'
+    ),
+    tags$hr()
   )
 }
 ```
 
-****
-
-###**Processed Variables**###
 
 ```{r}
 # find the columns that were added to the original data
 proc_cols <- processed$e_meta %>% 
   dplyr::select(which(colnames(processed$e_meta) %in% calc_cols$ColumnName)) %>% 
   colnames() %>% setdiff(temp)
+
+if(length(proc_cols) > 0){
+  tagList(
+    tags$h3(tags$b('Processed Variables')),
+    tags$p("The following variables were added in the 'Preprocessing' tab:")
+  )
+}
 
 ### **Reference html strings**
 
@@ -151,17 +161,15 @@ equations <- list("$\\frac{O}{C}$",
                   )
 ```
 
-The following variables were added in the "Preprocessing" tab:
-
 ```{r, results = 'asis', message = FALSE}
 # get display names that have a corresponding column in the processed columns
 cols_for_display <- calc_cols %>% filter(ColumnName %in% proc_cols) %>% purrr::pluck("DisplayName")
 
 # This is only for the element ratios which occupy the first 5 rows of the calculated columns table.
 if(all(calc_cols[1:5,]$DisplayName %in% cols_for_display)){
-  pander(paste(cols_for_display[1:5]), collapse = ", ")
+  pander(paste(cols_for_display[1:5]), collapse = ", ") # row of names for element ratios
   pander(" \n\n ")
-  pander(paste(unlist(equations)[1:5], collapse = " "))
+  pander(paste(unlist(equations)[1:5], collapse = " ")) # element ratios as actual math-mode ratio
   pander(" \n\n ")
   }
 
@@ -187,11 +195,9 @@ dontoutput <-lapply(6:length(equations), function(i){
 # cat("</div>")
 ```
 
-****
+`r if(length(proc_cols) > 0) tags$hr()`
 
-###**Filters**###
-
-```{r}
+```{r filter resources}
 # get the filters applied and make a df to display
 
 # row filters
@@ -217,25 +223,54 @@ if(length(removed_samples) > 0){
 filt_df <- data.frame("Filter" = filters_names, "Number of Peaks Removed" = num_filtered, row.names = NULL, check.names = FALSE)
 ```
 
-The following filters were applied to the data:
+```{r filters html}
+if(length(filters_names) > 0){
+  if(length(removed_samples) > 0){
+    samples_tags <- tagList(
+      tags$p(tags$b("Samples Removed:  "), paste(removed_samples, collapse = ", ")),
+      tags$p(tags$b("Samples Kept:  "), paste(retained_samples, collapse = ", "))
+    ) 
+  }
+  else samples_tags <- NULL
+  
+  tagList(
+    tags$h3(tags$b('Filters')),
+    tags$p('The following filters were applied to the data:'),
+    lapply(filters_names, function(x) tags$div(tags$b(x))),
+    tags$br(),
+    samples_tags,
+    tags$p("The following table shows the number of peaks removed by each filter. Filters are applied *in order* from top to bottom, i.e. 'Peaks Removed' for any given filter is the peaks removed after previous filters have already been applied."),
+    DT::datatable(filt_df, height = '100%', rownames = FALSE,
+                  options = list(columnDefs = list(list(className = 'dt-center', targets = '_all')),
+                                  dom = 't')
+        )
+  )
+}
 
-**`r if(length(filters_names) > 0) filters_names else "No filters were applied to the data"`** 
-
-`r if(length(removed_samples) > 0) paste("Samples Removed: ", paste(removed_samples, collapse = ", "), collapse = "") else NULL`
-
-`r if(length(removed_samples) > 0) paste("Samples Kept: ", paste(retained_samples, collapse = ", "), collapse = "") else NULL`
-
-`r if(length(filters_names) > 0) "The following table shows the number of peaks removed by each filter. Filters are applied *in order* from top to bottom, i.e. 'Peaks Removed' for any given filter is the peaks removed after previous filters have already been applied." else NULL`
-
-`r if(length(filters_names) > 0) kable(filt_df, format = "markdown") else NULL`
-
-***
+```
 
 After all preprocessing steps, **`r nrow(processed$f_data)` samples** and measurements for **`r nrow(processed$e_data)` peaks** remained.
 
 ***
 
-<!-- ### **References** -->
+```{r database html}
+if(inherits(dbinfo, 'data.frame')){
+  tagList(
+    tags$h3(style='font-weight:bold', 'Database Mapping'),
+    tags$p(sprintf('The following database tables were calculated using KeggData version %s and MetaCycData version %s', 
+            packageVersion('KeggData'), packageVersion('MetaCycData'))),
+    DT::datatable(dbinfo, height = '100%', rownames = FALSE, 
+                  options = list(columnDefs = list(list(className = 'dt-center', targets = '_all')),
+                                 dom = 't')
+                  )
+  )
+}
+```
+
+
+***
+
+### **References**
 <!-- <div id = 'refs'></div> -->
 <!-- $(1)$ [Hughey et al., 2001](https://pubs.acs.org/doi/pdf/10.1021/ac010560w) -->
 
