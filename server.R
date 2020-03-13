@@ -24,7 +24,7 @@ shinyServer(function(session, input, output) {
   #   omicsData_2_postmortem <<- objects$omicsData_2
   # })
   tryCatch({
-    source('store_postmortem_objects.R', local = TRUE)
+    source('untracked_resources/store_postmortem_objects.R', local = TRUE)
   }, error = function(e) message('Not storing postmortem objects'))
   
   # Source various helper functions
@@ -48,7 +48,7 @@ shinyServer(function(session, input, output) {
                            reset_counter = 0, chooseplots = NULL, filter_click_disable = list(init = TRUE), peakData2 = NULL, 
                            groups_list = list(), removed_samples = list())
   
-  plots <- reactiveValues(last_plot = NULL, plot_list = list(), plot_data = list(),
+  plots <- reactiveValues(last_plot = NULL, plot_list = list(), plot_data = list(), linked_plots = list(),
                           plot_table = data.frame("File Name" = character(0), 'Download?' = character(0), "Plot Type" = character(0), "Sample Type" = character(0), "Group 1 Samples" = character(0), 
                                                   "Group 2 Samples" = character(0), "Boundary Set" = character(0), "Color By Variable" = character(0), "X Variable" = character(0), 
                                                   "Y Variable" = character(0), "Presence Threshold" = character(0), "Absence Threshold" = character(0), "P-Value" = character(0),
@@ -56,7 +56,24 @@ shinyServer(function(session, input, output) {
   
   tables <- reactiveValues(mapping_tables = list(), saved_db_info = data.frame('Tables' = character(0), 'No. Rows' = character(0), 'Column Names' = character(0), check.names = F, stringsAsFactors = F))
   
+  if(exists('RELOAD_POSTMORTEM_PLOTS__')){
+    lapply(names(RELOAD_POSTMORTEM_PLOTS__), function(x){
+      plots[[x]] <<- RELOAD_POSTMORTEM_PLOTS__[[x]]
+    })
+  }
   
+  if(exists('RELOAD_POSTMORTEM_OBJECTS__')){
+    lapply(names(RELOAD_POSTMORTEM_OBJECTS__), function(x){
+      revals[[x]] <<- RELOAD_POSTMORTEM_OBJECTS__[[x]]
+    })
+  }
+  
+  if(exists('RELOAD_POSTMORTEM_TABLES__')){
+    lapply(names(RELOAD_POSTMORTEM_TABLES__), function(x){
+      tables[[x]] <<- RELOAD_POSTMORTEM_TABLES__[[x]]
+    })
+  }
+
   exportTestValues(plot_data = revals$plot_data_export, peakData = revals$peakData_export, color_choices = revals$color_by_choices)
   
   ##############################
@@ -180,6 +197,11 @@ shinyServer(function(session, input, output) {
   # warnings_visualize: displays warning messages in revals$warningmessage_visualize
   # chooseplots_icon, axlabs_icon, saveplots_icon: icons for collapse panels
   source('srv_ui_elements/visualize_UI_misc.R', local = TRUE)
+  
+  ## Linked plots Sub-tab
+  source('srv_ui_elements/visualize_linked_plots_UI.R', local = TRUE)
+  source('Observers/linked_plot_observers.R', local = TRUE)
+  source('Reactive_Variables/linked_plot_revals.R', local = TRUE)
   
   ############################
   ####### Database Tab #######

@@ -421,119 +421,141 @@ shinyUI(tagList(useShinyjs(),
                             )), # End Filter tab
                    
                    ################## Visualize Panel ###############################################
-                   tabPanel(div("Visualize", icon('eye-open', lib = 'glyphicon')), value = 'Visualize',
-                            
-                            fluidRow(
-                              # Sidebar Panel
-                              div(id='viz_sidebar', column(4,
-                                
-                                # Begin collapsible section                           
-                                bsCollapse(id='viz_sidebar', open = c('peakplots', 'axlabs'), multiple=TRUE, 
+                   navbarMenu(div('Visualize', icon('eye-open', lib = 'glyphicon'), style = 'display:inline-block'),
+                     # Main plot creation sub-panel
+                     tabPanel(div("Create Plots"), value = 'Visualize',
+                              
+                              fluidRow(
+                                # Sidebar Panel
+                                div(id='viz_sidebar', column(4,
                                   
-                                  # Plot Parameters
-                                  bsCollapsePanel(div('Construct a plot', div(style = 'float:right', uiOutput('chooseplots_icon'))), value = 'peakplots',
-                                    # Select Plot Type
-                                    inlineCSS("#chooseplots .btn{font-size:10.5pt;} #chooseplots .btn-group-container-sw{display:block;}" ),
-                                    uiOutput('plot_type', style = "margin-top:-10px"),     
-
-                                    # Select samples/groups
-                                    uiOutput('plotUI'),
+                                  # Begin collapsible section                           
+                                  bsCollapse(id='viz_sidebar', open = c('peakplots', 'axlabs'), multiple=TRUE, 
                                     
-                                    uiOutput('pcoa_dist'),
-                                    
-                                    uiOutput('viztab_select_groups'),
-                                    
-                                    # Single dropdown for 1 sample/group or....
-                                    hidden(div(id = "js_toggle_single", uiOutput("plotUI_single"))),
-                                    
-                                    # ...two dropdowns and extra options for group comparison
-                                    hidden(div(id = "js_toggle_groups", 
-                                                        tagList(div(id = "js_whichGroups1", uiOutput("plotUI_comparison_1")), 
-                                                                div(id = "js_whichGroups2", uiOutput("plotUI_comparison_2"))
-                                                                )
-                                                        )
-                                                    ),
-                                    
-                                    hidden(div(id = 'js_summary_fxn', uiOutput("summary_fxn_out", class = "adjustdown")
-                                               )
-                                           )
-                                    
-                                  ),
-                                  # Axes Options
-                                  bsCollapsePanel(div('Axes labels', div(style = 'float:right', uiOutput('axlabs_icon'))), value = 'axlabs',
-                                      splitLayout(
-                                        uiOutput("title_out"),
-                                        tags$div(id = "js_legend_title_input", uiOutput("legend_title_out"))
-                                        ),
-                                      splitLayout(
-                                        uiOutput("x_axis_out"),
-                                        uiOutput("y_axis_out")
-                                      )
-                                  )
-                                ),
+                                    # Plot Parameters
+                                    bsCollapsePanel(div('Construct a plot', div(style = 'float:right', uiOutput('chooseplots_icon'))), value = 'peakplots',
+                                      # Select Plot Type
+                                      inlineCSS("#chooseplots .btn{font-size:10.5pt;} #chooseplots .btn-group-container-sw{display:block;}" ),
+                                      uiOutput('plot_type', style = "margin-top:-10px"),     
+  
+                                      # Select samples/groups
+                                      uiOutput('plotUI'),
                                       
-                                # Separate buttons to generate plot or simply update labels without recalculating data
-                                disabled(
-                                  fluidRow(
-                                    column(width = 6,
-                                           actionButton("plot_submit", label = "Generate Plot", icon = icon("plus"), lib = "glyphicon")
+                                      uiOutput('pcoa_dist'),
+                                      
+                                      uiOutput('viztab_select_groups'),
+                                      
+                                      # Single dropdown for 1 sample/group or....
+                                      hidden(div(id = "js_toggle_single", uiOutput("plotUI_single"))),
+                                      
+                                      # ...two dropdowns and extra options for group comparison
+                                      hidden(div(id = "js_toggle_groups", 
+                                                          tagList(div(id = "js_whichGroups1", uiOutput("plotUI_comparison_1")), 
+                                                                  div(id = "js_whichGroups2", uiOutput("plotUI_comparison_2"))
+                                                                  )
+                                                          )
+                                                      ),
+                                      
+                                      hidden(div(id = 'js_summary_fxn', uiOutput("summary_fxn_out", class = "adjustdown")
+                                                 )
+                                             )
+                                      
                                     ),
-                                    column(width = 6,
-                                           actionButton("update_axes", label = "Update Labels", icon = icon("refresh"), lib = "glyphicon")
-                                    )
-                                  )
-                                ),
-                                
-                                br(),
-                                br(),
-                                
-                                div(id = "warnings_visualize", style = "overflow-y:auto;max-height:150px", uiOutput("warnings_visualize"))
-                                
-                              )),# End sidebar conditionals on Visualize tab #
-                              
-                              # Plot panel and axes/color controls.
-                              column(8,
-                                inlineCSS("#FxnPlot {width:inherit;}"),
-                                wellPanel(style = "margin-top:-10px",
-                                      div(style = "display:inline-block;outline-style:dotted;outline-width:thin;width:65%;padding:4px",
-                                        plotlyOutput('FxnPlot', width = 'auto', height = '600px') %>% 
-                                          withSpinner(color = "orange", type = 8)
-                                      )
-                                ),
-                                
-                                # plot options
-                                wellPanel(
-                                  # color and van-krevelen bounds dropdowns
-                                  fluidRow(
-                                    column(width = 4, class = "grey_out", id = "js_vk_colors",
-                                           disabled(selectInput("vk_colors", "Color by:", choices = NULL, selected = NULL))
-                                           ),
-                                    column(width = 4, class = "grey_out", id = "js_vkbounds",
-                                           disabled(selectInput('vkbounds', 'Display Van Krevelen boundary set:',
-                                                       choices = c('BS1' = 'bs1', 'BS2' = 'bs2', 'None' = 0),
-                                                       selected = 'bs1'))
-                                           )
-                                  ),
-                                
-                                  # x and y axis variable dropdowns for custom scatter plot
-                                  fluidRow(
-                                    column(width = 4, class = "grey_out", id = "js_scatter_x",
-                                           disabled(selectInput("scatter_x", "Horizontal axis variable:", choices = NULL, selected = NULL))
+                                    # Axes Options
+                                    bsCollapsePanel(div('Axes labels', div(style = 'float:right', uiOutput('axlabs_icon'))), value = 'axlabs',
+                                        splitLayout(
+                                          uiOutput("title_out"),
+                                          tags$div(id = "js_legend_title_input", uiOutput("legend_title_out"))
                                           ),
-                                    column(width = 4, class = "grey_out", id = "js_scatter_y",
-                                           disabled(selectInput("scatter_y", "Vertical axis variable:", choices = NULL, selected = NULL))
-                                          )
+                                        splitLayout(
+                                          uiOutput("x_axis_out"),
+                                          uiOutput("y_axis_out")
+                                        )
+                                    )
+                                  ),
+                                        
+                                  # Separate buttons to generate plot or simply update labels without recalculating data
+                                  disabled(
+                                    fluidRow(
+                                      column(width = 6,
+                                             actionButton("plot_submit", label = "Generate Plot", icon = icon("plus"), lib = "glyphicon")
+                                      ),
+                                      column(width = 6,
+                                             actionButton("update_axes", label = "Update Labels", icon = icon("refresh"), lib = "glyphicon")
+                                      )
+                                    )
                                   ),
                                   
-                                  # color pallete options and button to flip colorscale direction
-                                  inlineCSS("#js_colorpal img{margin-top:-9px;}"),
-                                  tags$div(id = "js_colorpal", uiOutput("colorpal_out"), style = "display:inline-block"),
-                                  actionButton("flip_colors", "Invert color scale", style = "display:inline-block")
-                                  )
-                                )# End main panel on Visualize tab #
-                              
-                            )# end fluidrow
-                    ), # End Visualize tab #
+                                  br(),
+                                  br(),
+                                  
+                                  div(id = "warnings_visualize", style = "overflow-y:auto;max-height:150px", uiOutput("warnings_visualize"))
+                                  
+                                )),# End sidebar conditionals on Visualize tab #
+                                
+                                # Plot panel and axes/color controls.
+                                column(8,
+                                  inlineCSS("#FxnPlot {width:inherit;}"),
+                                  wellPanel(style = "margin-top:-10px",
+                                        div(style = "display:inline-block;outline-style:dotted;outline-width:thin;width:65%;padding:4px",
+                                          plotlyOutput('FxnPlot', width = 'auto', height = '600px') %>% 
+                                            withSpinner(color = "orange", type = 8)
+                                        )
+                                  ),
+                                  
+                                  # plot options
+                                  wellPanel(
+                                    # color and van-krevelen bounds dropdowns
+                                    fluidRow(
+                                      column(width = 4, class = "grey_out", id = "js_vk_colors",
+                                             disabled(selectInput("vk_colors", "Color by:", choices = NULL, selected = NULL))
+                                             ),
+                                      column(width = 4, class = "grey_out", id = "js_vkbounds",
+                                             disabled(selectInput('vkbounds', 'Display Van Krevelen boundary set:',
+                                                         choices = c('BS1' = 'bs1', 'BS2' = 'bs2', 'None' = 0),
+                                                         selected = 'bs1'))
+                                             )
+                                    ),
+                                  
+                                    # x and y axis variable dropdowns for custom scatter plot
+                                    fluidRow(
+                                      column(width = 4, class = "grey_out", id = "js_scatter_x",
+                                             disabled(selectInput("scatter_x", "Horizontal axis variable:", choices = NULL, selected = NULL))
+                                            ),
+                                      column(width = 4, class = "grey_out", id = "js_scatter_y",
+                                             disabled(selectInput("scatter_y", "Vertical axis variable:", choices = NULL, selected = NULL))
+                                            )
+                                    ),
+                                    
+                                    # color pallete options and button to flip colorscale direction
+                                    inlineCSS("#js_colorpal img{margin-top:-9px;}"),
+                                    tags$div(id = "js_colorpal", uiOutput("colorpal_out"), style = "display:inline-block"),
+                                    actionButton("flip_colors", "Invert color scale", style = "display:inline-block")
+                                    )
+                                  )# End main panel on Visualize tab #
+                                
+                              )# end fluidrow
+                      ), 
+                     
+                     # Linked plots sub-panel
+                     tabPanel('Linked Plots', value = 'Linked Plots',
+                              bsCollapse(id = 'linked_plots_collapse', open = c('lp_select_plots'), multiple = TRUE,
+                                         bsCollapsePanel(title = 'Choose Two Plots to Compare', value = 'lp_select_plots',
+                                                         DTOutput('lp_plot_table'),
+                                                         bsButton('lp_compare_plots', 'Compare These Plots')),
+                                         # bsCollapsePanel(title = 'Create A Linked Plot', value = 'lp_create_plot',
+                                         #                 DTOutput('lp_plot_table'),
+                                         #                 bsButton('lp_create_plot', 'Create and Compare With Selected Plot')),
+                                         bsCollapsePanel(title = 'View and Interact', value = 'lp_mainpanel',
+                                                         splitLayout(
+                                                           withSpinner(plotlyOutput('lp_left', height = '600px'), color = 'orange', type = 8),
+                                                           withSpinner(plotlyOutput('lp_right', height = '600px'), color = 'orange', type = 8)
+                                                           )
+                                                         )
+                                         
+                                         )
+                              )
+                     ),# End Visualize tab #
                    
                    ################## Database Mapping Panel ####################
                    tabPanel(div('Database Mapping', icon('th-list', lib = 'glyphicon')), value = 'Database Mapping',
