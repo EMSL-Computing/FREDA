@@ -1,10 +1,11 @@
-FROM rocker/shiny-verse
+FROM rocker/shiny
 
 RUN apt-get update -qq && apt-get install -y \
   git-core \
   libssl-dev \
   libcurl4-gnutls-dev \
-  libmagick++-dev 
+  libmagick++-dev \
+  libv8-dev
   
 ################################################
 # This block copied from phantomjs docker image:
@@ -46,22 +47,27 @@ RUN set -x  \
 # End phantomjs block
 ################################################  
   
-# Install R package dependencies
-RUN install2.r -r https://cloud.r-project.org --error \
-    DT \
-    magick \
-    pander \
-    raster \
-    shinyBS \
-    shinycssloaders \
-    shinyjs \
-    shinyWidgets \
-    webshot \
-    datadr \
-    kableExtra
-
-RUN installGithub.r -r https://cloud.r-project.org EMSL-Computing/ftmsRanalysis
-
 COPY . /srv/shiny-server/FREDA
+
+RUN R -e "install.packages('https://cran.r-project.org/src/contrib/packrat_0.5.0.tar.gz', repos = NULL, type = 'source')" \
+	-e "install.packages('Rcpp')"
+	
+RUN R -e "packrat::init('/srv/shiny-server/FREDA')" \
+	-e "packrat::restore('/srv/shiny-server/FREDA')" \
+	-e "install.packages('devtools')" \
+	-e "devtools::install_github('EMSL-Computing/ftmsRanalysis')" \
+	-e "q"
+
+# RUN R -e "devtools::install_github('EMSL-Computing/ftmsRanalysis')"
+# RUN installGithub.r -r https://cloud.r-project.org EMSL-Computing/ftmsRanalysis
+
+ARG keggpath
+ARG metacycpath
+
+RUN R -e "install.packages('/srv/shiny-server/FREDA/$keggpath', type = 'source', repos = NULL)"
+RUN R -e "install.packages('/srv/shiny-server/FREDA/$metacycpath', type = 'source', repos = NULL)"q
+
+RUN rm /srv/shiny-server/FREDA/$keggpath
+RUN rm /srv/shiny-server/FREDA/$metacycpath
 
 RUN chown -R shiny:shiny /srv/shiny-server/FREDA

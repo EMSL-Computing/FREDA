@@ -24,6 +24,13 @@ list(
     if('downloads' %in% input$viz_sidebar)
       icon('chevron-up', lib = 'glyphicon')
     else icon('chevron-down', lib = 'glyphicon')
+  }),
+  
+  output$dynamic_opts_icon <- renderUI({
+    req(input$top_page == 'Visualize')
+    if('reactive_plot_opts' %in% input$viz_sidebar)
+      icon('chevron-up', lib = 'glyphicon')
+    else icon('chevron-down', lib = 'glyphicon')
   })
   #
 )

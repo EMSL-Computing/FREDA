@@ -410,8 +410,9 @@ observeEvent(revals$uploaded_data,{
       ,footer = NULL)
   )
   
+  message('enabling data upload inputs')
   # enable inputs that should only be available if data is sucessfully uploaded
-  disabled_inputs <- c("preprocess_click", "filter_click", "reset_filters", "plot_submit", "update_axes")
+  disabled_inputs <- c("preprocess_click", "filter_click", "reset_filters", "plot_submit", "update_axes", "visualize_goto_linked")
   lapply(disabled_inputs, enable)
   
 })

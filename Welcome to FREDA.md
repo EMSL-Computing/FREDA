@@ -20,8 +20,7 @@ The FT-MS R Exploratory Data Analysis (FREDA) tool is designed to allow users up
 
 #### **Recent Updates:**
 
-  * *Groups Tab:  Combine samples into named groups*
-  * *Remove samples in the filter tab*
-  * *Downloadable HTML report*
+  * *Linked plots sub-tab of the Visualize tab.  Interactively compare scatter or single sample histogram plots.*
+  * *Map peaks to values in the Kegg and Metacyc databases.*
   
 ***
