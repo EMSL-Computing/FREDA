@@ -56,6 +56,7 @@ shinyServer(function(session, input, output) {
   
   tables <- reactiveValues(mapping_tables = list(), saved_db_info = data.frame('Tables' = character(0), 'No. Rows' = character(0), 'Column Names' = character(0), check.names = F, stringsAsFactors = F))
   
+  # Reload objects for debugging if they exist
   if(exists('RELOAD_POSTMORTEM_PLOTS__')){
     lapply(names(RELOAD_POSTMORTEM_PLOTS__), function(x){
       plots[[x]] <<- RELOAD_POSTMORTEM_PLOTS__[[x]]
@@ -228,4 +229,10 @@ shinyServer(function(session, input, output) {
     },
     contentType = "application/zip"
   )
+  
+  # UI objects to be rendered when hidden
+  lapply(c('colorpal_out'), function(name){
+    outputOptions(output, name, suspendWhenHidden = FALSE)
+  })
+  
 })

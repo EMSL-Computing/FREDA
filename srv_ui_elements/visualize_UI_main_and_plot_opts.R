@@ -23,7 +23,7 @@ list(
         return(NULL)
       } 
       else {
-        # Make sure a plot stype selection has been chosen
+        # Make sure a plot style selection has been chosen
         validate(need(input$choose_single != 0, message = "Please select plotting criteria"))
         
         revals$legendTitle = ifelse(is.null(input$legend_title_input) || (input$legend_title_input == ""),
@@ -49,7 +49,6 @@ list(
           # get domain and obtain color pallette function
           domain = range(plot_data()$e_meta[,input$vk_colors], na.rm = TRUE)
           colorPal <- scales::col_numeric(pal, domain)
-          #revals$colorPal <- paste(paste(pal, collapse = ","), paste(domain, collapse = ","), sep = ":")
         }
         else if(!(input$choose_single %in% c(3,4)) & !(input$vk_colors %in% c("bs1", "bs2"))){
           # if there are too many categories, warn user and provide color palette
@@ -59,13 +58,12 @@ list(
             colorPal <- scales::col_factor(pal, domain = unique(plot_data()$e_meta[, input$vk_colors]))
           }
           else colorPal <- NA
-          #revals$colorPal <- NA
         }
         else if(input$choose_single %in% c(3,4)){
           pal = switch(input$colorpal,
                        'default' = c("#7fa453", "#a16db8", "#cb674a"), 'bpr' = c("#0175ee", '#7030A0', "#fd003d"),
                        'neutral' = c("#FC8D59", '#7030A0', "#91CF60"), 'bpg' = c('#8377cb', '#c95798', '#60a862'),
-                       'rblkgn' = c('red', 'black', 'green'))
+                       'rblkgn' = c('red', 'black', 'green')) #TODO move color choices to static object
           
           # still allow color_inversion, even though it looks weird
           if (input$flip_colors %% 2 != 0){
@@ -257,32 +255,29 @@ list(
     
   }),
   
-  # color palette selection (main panel)
+  # color palette selection (last collapse panel on sidebar)
   output$colorpal_out <- renderUI({
     req(input$choose_single)
     if(!(input$choose_single %in% c(3,4)) | isTRUE(input$chooseplots == "Density Plot")){
-      choices = c("YlOrRd", "YlGnBu", "YlGn", "RdYlGn")
-      
-      extensions <- lapply(choices, function(choice){
-        tags$img(src = paste0(choice, ".png"), width = "100px", height = "25px")
-      })
+      choices = c("YlOrRd", "YlGnBu", "YlGn", "RdYlGn") #TODO move color choices to static object
+      fnames = paste0(choices, '.png')
     }
     else if(input$choose_single %in% c(3,4)){
-      choices = c('default', 'bpr', 'neutral', 'bpg', 'rblkgn')
+      choices = c('default', 'bpr', 'neutral', 'bpg', 'rblkgn') #TODO move color choices to static object
       fnames = c('default.png', 'bl_prp_rd.png', 'neutral.png', 'bl_pnk_gn.png',	'rd_blk_gn.png')
-      extensions <- lapply(fnames, function(fname){
-        tags$img(src = fname, width = "100px", height = "25px")
-      })
     }
     
+    # create raw html to include in choicesOpt arg of pickerInput
+    extensions = sapply(1:length(choices), function(i){
+      sprintf("<img src='%s' width=100px, height = 25px><div style='display:inline-block'>%s</div></img>", fnames[i], choices[i])})
+    
+    # no choices for density plots yet
     if (isTRUE(input$chooseplots == "Density Plot")){
       addClass("js_colorpal", "grey_out")
-      disabled(colored_radiobuttons(inputId = "colorpal", label = "Pick a coloring scheme", inline = TRUE,
-                                    choices = choices, extensions = extensions))
+      disabled(pickerInput(inputId = 'colorpal', 'Color Scheme', choices = choices, choicesOpt = list(content = extensions)))
     }else {
       removeClass("js_colorpal", "grey_out")
-      colored_radiobuttons(inputId = "colorpal", label = "Pick a coloring scheme", inline = TRUE,
-                           choices = choices, extensions = extensions)
+      pickerInput(inputId = 'colorpal', 'Color Scheme', choices = choices, choicesOpt = list(content = extensions))
     }
   })
 )
