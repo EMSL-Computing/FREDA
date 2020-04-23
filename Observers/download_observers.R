@@ -71,11 +71,14 @@ observeEvent(input$makezipfile,{
     if(length(plots_marked_for_death) > 0){
       for(i in plots_marked_for_death){
         plot_key = plots$plot_table[i, 1]
-        path = file.path(tempdir(), paste0(plot_key, '.', input$image_format))
+        filename = paste0(plot_key, '.', input$image_format)
+        path = file.path(tempdir(), filename)
         fs <- c(fs, path)
-
+        
         if(inherits(plots$plot_list[[plot_key]], 'plotly')){
-          export(plots$plot_list[[plot_key]], file = path, zoom = 2)
+          # using withr until orca handles full paths
+          withr::with_dir(tempdir(), orca(plots$plot_list[[plot_key]], filename, scale = 2))
+          # export(plots$plot_list[[plot_key]], file = path, zoom = 2) # deprecated for some ungodly reason
         }
         else if(inherits(plots$plot_list[[plot_key]], 'ggplot')){
           ggsave(path, plots$plot_list[[plot_key]], width = 12, height = 6, units = 'in')

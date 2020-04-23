@@ -472,6 +472,7 @@ shinyUI(tagList(useShinyjs(),
                                         uiOutput("y_axis_out")
                                       )
                                     ),
+                                    
                                     bsCollapsePanel(div('Coloring/Appearance', div(style = 'float:right', uiOutput('dynamic_opts_icon'))), value = 'reactive_plot_opts',
                                       # plot options
                                       wellPanel(
@@ -531,9 +532,7 @@ shinyUI(tagList(useShinyjs(),
                                         
                                         div(id = "warnings_visualize", style = "overflow-y:auto;max-height:150px", uiOutput("warnings_visualize"))
                                   ),
-            
                                 )# End main panel on Visualize tab #
-                                
                               )# end fluidrow
                       ), 
                      
