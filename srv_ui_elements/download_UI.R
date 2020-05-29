@@ -25,10 +25,16 @@ list(
     ind <- input$download_plot_table_rows_selected
     plot_name <- plots$plot_table[ind, 1]
     if(inherits(plots$plot_list[[plot_name]], 'plotly')){
-      plotlyOutput('download_plotly', width = 'auto', height = '500px')
+      plotlyOutput('download_plotly', width = 'auto', height = 'auto')
     }
     else if(inherits(plots$plot_list[[plot_name]], 'ggplot')){
-      plotOutput('download_ggplot', width = 'auto', height = '500px')
+      plotOutput('download_ggplot', width = 'auto', height = 'auto')
     } 
+  }),
+  
+  # 
+  output$warnings_download <- renderUI({
+    HTML(lapply(revals$warningmessage_download, function(el){paste0("<p ", el, "</p>")}) %>%
+           paste(collapse = ""))
   })
 )

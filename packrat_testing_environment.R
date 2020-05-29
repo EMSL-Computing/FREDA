@@ -12,8 +12,13 @@
 ## path to folder (That doesn't exist) that R should create ##
 vdbDir <- "/Users/clab683/Documents/git_repos/packrat_folders/FREDA_packrat_0218"
 ## path to local repositories (where ftmsRanalysis folder is located ##
-localDir=c('/Users/clab683/Documents/git_repos', './packrat/lib-ext/x86_64-apple-darwin15.6.0/3.5.2/', './packrat/lib-R/x86_64-apple-darwin15.6.0/3.5.2/',
-           './packrat/lib-R/x86_64-apple-darwin15.6.0/3.5.2/')
+localDir=""
+localDir=c("/Users/clab683/Library/R/3.6/library")
+# localDir=c('/Users/clab683/Documents/git_repos', './packrat/lib-ext/x86_64-apple-darwin15.6.0/3.5.2/', './packrat/lib/x86_64-apple-darwin15.6.0/3.5.2/',
+#            './packrat/lib-R/x86_64-apple-darwin15.6.0/3.5.2/')
+
+# localDir=c('/Users/clab683/Documents/git_repos', './packrat/lib-ext/x86_64-apple-darwin15.6.0/3.5.2/', './packrat/lib-R/x86_64-apple-darwin15.6.0/3.5.2/',
+#            './packrat/lib-R/x86_64-apple-darwin15.6.0/3.5.2/')
 #"/anaconda3/lib/R/library"
 ############################################################
 
@@ -32,10 +37,11 @@ packrat::on()
 # - packages to not include in local packrat lib (always make sure KEGGdata and MetaCycData are here)
 # - don't automatically load the things in external.packages on startup (personal preference)
 # - local.repos = directories of package sources (e.g. local clone of ftms_viz repo if you need ftmsRanalysis)
-packrat::set_opts(external.packages=c("stringi", "plogr", "BH", "devtools", "roxygen2", "rgdal"),
-                  ignored.packages = c('testthat', 'KeggData', 'MetaCycData'),
+packrat::set_opts(external.packages=c("devtools", "MetaCycData", "KeggData", "Rcpp", "ftmsRanalysis"),
+                  ignored.packages=c('MetaCycData', 'KeggData', 'ftmsRanalysis', "devtools", "Rcpp"),
                   load.external.packages.on.startup=FALSE,
-                  local.repos= localDir)
+                  local.repos= localDir,
+                  ignored.directories = c('untracked_resources', 'data', 'inst'))
 
 # IMPORTANT: set options to use this repo, otherwise packrat adds the bioconductor repos and then shiny01 tries to connect to them
 # Also note "http" not "https"

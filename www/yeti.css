@@ -7119,6 +7119,21 @@ misc. style adjustments
   background-color:rgba(0,0,0,0.1);
 }
 
+.plot_border {
+  border-style:dotted;
+  border-width:thin;
+  padding:4px;
+}
+
+.spaced_flexbox {
+  display:flex;
+}
+
+.spaced_flexbox > div {
+  margin:3px;
+}
+
+
 /*
 Welcome page background
 */

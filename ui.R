@@ -514,7 +514,7 @@ shinyUI(tagList(useShinyjs(),
                                 column(8,
                                   inlineCSS("#FxnPlot {width:inherit;}"),
                                   wellPanel(style = "margin-top:-10px",
-                                        div(style = "outline-style:dotted;outline-width:thin;width:65%;padding:4px",
+                                        div(class = 'plot_border', style = "width:65%",
                                           plotlyOutput('FxnPlot', width = 'auto', height = '600px') %>% 
                                             withSpinner(color = "orange", type = 8)
                                         ),
@@ -546,7 +546,7 @@ shinyUI(tagList(useShinyjs(),
                                          #                 DTOutput('lp_plot_table'),
                                          #                 bsButton('lp_create_plot', 'Create and Compare With Selected Plot')),
                                          bsCollapsePanel(title = 'View and Interact', value = 'lp_mainpanel',
-                                                         splitLayout(
+                                                         splitLayout(cellArgs = list(class = 'plot_border'),
                                                            withSpinner(plotlyOutput('lp_left', height = '600px'), color = 'orange', type = 8),
                                                            withSpinner(plotlyOutput('lp_right', height = '600px'), color = 'orange', type = 8)
                                                            )
@@ -641,32 +641,37 @@ shinyUI(tagList(useShinyjs(),
                             fluidRow(style = "margin-top:10px",
                               column(width = 11,
                                      wellPanel(
-                                       fluidRow(
-                                          column(width = 2,
-                                              tags$h4(icon("image", "fa-2x"), tags$b("Figures"))
-                                          )
-                                       ),
-                                       tags$h5(tags$b("Select figures by row. When clicked, the download selection will highlight.")),
-                                       fluidRow(
+                                       div(style='display:flex',
                                          column(width = 5,
+                                                tags$h4(icon("image", "fa-2x"), tags$b("Figures")),
+                                                tags$h5(tags$b("Select figures by row. When clicked, the download selection will highlight.")),
                                                 DTOutput("download_plot_table")
                                          ),
                                          column(width = 7,
-                                                uiOutput('download_plot')
+                                                div(style = 'height:100%', class = 'plot_border', uiOutput('download_plot'))
                                          )
                                        ),
-                                       div( 
-                                           bsButton('mark_plot_download', 'Select/de-select for download', icon = icon('minus')),
-                                           bsButton('remove_plot_download', 'Remove selected plot', icon = icon('remove')),
-                                           div(style = 'display:inline-block;margin-left:3px;vertical-align:top',
-                                            radioButtons(inputId = "image_format", label = "Select an image format",
-                                                        choices = c( "png", "pdf", "jpeg"), selected = "png", inline = TRUE)
+                                       hr(),
+                                       br(),
+                                       div(style = 'display:flex',
+                                           div(style = 'float:left;width:50%;margin-left:10px',
+                                             bsButton('mark_plot_download', 'Select/de-select for download', icon = icon('minus')),
+                                             bsButton('remove_plot_download', 'Remove selected plot', icon = icon('remove'))
+                                           ),
+                                           div(style='float:right;width:50%', class='spaced_flexbox',
+                                              inlineCSS('[id=download_dimensions] > .shiny-input-container {width:49%;display:inline-block;}'), 
+                                              div(id = 'download_dimensions',
+                                                numericInput('download_img_width', 'Download width', value = 1600, min=100, max=2000, step = 1),
+                                                numericInput('download_img_height', 'Download height', value = 900, min=100, max=2000, step = 1)
+                                              ),
+                                              radioButtons(inputId = "image_format", label = "Select an image format",
+                                                          choices = c( "png", "pdf", "jpeg"), selected = "png", inline = TRUE)
                                            )
-                                       )
+                                       ),
+                                       uiOutput('warnings_download')
                                      )
                               )
                             ),
-                            #verbatimTextOutput('x4'),
                             div(style = 'width:75%',
                               actionButton('makezipfile', label = tags$b('Bundle up all selected items'), icon = icon("briefcase"), lib = "glyphicon", style = 'width:45%'),
                               disabled(downloadButton('download_processed_data', tags$b('Download bundle'), style = 'width:45%;float:right'))

@@ -1,4 +1,4 @@
-FROM rocker/shiny
+FROM rocker/shiny:3.6.0
 
 RUN apt-get update -qq && apt-get install -y \
   git-core \
@@ -45,8 +45,32 @@ RUN set -x  \
  && su phantomjs -s /bin/sh -c "phantomjs --version"
 
 # End phantomjs block
-################################################  
-  
+################################################  
+
+########## Plotly depedencies ##############
+# https://github.com/plotly/orca/issues/150
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+        wget \
+        xvfb \
+        xauth \
+        libgtk2.0-0 \
+        libxtst6 \
+        libxss1 \
+        libgconf-2-4 \
+        libnss3 \
+        libasound2 && \
+    mkdir -p /opt/orca && \
+    cd /opt/orca && \
+    wget https://github.com/plotly/orca/releases/download/v1.2.1/orca-1.2.1-x86_64.AppImage && \
+    chmod +x orca-1.2.1-x86_64.AppImage && \
+    ./orca-1.2.1-x86_64.AppImage --appimage-extract && \
+    rm orca-1.2.1-x86_64.AppImage && \
+    printf '#!/bin/bash \nxvfb-run --auto-servernum --server-args "-screen 0 640x480x24" /opt/orca/squashfs-root/app/orca "$@"' > /usr/bin/orca && \
+    chmod +x /usr/bin/orca
+
+###########################################
+
 COPY . /srv/shiny-server/FREDA
 
 RUN R -e "install.packages('https://cran.r-project.org/src/contrib/packrat_0.5.0.tar.gz', repos = NULL, type = 'source')" \
@@ -55,19 +79,16 @@ RUN R -e "install.packages('https://cran.r-project.org/src/contrib/packrat_0.5.0
 RUN R -e "packrat::init('/srv/shiny-server/FREDA')" \
 	-e "packrat::restore('/srv/shiny-server/FREDA')" \
 	-e "install.packages('devtools')" \
-	-e "devtools::install_github('EMSL-Computing/ftmsRanalysis')" \
-	-e "q"
-
-# RUN R -e "devtools::install_github('EMSL-Computing/ftmsRanalysis')"
-# RUN installGithub.r -r https://cloud.r-project.org EMSL-Computing/ftmsRanalysis
+	-e "devtools::install_github('EMSL-Computing/ftmsRanalysis')"
 
 ARG keggpath
 ARG metacycpath
 
 RUN R -e "install.packages('/srv/shiny-server/FREDA/$keggpath', type = 'source', repos = NULL)"
-RUN R -e "install.packages('/srv/shiny-server/FREDA/$metacycpath', type = 'source', repos = NULL)"q
+RUN R -e "install.packages('/srv/shiny-server/FREDA/$metacycpath', type = 'source', repos = NULL)"
 
 RUN rm /srv/shiny-server/FREDA/$keggpath
 RUN rm /srv/shiny-server/FREDA/$metacycpath
 
-RUN chown -R shiny:shiny /srv/shiny-server/FREDA
+COPY shiny-server.conf /etc/shiny-server/shiny-server.conf
+RUN chown -R shiny:shiny /srv/shiny-server/FREDA /opt/orca/squashfs-root

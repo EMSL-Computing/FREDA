@@ -69,6 +69,19 @@ observeEvent(input$makezipfile,{
     }
     
     if(length(plots_marked_for_death) > 0){
+      # fix stupid, enforce maximum height/width
+      width = if(is_empty(input$download_img_width)) 1600 else input$download_img_width
+      height = if(is_empty(input$download_img_height)) 900 else input$download_img_height
+      
+      if(isTRUE(input$download_img_width > 2400)){
+        width = 2400
+      }
+      
+      if(isTRUE(input$download_img_height > 2400)){
+        height = 2400
+      }
+      #
+      
       for(i in plots_marked_for_death){
         plot_key = plots$plot_table[i, 1]
         filename = paste0(plot_key, '.', input$image_format)
@@ -77,11 +90,12 @@ observeEvent(input$makezipfile,{
         
         if(inherits(plots$plot_list[[plot_key]], 'plotly')){
           # using withr until orca handles full paths
-          withr::with_dir(tempdir(), orca(plots$plot_list[[plot_key]], filename, scale = 2))
+          withr::with_dir(tempdir(), orca(plots$plot_list[[plot_key]], filename, width = width, height = height, scale = 2))
           # export(plots$plot_list[[plot_key]], file = path, zoom = 2) # deprecated for some ungodly reason
         }
         else if(inherits(plots$plot_list[[plot_key]], 'ggplot')){
-          ggsave(path, plots$plot_list[[plot_key]], width = 12, height = 6, units = 'in')
+          #TODO: variable dpi for ggplots
+          ggsave(path, plots$plot_list[[plot_key]], width = width/300, height = height/300, units = 'in')
         }
         incProgress(1/total_files, detail = sprintf('Plot: %s done..', plot_key))
      }
@@ -129,10 +143,22 @@ observeEvent(input$remove_plot_download, {
   plots$plot_data[[plot_name]] <- NULL
 })
 
-
 ###
 
 # store separate table for the download page because js is picky
 observeEvent(plots$plot_table,{
   plots$plot_table_download <- plots$plot_table
+})
+
+# enforce height/width limits
+observeEvent(c(input$download_img_width, input$download_img_height), {
+  revals$warningmessage_download$excess_width <- revals$warningmessage_download$excess_height <- NULL
+  if(isTRUE(input$download_img_width > 2400)){
+    revals$warningmessage_download$excess_width <- 'style = color:red>Max width is 2400, value will be truncated.'
+    # updateNumericInput(session, 'download_img_width', value = 2400)
+  }
+  if(isTRUE(input$download_img_height > 2400)){
+    revals$warningmessage_download$excess_height <- 'style = color:red>Max height is 2400, value will be truncated.'
+    # updateNumericInput(session, 'download_img_height', value = 2400)
+  }
 })
