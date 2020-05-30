@@ -560,62 +560,46 @@ shinyUI(tagList(useShinyjs(),
                    tabPanel(div('Database Mapping', icon('th-list', lib = 'glyphicon')), value = 'Database Mapping',
                             fluidRow(style = "display:flex;flex-direction:row;align-items:stretch",
                                column(4,
-                                  div(style = 'float:left;font-weight:bold;margin-top:10px;margin-right:10px', 'Select a Database'),
-                                  radioGroupButtons('database_select', choices = c('Kegg', 'MetaCyc')),
                                   bsCollapse(id='viz_sidebar', open = c('mappings'), multiple=TRUE, 
                                      bsCollapsePanel('Choose which mappings to calculate', value = 'mappings',
-                                         # reactions
-                                         #div('Reactions', div(style = 'float:right', uiOutput('reacts_icon'))),
-                                         fluidRow(
-                                           column(6,div(class = 'adjustdown', checkboxInput('comp2react', 'Get Reactions'))),
-                                           column(6,div(numericInput('maxreacts', 'Maximum Number of Reactions', Inf)))
-                                         ),
-                                         hr(),
-                                         #div('Modules', div(style = 'float:right', uiOutput('mods_icon'))),
-                                         fluidRow(
-                                            column(6,div(class = 'adjustdown', checkboxInput('react2mod', 'Get Modules'))),
-                                            column(6,div(numericInput('maxmods', 'Maximum Number of Modules', Inf)))
-                                         ),
-                                         hr(),
-                                         #div('Pathways', div(style = 'float:right', uiOutput('paths_icon'))),
-                                         fluidRow(
-                                           column(6,div(class = 'adjustdown', checkboxInput('mod2path', 'Get Pathways'))),
-                                           column(6,div(numericInput('maxpaths', 'Maximum Number of Pathways', Inf)))
-                                         ),
-                                         hr(),
-                                         tags$p('Make unique rows for which variable?'),
-                                         div( 
-                                          div(style='display:inline-block', 
-                                            uiOutput('which_unique')
-                                          ),
-                                          bsButton('create_mapping', 'Perform Mapping', style = 'info')
-                                          ),
-                                         uiOutput('warnings_database')
-                                      )
-                                    )
-                                ),# column 4
-                               column(8,
-                                      span(id = "toggle_table",
-                                           div(style = 'display:inline-block;margin-top:10px;margin-right:10px;font-weight:bold', "Display results:"),
-                                           div(style = 'display:inline-block', radioGroupButtons('which_table', choices = c('Kegg'=1, 'MetaCyc'=2))),
-                                           div(style = 'display:inline-block', bsButton('save_db_table', 'Save current table', style = 'info')),
-                                           div(style = 'display:inline-block', bsButton('view_db_tables', uiOutput('n_saved_db_tables'), style = 'info'))
-                                           
-                                      ),
-                                      bsCollapse(id = 'database_tables_parent_collapse', open = 'database_tables', multiple = TRUE,
-                                                 bsCollapsePanel('Table Preview', value = 'database_tables',
-                                                                 uiOutput('conditional_database_table')
-                                                   ),
-                                                 bsCollapsePanel('Summary Counts', value = 'database_plots',
-                                                                 DTOutput('mapping_summary'),
-                                                                 uiOutput('conditional_database_barplot')
-                                                                 # splitLayout(plotlyOutput('kegg_barplot'),
-                                                                 #             plotlyOutput('mc_barplot'))
+                                                     radioGroupButtons('database_select', label = "Choose a Database", choices = c('Kegg', 'MetaCyc')),
+                                                     numericInput('max_records_database', 'Exclude formulae that map to more than this many records:', value = 5),
+                                                     checkboxGroupButtons('which_mappings', label = "Include which variables in mapping:",
+                                                                       choices = c('Reactions' = 'comp2react', 'Modules' = 'react2mod', 'Pathways' = 'mod2path')),
+                                                     hr(),
+                                                     tags$p('Make unique rows for which variable?'),
+                                                     div( 
+                                                      div(style='display:inline-block', 
+                                                        uiOutput('which_unique')
+                                                      ),
+                                                      bsButton('create_mapping', 'Perform Mapping', style = 'info')
+                                                      ),
+                                                     uiOutput('warnings_database')
                                                   )
-                                                 )# parent collapse
-                                      ) # column 8
-                               )#fluidrow
-                   ),#tabpanel
+                                            )
+                                      ),# column 4
+                                     column(8,
+                                            bsCollapse(id = 'database_tables_parent_collapse', open = 'database_tables', multiple = TRUE,
+                                                       bsCollapsePanel('Table Preview', value = 'database_tables',
+                                                                       span(id = "toggle_table",
+                                                                            div(style = 'display:inline-block;margin-top:10px;margin-right:10px;font-weight:bold', "Display results:"),
+                                                                            div(style = 'display:inline-block', radioGroupButtons('which_table', choices = c('Kegg'=1, 'MetaCyc'=2))),
+                                                                            div(style = 'display:inline-block', bsButton('save_db_table', 'Save current table', style = 'info')),
+                                                                            div(style = 'display:inline-block', bsButton('view_db_tables', uiOutput('n_saved_db_tables'), style = 'info'))
+                                                                            
+                                                                       ),
+                                                                       uiOutput('conditional_database_table')
+                                                         ),
+                                                       bsCollapsePanel('Summary Counts', value = 'database_plots',
+                                                                       DTOutput('mapping_summary'),
+                                                                       uiOutput('conditional_database_barplot')
+                                                                       # splitLayout(plotlyOutput('kegg_barplot'),
+                                                                       #             plotlyOutput('mc_barplot'))
+                                                        )
+                                                       )# parent collapse
+                                            ) # column 8
+                                      )#fluidrow
+                                ),#tabpanel
                    
                    ################## Download Panel ##############################################
                    tabPanel(div('Download', icon('download')), value = 'Download',
