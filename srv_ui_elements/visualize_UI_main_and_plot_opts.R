@@ -207,7 +207,7 @@ list(
     # inspect <<- p
     
     revals$current_plot <- p
-    plots$last_plot <- p
+    isolate(plots$last_plot[[input$top_page]] <- p)
     
     p <- p %>% layout(margin = list(b = 50, l = 75)) # I dont know why but webGL crops axes titles, must reset
     p <- toWebGL(p)

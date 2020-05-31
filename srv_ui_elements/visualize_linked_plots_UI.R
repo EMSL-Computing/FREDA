@@ -13,29 +13,43 @@ list(
     input$lp_compare_plots
     lp_lastEvent$source
     
-    # get the data corresponding to selected points
-    # usually we will link plot components through e_meta
-    d <- event_data('plotly_selected', source= lp_lastEvent$source)
-    #d_out2 <<- d
-    
     # big ol' isolate block
     isolate({
+      # get the data corresponding to selected points
+      # usually we will link plot components through e_meta
+      d <- event_data('plotly_selected', source= lp_lastEvent$source)
+      
+      # must have two selected rows
+      row1 <- input$lp_plot_table_rows_selected[1]
+      row2 <- input$lp_plot_table_rows_selected[2]
+      req(all(!is.null(row1), !is.null(row2)))
+      
+      ## GET VARIABLE RESOURCES FOR DRAWING PLOTS/CONSTRUCTING DATA##
+      
+      # We need:
+      
+      # Plot type of the plot that was interacted with, since this determines the structure of 'd', AND ... (moved to inside if statement)
+      # ... type of the plot that is currently being drawn, since this determines how we should add extra elements
+      # These two will be the same if we interacted with the plot currently being drawn
+      # x-variable of the interacted-with plot and the current plot, usually for if we are dealing with data from/for a histogram
+      
+      pname_current = linked_plots_table()[row1, 'File Name']
+      xvar_current = linked_plots_table()[row1, 'X Variable']
+      ptype_current = linked_plots_table()[row1, 'Plot Type']
+      
+      # The samples that are contained in each plot, mostly for purposes of filtering out observations that dont appear in these samples (edata_inds below...)
+      sampnames = revals$peakData2$f_data[,getFDataColName(revals$peakData2)]
+      g1_samples = linked_plots_table()[row1, 'Group 1 Samples'] %>% stringr::str_extract_all(paste(sampnames, collapse="|")) %>% purrr::pluck(1)
+      g2_samples = linked_plots_table()[row1, 'Group 2 Samples'] %>% stringr::str_extract_all(paste(sampnames, collapse="|")) %>% purrr::pluck(1)
+      
+      edata_inds = revals$peakData2$e_data %>% select(g1_samples) %>% rowSums() %>% {. != 0}
+      
+      ##
+      
       if(!is_empty(d)){
         d <- d[!sapply(d$key, is.null),] # some keys are null, these are the elements we add to the plot to highlight selected points
         
-        row1 <- input$lp_plot_table_rows_selected[1]
-        row2 <- input$lp_plot_table_rows_selected[2]
-        
-        req(all(!is.null(row1), !is.null(row2)))
-        
-        ## GET VARIABLE RESOURCES FOR DRAWING PLOTS/CONSTRUCTING DATA##
-        
-        # We need:
-        
-        # Plot type of the plot that was interacted with, since this determines the structure of 'd', AND ...
-        # ... type of the plot that is currently being draw, since this determines how we should add extra elements
-        # These two will be the same if we interacted with the plot currently being drawn
-        # x-variable of the interacted-with plot and the current plot, usually for if we are dealing with data from/for a histogram
+        # plot type and x variable for -selected- plot
         if(lp_lastEvent$source == 'left_source'){
           ptype_selected = linked_plots_table()[row1, 'Plot Type']
           xvar_selected = linked_plots_table()[row1, 'X Variable']
@@ -44,18 +58,6 @@ list(
           ptype_selected = linked_plots_table()[row2, 'Plot Type']
           xvar_selected = linked_plots_table()[row2, 'X Variable']
         }
-        
-        xvar_current = linked_plots_table()[row1, 'X Variable']
-        ptype_current = linked_plots_table()[row1, 'Plot Type']
-        
-        # The samples that are contained in each plot, mostly for purposes of filtering out observations that dont appear in these samples (edata_inds below...)
-        sampnames = revals$peakData2$f_data[,getFDataColName(revals$peakData2)]
-        g1_samples = linked_plots_table()[row1, 'Group 1 Samples'] %>% stringr::str_extract_all(paste(sampnames, collapse="|")) %>% purrr::pluck(1)
-        g2_samples = linked_plots_table()[row1, 'Group 2 Samples'] %>% stringr::str_extract_all(paste(sampnames, collapse="|")) %>% purrr::pluck(1)
-        
-        edata_inds = revals$peakData2$e_data %>% select(g1_samples) %>% rowSums() %>% {. != 0}
-        
-        ##
         
         #### CONSTRUCT E-META CORRESPONDING TO SELECTED DATA #### 
         
@@ -80,12 +82,12 @@ list(
         
         # c('Van Krevelen Plot', 'Kendrick Plot', 'Density Plot', 'Custom Scatter Plot', 'PCOA Plot')
         if(ptype_current == "Van Krevelen Plot"){
-          plots$linked_plots$left %>% 
+          p <- plots$linked_plots$left %>% 
             add_markers(x=~get(getOCRatioColName(revals$peakData2)), y=~get(getHCRatioColName(revals$peakData2)), data=tmp_dat, 
                         marker=list(color="cyan"), name="Selected", inherit = F)
         }
         else if(ptype_current == 'Kendrick Plot'){
-          plots$linked_plots$left %>% 
+          p <- plots$linked_plots$left %>% 
             add_markers(x=~get(getKendrickMassColName(revals$peakData2)), y=~get(getKendrickDefectColName(revals$peakData2)), data=tmp_dat, 
                         marker=list(color="cyan"), name="Selected", inherit = F)
         }
@@ -93,7 +95,7 @@ list(
           # need the y variable as well for custom scatter plots, since it is not fixed
           yvar = linked_plots_table()[row1, 'Y Variable']
           
-          plots$linked_plots$left %>% 
+          p <- plots$linked_plots$left %>% 
             add_markers(x=~get(xvar_current), y=~get(yvar), data=tmp_dat, 
                         marker=list(color="cyan"), name="Selected", inherit = F)
         }
@@ -110,39 +112,44 @@ list(
           hist_dat$counts <- counts
           hist_dat$density <- density
           
-          plots$linked_plots$left %>% add_bars(x=~x, y=~density, width=~barwidth, marker = list(color='cyan'), data = hist_dat)
+          p <- plots$linked_plots$left %>% add_bars(x=~x, y=~density, width=~barwidth, marker = list(color='cyan'), data = hist_dat)
         }
       }
       else{
-        plots$linked_plots$left
+        p <- plots$linked_plots$left
       }
+      
+      isolate(plots$last_plot[[input$top_page]][[pname_current]] <- p)
+      p
+      
     })
   }),
   
   # Right linked plot, does the same as above, except the 'current plot' is referenced by the SECOND row selected
   output$lp_right <- renderPlotly({
-    #browser()
     req(revals$peakData2)
     input$lp_compare_plots
     lp_lastEvent$source
     
-    d <- event_data('plotly_selected', source= lp_lastEvent$source)
-    #d_out2 <<- d
-    
     isolate({
+      d <- event_data('plotly_selected', source= lp_lastEvent$source)
+      
+      row1 <- input$lp_plot_table_rows_selected[1]
+      row2 <- input$lp_plot_table_rows_selected[2]
+      req(all(!is.null(row1), !is.null(row2)))
+      
+      pname_current = linked_plots_table()[row2, 'File Name']
+      xvar_current = linked_plots_table()[row2, 'X Variable']
+      ptype_current = linked_plots_table()[row2, 'Plot Type']
+      sampnames = revals$peakData2$f_data[,getFDataColName(revals$peakData2)]
+      g1_samples = linked_plots_table()[row2, 'Group 1 Samples'] %>% stringr::str_extract_all(paste(sampnames, collapse="|")) %>% purrr::pluck(1)
+      g2_samples = linked_plots_table()[row2, 'Group 2 Samples'] %>% stringr::str_extract_all(paste(sampnames, collapse="|")) %>% purrr::pluck(1)
+      edata_inds = revals$peakData2$e_data %>% select(g1_samples) %>% rowSums() %>% {. != 0}
+      
+      scatter_types = c('Van Krevelen Plot', 'Kendrick Plot', 'Custom Scatter Plot')
+      
       if(!is_empty(d)){
         d <- d[!sapply(d$key, is.null),]
-        row1 <- input$lp_plot_table_rows_selected[1]
-        row2 <- input$lp_plot_table_rows_selected[2]
-        
-        req(all(!is.null(row1), !is.null(row2)))
-        
-        xvar_current = linked_plots_table()[row2, 'X Variable']
-        ptype_current = linked_plots_table()[row2, 'Plot Type']
-        sampnames = revals$peakData2$f_data[,getFDataColName(revals$peakData2)]
-        g1_samples = linked_plots_table()[row2, 'Group 1 Samples'] %>% stringr::str_extract_all(paste(sampnames, collapse="|")) %>% purrr::pluck(1)
-        g2_samples = linked_plots_table()[row2, 'Group 2 Samples'] %>% stringr::str_extract_all(paste(sampnames, collapse="|")) %>% purrr::pluck(1)
-        edata_inds = revals$peakData2$e_data %>% select(g1_samples) %>% rowSums() %>% {. != 0}
         
         if(lp_lastEvent$source == 'left_source'){
           ptype_selected = linked_plots_table()[row1, 'Plot Type']
@@ -153,8 +160,6 @@ list(
           xvar_selected = linked_plots_table()[row2, 'X Variable']
         }
         
-        scatter_types = c('Van Krevelen Plot', 'Kendrick Plot', 'Custom Scatter Plot')
-        
         if(ptype_selected %in% scatter_types){
           tmp_dat <- dplyr::filter(revals$peakData2$e_meta, !!rlang::sym(getEDataColName(revals$peakData2)) %in% d[["key"]])
         }
@@ -164,19 +169,19 @@ list(
         }
       
         if(ptype_current == "Van Krevelen Plot"){
-          plots$linked_plots$right %>% 
+          p <- plots$linked_plots$right %>% 
             add_markers(x=~get(getOCRatioColName(revals$peakData2)), y=~get(getHCRatioColName(revals$peakData2)), data=tmp_dat, 
                         marker=list(color="cyan"), name="Selected", inherit = F)
         }
         else if(ptype_current == 'Kendrick Plot'){
-          plots$linked_plots$right %>% 
+          p <- plots$linked_plots$right %>% 
             add_markers(x=~get(getKendrickMassColName(revals$peakData2)), y=~get(getKendrickDefectColName(revals$peakData2)), data=tmp_dat, 
                         marker=list(color="cyan"), name="Selected", inherit = F)
         }
         else if(ptype_current == 'Custom Scatter Plot'){
           yvar = linked_plots_table()[row2, 'Y Variable']
         
-          plots$linked_plots$right %>% 
+          p <- plots$linked_plots$right %>% 
             add_markers(x=~get(xvar_current), y=~get(yvar), data=tmp_dat, 
                         marker=list(color="cyan"), name="Selected", inherit = F)
         }
@@ -190,12 +195,15 @@ list(
           hist_dat$counts <- counts
           hist_dat$density <- density
           
-          plots$linked_plots$right %>% add_bars(x=~x, y=~density, width=~barwidth, marker = list(color='cyan'), data = hist_dat)
+          p <- plots$linked_plots$right %>% add_bars(x=~x, y=~density, width=~barwidth, marker = list(color='cyan'), data = hist_dat)
         }
       }
       else{
-        plots$linked_plots$right
+        p <- plots$linked_plots$right
       }
+      
+      isolate(plots$last_plot[[input$top_page]][[pname_current]] <- p)
+      p
     })
   })
 )

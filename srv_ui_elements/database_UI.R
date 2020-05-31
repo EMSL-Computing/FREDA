@@ -112,7 +112,7 @@ list(
                  xaxis = list(title = 'Database elements peak maps to'), 
                  yaxis = list(title = 'Number of peaks'))
     
-    plots$last_plot <- p
+    isolate(plots$last_plot[[input$top_page]] <- p)
     
     toWebGL(p)
     
@@ -132,7 +132,7 @@ list(
                  xaxis = list(title = 'Database elements peak maps to'), 
                  yaxis = list(title = 'Number of peaks'))
     
-    plots$last_plot <- p
+    isolate(plots$last_plot[[input$top_page]] <- p)
     
     toWebGL(p)
     
