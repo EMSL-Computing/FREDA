@@ -120,10 +120,11 @@ observeEvent(input$saveplot, {
   # Linked plots, two plots are saved
   else if(input$top_page == "Linked Plots"){
     temp <- data.frame()
-    for(name in names(plots$last_plot[[input$top_page]])){
+    for(name in lapply(plots$last_plot[[input$top_page]], names)){
       # copy the information from the selected linked plot and just change its name
       newRecords[1,] <- linked_plots_table() %>% filter(`File Name` == name) %>% slice(1)
       newRecords$FileName <- sprintf('Linked_Pair_%s_(%s)', ind, name)
+      newRecords$PlotType <- sprintf('(LINKED) %s', newRecords$PlotType)
       temp <- rbind(temp, newRecords)
     }
     newRecords <- temp
@@ -136,7 +137,8 @@ observeEvent(input$saveplot, {
   # store the current plots in a reactiveValue for later download
   if(inherits(plots$last_plot[[input$top_page]], 'list')){
     for(i in 1:nrow(newRecords)){
-      plots$plot_list[[newRecords$FileName[i]]] <- plots$last_plot[[input$top_page]][[i]] 
+      # TODO:  Currently storing a single element list for every element of plots$last_plot[[input$top_page]], a bit ugly. 
+      plots$plot_list[[newRecords$FileName[i]]] <- plots$last_plot[[input$top_page]][[i]][[1]]
     }
   }
   else{

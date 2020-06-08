@@ -8,7 +8,6 @@ list(
   
   # Left linked plot (corresponds to the first row selected)
   output$lp_left <- renderPlotly({
-    # browser()
     req(revals$peakData2)
     input$lp_compare_plots
     lp_lastEvent$trigger
@@ -119,7 +118,11 @@ list(
         p <- plots$linked_plots$left
       }
       
-      isolate(plots$last_plot[[input$top_page]][[pname_current]] <- p)
+      isolate({
+        plots$last_plot[[input$top_page]][['left']] <- list(p)
+        names(plots$last_plot[[input$top_page]][['left']]) <- pname_current
+      })
+      
       p
       
     })
@@ -202,7 +205,11 @@ list(
         p <- plots$linked_plots$right
       }
       
-      isolate(plots$last_plot[[input$top_page]][[pname_current]] <- p)
+      isolate({
+        plots$last_plot[[input$top_page]][['right']] <- list(p)
+        names(plots$last_plot[[input$top_page]][['right']]) <- pname_current
+      })
+      
       p
     })
   })
