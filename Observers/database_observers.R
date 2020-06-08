@@ -4,13 +4,10 @@ observeEvent(input$create_mapping, {
   on.exit({
     enable('create_mapping')
   })
-  
+
   req(revals$peakData2, !is.null(attr(revals$peakData2, 'cnames')$mf_cname))
   
-  # Thresholds for excluding results with too many returned elements.  Empty threshold = infinity
-  maxreacts <- ifelse(is.na(input$maxreacts) | is_empty(input$maxreacts), Inf, input$maxreacts)
-  maxmods <- ifelse(is.na(input$maxmods) | is_empty(input$maxmods), Inf, input$maxmods)
-  maxpaths <- ifelse(is.na(input$maxpaths) | is_empty(input$maxpaths), Inf, input$maxpaths)
+  maxrecords = if(isTruthy(input$max_records_database)) input$max_records_database else Inf
   
   ######## KEGG #########
   tryCatch({
@@ -28,30 +25,33 @@ observeEvent(input$create_mapping, {
       # peaks to compounds
       kegg_sub <- forms %>% 
         left_join(kegg_compounds, by = 'FORMULA') %>% 
-        filter(!is.na(COMPOUND) | !is.na(REACTION)) %>%
+        group_by(FORMULA) %>% 
+        mutate(n = n()) %>% 
+        ungroup() %>% 
+        filter((!is.na(COMPOUND) | !is.na(REACTION)) & n <= maxrecords) %>%
         tibble::as_tibble() %>%
         dplyr::select(getEDataColName(revals$peakData2), COMPOUND, FORMULA, URL) %>%
         mutate(URL = paste0("<a href='",URL,"' target='_blank'>", 'compound link</a>'))
       
       ### Three conditionals, each which add a column where each row element is a list of all related 
       
-      if(input$comp2react){
+      if('comp2react' %in% input$which_mappings){
         kegg_sub <- kegg_sub %>% 
-          mutate(REACTION = map(COMPOUND, newcol_from_mapping, maxlen = maxreacts, map_list = 'kegg_compound_reaction_map'))
+          mutate(REACTION = map(COMPOUND, newcol_from_mapping, maxlen = Inf, map_list = 'kegg_compound_reaction_map'))
       }
       
       # compounds to modules
-      if(input$react2mod){
-        req(input$comp2react)
+      if('react2mod' %in% input$which_mappings){
+        req('comp2react' %in% input$which_mappings)
         kegg_sub <- kegg_sub %>% 
-          mutate(MODULE = map(REACTION, newcol_from_mapping, maxlen = maxmods, map_list = 'kegg_reaction_module_map'))
+          mutate(MODULE = map(REACTION, newcol_from_mapping, maxlen = Inf, map_list = 'kegg_reaction_module_map'))
       }
       
       # modules to pathways
-      if(input$mod2path){
-        req(input$react2mod, input$comp2react)
+      if('mod2path' %in% input$which_mappings){
+        req(all(c('react2mod', 'comp2react') %in% input$which_mappings))
         kegg_sub <- kegg_sub %>% 
-          mutate(PATHWAY = map(MODULE, newcol_from_mapping, maxlen = maxpaths, map_list = 'kegg_module_pathway_map'))
+          mutate(PATHWAY = map(MODULE, newcol_from_mapping, maxlen = Inf, map_list = 'kegg_module_pathway_map'))
       }
       
       ## conditional block which unnests calculated columns based on unique row selection
@@ -147,7 +147,7 @@ observeEvent(input$create_mapping, {
       }
       
       # tidy columns
-      column_order <- c(getEDataColName(revals$peakData2), 'COMPOUND', 'FORMULA', 'URL', 'REACTION', 'ENZYME', 'MODULE', 'CLASS', 'PATHWAY', 'NAME')
+      column_order <- c(getEDataColName(revals$peakData2), 'FORMULA', 'COMPOUND', 'URL', 'REACTION', 'ENZYME', 'MODULE', 'CLASS', 'PATHWAY', 'NAME')
       column_order <- column_order[which(column_order %in% colnames(kegg_sub))]
       
       tables$kegg_table <- kegg_sub %>% dplyr::select(column_order)
@@ -167,24 +167,29 @@ observeEvent(input$create_mapping, {
       mc_sub <- revals$peakData2 %>% 
         mapPeaksToCompounds() %>%
         {dplyr::select(.$e_meta, getEDataColName(revals$peakData2), getEDataColName(.), getCompoundColName(.))} %>%
+        group_by(ID) %>% 
+        mutate(n = n()) %>% 
+        ungroup() %>% 
+        filter(n <= maxrecords) %>% 
+        select(-one_of('n')) %>% 
         tibble::as_tibble()
       
       # compounds to reactions
-      if(input$comp2react){
+      if('comp2react' %in% input$which_mappings){
         mc_sub <- mc_sub %>% 
-          mutate(REACTION = map(Compound, newcol_from_mapping, maxlen = maxreacts, 'mc_compound_reaction_map'))
+          mutate(REACTION = map(Compound, newcol_from_mapping, maxlen = Inf, 'mc_compound_reaction_map'))
       }
       
-      if(input$react2mod){
-        req(input$comp2react)
+      if('react2mod' %in% input$which_mappings){
+        req('comp2react' %in% input$which_mappings)
         mc_sub <- mc_sub %>% 
-          mutate(MODULE = map(REACTION, newcol_from_mapping, maxlen = maxmods, map_list = 'mc_reaction_module_map'))
+          mutate(MODULE = map(REACTION, newcol_from_mapping, maxlen = Inf, map_list = 'mc_reaction_module_map'))
       }
       
-      if(input$mod2path){
-        req(input$comp2react, input$react2mod)
+      if('mod2path' %in% input$which_mappings){
+        req(all(c('comp2react', 'react2mod') %in% input$which_mappings))
         mc_sub <- mc_sub %>%
-          mutate(SUPERPATHWAY = map(MODULE, newcol_from_mapping, maxlen = maxpaths, map_list = 'mc_module_superpathway_map'))
+          mutate(SUPERPATHWAY = map(MODULE, newcol_from_mapping, maxlen = Inf, map_list = 'mc_module_superpathway_map'))
       }
       
       ## unnest block (MetaCyc)
