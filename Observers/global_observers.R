@@ -34,7 +34,7 @@ observeEvent(input$top_page,{
 
 # multipurpose observer for page transitions
 observeEvent(input$top_page,{
-  toggleElement('helpbutton', condition = input$top_page %in% c('Upload', 'Groups', 'Preprocess', 'Filter', 'Visualize', 'Download', 'Database Mapping', 'Quality Control'))
+  toggleElement('helpbutton', condition = input$top_page %in% c('Upload', 'Groups', 'Preprocess', 'Filter', 'Visualize', 'Download', 'Database Mapping', 'Quality Control', 'Linked Plots'))
   
   if(input$top_page %in% c('Quality Control', 'Filter', 'Visualize', 'Database Mapping')){
     if(is.null(revals$peakData2)){

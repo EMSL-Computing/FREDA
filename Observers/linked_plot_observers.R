@@ -1,5 +1,5 @@
 # stores which plot we interacted with last
-lp_lastEvent <- reactiveValues(source="none")
+lp_lastEvent <- reactiveValues(source="none", trigger = 1)
 
 observeEvent(input$lp_compare_plots, {
   #browser()
@@ -27,11 +27,13 @@ observeEvent(input$lp_compare_plots, {
 observeEvent(input$`plotly_selected-left_source`, {
   message('updated source left')
   lp_lastEvent$source <- "left_source"
+  lp_lastEvent$trigger = -lp_lastEvent$trigger
 }, priority = 10)
 
 # Observe plotly-selected event from kendrick_source
 observeEvent(input$`plotly_selected-right_source`, {
   message('updated source right')
   lp_lastEvent$source <- "right_source"
+  lp_lastEvent$trigger = -lp_lastEvent$trigger
 }, priority = 10)
 

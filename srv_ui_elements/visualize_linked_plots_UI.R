@@ -11,7 +11,7 @@ list(
     # browser()
     req(revals$peakData2)
     input$lp_compare_plots
-    lp_lastEvent$source
+    lp_lastEvent$trigger
     
     # big ol' isolate block
     isolate({
@@ -129,7 +129,7 @@ list(
   output$lp_right <- renderPlotly({
     req(revals$peakData2)
     input$lp_compare_plots
-    lp_lastEvent$source
+    lp_lastEvent$trigger
     
     isolate({
       d <- event_data('plotly_selected', source= lp_lastEvent$source)
