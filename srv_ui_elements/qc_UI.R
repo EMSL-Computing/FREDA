@@ -45,7 +45,7 @@ list(
     else p <- plot(temp_peakData2, xlabel=isolate(input$qc_boxplot_xlab), ylabel=isolate(input$qc_boxplot_ylab), 
                    title = isolate(input$qc_boxplot_title), colorBy=color_by) %>% layout(margin = list(b = 100), xaxis = list(tickangle = 45))
     
-    plots$last_plot <- p
+    isolate(plots$last_plot[[input$top_page]] <- p)
     
     toWebGL(p)
   }),

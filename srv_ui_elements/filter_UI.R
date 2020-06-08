@@ -68,7 +68,7 @@ list(
           scale_fill_brewer(name = 'Peak Type', labels = c('Formulae Assigned', 'Formulae Unassigned'), palette="Blues") + 
           labs(x = 'Data State', y = 'Number of peaks') 
     
-    plots$last_plot <- p
+    isolate(plots$last_plot[[input$top_page]] <- p)
     
     p
     

@@ -690,9 +690,10 @@ shinyUI(tagList(useShinyjs(),
                    )
     ),
     div(id = "js_helpbutton", style = "position:absolute;top:3px;right:16px;z-index:1000", 
-          hidden(div(id = "js_saveplot", style = 'float:left;margin-right:3px', 
-                bsButton("viewplots", uiOutput('viewplots_label', style = 'float:left;margin-right:10px'), style = "info", icon = icon("folder-open", lib = "glyphicon"))
-                )),
+          div(style = 'float:left;margin-right:3px', 
+              hidden(bsButton("viewplots", uiOutput('viewplots_label', style = 'float:left;margin-right:10px'), style = "info", icon = icon("folder-open", lib = "glyphicon"))
+                    )
+              ),
           hidden(bsButton("saveplot", span(style = 'float:left;margin-right:10px', "Save Last Plot"), style = "info", icon = icon("save", lib = "glyphicon"))),
           hidden(bsButton("helpbutton", "How do I use this page?", style = "info")),
           hidden(bsButton('datareqs_video', 'Data requirements tutorial', 

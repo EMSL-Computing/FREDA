@@ -1,4 +1,4 @@
-#uncomment to do postmortem debugging
+#uncomment to do postmortem debugging/enable browser button
 
 # observeEvent(revals$peakData2,{
 #   peakData2 <<- revals$peakData2
@@ -13,55 +13,78 @@
 #   plots_postmortem <<- reactiveValuesToList(plots)
 # })
 
+observeEvent(input$debugger, {
+  browser()
+})
+
 #
 
 # display buttons depending on page selection 
 observeEvent(input$top_page,{
-  condition = input$top_page %in% c("Upload", "Groups", "Preprocess", "Quality Control", 'Filter', 'Visualize', 'Database Mapping')
+  condition = input$top_page %in% c("Upload", "Groups", "Preprocess", "Quality Control", 'Filter', 'Visualize', 'Database Mapping', 'Linked Plots')
   toggleElement("viewplots", condition = condition)
   toggleElement('saveplot', condition = condition)
 
 }, priority = 10, ignoreInit = FALSE)
 
+# observeEvent(input$top_page,{
+#   toggleElement("js_saveplot", condition = input$top_page %in% c("Upload", "Groups", "Preprocess", "Quality Control", 'Filter', 'Visualize', 'Database Mapping', 'Linked Plots'))
+#   
+# }, priority = 10, ignoreInit = FALSE)
+
+# multipurpose observer for page transitions
+observeEvent(input$top_page,{
+  toggleElement('helpbutton', condition = input$top_page %in% c('Upload', 'Groups', 'Preprocess', 'Filter', 'Visualize', 'Download', 'Database Mapping', 'Quality Control', 'Linked Plots'))
+  
+  if(input$top_page %in% c('Quality Control', 'Filter', 'Visualize', 'Database Mapping')){
+    if(is.null(revals$peakData2)){
+      revals$peakData2 <- revals$uploaded_data
+    }
+  }
+  
+  # button specific to data requirements page
+  toggleElement('datareqs_video', condition = input$top_page == 'data_requirements')
+}, priority = 10)
+
 # # store the current plot in a list of all plots
 observeEvent(input$saveplot, {
-  req(!is.null(plots$last_plot))
-  
+  req(!is.null(plots$last_plot[[input$top_page]]))
   # keeps plot names unique
   ind <- input$saveplot - revals$reset_counter
   
   # initialize a new line
-  newLine <- data.frame(FileName = NA, Download = dt_checkmark, PlotType = NA, SampleType = NA, Group_1_Samples = NA,  Group_2_Samples = NA, BoundarySet = NA,
+  # TODO: standardize column names for newrecords and plot_table, currently just reassigns column names before rowbinding, seems bad.
+  newRecords <- data.frame(FileName = NA, Download = dt_checkmark, PlotType = NA, SampleType = NA, Group_1_Samples = NA,  Group_2_Samples = NA, BoundarySet = NA,
                         ColorBy = NA, x_var = NA, y_var = NA, pres_thresh = NA, absn_thresh = NA, pval = NA, compfn = NA, stringsAsFactors = FALSE)
   
-
+  # Main viztab, single record
   if(input$top_page == 'Visualize'){  
     # which type of plot
-    newLine$FileName <- ifelse(is.na(input$title_input) | input$title_input == '', paste0('Plot_', ind), paste0('Plot_', ind, '_', input$title_input))
-    newLine$PlotType <- input$chooseplots
+    newRecords$FileName <- ifelse(is.na(input$title_input) | input$title_input == '', sprintf('Plot_%s', ind), sprintf('Plot_%s_(%s)', ind, input$title_input))
+    newRecords$PlotType <- input$chooseplots
     # Single or Multiple Samples
-    newLine$SampleType <- ifelse(input$chooseplots == "PCOA Plot", 'None',
+    newRecords$SampleType <- ifelse(input$chooseplots == "PCOA Plot", 'None',
                                  switch(as.character(input$choose_single), '1' = 'Single Sample', '2' = 'Single Group of Samples', '3' = 'Comparison of Two Groups', '4' = 'Comparison of Two Samples')
     )
     # Sample(s) in The first group (depends on input$choose_single to decide if this is a single or multiple sample list)
-    newLine$Group_1_Samples <- ifelse(input$choose_single %in% c(1,2), yes = paste(input$whichSamples, collapse = ','), no = paste(g1_samples(), collapse = ','))
+    newRecords$Group_1_Samples <- ifelse(input$choose_single %in% c(1,2), yes = paste(input$whichSamples, collapse = ','), no = paste(g1_samples(), collapse = ','))
     # Sample(s) in the second group. Automatically NA if input$choose_single is single sample or single group
-    newLine$Group_2_Samples <- ifelse(input$choose_single %in% c(3,4), yes =  paste(g2_samples() , collapse = ','), no = 'None')
+    newRecords$Group_2_Samples <- ifelse(input$choose_single %in% c(3,4), yes =  paste(g2_samples() , collapse = ','), no = 'None')
     # Boundary set borders to use (NA for non-Van Krevelen plots)
-    newLine$BoundarySet <- ifelse(input$chooseplots == 'Van Krevelen Plot', yes = ifelse(input$vkbounds == 0, 'None', input$vkbounds), no = 'None')
-    newLine$ColorBy <- ifelse(input$chooseplots == 'PCOA Plot', 'None', input$vk_colors)
-    newLine$x_var <- input$scatter_x
-    newLine$y_var <- input$scatter_y
+    newRecords$BoundarySet <- ifelse(input$chooseplots == 'Van Krevelen Plot', yes = ifelse(input$vkbounds == 0, 'None', input$vkbounds), no = 'None')
+    newRecords$ColorBy <- ifelse(input$chooseplots == 'PCOA Plot', 'None', input$vk_colors)
+    newRecords$x_var <- input$scatter_x
+    newRecords$y_var <- input$scatter_y
     
-    newLine$x_var <- switch(input$chooseplots, 'Van Krevelen Plot' = 'O:C Ratio', 'Kendrick Plot' = 'Kendrick Mass', 
+    newRecords$x_var <- switch(input$chooseplots, 'Van Krevelen Plot' = 'O:C Ratio', 'Kendrick Plot' = 'Kendrick Mass', 
                             'Density Plot' = input$vk_colors, 'Custom Scatter Plot' = input$scatter_x,
                             'PCOA Plot' = paste0('Principal Component ', input$scatter_x))
-    newLine$y_var <- switch(input$chooseplots, 'Van Krevelen Plot' = 'H:C Ratio', 'Kendrick Plot' = 'Kendrick Defect', 
+    newRecords$y_var <- switch(input$chooseplots, 'Van Krevelen Plot' = 'H:C Ratio', 'Kendrick Plot' = 'Kendrick Defect', 
                             'Density Plot' = 'Density', 'Custom Scatter Plot' = input$scatter_y,
                             'PCOA Plot' = paste0('Principal Component ', input$scatter_y))
     
     
-    newLine$compfn <- ifelse(isTRUE(input$choose_single %in% c(3,4)) & isTRUE(input$summary_fxn != ""), 
+    newRecords$compfn <- ifelse(isTRUE(input$choose_single %in% c(3,4)) & isTRUE(input$summary_fxn != ""), 
                              switch(input$summary_fxn,
                                     "select_none" = "None", 
                                     "uniqueness_gtest" = "G test", 
@@ -72,36 +95,62 @@ observeEvent(input$saveplot, {
     # special storage options for single and two-group plots
     if (input$choose_single == 2){
       # store edata_result of summarizeGroups()
-      plots$plot_data[[newLine$FileName]] <- plot_data()$e_data 
+      plots$plot_data[[newRecords$FileName]] <- plot_data()$e_data 
     }
     
     if (input$choose_single %in% c(3,4)){
       # store edata result of summarizeGroupComparisons()
-      plots$plot_data[[newLine$FileName]] <- plot_data()$e_data 
+      plots$plot_data[[newRecords$FileName]] <- plot_data()$e_data 
       
       # parameters specific to group comparison plots
-      newLine$pres_thresh <- input$pres_thresh
-      newLine$absn_thresh <- input$absn_thresh
-      newLine$pval <- input$pval
+      newRecords$pres_thresh <- input$pres_thresh
+      newRecords$absn_thresh <- input$absn_thresh
+      newRecords$pval <- input$pval
     }
   }
+  # QC tab, single record
   else if(input$top_page == 'Quality Control'){
     # which type of plot
-    newLine$FileName <- ifelse(is.na(input$qc_boxplot_title) | input$qc_boxplot_title == '', paste0('Plot_', ind), paste0('Plot', ind, '_', input$qc_boxplot_title))
-    newLine$PlotType <- paste0('QC boxplot with scale:  ', input$qc_plot_scale)
+    newRecords$FileName <- ifelse(is.na(input$qc_boxplot_title) | input$qc_boxplot_title == '', sprintf('Plot_%s', ind), sprintf('Plot_%s_%s', ind, input$qc_boxplot_title))
+    newRecords$PlotType <- paste0('QC boxplot with scale:  ', input$qc_plot_scale)
     
     # Sample(s) in The first group (depends on input$choose_single to decide if this is a single or multiple sample list)
-    newLine$Group_1_Samples <- if(!is.null(input$qc_select_groups)) (revals$groups_list[input$qc_select_groups] %>% unlist() %>% unique() %>% setdiff(revals$removed_samples) %>% paste(collapse=', ')) else 'All Samples'
-    
+    newRecords$Group_1_Samples <- if(!is.null(input$qc_select_groups)) (revals$groups_list[input$qc_select_groups] %>% unlist() %>% unique() %>% setdiff(revals$removed_samples) %>% paste(collapse=', ')) else 'All Samples'
+  }
+  # Linked plots, two plots are saved
+  else if(input$top_page == "Linked Plots"){
+    temp <- data.frame()
+    for(name in lapply(plots$last_plot[[input$top_page]], names)){
+      # copy the information from the selected linked plot and just change its name
+      newRecords[1,] <- linked_plots_table() %>% filter(`File Name` == name) %>% slice(1)
+      newRecords$FileName <- sprintf('Linked_Pair_%s_(%s)', ind, name)
+      newRecords$PlotType <- sprintf('(LINKED) %s', newRecords$PlotType)
+      temp <- rbind(temp, newRecords)
+    }
+    newRecords <- temp
+    rm(temp)
   }
   else{
-    newLine$FileName <- sprintf('Plot_%s:%s_tab', ind, input$top_page)
+    newRecords$FileName <- sprintf('Plot_%s:%s_tab', ind, input$top_page)
   }
   
-  plots$plot_table[nrow(plots$plot_table) + 1,] <- newLine
+  # store the current plots in a reactiveValue for later download
+  if(inherits(plots$last_plot[[input$top_page]], 'list')){
+    for(i in 1:nrow(newRecords)){
+      # TODO:  Currently storing a single element list for every element of plots$last_plot[[input$top_page]], a bit ugly. 
+      plots$plot_list[[newRecords$FileName[i]]] <- plots$last_plot[[input$top_page]][[i]][[1]]
+    }
+  }
+  else{
+    plots$plot_list[[newRecords$FileName]] <- plots$last_plot[[input$top_page]]
+  }
   
-  # store the current plot in a reactiveValue for later download
-  plots$plot_list[[newLine$FileName]] <- plots$last_plot
+  colnames(newRecords) <- colnames(plots$plot_table)
+  plots$plot_table <- plots$plot_table %>% rbind(newRecords)
+  
+  # TODO: check table and plot list name consistency
+  
+  plots$last_plot[[input$top_page]] <- NULL
   
   # wooooo css
   addCssClass("viewplots", "pulse_bow")
@@ -164,7 +213,7 @@ observeEvent(input$mark_plot,{
 })
 
 # remove the selected plot on button click
-# need to remove the entry plots$plot_table and the corresponding plot in plots$allplots
+# need to remove the entry plots$plot_table and the corresponding plot in plots$plot_list
 observeEvent(input$remove_plot, {
   req(length(input$modal_plot_table_rows_selected) > 0)
   plot_name = plots$plot_table[input$modal_plot_table_rows_selected,1]
@@ -173,29 +222,6 @@ observeEvent(input$remove_plot, {
   plots$plot_list[[plot_name]] <- NULL
   plots$plot_data[[plot_name]] <- NULL
 })
-
-# multipurpose observer for page transitions
-observeEvent(input$top_page,{
-  toggleElement('helpbutton', condition = input$top_page %in% c('Upload', 'Groups', 'Preprocess', 'Filter', 'Visualize', 'Download', 'Database Mapping', 'Quality Control'))
-
-  if(input$top_page %in% c('Quality Control', 'Filter', 'Visualize', 'Database Mapping')){
-      if(is.null(revals$peakData2)){
-        revals$peakData2 <- revals$uploaded_data
-      }
-  }
-  
-  toggleElement('datareqs_video', condition = input$top_page == 'data_requirements')
-}, priority = 10)
-
-observeEvent(input$top_page,{
-  toggleElement("js_saveplot", condition = input$top_page %in% c("Upload", "Groups", "Preprocess", "Quality Control", 'Filter', 'Visualize', 'Database Mapping'))
-  
-}, priority = 10, ignoreInit = FALSE)
-
-# show data requirements video on welcome page
-# observeEvent(input$welcome_menu,{
-#   toggleElement('datareqs_video', condition = input$welcome_menu == 'data_requirements')
-# })
 
 # control drawing of filter plot for large data, show warnings on qc and filter that dynamic plotting is disabled
 observeEvent(uploaded_data_dim(),{
