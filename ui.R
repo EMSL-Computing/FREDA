@@ -1,7 +1,7 @@
 
 # Define UI and wrap everything in a taglist that first calls useShinyjs()
-shinyUI(tagList(useShinyjs(),
-                navbarPage(title = (windowTitle = "FREDA"),
+ui <- tagList(useShinyjs(), navbarPage(
+                   title = tags$div("FREDA", tags$span(style = "font-size:small", "v1.0.2")), windowTitle = 'FREDA',
                    id = "top_page",
                    theme = "yeti.css",
                    ############# Welcome Panel #########################
@@ -673,17 +673,29 @@ shinyUI(tagList(useShinyjs(),
                             
                    )
     ),
-    div(id = "js_helpbutton", style = "position:absolute;top:3px;right:16px;z-index:1000", 
-          div(style = 'float:left;margin-right:3px', 
-              hidden(bsButton("viewplots", uiOutput('viewplots_label', style = 'float:left;margin-right:10px'), style = "info", icon = icon("folder-open", lib = "glyphicon"))
-                    )
-              ),
-          hidden(bsButton("saveplot", span(style = 'float:left;margin-right:10px', "Save Last Plot"), style = "info", icon = icon("save", lib = "glyphicon"))),
-          hidden(bsButton("helpbutton", "How do I use this page?", style = "info")),
+    div(id = "js_helpbutton", style = "position:absolute;top:3px;right:16px;z-index:1000;width:11%", 
+          div(style = 'float:right;width:25%',
+              tipify(
+                hidden(bsButton("helpbutton", icon("question-sign", lib = "glyphicon"), style = "info")),
+                ttip_text[['page_help']]
+              )
+          ),
+          div(style = 'float:right;width:50%%;margin-left:1px;margin-right:1px',
+              tipify(
+                hidden(bsButton("viewplots", uiOutput('viewplots_label', style = 'float:left;margin-right:10px'), style = "info", icon = icon("folder-open", lib = "glyphicon"))),
+                ttip_text[['plot_review']]
+              )
+          ),
+          div(style = 'float:right;width:25%',
+            tipify(
+              hidden(bsButton("saveplot", icon("save", lib = "glyphicon"), style = "info")),
+              ttip_text[['plot_save']]
+            )
+          ),
           hidden(bsButton('datareqs_video', 'Data requirements tutorial', 
                    onclick = "window.open('https://youtu.be/uU5Q7r_pEGM', '_blank')", 
-                   style = 'info', icon = icon('facetime-video', lib = 'glyphicon')))
-    )
+                   style = 'info', icon = icon('facetime-video', lib = 'glyphicon'))),
+    ),
+    # actionButton("debugger", "whats wrong!?!?"),
   )
-)
 

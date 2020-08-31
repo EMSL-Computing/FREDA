@@ -30,3 +30,5 @@ library(shinyjs)
 library(DT)
 library(shinycssloaders)
 library(shinyWidgets)
+
+source("static_objects.R", local=TRUE)

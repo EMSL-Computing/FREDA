@@ -7269,4 +7269,8 @@ Button Animations
   border-radius:4px;
 }
 
+#js_helpbutton .btn {
+  width:100%;
+}
+
 
