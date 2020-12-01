@@ -2,7 +2,7 @@ list(
   # view plot table button UI
   output$viewplots_label <- renderUI({
     n_plots <- nrow(plots$plot_table)
-    tags$span(sprintf("Review Saved Plots (%i)", n_plots))
+    tags$span(sprintf("(%i)", n_plots))
   }),
   
   # display table of plots in modal dialog

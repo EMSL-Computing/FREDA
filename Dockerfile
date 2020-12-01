@@ -71,7 +71,7 @@ RUN apt-get update && \
 
 ###########################################
 
-COPY . /srv/shiny-server/FREDA
+COPY packrat.lock packrat.opts /srv/shiny-server/FREDA/packrat/
 
 RUN R -e "install.packages('https://cran.r-project.org/src/contrib/packrat_0.5.0.tar.gz', repos = NULL, type = 'source')" \
 	-e "install.packages('Rcpp')"
@@ -83,6 +83,8 @@ RUN R -e "packrat::init('/srv/shiny-server/FREDA')" \
 
 ARG keggpath
 ARG metacycpath
+
+COPY . /srv/shiny-server/FREDA
 
 RUN R -e "install.packages('/srv/shiny-server/FREDA/$keggpath', type = 'source', repos = NULL)"
 RUN R -e "install.packages('/srv/shiny-server/FREDA/$metacycpath', type = 'source', repos = NULL)"

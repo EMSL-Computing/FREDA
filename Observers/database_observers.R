@@ -4,7 +4,9 @@ observeEvent(input$create_mapping, {
   on.exit({
     enable('create_mapping')
   })
-
+  
+  revals$warningmessage_database$mapping_error <<- NULL
+  
   req(revals$peakData2, !is.null(attr(revals$peakData2, 'cnames')$mf_cname))
   
   maxrecords = if(isTruthy(input$max_records_database)) input$max_records_database else Inf
@@ -42,14 +44,14 @@ observeEvent(input$create_mapping, {
       
       # compounds to modules
       if('react2mod' %in% input$which_mappings){
-        req('comp2react' %in% input$which_mappings)
+        validate(need('comp2react' %in% input$which_mappings, "If retrieving modules, you must also retrieve reactions."))
         kegg_sub <- kegg_sub %>% 
           mutate(MODULE = map(REACTION, newcol_from_mapping, maxlen = Inf, map_list = 'kegg_reaction_module_map'))
       }
       
       # modules to pathways
       if('mod2path' %in% input$which_mappings){
-        req(all(c('react2mod', 'comp2react') %in% input$which_mappings))
+        validate(need(all(c('react2mod', 'comp2react') %in% input$which_mappings), "If retrieving pathways, you must also retrieve modules and reactions."))
         kegg_sub <- kegg_sub %>% 
           mutate(PATHWAY = map(MODULE, newcol_from_mapping, maxlen = Inf, map_list = 'kegg_module_pathway_map'))
       }
@@ -181,13 +183,13 @@ observeEvent(input$create_mapping, {
       }
       
       if('react2mod' %in% input$which_mappings){
-        req('comp2react' %in% input$which_mappings)
+        validate(need('comp2react' %in% input$which_mappings, "If retrieving modules, you must also retrieve reactions."))
         mc_sub <- mc_sub %>% 
           mutate(MODULE = map(REACTION, newcol_from_mapping, maxlen = Inf, map_list = 'mc_reaction_module_map'))
       }
       
       if('mod2path' %in% input$which_mappings){
-        req(all(c('comp2react', 'react2mod') %in% input$which_mappings))
+        validate(need(all(c('react2mod', 'comp2react') %in% input$which_mappings), "If retrieving pathways, you must also retrieve modules and reactions."))
         mc_sub <- mc_sub %>%
           mutate(SUPERPATHWAY = map(MODULE, newcol_from_mapping, maxlen = Inf, map_list = 'mc_module_superpathway_map'))
       }
