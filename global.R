@@ -15,6 +15,13 @@ library(shinyWidgets)
 library(pander)
 library(readr)
 library(plotly)
+library(plotly)
+library(shiny)
+library(shinyBS)
+library(shinyjs)
+library(DT)
+library(shinycssloaders)
+library(shinyWidgets)
 
 # uncomment either library() or load_all() if you need to load kegg
 library(KeggData)

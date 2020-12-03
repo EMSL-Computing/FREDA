@@ -16,19 +16,73 @@ observeEvent(input$preprocess_click, {
     
     temp <- revals$uploaded_data
     
+    ### construct params
+    arguments <- list()
+    choices <- calc_opts$Function
+    
+    tryCatch({ 
+      for(x in choices) {
+        if(x == 'calc_kendrick'){
+          if(!is.null(input$base_unit)){
+            arguments[[x]] <- list(base_compounds = input$base_unit)
+          }
+        }
+        else if(x == 'calc_dbe'){
+          if(!is.null(input$dbe_valences) & isTRUE(input$dbe_valences != '')){
+            # input argument to calc_dbe is a dataframe with valences fore each element
+            valence_df <-  data.frame('C' = numeric(0), 'H' = numeric(0), 'N' = numeric(0), 'O' = numeric(0), 'S' = numeric(0), 'P' = numeric(0))
+            
+            valence_list <- strsplit(input$dbe_valences, ';')[[1]]
+            valence_list <- lapply(valence_list, function(el){
+              V <- strsplit(el, '(?<=.)(?=(C|H|N|O|S|P)[0-9]*)', perl=T)[[1]] # Stare not into the void that is regex.  I have looked and seen the terror within; the terror that consumes the souls of men and deposits their husks like sand dollars on the beach of eternity.
+              counts <- lapply(V, function(x){
+                  if(x == ''){
+                    2 # if they didnt specify, assume the valence that doesnt contribute to the dbe
+                  }
+                  else if(!grepl('[0-9]', x)){
+                    1 # specified without number, assume they mean one, i.e. H = H1
+                  }
+                  else as.numeric(gsub("[A-Z]", '', x))
+                })
+                Vnames <- sapply(V, function(x) gsub("[0-9]", '', x))
+                names(counts) <- Vnames
+                counts
+              })
+            
+            # populate the empty dataframe
+            for(i in 1:length(valence_list)){
+              V <- valence_list[[i]]
+              for(name in names(V)){
+                print(V[[name]])
+                valence_df[i,name] <- V[[name]]
+              }
+            }
+            
+            arguments[[x]] <- list(valences = valence_df)
+          }
+        } # end DBE
+      } # end for
+    },
+    error = function(e){
+      msg <<- sprintf('Something went wrong applying extra options, double check your input.  System error:  %s', e)
+      revals$warningmessage_preprocess$get_args <<- sprintf("<p style = 'color:red'>%s</p>", msg)
+      NULL
+    })
+    
     tryCatch({
       revals$warningmessage_preprocess$makeobject_error <- NULL
       for(el in isolate(input$tests)){
+        args <- arguments[[el]]
+        
         if(grepl("assign_class", el)){
           foo <- strsplit(el, ";")[[1]]
           f <- get(foo[1], envir=asNamespace("ftmsRanalysis"), mode="function")
           temp <- f(temp, foo[2])
           temp$e_meta[paste0(foo[2], "_class")] <- gsub(";.*", "", temp$e_meta[,paste0(foo[2], "_class")])
-          
         }
         else{
           f <- get(el, envir=asNamespace("ftmsRanalysis"), mode="function")
-          temp <- f(temp)
+          temp <- if(is.null(arguments[[el]])) f(temp) else do.call(f, c(list(temp), arguments[[el]]))
         }
         
         incProgress(1/length(input$tests))

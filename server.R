@@ -11,10 +11,6 @@ options(shiny.maxRequestSize=250*1024^2, ch.dir = TRUE)
 #options(shiny.sanitize.errors = FALSE)
 
 shinyServer(function(session, input, output) {
-  # static objects
-  dt_checkmark <- '<span class="glyphicon glyphicon-ok" style="color:deepskyblue"></span>'
-  dt_minus <- '<span class="glyphicon glyphicon-minus"></span>'
-  
   # onStop(function() rm(revals$peakData2, pos = 1))
   Sys.setenv(R_ZIPCMD="/usr/bin/zip")
   
@@ -82,15 +78,7 @@ shinyServer(function(session, input, output) {
   ##############################
   ######## Welcome Tab #########
   ##############################
-  
-  #------ Download Example Data ---------#
-  example_edata <- read_csv('Data/example12T_edata.csv') %>% as.data.frame(stringsAsFactors = FALSE)
-  example_emeta <- read_csv('Data/example12T_emeta.csv') %>% as.data.frame(stringsAsFactors = FALSE)
-  calc_opts <- read_csv('calculation_options.csv') %>% as.data.frame(stringsAsFactors = FALSE)
-  calc_vars <- read_csv('calculation_variables.csv') %>% as.data.frame(stringsAsFactors = FALSE)
-  # determines when 'large data' options are triggered
-  max_cells <- 2000000
-  
+
   #############
   output$downloadData <- downloadHandler(
     filename = "FREDA_Example_Data.zip",
