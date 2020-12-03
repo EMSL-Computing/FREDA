@@ -57,23 +57,25 @@ shinyServer(function(session, input, output) {
   tables <- reactiveValues(mapping_tables = list(), saved_db_info = data.frame('Tables' = character(0), 'No. Rows' = character(0), 'Column Names' = character(0), check.names = F, stringsAsFactors = F))
   
   # Reload objects for debugging if they exist
-  if(exists('RELOAD_POSTMORTEM_PLOTS__')){
-    lapply(names(RELOAD_POSTMORTEM_PLOTS__), function(x){
-      plots[[x]] <<- RELOAD_POSTMORTEM_PLOTS__[[x]]
-    })
-  }
-  
-  if(exists('RELOAD_POSTMORTEM_OBJECTS__')){
-    lapply(names(RELOAD_POSTMORTEM_OBJECTS__), function(x){
-      revals[[x]] <<- RELOAD_POSTMORTEM_OBJECTS__[[x]]
-    })
-  }
-  
-  if(exists('RELOAD_POSTMORTEM_TABLES__')){
-    lapply(names(RELOAD_POSTMORTEM_TABLES__), function(x){
-      tables[[x]] <<- RELOAD_POSTMORTEM_TABLES__[[x]]
-    })
-  }
+  observeEvent(input$debug_reload,{
+    if(exists('RELOAD_POSTMORTEM_PLOTS__')){
+      lapply(names(RELOAD_POSTMORTEM_PLOTS__), function(x){
+        plots[[x]] <<- RELOAD_POSTMORTEM_PLOTS__[[x]]
+      })
+    }
+    
+    if(exists('RELOAD_POSTMORTEM_OBJECTS__')){
+      lapply(names(RELOAD_POSTMORTEM_OBJECTS__), function(x){
+        revals[[x]] <<- RELOAD_POSTMORTEM_OBJECTS__[[x]]
+      })
+    }
+    
+    if(exists('RELOAD_POSTMORTEM_TABLES__')){
+      lapply(names(RELOAD_POSTMORTEM_TABLES__), function(x){
+        tables[[x]] <<- RELOAD_POSTMORTEM_TABLES__[[x]]
+      })
+    }
+  })
 
   exportTestValues(plot_data = revals$plot_data_export, peakData = revals$peakData_export, color_choices = revals$color_by_choices)
   

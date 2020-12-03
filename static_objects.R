@@ -17,3 +17,7 @@ calc_opts <- read_csv('calculation_options.csv') %>% as.data.frame(stringsAsFact
 calc_vars <- read_csv('calculation_variables.csv') %>% as.data.frame(stringsAsFactors = FALSE)
 # determines when 'large data' options are triggered
 max_cells <- 2000000
+
+info_text = list(
+  VALID_LINKED_PLOTS = "Current valid plots to link are Van-Krevelen, Kendrick, single sample density, and custom scatter plots."
+)

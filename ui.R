@@ -484,7 +484,7 @@ ui <- tagList(useShinyjs(), navbarPage(
                                           column(width = 6, class = "grey_out", id = "js_vkbounds",
                                                  disabled(selectInput('vkbounds', 'Van Krevelen boundary set:',
                                                                       choices = c('BS1' = 'bs1', 'BS2' = 'bs2', 'None' = 0),
-                                                                      selected = 'bs1'))
+                                                                      selected = 0))
                                           )
                                         ),
                                         
@@ -540,6 +540,8 @@ ui <- tagList(useShinyjs(), navbarPage(
                      tabPanel('Linked Plots', value = 'Linked Plots',
                               bsCollapse(id = 'linked_plots_collapse', open = c('lp_select_plots'), multiple = TRUE,
                                          bsCollapsePanel(title = 'Choose Two Plots to Compare', value = 'lp_select_plots',
+                                                         tags$i(info_text[['VALID_LINKED_PLOTS']]),
+                                                         tags$hr(),
                                                          DTOutput('lp_plot_table'),
                                                          bsButton('lp_compare_plots', 'Compare These Plots')),
                                          # bsCollapsePanel(title = 'Create A Linked Plot', value = 'lp_create_plot',
@@ -696,6 +698,6 @@ ui <- tagList(useShinyjs(), navbarPage(
                    onclick = "window.open('https://youtu.be/uU5Q7r_pEGM', '_blank')", 
                    style = 'info', icon = icon('facetime-video', lib = 'glyphicon'))),
     ),
-    # actionButton("debugger", "whats wrong!?!?"),
+    uiOutput("enter_debugger")
   )
 

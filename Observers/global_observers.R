@@ -34,7 +34,8 @@ observeEvent(input$top_page,{
 
 # multipurpose observer for page transitions
 observeEvent(input$top_page,{
-  toggleElement('helpbutton', condition = input$top_page %in% c('Upload', 'Groups', 'Preprocess', 'Filter', 'Visualize', 'Download', 'Quality Control'))
+  toggleElement('helpbutton', condition = input$top_page %in% 
+                  c('Upload', 'Groups', 'Preprocess', 'Filter', 'Visualize', 'Download', 'Quality Control', 'Linked Plots', 'Database Mapping'))
   
   if(input$top_page %in% c('Quality Control', 'Filter', 'Visualize', 'Database Mapping')){
     if(is.null(revals$peakData2)){
@@ -354,15 +355,31 @@ observeEvent(input$helpbutton,{
                     )
                 )
   }
-  else if(input$top_page == "Database"){
+  else if(input$top_page == "Linked Plots"){
+    showModal(
+      modalDialog("",
+                  tags$h4(tags$b("Interactively compare two plots side by side.")),
+                  br(),
+                  tags$p('In the top collapsible panel, you will see a list of valid plots.  Not all plots are valid, currently linking supports Van-Krevelen, Kendrick, single sample density, and custom scatter plots'),
+                  tags$p('Select exactly two of these plots by clicking on the entries in the table and then click "Compare These Plots"'),
+                  tags$p('In the bottom panel, you will see your plots appear side-by side.  Click and drag to select points or bins in one plot and FREDA will highlight both your selection, and the corresponding points in the other plot.')
+      )
+    )
+  }
+  else if(input$top_page == "Database Mapping"){
     showModal(
       modalDialog("",
                   tags$h4(tags$b("Map your observed peak masses to compounds, reactions, modules, and pathways/superpathways.\n")),
                   br(),
-                  tags$p('UNDER CONSTRUCTION'),
-                  footer = video_footer('database_video', 'http://google.com')
+                  tags$p('In the left panel, specify the following from top to bottom:'),
+                  tags$ul(
+                    tags$li("Select if you would like to use Kegg or Metacyc to map your peaks."),
+                    tags$li("A number which, if a peak maps to more than that many database elements, it is exluded from the results."),
+                    tags$li("Which database values you would like included.  Any value selected must also have the value(s) to its left selected.  I.e. if you would like Kegg modules, you must also select Kegg reactions"),
+                    tags$li("Which variable that you have calculated to expand such that each row of the results contains a single value of this variable.")
+                    )
                   )
-                  )
+              )
   }
   else if(input$top_page == "Download"){
     showModal(

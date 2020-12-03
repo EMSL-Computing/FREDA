@@ -1,4 +1,14 @@
 list(
+  output$enter_debugger <- renderUI({
+    if(isTRUE(getOption("shiny.testmode"))){
+      tagList(
+        actionButton("debugger", "whats wrong!?!?"),
+        actionButton("debug_reload", "reload resources")
+      )
+    }
+    else return(NULL)
+  }),
+  
   # view plot table button UI
   output$viewplots_label <- renderUI({
     n_plots <- nrow(plots$plot_table)

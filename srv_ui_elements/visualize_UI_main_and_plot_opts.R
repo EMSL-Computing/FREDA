@@ -108,7 +108,8 @@ list(
                                    title = input$title_input,legendTitle = revals$legendTitle)
             } else {
               # if no boundary lines and color selection doesn't belong to a boundary, color by test
-              p <- vanKrevelenPlot(plot_data(), showVKBounds = FALSE, colorCName = input$vk_colors, colorPal = colorPal,
+              p <- vanKrevelenPlot(plot_data(), showVKBounds = FALSE, vkBoundarySet = NA,
+                                   colorCName = input$vk_colors, colorPal = colorPal,
                                    xlabel = input$x_axis_input, ylabel = input$y_axis_input,
                                    title = input$title_input,legendTitle = revals$legendTitle)
             }
