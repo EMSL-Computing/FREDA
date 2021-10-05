@@ -1,7 +1,8 @@
 
 # Define UI and wrap everything in a taglist that first calls useShinyjs()
 ui <- tagList(useShinyjs(), navbarPage(
-                   title = tags$div("FREDA", tags$span(style = "font-size:small", "v1.0.2")), windowTitle = 'FREDA',
+                   title = tags$div("FREDA", tags$span(style = "font-size:small", "v1.0.4")), 
+                   windowTitle = 'FREDA',
                    id = "top_page",
                    theme = "yeti.css",
                    ############# Welcome Panel #########################
@@ -678,7 +679,7 @@ ui <- tagList(useShinyjs(), navbarPage(
     div(id = "js_helpbutton", style = "position:absolute;top:3px;right:16px;z-index:1000;width:11%", 
           div(style = 'float:right;width:25%',
               tipify(
-                hidden(bsButton("helpbutton", icon("question-sign", lib = "glyphicon"), style = "info")),
+                hidden(bsButton("helpbutton", icon("question-sign", lib = "glyphicon", style = "color:white"), style = "info")),
                 ttip_text[['page_help']]
               )
           ),

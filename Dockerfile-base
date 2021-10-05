@@ -1,0 +1,45 @@
+FROM rocker/shiny:4.1.1
+
+RUN apt-get update -qq && apt-get install -y \
+  git-core \
+  libssl-dev \
+  libcurl4-gnutls-dev \
+  libmagick++-dev \
+  libv8-dev
+  
+WORKDIR /srv/shiny-server/
+COPY renv.lock .
+
+# pre-install renv
+RUN R -e "install.packages('renv', repos = 'https://cran.rstudio.com')"
+
+# install all packages listed in renv.lock
+RUN --mount=type=secret,id=github_pat export GITHUB_PAT="$(cat /run/secrets/github_pat)" \
+&& R -e 'renv::restore()'
+
+#####
+
+# Install all plotly's dependencies
+RUN R -e "install.packages('plotly', dependencies = T)"
+
+# Download orca binary and make it executable under xvfb
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+        xvfb \
+        xauth \
+        libgtk2.0-0 \
+        libxtst6 \
+        libxss1 \
+        libgconf-2-4 \
+        libnss3 \
+        libasound2 && \
+    mkdir -p /opt/orca && \
+    cd /opt/orca && \
+    wget https://github.com/plotly/orca/releases/download/v1.2.1/orca-1.2.1-x86_64.AppImage && \
+    chmod +x orca-1.2.1-x86_64.AppImage && \
+    ./orca-1.2.1-x86_64.AppImage --appimage-extract && \
+    rm orca-1.2.1-x86_64.AppImage && \
+    printf '#!/bin/bash \nxvfb-run --auto-servernum --server-args "-screen 0 640x480x24" /opt/orca/squashfs-root/app/orca "$@"' > /usr/bin/orca && \
+    chmod +x /usr/bin/orca && \
+    apt-get remove -y libnode-dev
+    

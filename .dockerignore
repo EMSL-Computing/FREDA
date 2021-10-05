@@ -1,59 +1,30 @@
-# History files
-.Rhistory
-.Rapp.history
+*
 
-# Session Data files
-.RData
-.Rprofile
+!calculation_options.csv
+!calculation_variables.csv
+!processedCols.csv
+!DataRequirements.md
+!Docker_instructions.md
+!peakData_Report.Rmd
+!README.md
+!report_refs.bib
+!resources_and_contact.md
+!Welcome*to*FREDA.md
+!shiny-server.conf
 
-# scratch files and output
-untracked_resources/
-
-# Example code in package build process
-*-Ex.R
-
-# Output files from R CMD build
-/*.tar.gz
-!/KeggData*.tar.gz
-!/MetaCycData*.tar.gz
-
-# Output files from R CMD check
-/*.Rcheck/
-
-# RStudio files
-.Rproj.user/
-
-# produced vignettes
-vignettes/*.html
-vignettes/*.pdf
-
-# OAuth2 token, see https://github.com/hadley/httr/releases/tag/v0.3
-.httr-oauth
-
-# knitr and R markdown default cache directories
-/*_cache/
-/cache/
-
-# Temporary files created by R markdown
-*.utf8.md
-*.knit.md
-.Rproj.user
-
-# Tests
-tests/screenshots/*
 !tests/screenshots/info.txt
-tests/test_*/
-
-#packrat
-packrat/
-packrat_testing_environment.R
-
-#Data
-Data/*
 !Data/example12T_edata.csv
 !Data/example12T_emeta.csv
 
-#random
-script_dump.R
-.git/
-*.Rprofvis
+!global.R
+!server.R
+!ui.R
+!static_objects.R
+
+!helper_functions
+!Observers
+!Reactive_Variables
+!srv_ui_elements
+!www
+!README
+
