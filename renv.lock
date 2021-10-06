@@ -47,6 +47,18 @@
       "Repository": "CRAN",
       "Hash": "e031418365a7f7a766181ab5a41a5716"
     },
+    "datadr": {
+      "Package": "datadr",
+      "Version": "0.8.6",
+      "Source": "GitHub",
+      "RemoteType": "github",
+      "RemoteHost": "api.github.com",
+      "RemoteRepo": "datadr",
+      "RemoteUsername": "delta-rho",
+      "RemoteRef": "HEAD",
+      "RemoteSha": "f3ffebd8e1c43a5d11cd3543bbe672c88f8c52f3",
+      "Hash": "4ddf60dd3cd5d3baf559f44d872fc74e"
+    },
     "dplyr": {
       "Package": "dplyr",
       "Version": "1.0.7",

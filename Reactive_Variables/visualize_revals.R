@@ -133,6 +133,7 @@ plot_data <- eventReactive(input$plot_submit,{
     # assign a group DF to the data with a level for each of the two groups
     temp_group_df <- data.frame(c(g1_samples(), g2_samples()), c(rep(group1, times=length(g1_samples())), rep(group2, length(g2_samples()))))
     colnames(temp_group_df) <- c(getFDataColName(revals$peakData2), "Group")
+    temp_group_df$Group <- as.factor(temp_group_df$Group)
 
     temp_data <- revals$peakData2 %>%
       subset(samples=c(g1_samples(), g2_samples()))
