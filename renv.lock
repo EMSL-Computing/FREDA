@@ -24,9 +24,9 @@
       "RemoteHost": "api.github.com",
       "RemoteRepo": "KeggData",
       "RemoteUsername": "lmbramer",
-      "RemoteRef": "HEAD",
-      "RemoteSha": "d38face87054edd0aecc1662942dba56d177fac6",
-      "Hash": "95c52496cf50651d49b73a5eaac77169"
+      "RemoteRef": "new_dbmappings",
+      "RemoteSha": "bd6bf12f1bbbd3d0543962e1729dd61271f3e3a8",
+      "Hash": "ce03ab7b4111dd280f973574c02d3830"
     },
     "MetaCycData": {
       "Package": "MetaCycData",
@@ -35,10 +35,10 @@
       "RemoteType": "github",
       "RemoteHost": "api.github.com",
       "RemoteRepo": "MetaCycData",
-      "RemoteUsername": "lmbramer",
-      "RemoteRef": "HEAD",
-      "RemoteSha": "1424362ba9e5ec85d6317085a93d861346067528",
-      "Hash": "0afdd79362883773b24badd4aa8096db"
+      "RemoteUsername": "EMSL-computing",
+      "RemoteRef": "new_dbmappings",
+      "RemoteSha": "e103875c4cbdd33bfacadbbc24ebb801ee4992ab",
+      "Hash": "b35d881fa52fefba6c57652ae399e218"
     },
     "RColorBrewer": {
       "Package": "RColorBrewer",
@@ -73,10 +73,10 @@
       "RemoteType": "github",
       "RemoteHost": "api.github.com",
       "RemoteRepo": "ftmsRanalysis",
-      "RemoteUsername": "stratkg",
-      "RemoteRef": "develop",
-      "RemoteSha": "93d18f3cb8e8c82187b1c91bc0ef774bf5ecbe7c",
-      "Hash": "af602bcaa76ae4427d4132c4ec93a325"
+      "RemoteUsername": "EMSL-computing",
+      "RemoteRef": "HEAD",
+      "RemoteSha": "6df6a14b2fbeb14f9578b058ba83dee2aba24b7b",
+      "Hash": "205ba328b26ecddbf46a14c5617385d2"
     },
     "ggplot2": {
       "Package": "ggplot2",
