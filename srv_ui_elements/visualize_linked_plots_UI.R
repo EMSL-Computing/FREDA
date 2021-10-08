@@ -41,7 +41,7 @@ list(
       g1_samples = linked_plots_table()[row1, 'Group 1 Samples'] %>% stringr::str_extract_all(paste(sampnames, collapse="|")) %>% purrr::pluck(1)
       g2_samples = linked_plots_table()[row1, 'Group 2 Samples'] %>% stringr::str_extract_all(paste(sampnames, collapse="|")) %>% purrr::pluck(1)
       
-      edata_inds = revals$peakData2$e_data %>% select(g1_samples) %>% rowSums() %>% {. != 0}
+      edata_inds = revals$peakData2$e_data %>% select(g1_samples) %>% rowSums(na.rm = T) %>% {. != 0}
       
       ##
       
@@ -147,7 +147,7 @@ list(
       sampnames = revals$peakData2$f_data[,getFDataColName(revals$peakData2)]
       g1_samples = linked_plots_table()[row2, 'Group 1 Samples'] %>% stringr::str_extract_all(paste(sampnames, collapse="|")) %>% purrr::pluck(1)
       g2_samples = linked_plots_table()[row2, 'Group 2 Samples'] %>% stringr::str_extract_all(paste(sampnames, collapse="|")) %>% purrr::pluck(1)
-      edata_inds = revals$peakData2$e_data %>% select(g1_samples) %>% rowSums() %>% {. != 0}
+      edata_inds = revals$peakData2$e_data %>% select(g1_samples) %>% rowSums(na.rm=T) %>% {. != 0}
       
       scatter_types = c('Van Krevelen Plot', 'Kendrick Plot', 'Custom Scatter Plot')
       
