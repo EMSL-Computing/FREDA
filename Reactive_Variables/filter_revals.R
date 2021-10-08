@@ -53,7 +53,7 @@ sampfilter_ids <- eventReactive(c(input$keep_samples, input$samplefilter, input$
 
 # removed mass filter filter ids
 massfilter_ids <- eventReactive(c(input$massfilter, input$min_mass, input$max_mass, input$top_page, revals$react_largedata),{
-  req(!is.null(revals$peakData2))
+  req(!is.null(revals$peakData2), input$top_page == "Filter")
   if(!revals$redraw_largedata){
     return(NULL)
   }

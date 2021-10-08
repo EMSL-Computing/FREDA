@@ -27,22 +27,42 @@ list(
       
       # We need:
       
-      # Plot type of the plot that was interacted with, since this determines the structure of 'd', AND ... (moved to inside if statement)
-      # ... type of the plot that is currently being drawn, since this determines how we should add extra elements
-      # These two will be the same if we interacted with the plot currently being drawn
-      # x-variable of the interacted-with plot and the current plot, usually for if we are dealing with data from/for a histogram
+      #' 1. Plot type of the plot that was interacted with, since this determines 
+      #' the structure of 'd'.
+      #' 
+      #' 2. Type of the plot that is currently being drawn, since this determines 
+      #' how we should add extra elements
+      #' 
+      #' 1/2 Will be the same if we interacted with the plot currently 
+      #' being drawn.
+      #' 
+      #' x-variable of the interacted-with plot and the current plot, usually 
+      #' for if we are dealing with data from/for a histogram
       
       pname_current = linked_plots_table()[row1, 'File Name']
       xvar_current = linked_plots_table()[row1, 'X Variable']
       ptype_current = linked_plots_table()[row1, 'Plot Type']
       
-      # The samples that are contained in each plot, mostly for purposes of filtering out observations that dont appear in these samples (edata_inds below...)
+      #' The samples that are contained in each plot, mostly for purposes of 
+      #' filtering out observations that dont appear in these samples 
+      #' (edata_inds below...)
       sampnames = revals$peakData2$f_data[,getFDataColName(revals$peakData2)]
-      g1_samples = linked_plots_table()[row1, 'Group 1 Samples'] %>% stringr::str_extract_all(paste(sampnames, collapse="|")) %>% purrr::pluck(1)
-      g2_samples = linked_plots_table()[row1, 'Group 2 Samples'] %>% stringr::str_extract_all(paste(sampnames, collapse="|")) %>% purrr::pluck(1)
+      g1_samples = linked_plots_table()[row1, 'Group 1 Samples'] %>% 
+        stringr::str_extract_all(paste(sampnames, collapse="|")) %>% 
+        purrr::pluck(1)
+      g2_samples = linked_plots_table()[row1, 'Group 2 Samples'] %>% 
+        stringr::str_extract_all(paste(sampnames, collapse="|")) %>% 
+        purrr::pluck(1)
       
-      edata_inds = revals$peakData2$e_data %>% select(g1_samples) %>% rowSums(na.rm = T) %>% {. != 0}
-      
+      #' indices of e_data for all the peaks that have at least one nonzero
+      #' observation for all the samples for this plot.
+      edata_inds = revals$peakData2$e_data %>% 
+        select(getEDataColName(revals$peakData2)) %>% 
+        mutate(`__INCLUDE_EDATA__` = revals$peakData2$e_data %>%
+                 select(g1_samples) %>%
+                 rowSums(na.rm = T) %>%
+                 {. != 0} 
+        )
       ##
       
       if(!is_empty(d)){
@@ -68,13 +88,26 @@ list(
           tmp_dat <- dplyr::filter(revals$peakData2$e_meta, !!rlang::sym(getEDataColName(revals$peakData2)) %in% d[["key"]])
         }
         else if(ptype_selected %in% c('Density Plot')){
-          # if we selected a histogram, d$key has the ranges of the selected bins, 
-          # sapply:  for each range, get a vector that indicates which elements of the xvar column were in this range
-          # apply:  combine all vectors into one vector that is true if any of the vectors are true
-          emeta_inds = sapply(d$key, function(x) between(revals$peakData2$e_meta[[xvar_selected]], as.numeric(x[1]), as.numeric(x[2]))) %>% apply(1, any)
+          #' A dataframe that indicates if certain values of the variable in
+          #' question lie inside any of the bins selected on the histogram.
+          emeta_inds <- revals$peakData2$e_meta %>% 
+            select(getEDataColName(revals$peakData2)) %>% 
+            mutate(`__INCLUDE_EMETA__` = sapply(d$key, function(x) {
+                # histogram data includes values on the right edge, not the left
+                revals$peakData2$e_meta[[xvar_selected]] > as.numeric(x[1]) &
+                revals$peakData2$e_meta[[xvar_selected]] <= as.numeric(x[2])
+              }) %>%
+              apply(1, any)
+            )
           
-          # filter down to observations that fell within selected histogram bins AND have at least one observation in the selected samples
-          tmp_dat <- revals$peakData2$e_meta[emeta_inds & edata_inds,]
+          #' filter down to observations that fell within selected histogram 
+          #' bins AND have at least one observation in the selected samples
+          selected_rows <- emeta_inds %>%  
+            left_join(edata_inds) %>% 
+            select(-one_of(getEDataColName(revals$peakData2))) %>% 
+            apply(1, all)
+          
+          tmp_dat <- revals$peakData2$e_meta[selected_rows,]
         }
         
         #### UPDATE PLOTS BASED ON TYPE ####
@@ -99,19 +132,31 @@ list(
                         marker=list(color="cyan"), name="Selected", inherit = F)
         }
         else if(ptype_current == 'Density Plot'){
-          # plotly objects with histogram traces have a 'hist_data' attribute containing bins, bindwidths, etc.
+          #' plotly objects with histogram traces have a 'hist_data' attribute 
+          #' containing bins, bindwidths, etc.
           hist_dat <- attr(plots$linked_plots$left, 'hist_data')
           
-          # for each range, get the counts of FILTERED data that fall in that range
-          counts <- sapply(hist_dat$key, function(x) nrow(tmp_dat %>% filter(between(!!rlang::sym(xvar_current), x[1], x[2]))))
+          #' for each range, get the counts of FILTERED data that fall in that range
+          counts <- sapply(hist_dat$key, function(x) {
+            nrow(
+              tmp_dat %>% 
+                filter(
+                  !!rlang::sym(xvar_current) > x[1] & 
+                  !!rlang::sym(xvar_current) <= x[2]
+                )
+            )
+          })
           
-          # normalize by the number of rows in the original data that had nonmissing observations in the current plots displayed samples, as well as the bin width
-          density <- counts/sum(edata_inds)/hist_dat$barwidth
+          #' normalize by the number of rows in the original data that had 
+          #' nonmissing observations in the current plots displayed samples, 
+          #' as well as the bin width
+          density <- counts/sum(edata_inds$`__INCLUDE_EDATA__`)/hist_dat$barwidth
           
           hist_dat$counts <- counts
           hist_dat$density <- density
           
-          p <- plots$linked_plots$left %>% add_bars(x=~x, y=~density, width=~barwidth, marker = list(color='cyan'), data = hist_dat)
+          p <- plots$linked_plots$left %>% 
+            add_bars(x=~x, y=~density, width=~barwidth, marker = list(color='cyan'), data = hist_dat)
         }
       }
       else{
@@ -128,7 +173,8 @@ list(
     })
   }),
   
-  # Right linked plot, does the same as above, except the 'current plot' is referenced by the SECOND row selected
+  #' Right linked plot, does the same as above, except the 'current plot' is 
+  #' referenced by the SECOND row selected.
   output$lp_right <- renderPlotly({
     req(revals$peakData2)
     input$lp_compare_plots
@@ -145,9 +191,19 @@ list(
       xvar_current = linked_plots_table()[row2, 'X Variable']
       ptype_current = linked_plots_table()[row2, 'Plot Type']
       sampnames = revals$peakData2$f_data[,getFDataColName(revals$peakData2)]
-      g1_samples = linked_plots_table()[row2, 'Group 1 Samples'] %>% stringr::str_extract_all(paste(sampnames, collapse="|")) %>% purrr::pluck(1)
-      g2_samples = linked_plots_table()[row2, 'Group 2 Samples'] %>% stringr::str_extract_all(paste(sampnames, collapse="|")) %>% purrr::pluck(1)
-      edata_inds = revals$peakData2$e_data %>% select(g1_samples) %>% rowSums(na.rm=T) %>% {. != 0}
+      g1_samples = linked_plots_table()[row2, 'Group 1 Samples'] %>% 
+        stringr::str_extract_all(paste(sampnames, collapse="|")) %>% 
+        purrr::pluck(1)
+      g2_samples = linked_plots_table()[row2, 'Group 2 Samples'] %>% 
+        stringr::str_extract_all(paste(sampnames, collapse="|")) %>% 
+        purrr::pluck(1)
+      edata_inds = revals$peakData2$e_data %>% 
+        select(getEDataColName(revals$peakData2)) %>% 
+        mutate(`__INCLUDE_EDATA__` = revals$peakData2$e_data %>%
+                 select(g1_samples) %>%
+                 rowSums(na.rm = T) %>%
+                 {. != 0} 
+        )
       
       scatter_types = c('Van Krevelen Plot', 'Kendrick Plot', 'Custom Scatter Plot')
       
@@ -167,8 +223,21 @@ list(
           tmp_dat <- dplyr::filter(revals$peakData2$e_meta, !!rlang::sym(getEDataColName(revals$peakData2)) %in% d[["key"]])
         }
         else if(ptype_selected %in% c('Density Plot')){
-          emeta_inds = sapply(d$key, function(x) between(revals$peakData2$e_meta[[xvar_selected]], as.numeric(x[1]), as.numeric(x[2]))) %>% apply(1, any)
-          tmp_dat <- revals$peakData2$e_meta[emeta_inds & edata_inds,]
+          emeta_inds <-  revals$peakData2$e_meta %>% 
+            select(getEDataColName(revals$peakData2)) %>% 
+            mutate(`__INCLUDE_EMETA__` = sapply(d$key, function(x) {
+                revals$peakData2$e_meta[[xvar_selected]] > as.numeric(x[1]) &
+                revals$peakData2$e_meta[[xvar_selected]] <= as.numeric(x[2])
+              }) %>%
+              apply(1, any)
+            )
+          
+          selected_rows <- emeta_inds %>%  
+            left_join(edata_inds) %>% 
+            select(-one_of(getEDataColName(revals$peakData2))) %>% 
+            apply(1, all)
+          
+          tmp_dat <- revals$peakData2$e_meta[selected_rows,]
         }
       
         if(ptype_current == "Van Krevelen Plot"){
@@ -191,14 +260,23 @@ list(
         else if(ptype_current == 'Density Plot'){
           hist_dat <- attr(plots$linked_plots$right, 'hist_data')
           
-          counts <- sapply(hist_dat$key, function(x) nrow(tmp_dat %>% filter(between(!!rlang::sym(xvar_current), x[1], x[2]))))
+          counts <- sapply(hist_dat$key, function(x) {
+              nrow(
+                tmp_dat %>% 
+                  filter(
+                    !!rlang::sym(xvar_current) > x[1] & 
+                    !!rlang::sym(xvar_current) <= x[2]
+                  )
+              )
+            })
           
-          density <- counts/sum(edata_inds)/hist_dat$barwidth
+          density <- counts/sum(edata_inds$`__INCLUDE_EDATA__`)/hist_dat$barwidth
           
           hist_dat$counts <- counts
           hist_dat$density <- density
           
-          p <- plots$linked_plots$right %>% add_bars(x=~x, y=~density, width=~barwidth, marker = list(color='cyan'), data = hist_dat)
+          p <- plots$linked_plots$right %>% 
+            add_bars(x=~x, y=~density, width=~barwidth, marker = list(color='cyan'), data = hist_dat)
         }
       }
       else{
