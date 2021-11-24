@@ -14,7 +14,8 @@ COPY renv.lock .
 RUN R -e "install.packages('renv', repos = 'https://cran.rstudio.com')"
 
 # install all packages listed in renv.lock
-RUN --mount=type=secret,id=github_pat export GITHUB_PAT="$(cat /run/secrets/github_pat)" \
+RUN --mount=type=secret,id=access_tokens set -a \
+&& . /run/secrets/access_tokens && set +a \
 && R -e 'renv::restore()'
 
 #####

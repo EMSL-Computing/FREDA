@@ -92,6 +92,18 @@
       "Repository": "CRAN",
       "Hash": "76147821cd3fcd8c4b04e1ef0498e7fb"
     },
+    "mapDataAccess": {
+      "Package": "mapDataAccess",
+      "Version": "0.0.0.10",
+      "Source": "GitLab",
+      "RemoteType": "gitlab",
+      "RemoteHost": "code.emsl.pnl.gov",
+      "RemoteRepo": "mapdataaccess-lib",
+      "RemoteUsername": "multiomics-analyses",
+      "RemoteRef": "HEAD",
+      "RemoteSha": "bca23c536aad7400af52ff1db585f7561d32ce44",
+      "Hash": "add0bba6dac6effce063a8a9213f335d"
+    },
     "markdown": {
       "Package": "markdown",
       "Version": "1.1",
@@ -147,6 +159,13 @@
       "Source": "Repository",
       "Repository": "CRAN",
       "Hash": "bb5996d0bd962d214a11140d77589917"
+    },
+    "reticulate": {
+      "Package": "reticulate",
+      "Version": "1.22",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "b34a8bb69005168078d1d546a53912b2"
     },
     "rlang": {
       "Package": "rlang",

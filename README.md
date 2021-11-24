@@ -50,10 +50,15 @@ Then run the docker container:  `docker run -p 3838:3838 docker pull docker.arti
 
 We build a 'base' container which has all the system libraries and R packages installed, and then build a container on top of it that simply copies the app source code and exposes the correct port.  There are two Dockerfiles, and two corresponding .dockerignore files.
 
-**To build the base container**, you must provide a github PAT in order to install package from private git repos; currently these include KeggData and MetaCycData. Generate a personal access token according to:  https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/creating-a-personal-access-token.  Put this token in a file next to the Dockerfile, say `.mysecret`  
+**To build the base container**, you must provide a github PAT AND gitlab PAT in order to install packages from private git repos to which you have access; currently these include mapDataAccess, KeggData and MetaCycData. Generate a personal access token according to:  https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/creating-a-personal-access-token for github and https://docs.gitlab.com/ee/user/profile/personal_access_tokens.html for gitlab.  Put these tokens in a file next to the Dockerfile, say `.mysecrets`.  It should look like:
+
+`
+GITLAB_PAT=<your gitlab pat>
+GITHUB_PAT=<your github pat>
+`
 
 Now, replacing &lt;base tag&gt; with whatever version, run:  
-`docker build -f Dockerfile-base --secret id=gitlab_pat,src=.mysecret -t docker.artifactory.pnnl.gov/mscviz/freda/base:<base tag> .`
+`docker build -f Dockerfile-base --secret id=access_tokens,src=.mysecrets -t docker.artifactory.pnnl.gov/mscviz/freda/base:<base tag> .`
 
 **To build the 'top' container**:  
 Simply make sure Dockerfile refers to the correct base container if you have updated any dependencies (rebuilt the base container) and run:  
