@@ -46,7 +46,7 @@ Then run the docker container:  `docker run -p 3838:3838 docker pull docker.arti
 
 ### **Development**
 
-#### **1. Dockerfiles**
+#### **Dockerfiles**
 
 We build a 'base' container which has all the system libraries and R packages installed, and then build a container on top of it that simply copies the app source code and exposes the correct port.  There are two Dockerfiles, and two corresponding .dockerignore files.
 
@@ -61,7 +61,7 @@ Simply make sure Dockerfile refers to the correct base container if you have upd
 
 If all is well, push new containers to the registry:  `docker push <container_name>:<tag>`
 
-#### **2. Dependencies**
+#### **Dependencies**
 
 We use [renv](https://rstudio.github.io/renv/articles/renv.html) to track dependencies.  The renv.lock file contains a list of dependencies and various details about them.  We use renv to manage the details about dependencies.  When updating the lockfile, we will do the following:
 
@@ -70,7 +70,7 @@ We use [renv](https://rstudio.github.io/renv/articles/renv.html) to track depend
 
 Certain dependencies are forced to be recognized by renv without being explicitly loaded in the app by adding `library(somepackage)` to `renv_dependencies.R`
 
-#### **4. Misc**
+#### **Misc**
 
 **Long text**:  Long tooltips or info text should go in the `ttip_text` object or other global objects in `static_objects.R` and then referenced in the app to keep code tidy.
 

@@ -14,11 +14,15 @@ shinyServer(function(session, input, output) {
   # onStop(function() rm(revals$peakData2, pos = 1))
   Sys.setenv(R_ZIPCMD="/usr/bin/zip")
   
-  # source error handling file if exists, will be a script with observers that store objects that will show up the workspace after disconnect, like so:
-  # observeEvent(c(objects$omicsData, objects$omicsData_2),{
-  #   omicsData_postmortem <<- objects$omicsData
-  #   omicsData_2_postmortem <<- objects$omicsData_2
+  # source error handling file if exists, will be a script with observers that 
+  # store objects that will show up the workspace after disconnect, like so:
+  
+  # reactive values, including peakdata objects
+  # observeEvent(reactiveValuesToList(revals),{
+  #   revals$uploaded_emeta <- Emeta()
+  #   revals_postmortem <<- reactiveValuesToList(revals)
   # })
+
   tryCatch({
     source('untracked_resources/store_postmortem_objects.R', local = TRUE)
   }, error = function(e) message('Not storing postmortem objects'))
@@ -28,42 +32,80 @@ shinyServer(function(session, input, output) {
   for (f in Sys.glob("./Reactive_variables/*.R")) source(f, local = TRUE)
   for (f in Sys.glob("./Observers/*.R")) source(f, local = TRUE)
   for (f in Sys.glob("./srv_ui_elements/*.R")) source(f, local = TRUE)  
-
-  #### Minio/cloud initialization
+  for (f in Sys.glob("./tab_factories/*.R")) source(f, local = TRUE) 
+  
+  #'@details Store any values passed in the URL
   header_params = reactiveValues()
   
-  # parse header params
-  observe({
-    query <- parseQueryString(session$clientData$url_search)
-    
-    # establish minio connection if we are pulling cloud resources
-    if(any(names(query) %in% VALID_MINIO_HEADER_PARAMS)) {
-      minio_con <<- mapDataAccess::map_data_connection("./cfg/minio_config_local.yml")
-    }
-    
-    isolate({
-      # store header params in a reactive variable
-      for(key in names(query)){
-        header_params[[key]] <- query[[key]]
-        message(sprintf("INFO: stored parameter %s: %s", key, query[[key]]))
-      }
-    })
-  })
+  #'@details General unorganized reactiveValues
+  revals <-
+    reactiveValues(
+      ntables = 0,
+      makeplot = 1,
+      color_by_choices = NULL,
+      axes_choices = NULL,
+      redraw_largedata = FALSE,
+      react_largedata = FALSE,
+      plot_data_export = NULL,
+      peakData_export = NULL,
+      redraw_filter_plot = TRUE,
+      reac_filter_plot = TRUE,
+      group_1 = NULL,
+      group_2 = NULL,
+      single_group = NULL,
+      single_sample = NULL,
+      whichSample1 = NULL,
+      whichSample2 = NULL,
+      warningmessage_upload = list(upload = "style = 'color:deepskyblue'>Upload data and molecular identification files described in 'Data Requirements' on the previous page."),
+      reset_counter = 0,
+      chooseplots = NULL,
+      filter_click_disable = list(init = TRUE),
+      peakData2 = NULL,
+      groups_list = list(),
+      removed_samples = list()
+    )
   
-  revals <- reactiveValues(ntables = 0, makeplot = 1, color_by_choices = NULL, axes_choices = NULL, redraw_largedata = FALSE, react_largedata = FALSE,
-                           plot_data_export = NULL, peakData_export = NULL, redraw_filter_plot = TRUE, reac_filter_plot = TRUE,
-                           group_1 = NULL, group_2 = NULL, single_group = NULL, single_sample = NULL, whichSample1 = NULL, whichSample2 = NULL, 
-                           warningmessage_upload = list(upload = "style = 'color:deepskyblue'>Upload data and molecular identification files described in 'Data Requirements' on the previous page."),
-                           reset_counter = 0, chooseplots = NULL, filter_click_disable = list(init = TRUE), peakData2 = NULL, 
-                           groups_list = list(), removed_samples = list())
+  plots <-
+    reactiveValues(
+      last_plot = NULL,
+      plot_list = list(),
+      plot_data = list(),
+      linked_plots = list(),
+      plot_table = data.frame(
+        "File Name" = character(0),
+        'Download?' = character(0),
+        "Plot Type" = character(0),
+        "Sample Type" = character(0),
+        "Group 1 Samples" = character(0),
+        "Group 2 Samples" = character(0),
+        "Boundary Set" = character(0),
+        "Color By Variable" = character(0),
+        "X Variable" = character(0),
+        "Y Variable" = character(0),
+        "Presence Threshold" = character(0),
+        "Absence Threshold" = character(0),
+        "P-Value" = character(0),
+        "Comparisons Method" = character(0),
+        check.names = FALSE,
+        stringsAsFactors = FALSE
+      )
+    )
   
-  plots <- reactiveValues(last_plot = NULL, plot_list = list(), plot_data = list(), linked_plots = list(),
-                          plot_table = data.frame("File Name" = character(0), 'Download?' = character(0), "Plot Type" = character(0), "Sample Type" = character(0), "Group 1 Samples" = character(0), 
-                                                  "Group 2 Samples" = character(0), "Boundary Set" = character(0), "Color By Variable" = character(0), "X Variable" = character(0), 
-                                                  "Y Variable" = character(0), "Presence Threshold" = character(0), "Absence Threshold" = character(0), "P-Value" = character(0),
-                                                   "Comparisons Method" = character(0), check.names = FALSE, stringsAsFactors = FALSE))
+  tables <-
+    reactiveValues(
+      mapping_tables = list(),
+      saved_db_info = data.frame(
+        'Tables' = character(0),
+        'No. Rows' = character(0),
+        'Column Names' = character(0),
+        check.names = F,
+        stringsAsFactors = F
+      )
+    )
   
-  tables <- reactiveValues(mapping_tables = list(), saved_db_info = data.frame('Tables' = character(0), 'No. Rows' = character(0), 'Column Names' = character(0), check.names = F, stringsAsFactors = F))
+  #' @details core-ms files loaded through a header parameter that points to a
+  #' 'folder' in minio containing all files.
+  corems_samples <- reactiveValues()
   
   # Reload objects for debugging if they exist
   observeEvent(input$debug_reload,{

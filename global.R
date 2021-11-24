@@ -71,6 +71,9 @@ calc_vars <- read_csv('calculation_variables.csv') %>% as.data.frame(stringsAsFa
 max_cells <- 2000000
 
 info_text = list(
+  COREMS_UPLOAD_ERROR = "There was an error retrieving your Core-MS files: %s",
+  COREMS_UPLOAD_NOSAMPS = "No files found in the cloud location specified by 'corems-uri' in the URL.",
+  COREMS_UPLOAD_SUCCESS = "The following files were uploaded from Core-MS: <br>",
   VALID_LINKED_PLOTS = "Current valid plots to link are Van-Krevelen, Kendrick, single sample density, and custom scatter plots."
 )
 
