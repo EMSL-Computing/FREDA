@@ -23,19 +23,32 @@ shinyServer(function(session, input, output) {
     source('untracked_resources/store_postmortem_objects.R', local = TRUE)
   }, error = function(e) message('Not storing postmortem objects'))
   
-  # Source various helper functions
-  source('helper_functions/selection_addons.R')
-  source('helper_functions/summaryFilter.R') 
-  source('helper_functions/summaryPreprocess.R')
-  source('helper_functions/database_utils.R')
+  # Source all scripts
+  for (f in Sys.glob("./helper_functions/*.R")) source(f, local = TRUE)
+  for (f in Sys.glob("./Reactive_variables/*.R")) source(f, local = TRUE)
+  for (f in Sys.glob("./Observers/*.R")) source(f, local = TRUE)
+  for (f in Sys.glob("./srv_ui_elements/*.R")) source(f, local = TRUE)  
+
+  #### Minio/cloud initialization
+  header_params = reactiveValues()
   
-  # observers and UI elements which operate across tabs
-  source("Observers/global_observers.R", local = TRUE)
-  source('srv_ui_elements/global_UI.R', local = TRUE)
-  
-  # Misc Reactive Values:
-  # peakData2_dim(), uploaded_data_dim(). The number of cells in e_data of the respective objects
-  source('Reactive_Variables/misc_revals.R', local = TRUE)
+  # parse header params
+  observe({
+    query <- parseQueryString(session$clientData$url_search)
+    
+    # establish minio connection if we are pulling cloud resources
+    if(any(names(query) %in% VALID_MINIO_HEADER_PARAMS)) {
+      minio_con <<- mapDataAccess::map_data_connection("./cfg/minio_config_local.yml")
+    }
+    
+    isolate({
+      # store header params in a reactive variable
+      for(key in names(query)){
+        header_params[[key]] <- query[[key]]
+        message(sprintf("INFO: stored parameter %s: %s", key, query[[key]]))
+      }
+    })
+  })
   
   revals <- reactiveValues(ntables = 0, makeplot = 1, color_by_choices = NULL, axes_choices = NULL, redraw_largedata = FALSE, react_largedata = FALSE,
                            plot_data_export = NULL, peakData_export = NULL, redraw_filter_plot = TRUE, reac_filter_plot = TRUE,
@@ -95,120 +108,7 @@ shinyServer(function(session, input, output) {
     },
     contentType = "application/zip"
   )
-  ##############################
-  ######## Upload Tab ##########
-  ##############################
-  
-  # Upload Tab Reactive Values:
-  # Edata():  The uploaded data file
-  # edata_cnames():  All column names from from Edata()
-  # Emeta():  The uploaded e_meta file
-  # emeta_cnames():  All column names from Emeta()
-  # sample_names(): Sample names from uploaded data (all columns from Edata() minus mass column)
-  # fdata():  dummy f_data object created from sample_names().  Needed for input to as.peakData.  CONTAINS NO GROUPING INFORMATION
-  source("Reactive_Variables/upload_revals.R", local = TRUE)
 
-  ### Upload Observers:  Contains conditional dropdown behavior, shinyjs functionality.
-  source("Observers/upload_observers.R", local = TRUE)
-  ###
-  
-  #### Main Panel (Upload Tab) ####
-  # Minor upload UI Elements (output$<name>)
-  # num_peaks, num_samples
-  # emeta_text, edata_text, success_upload
-  source('srv_ui_elements/upload_UI_mainpanel.R', local = TRUE)
-  
-  #### Sidebar Panel (Upload Tab) ####
-  # element selection and C13 sidebar elements
-  source('srv_ui_elements/upload_UI_sidebar.R', local = TRUE)
-  
-  #########################
-  ####### Groups Tab ######
-  #########################
-
-  source("Observers/groups_observers.R", local = TRUE)
-  source("srv_ui_elements/groups_UI.R", local = TRUE)
-  
-  # Groups tab reactive variables:
-  # groupstab_df():  reactive table that displays groups and their filtered/non filtered samples
-  source("Reactive_Variables/groups_revals.R", local = TRUE)
-  
-  ##############################
-  ####### Preprocess Tab #######
-  ##############################
-  
-  # Preprocess Tab reactive variables:
-  # emeta_display_choices():  Columns of emeta minus mass column, isotopic information column, and categorical columns with greater than 12 categories
-  source("Reactive_Variables/preprocess_revals.R", local = TRUE)
-  
-  source("Observers/preprocess_observers.R", local = TRUE)
-  source('srv_ui_elements/preprocess_UI.R', local = TRUE)
-  
-  ######################################
-  ############## QC tab ################
-  ######################################
-  
-  source('Observers/qc_observers.R', local = TRUE)
-  source('srv_ui_elements/qc_UI.R', local = TRUE)
-
-  ########################################
-  ############## Filter tab ##############
-  ########################################
-  
-  ### Filter Observers.  Contains much of the dropdown behavior and helper button functionality.
-  source("Observers/filter_observers.R", local = TRUE)
-  ###
-  
-  # Filter UI Elements
-  source('srv_ui_elements/filter_UI.R', local = TRUE)
-  
-  ## Filter tab reactive values
-  source("Reactive_Variables/filter_revals.R", local = TRUE)
-
-  #############################
-  ####### Visualize Tab #######
-  #############################
-  
-  #Visualize Tab reactive variables:
-  # plot_data(): Plotting dataframe that is passed to output$FxnPlot.  This object triggers an important observer (in server.R) which controls dropdown selection
-  # plot_defaults():  defaults arguments to plot axes/title values
-  # numeric_selected():  keeps track of whether the column selected by input$vk_colors is numeric or categorical
-  # g1_samples() and g2_samples()  These store the samples that will be compared during group/sample comparison plots
-  source("Reactive_Variables/visualize_revals.R", local = TRUE)
-  
-  # Viztab observers.  Help Button. Dropdown choices, plot clearing, and shinyjs helper functionality###
-  source("Observers/visualize_observers.R", local = TRUE)
-  #
-  
-  # Minor UI Elements
-  # Label adjustment and plot download buttons (sidebar)
-  source('srv_ui_elements/visualize_UI_main_and_plot_opts.R', local = TRUE)
-  # plot, sample type, and comparison options
-  source('srv_ui_elements/visualize_UI_sidebar.R', local = TRUE)
-  # warnings_visualize: displays warning messages in revals$warningmessage_visualize
-  # chooseplots_icon, axlabs_icon, saveplots_icon: icons for collapse panels
-  source('srv_ui_elements/visualize_UI_misc.R', local = TRUE)
-  
-  ## Linked plots Sub-tab
-  source('srv_ui_elements/visualize_linked_plots_UI.R', local = TRUE)
-  source('Observers/linked_plot_observers.R', local = TRUE)
-  source('Reactive_Variables/linked_plot_revals.R', local = TRUE)
-  
-  ############################
-  ####### Database Tab #######
-  ############################
-  
-  source('./Observers/database_observers.R', local = TRUE)
-  source('./srv_ui_elements/database_UI.R', local = TRUE)
-  
-  ############################
-  ####### Download Tab #######
-  ############################
-  
-  source("Observers/download_observers.R", local = TRUE)
-  source("helper_functions/report.R", local = TRUE)
-  source('srv_ui_elements/download_UI.R', local = TRUE)
-  
   #---- processed data download --------#
   output$download_processed_data <- downloadHandler(
     filename = paste("FREDA_Output_",proc.time()[1],".zip", sep = ""),
