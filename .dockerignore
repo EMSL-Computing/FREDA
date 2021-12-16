@@ -19,7 +19,6 @@
 !global.R
 !server.R
 !ui.R
-!static_objects.R
 
 !helper_functions
 !Observers

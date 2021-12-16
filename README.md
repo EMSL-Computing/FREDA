@@ -33,13 +33,24 @@ Install the required packages.  You can do this either by inspecting the global.
 To install package with `renv`, first `install.packages("renv")`.  Then call renv::restore().  This will install all packages contained in the renv.lock file.  See the [renv website](https://rstudio.github.io/renv/articles/renv.html) for more details.
 Then simply call shiny::runApp()
 
+**Pulling from minio**
+
+FREDA has the ability to pull files from minio, currently only for use in retrieving core-ms output.  You must provide a config that contains several connection parameters and put it at cfg/minio_config.yml
+
+See the example file cfg/minio_config_example.yml
+
 #### 2.  Using docker:
 
 Either build the container as described in the development section, or pull it from pnnl artifactory if you have access:
 `docker login docker.artifactory.pnnl.gov`
 `docker pull docker.artifactory.pnnl.gov/mscviz/freda:latest`
 
-Then run the docker container:  `docker run -p 3838:3838 docker pull docker.artifactory.pnnl.gov/mscviz/freda:latest`  
+Then run the docker container:  `docker run -p 3838:3838 docker.artifactory.pnnl.gov/mscviz/freda:latest`  
+
+If you are pulling files from minio, you must mount a minio config to `/srv/shiny-server/FREDA/cfg/minio_config.yml`:
+
+`docker run -p 3838:3838 -v /path/to/config.yml:/srv/shiny-server/FREDA/cfg/minio_config.yml docker.artifactory.pnnl.gov/mscviz/freda:latest`  
+
 ... and navigate to https://127.0.0.1:3838 in your web browser.
 
 ***

@@ -29,7 +29,7 @@ shinyServer(function(session, input, output) {
   
   # Source all scripts
   for (f in Sys.glob("./helper_functions/*.R")) source(f, local = TRUE)
-  for (f in Sys.glob("./Reactive_variables/*.R")) source(f, local = TRUE)
+  for (f in Sys.glob("./Reactive_Variables/*.R")) source(f, local = TRUE)
   for (f in Sys.glob("./Observers/*.R")) source(f, local = TRUE)
   for (f in Sys.glob("./srv_ui_elements/*.R")) source(f, local = TRUE)  
   for (f in Sys.glob("./tab_factories/*.R")) source(f, local = TRUE) 

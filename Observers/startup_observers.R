@@ -1,11 +1,11 @@
-#'@details Parse and store header parameters.  If 'corems-uri' is passed, load 
+#'@details Parse and store header parameters.  If 'corems-prefix' is passed, load 
 #'the files and display a different tab for 'upload'.
 observe({
   query <- parseQueryString(session$clientData$url_search)
   
   # establish minio connection if we are pulling cloud resources
   if(any(names(query) %in% VALID_MINIO_HEADER_PARAMS)) {
-    minio_con <<- mapDataAccess::map_data_connection("./cfg/minio_config_local.yml")
+    minio_con <<- mapDataAccess::map_data_connection("./cfg/minio_config.yml")
   }
   
   isolate({
@@ -15,12 +15,12 @@ observe({
       message(sprintf("INFO: stored parameter %s: %s", key, query[[key]]))
     }
     
-    if('corems-uri' %in% names(query)) {
+    if('corems-prefix' %in% names(query)) {
       withProgress(message = "Loading core-ms files...", value = 1, {
         uris <- reticulate::iterate(
           minio_con$client$list_objects(
             minio_con$bucket,
-            prefix = header_params[['corems-uri']], 
+            prefix = header_params[['corems-prefix']], 
             recursive = TRUE),
           function(x) x$object_name
         )
