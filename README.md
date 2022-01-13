@@ -39,6 +39,22 @@ FREDA has the ability to pull files from minio, currently only for use in retrie
 
 See the example file cfg/minio_config_example.yml
 
+To test pulling from minio locally, you must run a local minio docker container.  With docker installed on your machine,
+run the following:
+
+`docker pull minio/minio`  
+`docker run -d -p 9000:9000 --name minio-map minio/minio server /data`
+
+Now navigate to http://localhost:9000/, which will display a UI where you can create folders and upload files.  As an
+example, do the following:
+
+1.  Create a folder in the minio UI (call it test_folder, for example) and put a couple csv files in it.
+2.  Launch FREDA from Rstudio.  
+3.  Nagivate to wherever FREDA is being served at, adding /?corems-prefix=test_folder to the url.
+
+FREDA will attempt to read all the files in the minio folder `test_folder` and load them into the reactiveValue 
+corems_samples.
+
 #### 2.  Using docker:
 
 Either build the container as described in the development section, or pull it from pnnl artifactory if you have access:

@@ -1,4 +1,12 @@
-FROM docker.artifactory.pnnl.gov/mscviz/freda/base
+# Builds off the FREDA base container that contains all dependencies for the
+# app.  Mostly just copies in app source code and server configuration.
+
+# Change this when we bump versions, or if you have some test version of the
+# base container you can specify --build-arg base_tag=<yourtag> in docker 
+# build.
+ARG base_tag=1.0.4
+
+FROM docker.artifactory.pnnl.gov/mscviz/freda/base:$base_tag
 
 # All app source/resources
 COPY . /srv/shiny-server/FREDA
