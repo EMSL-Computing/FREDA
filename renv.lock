@@ -101,8 +101,8 @@
       "RemoteRepo": "mapdataaccess-lib",
       "RemoteUsername": "multiomics-analyses",
       "RemoteRef": "HEAD",
-      "RemoteSha": "bca23c536aad7400af52ff1db585f7561d32ce44",
-      "Hash": "add0bba6dac6effce063a8a9213f335d"
+      "RemoteSha": "12e6bd1e85a406a0d28b636f8c23754d81745ac5",
+      "Hash": "16970b5f8a17a3d5e2dc74911b59c0b2"
     },
     "markdown": {
       "Package": "markdown",

@@ -29,7 +29,8 @@ observe({
           tryCatch({
             fpaths <- lapply(uris, function(uri) {
               mapDataAccess::get_file(
-                minio_con, id = uri, filename = file.path(tempfile(), basename(uri))
+                minio_con, id = uri, filename = file.path(tempfile(), basename(uri)), 
+                use_dir = FALSE
               )
             })
             
