@@ -58,7 +58,7 @@ corems_samples.
 #### 2.  Using docker:
 
 Either build the container as described in the development section, or pull it from pnnl artifactory if you have access:
-`docker login docker.artifactory.pnnl.gov`
+`docker login docker.artifactory.pnnl.gov`  
 `docker pull docker.artifactory.pnnl.gov/mscviz/freda:latest`
 
 Then run the docker container:  `docker run -p 3838:3838 docker.artifactory.pnnl.gov/mscviz/freda:latest`  

@@ -34,10 +34,17 @@ observe({
               )
             })
             
-            names(fpaths) <- sapply(fpaths, basename)
+            names(fpaths) <- sapply(fpaths, function(x) basename(tools::file_path_sans_ext(x))) %>% 
+              make.unique()
             
+            corems_revals[['combined_tables']] <- ftmsRanalysis::read_CoreMS_data(
+              unlist(fpaths), 
+              sample_names = names(fpaths)
+            )
+          
             for(name in names(fpaths)) {
-              corems_samples[[name]] <- read_csv(fpaths[[name]])
+              corems_revals[['tables']][[name]] <- read_csv(fpaths[[name]])
+              corems_revals[['fpaths']][[name]] <- fpaths[[name]]
             }
             
             modalmessage <- div(class = "column-scroll-sm",
@@ -59,7 +66,7 @@ observe({
     insertTab(
       "top_page",
       target = "Welcome",
-      tab = upload_tab(length(names(corems_samples)) > 0),
+      tab = upload_tab(length(corems_revals[['combined']]) > 0),
       position = "after"  
     )
     

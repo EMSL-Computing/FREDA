@@ -74,9 +74,9 @@
       "RemoteHost": "api.github.com",
       "RemoteRepo": "ftmsRanalysis",
       "RemoteUsername": "EMSL-computing",
-      "RemoteRef": "HEAD",
-      "RemoteSha": "6df6a14b2fbeb14f9578b058ba83dee2aba24b7b",
-      "Hash": "205ba328b26ecddbf46a14c5617385d2"
+      "RemoteRef": "CoreMS-compatibility",
+      "RemoteSha": "66352c9d71266564286032a515f18453cee0fdc0",
+      "Hash": "d4e9324869317775393099b9d3603c4e"
     },
     "ggplot2": {
       "Package": "ggplot2",
