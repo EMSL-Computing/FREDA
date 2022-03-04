@@ -5,10 +5,7 @@
 #' 
 upload_tab <- function(from_corems = FALSE) {
   if(from_corems) {
-    navbarMenu("Core-MS Processing",
-      tabPanel("tab1", HTML("This is a tab")),
-      tabPanel("tab2", HTML("This is another tab"))
-    )
+    corems_tabs() 
   } else {
     tabPanel(div("Upload", icon('upload')), value = 'Upload',
              fluidRow(
@@ -161,4 +158,119 @@ upload_tab <- function(from_corems = FALSE) {
                
              ))
   }
+}
+
+corems_tabs <- function() {
+  navbarMenu("Core-MS Processing",
+    tabPanel("Create CoreMS Object",
+      fluidRow(
+        ## Sidebar panel on Upload tab ##
+        column(width = 4,
+               bsCollapse(
+                 id = 'upload_collapse', open = c('Upload Data'), multiple = TRUE,
+                 bsCollapsePanel(
+                   title = "Specify Column Names",
+                   div(id = 'specify_colnames',         
+                       uiOutput("index_cname"),
+                       uiOutput("obs_mass_cname"),
+                       uiOutput("calc_mass_cname"),
+                       uiOutput("pheight_cname"),
+                       uiOutput("error_cname"),
+                       uiOutput("conf_cname"),
+                       uiOutput("file_cname"),
+                       uiOutput("mono_index_cname"),
+                       uiOutput("mf_cname"),
+                       uiOutput("c13_cname"),
+                       uiOutput("o18_cname"),
+                       uiOutput("n15_cname"),
+                       uiOutput("s34_cname")
+                   ) # end div
+                 ) # end Collapse Panel
+               ), # end bsCollapse
+               
+               shiny::actionButton("make_cmsdata", 
+                                   "Create CoreMSData Object", 
+                                   icon = icon("cog"),
+                                   lib = "glyphicon")
+        ), # end sidebar column
+        
+        # main panel 
+        column(width = 8,
+           # keeps table compact on page, no line wrapping:
+           tags$head(tags$style("#raw_data  {white-space: nowrap;  }")),
+           DT::dataTableOutput("cms_raw_data"),
+           plotlyOutput("cmsdat_plot")
+        ) # end main column
+      ) # end fluidRow
+    ),
+    ###################### Confidence Filter Panel ######################
+    tabPanel("Confidence Filter",
+      fluidRow(
+        # sidebar column
+        column(width = 4,
+          bsCollapse(id = "filter_collapse", open = c("conf_thresh"), multiple = TRUE,
+            bsCollapsePanel(
+              title = "Select Confidence Threshold",
+              value = "conf_thresh",
+              
+              sliderInput(inputId = "min_conf",
+                         label = "Minimum confidence score:",
+                         min = 0,
+                         max = 1,
+                         value = .5)
+            ) # end collapse panel
+          ), # end collapse 
+          
+          shiny::actionButton("apply_conf_filter", 
+                              "Filter Data", 
+                              icon = icon("cog"),
+                              lib = "glyphicon"),
+          
+          shiny::actionButton("reset_filter", 
+                              "Reset Filter", 
+                              icon = icon("trash"),
+                              lib = "glyphicon")
+              
+        ), # end sidebar column
+       
+        column(width = 8,
+              DT::dataTableOutput("filt_peaks_dt"),
+              plotlyOutput("me_plot"),
+              plotlyOutput("cms_filt_plot")
+              
+        ) # end main column
+      ) # end fluidRow
+    ), # end conf filter tabPanel
+    
+    ###################### Unique Formula Assingment Panel ######################
+    tabPanel("Formula Assignment",
+      fluidRow(
+        # sidebar column
+        column(width = 4,
+          bsCollapse(id = 'unq_mf_collapse', open = "unq_mf_assign", multiple = TRUE,
+             bsCollapsePanel(title = "Unique Molecular Formula Assignment", 
+                             value = "unq_mf_assign",
+                             
+                             selectInput("unq_mf_method", label = "Method:",
+                                         choices = c("Select Method", "Confidence score", "Peak height"))
+             ) # end collapse panel
+          ), # end collapse
+          shiny::actionButton("unique_mf", 
+                              "Assign Unique Formula", 
+                              icon = icon("cog"),
+                              lib = "glyphicon")
+              
+        ), # end sidebar column
+        
+        # main column
+        column(width = 8,
+              plotlyOutput("mf_plot")
+        ) # close main column
+      ) # close fluidrow
+    ), # close unique mf tabPanel
+    tabPanel(
+      "Convert to Peak Data",
+      uiOutput("corems_to_peakdata_UI")
+    )
+  )
 }

@@ -66,7 +66,7 @@ observe({
     insertTab(
       "top_page",
       target = "Welcome",
-      tab = upload_tab(length(corems_revals[['combined']]) > 0),
+      tab = upload_tab(length(corems_revals[['combined_tables']]) > 0),
       position = "after"  
     )
     
