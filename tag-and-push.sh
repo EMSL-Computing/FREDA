@@ -1,5 +1,8 @@
 #!/bin/bash
 
+# Usage:
+# tag-and-push.sh -n <container name> -t <container-tag> (optional -l)
+
 TAG_LATEST="false"
 
 while getopts ":n:t:l;" opt; do
