@@ -52,7 +52,11 @@ upload_tab <- function(from_corems = FALSE) {
                                                                        choices = list('Log base 2' = 'log2', 'Log base 10'='log10', 'Natural log'='log', 
                                                                                       'Presence/absence' = 'pres', 'Raw intensity'='abundance'), 
                                                                        selected = 'abundance'
-                                 )
+                                    )
+                                 ),
+                                 div(
+                                   id = "js_NA_value",
+                                   uiOutput("NA_value_UI")
                                  ),
                                  
                                  tags$hr(style = "margin:20px 0px 20px 0px"),
