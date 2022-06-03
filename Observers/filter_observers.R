@@ -384,14 +384,14 @@ observe({
 })
 
 # ----- Filter Reset Setup -----# 
-# f$clearFilters simply allows/denies the destruction of filters and plots, and the rest of data to pre-filtered state.
-f <- reactiveValues(clearFilters = FALSE)
+# clear_filters$clearFilters simply allows/denies the destruction of filters and plots, and the rest of data to pre-filtered state.
+clear_filters <- reactiveValues(clearFilters = FALSE)
 observeEvent(input$clear_filters_yes, {
-  f$clearFilters <- TRUE
+  clear_filters$clearFilters <- TRUE
 }, priority = 10)
 
 observeEvent(input$filter_click, {
-  f$clearFilters <- FALSE
+  clear_filters$clearFilters <- FALSE
 }, priority = 10)
 
 #-------- Reset Activity -------#
@@ -447,7 +447,7 @@ observeEvent(input$clear_filters_no,{
 
 # if they click yes, reset data and exit modal dialog
 observeEvent(input$clear_filters_yes, {
-  if (f$clearFilters) {
+  if (clear_filters$clearFilters) {
     updateCheckboxInput(session, inputId = "massfilter", value = FALSE)
     updateCheckboxInput(session, inputId = "molfilter", value = FALSE)
     updateCheckboxInput(session, inputId = "formfilter", value = FALSE)
