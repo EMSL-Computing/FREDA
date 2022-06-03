@@ -1,7 +1,7 @@
 
 # Define UI and wrap everything in a taglist that first calls useShinyjs()
 ui <- tagList(useShinyjs(), navbarPage(
-                   title = tags$div("FREDA", tags$span(style = "font-size:small", "v1.0.6")), 
+                   title = tags$div("FREDA", tags$span(style = "font-size:small", "v1.0.7")), 
                    windowTitle = 'FREDA',
                    id = "top_page",
                    theme = "yeti.css",
