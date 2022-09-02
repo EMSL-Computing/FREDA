@@ -5,7 +5,8 @@ observe({
   
   # establish minio connection if we are pulling cloud resources
   if(any(names(query) %in% VALID_MINIO_HEADER_PARAMS)) {
-    minio_con <<- mapDataAccess::map_data_connection("./cfg/minio_config.yml")
+    cfg_location = if(Sys.getenv("MINIO_CONFIG_PATH") == "") "./cfg/minio_config.yml" else Sys.getenv("MINIO_CONFIG_PATH")
+    minio_con <<- mapDataAccess::map_data_connection(cfg_location)
   }
   
   isolate({
