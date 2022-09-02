@@ -162,7 +162,9 @@ upload_tab <- function(from_corems = FALSE) {
 
 corems_tabs <- function() {
   navbarMenu("Core-MS Processing",
-    tabPanel("Create CoreMS Object",
+    tabPanel(
+      "Create CoreMS Object",
+      value = "CoreMS-create",
       fluidRow(
         ## Sidebar panel on Upload tab ##
         column(width = 4,
@@ -204,7 +206,9 @@ corems_tabs <- function() {
       ) # end fluidRow
     ),
     ###################### Confidence Filter Panel ######################
-    tabPanel("Confidence Filter",
+    tabPanel(
+      "Confidence Filter",
+      value = "CoreMS-conf-filter",
       fluidRow(
         # sidebar column
         column(width = 4,
@@ -243,7 +247,9 @@ corems_tabs <- function() {
     ), # end conf filter tabPanel
     
     ###################### Unique Formula Assingment Panel ######################
-    tabPanel("Formula Assignment",
+    tabPanel(
+      "Formula Assignment",
+      value = "CoreMS-formula-assign",
       fluidRow(
         # sidebar column
         column(width = 4,
@@ -266,11 +272,8 @@ corems_tabs <- function() {
         column(width = 8,
               plotlyOutput("mf_plot")
         ) # close main column
-      ) # close fluidrow
-    ), # close unique mf tabPanel
-    tabPanel(
-      "Convert to Peak Data",
+      ), # close fluidrow
       uiOutput("corems_to_peakdata_UI")
-    )
+    ) # close unique mf tabPanel
   )
 }

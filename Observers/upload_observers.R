@@ -391,7 +391,7 @@ observeEvent(input$iso_info_filter,{
 observeEvent(revals$uploaded_data,{
   #Error handling: revals$uploaded_data must exist
   req(revals$uploaded_data)
-  req(input$top_page == 'Upload')
+  req(grepl('^Upload$|^CoreMS-', input$top_page))
   
   #___test-export___
   if (isTRUE(getOption("shiny.testmode"))) {
@@ -403,7 +403,7 @@ observeEvent(revals$uploaded_data,{
       title = "Upload Success",
       fluidRow(
         column(10, align = "center", offset = 1,
-               HTML('<h4 style= "color:#1A5276">Your data has been successfully uploaded. 
+               HTML('<h4 style= "color:#1A5276">Your data object has been successfully created. 
                     You may proceed to the subsequent tabs for analysis.</h4>'),
                hr(),
                actionButton("upload_dismiss", "Review results", width = '75%'),
