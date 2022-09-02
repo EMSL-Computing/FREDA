@@ -1,5 +1,12 @@
 # Object: Get e_data from file input
 Edata <- reactive({
+  if(!is.null(revals$uploaded_data)) {
+    return(revals$uploaded_data$e_data %>%
+             dplyr::select(-dplyr::one_of(
+               ftmsRanalysis::getEDataColName(revals$uploaded_data)
+             )))
+  }
+  
   # Error handling: Need file_edata path
   req(input$file_edata$datapath)
   
@@ -29,15 +36,13 @@ Emeta <- reactive({
 }) # End Emeta #
 
 # Object: Emeta column names 
-# Note: created when emeta is loaded/updated
 emeta_cnames <- reactive({names(Emeta())}) 
 
 # Object: Sample names from e_data
-# Note: This object is created when e_data and edata_id are entered
 sample_names <- reactive({
   setdiff(edata_cnames(), input$edata_id_col)
-  
-}) # End sample_names #
+}) 
+
 # Create reactive fake f_data (used when action button creates peakData())
 fdata <- reactive({
   col2 <- rep(NA, length(sample_names()))

@@ -19,7 +19,7 @@ observeEvent(input$makezipfile,{
     if (input$report_selection == TRUE & !is.null(revals$peakData2)){
       tryCatch({
         fs <- c(fs, file.path(tempdir(), "report.html"))
-        report(revals$uploaded_data, revals$peakData2, Emeta(), output_file = file.path(tempdir(), "report.html"), output_format = "html_document", 
+        report(revals$uploaded_data, revals$peakData2, revals$uploaded_data$e_meta, output_file = file.path(tempdir(), "report.html"), output_format = "html_document", 
              C13_ID = input$iso_symbol, groups_list = revals$groups_list, db_tables_info = tables$saved_db_info)
         },
       error = function(e){

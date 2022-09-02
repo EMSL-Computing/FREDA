@@ -35,6 +35,6 @@ cms_dat_unq_mf <- eventReactive(input$unique_mf, {
   if (input$unq_mf_method == "Confidence score") {method <- "confidence"}
   if (input$unq_mf_method == "Peak height") {method <- "peak_intensity"}
   
-  unq_dat <- unique_mf_assingment(cms_data_filtered(), method)
+  unq_dat <- unique_mf_assignment(cms_data_filtered(), method)
   return(unq_dat)
 })
