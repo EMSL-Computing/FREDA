@@ -1,6 +1,15 @@
 
 # Define UI and wrap everything in a taglist that first calls useShinyjs()
-ui <- tagList(useShinyjs(), navbarPage(
+ui <- tagList(useShinyjs(), 
+              
+              # loading message
+              div(
+                id = "loading-gray-overlay",
+                class = "loading-mask",
+                div(class = "fadein-out busy relative-centered", style = "font-size:xx-large", "Loading app resources...")
+              ), 
+              
+              navbarPage(
                    title = tags$div("FREDA", tags$span(style = "font-size:small", "v1.0.7")), 
                    windowTitle = 'FREDA',
                    id = "top_page",
