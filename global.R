@@ -55,3 +55,29 @@ info_text = list(
 
 # cloud/minio resources
 VALID_MINIO_HEADER_PARAMS = c("corems-prefix")
+
+
+#'@SECTION Variables for selectors/inputs ##
+
+# Use this global variable for 'nothing selected' options
+NULLSELECT__ = "__nullselect__"
+
+# list of arguments to be passed to as.CoreMSData that need an input picker
+COREMSDATA_ARGS = c(
+  "index_cname",
+  "obs_mass_cname", 
+  "calc_mass_cname",
+  "pheight_cname", 
+  "error_cname",
+  "conf_cname",
+  "file_cname", 
+  "monoiso_index_cname",
+  "mf_cname",
+  "c13_cname",
+  "o18_cname",
+  "n15cname",
+  "s34_cname"
+)
+
+
+
