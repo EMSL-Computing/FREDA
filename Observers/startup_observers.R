@@ -9,6 +9,11 @@ observe({
     minio_con <<- mapDataAccess::map_data_connection(cfg_location)
   }
   
+  on.exit({
+    Sys.sleep(1)
+    hide("loading-gray-overlay")
+  })
+  
   isolate({
     # store header params in a reactive variable
     for(key in names(query)){
@@ -17,51 +22,50 @@ observe({
     }
     
     if('corems-prefix' %in% names(query)) {
-      withProgress(message = "Loading core-ms files...", value = 1, {
-        uris <- reticulate::iterate(
-          minio_con$client$list_objects(
-            minio_con$bucket,
-            prefix = header_params[['corems-prefix']], 
-            recursive = TRUE),
-          function(x) x$object_name
-        )
-        
-        if(length(uris) > 0) {
-          tryCatch({
-            fpaths <- lapply(uris, function(uri) {
-              mapDataAccess::get_file(
-                minio_con, id = uri, filename = file.path(tempfile(), basename(uri)), 
-                use_dir = FALSE
-              )
-            })
-            
-            names(fpaths) <- sapply(fpaths, function(x) basename(tools::file_path_sans_ext(x))) %>% 
-              make.unique()
-            
-            corems_revals[['combined_tables']] <- ftmsRanalysis::read_CoreMS_data(
-              unlist(fpaths), 
-              sample_names = names(fpaths)
+      html(selector = "#loading-gray-overlay > div", html = "Loading Core-MS data...")
+      
+      uris <- reticulate::iterate(
+        minio_con$client$list_objects(
+          minio_con$bucket,
+          prefix = header_params[['corems-prefix']], 
+          recursive = TRUE),
+        function(x) x$object_name
+      )
+      
+      if(length(uris) > 0) {
+        tryCatch({
+          fpaths <- lapply(uris, function(uri) {
+            mapDataAccess::get_file(
+              minio_con, id = uri, filename = file.path(tempfile(), basename(uri)), 
+              use_dir = FALSE
             )
-          
-            for(name in names(fpaths)) {
-              corems_revals[['tables']][[name]] <- read_csv(fpaths[[name]])
-              corems_revals[['fpaths']][[name]] <- fpaths[[name]]
-            }
-            
-            modalmessage <- div(class = "column-scroll-sm",
-              HTML(info_text[["COREMS_UPLOAD_SUCCESS"]]), 
-              HTML(paste(names(fpaths), collapse = "<br>"))
-            )
-          }, error = function(e) {
-            modalmessage <<- div(sprintf(info_text[["COREMS_UPLOAD_ERROR"]], e))
           })
-        } else {
-          modalmessage <- div(info_text[["COREMS_UPLOAD_NOSAMPS"]])
-        }
+          
+          names(fpaths) <- sapply(fpaths, function(x) basename(tools::file_path_sans_ext(x))) %>% 
+            make.unique()
+          
+          corems_revals[['combined_tables']] <- ftmsRanalysis::read_CoreMS_data(
+            unlist(fpaths), 
+            sample_names = names(fpaths)
+          )
         
-        showModal(modalDialog(modalmessage, title = "Core-MS Upload"))
-        
-      })
+          for(name in names(fpaths)) {
+            corems_revals[['tables']][[name]] <- read_csv(fpaths[[name]])
+            corems_revals[['fpaths']][[name]] <- fpaths[[name]]
+          }
+          
+          modalmessage <- div(class = "column-scroll-sm",
+            HTML(info_text[["COREMS_UPLOAD_SUCCESS"]]), 
+            HTML(paste(names(fpaths), collapse = "<br>"))
+          )
+        }, error = function(e) {
+          modalmessage <<- div(sprintf(info_text[["COREMS_UPLOAD_ERROR"]], e))
+        })
+      } else {
+        modalmessage <- div(info_text[["COREMS_UPLOAD_NOSAMPS"]])
+      }
+      
+      showModal(modalDialog(modalmessage, title = "Core-MS Upload"))
     }
     
     insertTab(
@@ -70,6 +74,5 @@ observe({
       tab = upload_tab(length(corems_revals[['combined_tables']]) > 0),
       position = "after"  
     )
-    
   })
 })
