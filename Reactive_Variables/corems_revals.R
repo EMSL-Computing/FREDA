@@ -5,12 +5,13 @@ corems_cols <- reactive({
   colnames(corems_revals[['combined_tables']])
 })
 
-# create CoreMSData object upon button click
+# Create CoreMSData object upon button click
 cms_data <- eventReactive(input$make_cmsdata, {
   req(corems_revals[['combined_tables']])
   
   args = list(corems_revals[['combined_tables']])
   
+  # Collect arguments specified by the user
   for(argname in COREMSDATA_ARGS) {
     if(isTRUE(input[[argname]] == NULLSELECT__) | !isTruthy(input[[argname]])) {
       args[[argname]] <-  NULL
@@ -19,7 +20,7 @@ cms_data <- eventReactive(input$make_cmsdata, {
     }
   }
   
-
+  
   cms_dat <- do.call(as.CoreMSData, args) 
 
   return(cms_dat)

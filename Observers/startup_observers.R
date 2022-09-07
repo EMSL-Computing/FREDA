@@ -65,7 +65,8 @@ observe({
         modalmessage <- div(info_text[["COREMS_UPLOAD_NOSAMPS"]])
       }
       
-      showModal(modalDialog(modalmessage, title = "Core-MS Upload"))
+      # defined in srv_ui_elements/corems_UI.R
+      showModal(corems_upload_modal(modalmessage))
     }
     
     insertTab(
