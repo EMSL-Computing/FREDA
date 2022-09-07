@@ -48,3 +48,19 @@ observeEvent(input$goto_corems_creation, {
   updateTabsetPanel(inputId = "top_page", selected = "CoreMS-create")
   removeModal()
 })
+
+#'@details (CoreMS filter tab) Show summary plot and show progression modal
+observeEvent(cms_data_filtered(), {
+  req(cms_data_filtered())
+  updateCollapse(session, id = "corems-filter-summary-collapse",
+                 open = c("viz"))
+  updateTabsetPanel(inputId = "corems-viz-tabset", selected = "filt_summary_plot")
+  
+  showModal(corems_filter_modal())
+})
+
+#'@details Move user to the formula assignment tab after successful filtering
+observeEvent(input$goto_corems_formula, {
+  updateTabsetPanel(inputId = "top_page", selected = "CoreMS-formula-assign")
+  removeModal()
+})

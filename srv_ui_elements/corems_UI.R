@@ -27,6 +27,21 @@ corems_obj_creation_modal <- function() {
   )
 }
 
+#'@details Modal indicating ftmsRanalysis::conf_filter was successfully applied.
+corems_filter_modal <- function() {
+  modalDialog(
+    "Your CoreMS data object was successfully filtered, continue to formula assignment sub-tab or dismiss to review table/plots", 
+    title = "Filter Success!",
+    footer = tagList(
+      div(
+        style = "float:left",
+        bsButton("goto_corems_formula", "Go to CoreMS formula assignment tab")
+      ),
+      modalButton("Dismiss")
+    )
+  )
+}
+
 ##
 #' Dropdowns for arguments to as.CoreMSData, all are named as 
 #' output$<as.coreMSData argument name>
