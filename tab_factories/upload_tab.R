@@ -224,7 +224,7 @@ corems_tabs <- function() {
       fluidRow(
         # sidebar column
         column(width = 4,
-          bsCollapse(id = "filter_collapse", open = c("conf_thresh"), multiple = TRUE,
+          bsCollapse(id = "corems-filter-sidebar-collapse", open = c("conf_thresh"), multiple = TRUE,
             bsCollapsePanel(
               title = "Select Confidence Threshold",
               value = "conf_thresh",
@@ -250,10 +250,32 @@ corems_tabs <- function() {
         ), # end sidebar column
        
         column(width = 8,
-              DT::dataTableOutput("filt_peaks_dt"),
-              plotlyOutput("me_plot"),
-              plotlyOutput("cms_filt_plot")
-              
+          bsCollapse(
+            id = "corems-filter-summary-collapse", 
+            open = c("table", "viz"), multiple = TRUE,
+            bsCollapsePanel(
+              "Table Summary",
+              value = "table",
+              DT::dataTableOutput("filt_peaks_dt")
+            ),
+            bsCollapsePanel(
+              "Visualizations",
+              "viz",
+              tabsetPanel(
+                id = "corems-viz-tabset",
+                tabPanel(
+                  "Mass Error Plot",
+                  value = "me_plot",
+                  plotlyOutput("me_plot")
+                ),
+                tabPanel(
+                  "Filtered Data Plot",
+                  value = "filt_summary_plot",
+                  plotlyOutput("cms_filt_plot")
+                )
+              )
+            )
+          )
         ) # end main column
       ) # end fluidRow
     ), # end conf filter tabPanel
