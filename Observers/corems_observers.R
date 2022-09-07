@@ -22,3 +22,29 @@ observeEvent(input$corems_to_peakdata, {
     revals$uploaded_data <- res 
   }
 })
+
+#'@details Show a modal for the completion of corems data
+observeEvent(cms_data(), {
+  req(cms_data(), input$top_page == "CoreMS-create")
+  
+  updateCollapse(session, id = "corems-upload-summary-collapse",
+                 open = c("corems-upload-visualize"), close = c("corems-upload-table"))
+  
+  showModal(
+    # defined in srv_ui_elements/corems_UI.R
+    corems_obj_creation_modal()
+  )
+})
+
+#'@details Go to the corems filter tab from the object creation success tab.
+observeEvent(input$goto_corems_filter, {
+  req(input$top_page == "CoreMS-create")
+  updateTabsetPanel(inputId = "top_page", selected = "CoreMS-conf-filter")
+  removeModal()
+})
+
+#'@details Move the user to the create CoreMSData tab after successful upload
+observeEvent(input$goto_corems_creation, {
+  updateTabsetPanel(inputId = "top_page", selected = "CoreMS-create")
+  removeModal()
+})

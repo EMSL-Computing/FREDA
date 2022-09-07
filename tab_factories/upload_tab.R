@@ -169,8 +169,9 @@ corems_tabs <- function() {
         ## Sidebar panel on Upload tab ##
         column(width = 4,
                bsCollapse(
-                 id = 'upload_collapse', open = c('Upload Data'), multiple = TRUE,
+                 id = 'corems-upload-collapse', open = c("input_args"), multiple = TRUE,
                  bsCollapsePanel(
+                   value = "input_args",
                    title = "Specify Column Names",
                    div(id = 'specify_colnames',         
                        uiOutput("index_cname"),
@@ -198,10 +199,21 @@ corems_tabs <- function() {
         
         # main panel 
         column(width = 8,
-           # keeps table compact on page, no line wrapping:
-           tags$head(tags$style("#raw_data  {white-space: nowrap;  }")),
-           DT::dataTableOutput("cms_raw_data"),
-           plotlyOutput("cmsdat_plot")
+           bsCollapse(
+             id = "corems-upload-summary-collapse", 
+             open = c("corems-upload-table", "corems-upload-visualize"), 
+             multiple = TRUE,
+             bsCollapsePanel(
+               title = "Table Summary", value = "corems-upload-table",
+               # keeps table compact on page, no line wrapping:
+               tags$head(tags$style("#raw_data  {white-space: nowrap;  }")),
+               DT::dataTableOutput("cms_raw_data") 
+             ),
+             bsCollapsePanel(
+               title = "Plot Summary", value = "corems-upload-visualize",
+               withSpinner(plotlyOutput("cmsdat_plot"), color = "deepskyblue", type = 8) 
+             )
+           )
         ) # end main column
       ) # end fluidRow
     ),
