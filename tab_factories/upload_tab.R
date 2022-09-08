@@ -260,7 +260,7 @@ corems_tabs <- function() {
             ),
             bsCollapsePanel(
               "Visualizations",
-              "viz",
+              value = "viz",
               tabsetPanel(
                 id = "corems-viz-tabset",
                 tabPanel(
@@ -292,7 +292,7 @@ corems_tabs <- function() {
                              value = "unq_mf_assign",
                              
                              selectInput("unq_mf_method", label = "Method:",
-                                         choices = c("Select Method", "Confidence score", "Peak height"))
+                                         choices = c("Confidence score", "Peak height"))
              ) # end collapse panel
           ), # end collapse
           shiny::actionButton("unique_mf", 
@@ -304,10 +304,35 @@ corems_tabs <- function() {
         
         # main column
         column(width = 8,
+          bsCollapse(
+            id = "corems-assign-formula",
+            open = NULL,
+            multiple = TRUE,
+            bsCollapsePanel(
+              "Table Summary",
+              value = "tables",
+              tabsetPanel(
+                id = "corems-assign-formula-tables",
+                tabPanel(
+                  "Mono-Isotopic Peaks",
+                  value = "monoiso",
+                  DTOutput("assign_formula_monoiso")
+                ),
+                tabPanel(
+                  "Isotopic Peaks",
+                  value = "iso",
+                  DTOutput("assign_formula_iso")
+                )
+              )
+            ),
+            bsCollapsePanel(
+              "Visualizations",
+              value = "viz",
               plotlyOutput("mf_plot")
+          )
+        )
         ) # close main column
       ), # close fluidrow
-      uiOutput("corems_to_peakdata_UI")
     ) # close unique mf tabPanel
   )
 }

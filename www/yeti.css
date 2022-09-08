@@ -7087,6 +7087,13 @@ ADDED BY YOURS TRULY
 ####################
 */
 
+/*centers the div that wraps all notifications*/
+#shiny-notification-panel {
+  position:fixed;
+  bottom: calc(4%);
+  left: calc(48%);
+}
+
 /* Loading message mask for app startup */
 .loading-mask {
    width: 100%;
