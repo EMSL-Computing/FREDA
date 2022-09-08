@@ -38,6 +38,7 @@ cms_data_filtered <- eventReactive(input$apply_conf_filter, {
 
 ########## Unique MF Assignment Tab ##########
 cms_dat_unq_mf <- eventReactive(input$unique_mf, {  
+  req(input$unq_mf_method)
   if (input$unq_mf_method == "Confidence score") {method <- "confidence"}
   if (input$unq_mf_method == "Peak height") {method <- "peak_intensity"}
   

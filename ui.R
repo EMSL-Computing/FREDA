@@ -537,6 +537,9 @@ ui <- tagList(useShinyjs(),
                             
                    )
     ),
+    
+    hidden(div(id = "corems_to_peakdata_toggle", style = "position:fixed;left:15px;bottom:15px", uiOutput("corems_to_peakdata_UI"))),
+    
     div(id = "js_helpbutton", style = "position:absolute;top:3px;right:16px;z-index:1000;width:11%", 
           div(style = 'float:right;width:25%',
               tipify(

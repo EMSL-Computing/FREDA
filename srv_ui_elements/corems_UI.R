@@ -42,6 +42,21 @@ corems_filter_modal <- function() {
   )
 }
 
+#'@details Modal indicating unique formulae have been assigned
+corems_unq_mf_modal <- function() {
+  modalDialog(
+    "Unique molecular formula were assigned to your Core-MS object, convert your object to a peakData object to continue in FREDA, or dismiss to review.", 
+    title = "Formulas Assigned!",
+    footer = tagList(
+      div(
+        style = "float:left",
+        actionButton("corems_to_peakdata_modal", "Convert your Core-MS data to peakData")
+      ),
+      modalButton("Dismiss")
+    )
+  )
+}
+
 ##
 #' Dropdowns for arguments to as.CoreMSData, all are named as 
 #' output$<as.coreMSData argument name>
@@ -163,9 +178,34 @@ output$mf_plot <- renderPlotly({
   plot(cms_dat_unq_mf())
 })
 
+#'@details data table with kept/removed peaks
+#'@app_location Confidence Filtering Tab
+output$filt_peaks_dt <- DT::renderDT(
+  ftmsRanalysis:::conf_filter_dt(cms_data(), input$min_conf),
+  options = list(dom = 't')
+)
+
+#'@details Isotopic peaks after formula assignment
+#'@app_location Core-MS formula assignment tab
+output$assign_formula_iso <- DT::renderDT({
+    req(cms_dat_unq_mf())
+    cms_dat_unq_mf()$iso_data
+  },
+  options = list(dom = 't')
+)
+
+#'@details Mono-isotopic peaks after formula assignment
+#'@app_location Core-MS formula assignment tab
+output$assign_formula_monoiso <- DT::renderDT({
+  req(cms_dat_unq_mf())
+  cms_dat_unq_mf()$monoiso_data
+},
+options = list(dom = 't')
+)
+
 #'@details Button to convert corems data to ftmsRanalysis peakData
-#'@app_location Convert to peakdata tab
 output$corems_to_peakdata_UI <- renderUI({
-  validate(need(cms_dat_unq_mf(), "Please assign molecular formulae to your CoreMS data"))
-  actionButton("corems_to_peakdata", "Convert to peak data")
+  req(cms_dat_unq_mf())
+  req(grepl("^CoreMS", input$top_page))
+  actionButton("corems_to_peakdata", "Convert to peak data", class = "btn-primary")
 })

@@ -1,8 +1,16 @@
 #'@details Convert the filtered corems data to peakData
 #'cms_dat_unq_mf() is converted into peakData using CoreMSData_to_ftmsData and
 #'the result is stored in revals$uploaded_data
-observeEvent(input$corems_to_peakdata, {
+observeEvent(
+  c(
+    input$corems_to_peakdata,
+    input$corems_to_peakdata_modal
+  ),{
+    
   req(cms_dat_unq_mf())
+  req(isTruthy(input$corems_to_peakdata > 0) | isTruthy(input$corems_to_peakdata_modal > 0))
+  
+  revals$uploaded_data <- revals$peakData2 <- NULL
   
   res <- tryCatch({
     ftmsRanalysis::CoreMSData_to_ftmsData(cms_dat_unq_mf())
@@ -10,18 +18,30 @@ observeEvent(input$corems_to_peakdata, {
   error = function(e){
     msg = paste0('Error converting your coreMS data to peakData: \n System error: ', e)
     revals$warningmessage_corems$corems_to_peakdata <<- sprintf("<p style = 'color:red'>%s</p>", msg)
-    NULL
+    revals$warningmessage_corems$corems_to_peakdata
   })
   
-  if(!is.null(res)){
+  if(inherits(res, "peakData")){
     # need a fake f_data column.
     if(ncol(res$f_data) == 1) {
       res$f_data[,2] <- NA
     }
     
     revals$uploaded_data <- res 
+  } else {
+    if(inherits(res, "character")) {
+      msg = res  
+    } else {
+      msg = "Error converting your coreMS data to peakData"
+    }
+    
+    showNotification(
+      HTML(msg),
+      duration = NULL,
+      type = "error"
+    )
   }
-})
+}, ignoreInit = T)
 
 #'@details Show a modal for the completion of corems data
 observeEvent(cms_data(), {
@@ -63,4 +83,14 @@ observeEvent(cms_data_filtered(), {
 observeEvent(input$goto_corems_formula, {
   updateTabsetPanel(inputId = "top_page", selected = "CoreMS-formula-assign")
   removeModal()
+})
+
+#'@details display table visualization panels and prompt user for next steps 
+#'when unique molecular formula are assigned.
+observeEvent(cms_dat_unq_mf(), {
+  hide("corems_to_peakdata_toggle")
+  req(cms_dat_unq_mf())
+  updateCollapse(session, id = "corems-assign-formula", open = c("viz", "tables"))
+  showModal(corems_unq_mf_modal())
+  show("corems_to_peakdata_toggle")
 })
