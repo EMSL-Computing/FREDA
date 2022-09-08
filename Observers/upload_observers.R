@@ -136,6 +136,10 @@ observeEvent(input$upload_click, {
                            check_rows = TRUE, data_scale = input$data_scale)
         
       } # End C13 / no C13 if statement
+      
+      if (input$NA_value != "NA"){
+        res <- edata_replace(res, input$NA_value, NA) 
+      }
     },
     error = function(e){
       msg = paste0('Error making your peakData: \n System error: ', e)

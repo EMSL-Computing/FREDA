@@ -5,7 +5,8 @@ RUN apt-get update -qq && apt-get install -y \
   libssl-dev \
   libcurl4-gnutls-dev \
   libmagick++-dev \
-  libv8-dev
+  libv8-dev \
+  vim python3-venv
   
 WORKDIR /srv/shiny-server/
 COPY renv.lock .
@@ -14,10 +15,16 @@ COPY renv.lock .
 RUN R -e "install.packages('renv', repos = 'https://cran.rstudio.com')"
 
 # install all packages listed in renv.lock
-RUN --mount=type=secret,id=github_pat export GITHUB_PAT="$(cat /run/secrets/github_pat)" \
+RUN --mount=type=secret,id=access_tokens set -a \
+&& . /run/secrets/access_tokens && set +a \
 && R -e 'renv::restore()'
 
-#####
+## Setup Python venv ##
+USER root
+COPY python_requirements.txt .
+RUN python3 -m venv /venv
+RUN /venv/bin/pip install --upgrade pip
+RUN /venv/bin/pip install -r python_requirements.txt
 
 # Install all plotly's dependencies
 RUN R -e "install.packages('plotly', dependencies = T)"

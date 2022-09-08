@@ -7094,6 +7094,11 @@ misc. style adjustments
   top:5px;
 }
 
+.column-scroll-sm {
+  overflow-y: scroll;
+  max-height: 500px;
+}
+
 .nowrap_scroll {
   white-space: nowrap;
   overflow-x:scroll;

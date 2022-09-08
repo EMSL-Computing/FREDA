@@ -19,12 +19,12 @@
 !global.R
 !server.R
 !ui.R
-!static_objects.R
 
 !helper_functions
 !Observers
 !Reactive_Variables
 !srv_ui_elements
+!tab_factories
 !www
 !README
 

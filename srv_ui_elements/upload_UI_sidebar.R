@@ -6,6 +6,15 @@ list(
                 choices  = c('Select one', edata_cnames()))
   }), # End edata_id #
   
+  output$NA_value_UI <- renderUI({
+    validate(need(Edata(), "Upload data file"))
+    
+    n_zeros = sum(Edata() == 0)
+    prop_zeros = n_zeros/(prod(dim(Edata())) - nrow(Edata()))
+    value = if(prop_zeros > 0.1) "0" else "NA"
+    textInput("NA_value", "What value specifies missing data?", value = value)
+  }),
+  
   # Drop-down lists: Choose formula column
   output$f_column <- renderUI({
     selectInput("f_column", "Choose formula column",

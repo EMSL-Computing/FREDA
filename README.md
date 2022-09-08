@@ -33,35 +33,69 @@ Install the required packages.  You can do this either by inspecting the global.
 To install package with `renv`, first `install.packages("renv")`.  Then call renv::restore().  This will install all packages contained in the renv.lock file.  See the [renv website](https://rstudio.github.io/renv/articles/renv.html) for more details.
 Then simply call shiny::runApp()
 
+**Pulling from minio**
+
+FREDA has the ability to pull files from minio, currently only for use in retrieving core-ms output.  You must provide a config that contains several connection parameters and put it at cfg/minio_config.yml
+
+See the example file cfg/minio_config_example.yml
+
+To test pulling from minio locally, you must run a local minio docker container.  With docker installed on your machine,
+run the following:
+
+`docker pull minio/minio`  
+`docker run -d -p 9000:9000 --name minio-map minio/minio server /data`
+
+Now navigate to http://localhost:9000/, which will display a UI where you can create folders and upload files.  As an
+example, do the following:
+
+1.  Create a folder in the minio UI (call it test_folder, for example) and put a couple csv files in it.
+2.  Launch FREDA from Rstudio.  
+3.  Nagivate to wherever FREDA is being served at, adding /?corems-prefix=test_folder to the url.
+
+FREDA will attempt to read all the files in the minio folder `test_folder` and load them into the reactiveValue 
+corems_samples.
+
 #### 2.  Using docker:
 
 Either build the container as described in the development section, or pull it from pnnl artifactory if you have access:
 `docker login docker.artifactory.pnnl.gov`
 `docker pull docker.artifactory.pnnl.gov/mscviz/freda:latest`
 
-Then run the docker container:  `docker run -p 3838:3838 docker pull docker.artifactory.pnnl.gov/mscviz/freda:latest`  
+Then run the docker container:  `docker run -p 3838:3838 docker.artifactory.pnnl.gov/mscviz/freda:latest`  
+
+If you are pulling files from minio, you must mount a minio config to `/srv/shiny-server/FREDA/cfg/minio_config.yml`:
+
+`docker run -p 3838:3838 -v /path/to/config.yml:/srv/shiny-server/FREDA/cfg/minio_config.yml docker.artifactory.pnnl.gov/mscviz/freda:latest`  
+
 ... and navigate to https://127.0.0.1:3838 in your web browser.
 
 ***
 
 ### **Development**
 
-#### **1. Dockerfiles**
+#### **Dockerfiles**
 
 We build a 'base' container which has all the system libraries and R packages installed, and then build a container on top of it that simply copies the app source code and exposes the correct port.  There are two Dockerfiles, and two corresponding .dockerignore files.
 
-**To build the base container**, you must provide a github PAT in order to install package from private git repos; currently these include KeggData and MetaCycData. Generate a personal access token according to:  https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/creating-a-personal-access-token.  Put this token in a file next to the Dockerfile, say `.mysecret`  
+**To build the base container**, you must provide a github PAT AND gitlab PAT in order to install packages from private git repos to which you have access; currently these include mapDataAccess, KeggData and MetaCycData. Generate a personal access token according to:  https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/creating-a-personal-access-token for github and https://docs.gitlab.com/ee/user/profile/personal_access_tokens.html for gitlab.  Put these tokens in a file next to the Dockerfile, say `.mysecrets`.  It should look like:
+
+```
+GITLAB_PAT=<your gitlab pat>  
+GITHUB_PAT=<your github pat>
+```
 
 Now, replacing &lt;base tag&gt; with whatever version, run:  
-`docker build -f Dockerfile-base --secret id=gitlab_pat,src=.mysecret -t docker.artifactory.pnnl.gov/mscviz/freda/base:<base tag> .`
+`docker build -f Dockerfile-base --secret id=access_tokens,src=.mysecrets -t docker.artifactory.pnnl.gov/mscviz/freda/base:<base tag> .`
 
 **To build the 'top' container**:  
 Simply make sure Dockerfile refers to the correct base container if you have updated any dependencies (rebuilt the base container) and run:  
-`docker build -t docker.artifactory.pnnl.gov/mscviz/freda/<top tag> .`
+`docker build -t docker.artifactory.pnnl.gov/mscviz/freda:<top tag> .`
 
-If all is well, push new containers to the registry:  `docker push <container_name>:<tag>`
+If all is well, push new containers to the registry:  
+`docker push docker.artifactory.pnnl.gov/mscviz/freda/base:<base tag>`  
+`docker push docker.artifactory.pnnl.gov/mscviz/freda:<top tag>`
 
-#### **2. Dependencies**
+#### **Dependencies**
 
 We use [renv](https://rstudio.github.io/renv/articles/renv.html) to track dependencies.  The renv.lock file contains a list of dependencies and various details about them.  We use renv to manage the details about dependencies.  When updating the lockfile, we will do the following:
 
@@ -70,7 +104,7 @@ We use [renv](https://rstudio.github.io/renv/articles/renv.html) to track depend
 
 Certain dependencies are forced to be recognized by renv without being explicitly loaded in the app by adding `library(somepackage)` to `renv_dependencies.R`
 
-#### **4. Misc**
+#### **Misc**
 
 **Long text**:  Long tooltips or info text should go in the `ttip_text` object or other global objects in `static_objects.R` and then referenced in the app to keep code tidy.
 

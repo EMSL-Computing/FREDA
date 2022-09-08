@@ -41,7 +41,7 @@ panderOptions('knitr.auto.asis', FALSE)
 calc_cols <- read.csv("calculation_variables.csv", stringsAsFactors = FALSE)
 ```
 
-###**Input Data**###
+### **Input Data**
 
 Your data started with **`r nrow(upload$f_data)` samples** and measurements for **`r nrow(upload$e_data)` peaks**.
 
