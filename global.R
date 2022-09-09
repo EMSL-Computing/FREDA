@@ -36,7 +36,7 @@ kendrick_opts_info <- 'The base compound(s) used to calculate the Kendrick Mass.
 dt_checkmark <- '<span class="glyphicon glyphicon-ok" style="color:deepskyblue"></span>'
 dt_minus <- '<span class="glyphicon glyphicon-minus"></span>'
 
-ttip_text = list("plot_save"="Save the last created plot", "plot_review"="Review saved plots", "page_help"="How do I use this page?")
+ttip_text = list("plot_save" = "Save the last created plot", "plot_review" = "Review saved plots", "page_help" = "How do I use this page?")
 
 #------ Download Example Data ---------#
 example_edata <- read_csv('Data/example12T_edata.csv') %>% as.data.frame(stringsAsFactors = FALSE)
@@ -57,7 +57,7 @@ info_text = list(
 VALID_MINIO_HEADER_PARAMS = c("corems-prefix")
 
 
-#'@SECTION Variables for selectors/inputs ##
+#' @SECTION Variables for selectors/inputs ##
 
 # Use this global variable for 'nothing selected' options
 NULLSELECT__ = "__nullselect__"
@@ -65,12 +65,12 @@ NULLSELECT__ = "__nullselect__"
 # list of arguments to be passed to as.CoreMSData that need an input picker
 COREMSDATA_ARGS = c(
   "index_cname",
-  "obs_mass_cname", 
+  "obs_mass_cname",
   "calc_mass_cname",
-  "pheight_cname", 
+  "pheight_cname",
   "error_cname",
   "conf_cname",
-  "file_cname", 
+  "file_cname",
   "monoiso_index_cname",
   "mf_cname",
   "c13_cname",
@@ -78,6 +78,3 @@ COREMSDATA_ARGS = c(
   "n15cname",
   "s34_cname"
 )
-
-
-
