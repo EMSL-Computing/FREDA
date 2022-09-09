@@ -1,4 +1,4 @@
-#'@details Modal indicating corems data was successfully uploaded
+#' @details Modal indicating corems data was successfully uploaded
 corems_upload_modal <- function(modal_message) {
   modalDialog(
     modal_message, title = "Core-MS Upload Success",
@@ -12,10 +12,10 @@ corems_upload_modal <- function(modal_message) {
   )
 }
 
-#'@details Modal indicating ftmsRanalysis::CoreMSData was successfully created.
+#' @details Modal indicating ftmsRanalysis::CoreMSData was successfully created.
 corems_obj_creation_modal <- function() {
   modalDialog(
-    "Your CoreMS data object was successfully created, continue to filtering sub-tab or dismiss to review table/plots", 
+    "Your CoreMS data object was successfully created, continue to filtering sub-tab or dismiss to review table/plots",
     title = "Object Creation Success!",
     footer = tagList(
       div(
@@ -27,10 +27,10 @@ corems_obj_creation_modal <- function() {
   )
 }
 
-#'@details Modal indicating ftmsRanalysis::conf_filter was successfully applied.
+#' @details Modal indicating ftmsRanalysis::conf_filter was successfully applied.
 corems_filter_modal <- function() {
   modalDialog(
-    "Your CoreMS data object was successfully filtered, continue to formula assignment sub-tab or dismiss to review table/plots", 
+    "Your CoreMS data object was successfully filtered, continue to formula assignment sub-tab or dismiss to review table/plots",
     title = "Filter Success!",
     footer = tagList(
       div(
@@ -42,10 +42,10 @@ corems_filter_modal <- function() {
   )
 }
 
-#'@details Modal indicating unique formulae have been assigned
+#' @details Modal indicating unique formulae have been assigned
 corems_unq_mf_modal <- function() {
   modalDialog(
-    "Unique molecular formula were assigned to your Core-MS object, convert your object to a peakData object to continue in FREDA, or dismiss to review.", 
+    "Unique molecular formula were assigned to your Core-MS object, convert your object to a peakData object to continue in FREDA, or dismiss to review.",
     title = "Formulas Assigned!",
     footer = tagList(
       div(
@@ -58,31 +58,31 @@ corems_unq_mf_modal <- function() {
 }
 
 ##
-#' Dropdowns for arguments to as.CoreMSData, all are named as 
+#' Dropdowns for arguments to as.CoreMSData, all are named as
 #' output$<as.coreMSData argument name>
-#' 
+#'
 
-#'Helper function to make a dropdown that is  mutually exclusive with other
-#'dropdowns that pull from the columns of the imported corems data.
+#' Helper function to make a dropdown that is  mutually exclusive with other
+#' dropdowns that pull from the columns of the imported corems data.
 mutually_exclusive_dropdown <- function(id, title, selected = NULL) {
   renderUI({
     choices = union(
-      input[[id]], 
+      input[[id]],
       coreMS_remaining_choices()
     ) %>% setdiff(NULLSELECT__)
-    
+
     choices = c("Select one" = NULLSELECT__, choices)
-    
-    if(any(!(selected %in% choices),isTRUE(input[[id]] != NULLSELECT__))) {
+
+    if (any(!(selected %in% choices), isTRUE(input[[id]] != NULLSELECT__))) {
       selected = input[[id]]
     }
-      
+
     pickerInput(id,
-                title,
-                choices = choices,
-                selected = selected
+      title,
+      choices = choices,
+      selected = selected
     )
-  }) 
+  })
 }
 
 output$index_cname <- mutually_exclusive_dropdown(
@@ -137,65 +137,65 @@ output$s34_cname <- mutually_exclusive_dropdown(
   "s34_cname", "S34 Column:", "34S"
 )
 
-#'@details Preview table
+#' @details Preview table
 output$cms_raw_data <- DT::renderDT(
   corems_revals[['combined_tables']],
   options = list(dom = 'ftp',
-                 scrollX = TRUE)
+    scrollX = TRUE)
 )
 
-#'@details display plot of unique masses per sample
-#'@app_location CoreMS Creation Tab
+#' @details display plot of unique masses per sample
+#' @app_location CoreMS Creation Tab
 output$cmsdat_plot <- renderPlotly({
   req(cms_data())
   plot(cms_data())
 })
 
-#'@details data table with kept/removed peaks
-#'@app_location Confidence Filtering Tab
+#' @details data table with kept/removed peaks
+#' @app_location Confidence Filtering Tab
 output$filt_peaks_dt <- DT::renderDT(
   ftmsRanalysis:::conf_filter_dt(cms_data(), input$min_conf),
   options = list(dom = 't')
 )
 
-#'@details Plot of filtered corems data
-#'@app_location Confidence Filtering Tab
+#' @details Plot of filtered corems data
+#' @app_location Confidence Filtering Tab
 output$cms_filt_plot <- renderPlotly({
   validate(need(cms_data_filtered(), "Create your filtered data to view filter plot"))
   plot(cms_data_filtered())
 })
 
-#'@details display mass error plot with min_conf slider values
-#'@app_location Confidence Filtering Tab
+#' @details display mass error plot with min_conf slider values
+#' @app_location Confidence Filtering Tab
 output$me_plot <- renderPlotly({
   mass_error_plot(cms_data(), min_conf = input$min_conf)
 })
 
-#'@details Molecular formula plot
-#'@app_location Unique molecular formula assignment tab
+#' @details Molecular formula plot
+#' @app_location Unique molecular formula assignment tab
 output$mf_plot <- renderPlotly({
   validate(need(cms_dat_unq_mf(), "Please assign molecular formulae to your CoreMS data"))
   plot(cms_dat_unq_mf())
 })
 
-#'@details data table with kept/removed peaks
-#'@app_location Confidence Filtering Tab
+#' @details data table with kept/removed peaks
+#' @app_location Confidence Filtering Tab
 output$filt_peaks_dt <- DT::renderDT(
   ftmsRanalysis:::conf_filter_dt(cms_data(), input$min_conf),
   options = list(dom = 't')
 )
 
-#'@details Isotopic peaks after formula assignment
-#'@app_location Core-MS formula assignment tab
+#' @details Isotopic peaks after formula assignment
+#' @app_location Core-MS formula assignment tab
 output$assign_formula_iso <- DT::renderDT({
-    req(cms_dat_unq_mf())
-    cms_dat_unq_mf()$iso_data
-  },
-  options = list(dom = 't')
+  req(cms_dat_unq_mf())
+  cms_dat_unq_mf()$iso_data
+},
+options = list(dom = 't')
 )
 
-#'@details Mono-isotopic peaks after formula assignment
-#'@app_location Core-MS formula assignment tab
+#' @details Mono-isotopic peaks after formula assignment
+#' @app_location Core-MS formula assignment tab
 output$assign_formula_monoiso <- DT::renderDT({
   req(cms_dat_unq_mf())
   cms_dat_unq_mf()$monoiso_data
@@ -203,7 +203,7 @@ output$assign_formula_monoiso <- DT::renderDT({
 options = list(dom = 't')
 )
 
-#'@details Button to convert corems data to ftmsRanalysis peakData
+#' @details Button to convert corems data to ftmsRanalysis peakData
 output$corems_to_peakdata_UI <- renderUI({
   req(cms_dat_unq_mf())
   req(grepl("^CoreMS", input$top_page))
