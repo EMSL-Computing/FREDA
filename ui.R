@@ -530,10 +530,7 @@ ui <- tagList(useShinyjs(),
 
     ################## Glossary Panel ##############################################
     tabPanel(div('Glossary', icon('question-sign', lib = 'glyphicon')), value = 'Glossary',
-      # mainPanel(
-      # includeHTML("./README/Glossary.html")
       withMathJax(includeMarkdown("./README/Glossary.md"))
-      # )
 
     )
   ),

@@ -6,7 +6,3 @@ peakData2_dim <- eventReactive(revals$peakData2, {
 uploaded_data_dim <- eventReactive(revals$uploaded_data, {
   prod(dim(revals$uploaded_data$e_data[, -1]))
 })
-
-edata_dim <- eventReactive(Edata(), {
-  prod(dim(Edata()[, -1]))
-})

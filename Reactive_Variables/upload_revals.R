@@ -1,6 +1,7 @@
 # Object: Get e_data from file input
 Edata <- reactive({
-  if (!is.null(revals$uploaded_data)) {
+  # Handle scenario where we made edata from another source.
+  if (!is.null(revals$uploaded_data) & is.null(input$file_edata$datapath)) {
     return(revals$uploaded_data$e_data %>%
       dplyr::select(-dplyr::one_of(
         ftmsRanalysis::getEDataColName(revals$uploaded_data)
