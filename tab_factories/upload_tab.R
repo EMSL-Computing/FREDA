@@ -143,7 +143,7 @@ upload_tab <- function(from_corems = FALSE) {
                
                column(width = 8,
                       # warnings panel
-                      div(id = "warnings_upload", style = "overflow-y:auto;max-height:250px", uiOutput("warnings_upload")),
+                      div(id = "warnings_upload", style = "overflow-y:auto;max-height:250px", uiOutput("warnings_upload_UI")),
                       
                       tags$hr(),
                       

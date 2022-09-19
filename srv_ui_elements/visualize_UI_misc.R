@@ -1,6 +1,6 @@
 list(
   # warning messages for viztab
-  output$warnings_visualize <- renderUI({
+  output$warnings_visualize_UI <- renderUI({
     HTML(paste(revals$warningmessage_visualize, collapse = ""))
   }),
   
