@@ -3,6 +3,7 @@
 !calculation_options.csv
 !calculation_variables.csv
 !processedCols.csv
+!isotopes.json
 !DataRequirements.md
 !Docker_instructions.md
 !peakData_Report.Rmd

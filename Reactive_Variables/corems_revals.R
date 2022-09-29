@@ -12,14 +12,13 @@ cms_data <- eventReactive(input$make_cmsdata, {
   args = list(corems_revals[['combined_tables']])
 
   # Collect arguments specified by the user
-  for (argname in COREMSDATA_ARGS) {
+  for (argname in COREMSDATA_REQ_ARGS) {
     if (isTRUE(input[[argname]] == NULLSELECT__) | !isTruthy(input[[argname]])) {
       args[[argname]] <- NULL
     } else {
       args[[argname]] <- input[[argname]]
     }
   }
-
 
   cms_dat <- do.call(as.CoreMSData, args)
 

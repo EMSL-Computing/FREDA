@@ -72,8 +72,8 @@ mutually_exclusive_dropdown <- function(id, title, selected = NULL) {
     ) %>% setdiff(NULLSELECT__)
 
     choices = c("Select one" = NULLSELECT__, choices)
-
-    if (any(!(selected %in% choices), isTRUE(input[[id]] != NULLSELECT__))) {
+    
+    if(!is.null(input[[id]])) {
       selected = input[[id]]
     }
 
@@ -85,56 +85,52 @@ mutually_exclusive_dropdown <- function(id, title, selected = NULL) {
   })
 }
 
-output$index_cname <- mutually_exclusive_dropdown(
+output$index_cname_UI <- mutually_exclusive_dropdown(
   "index_cname", "Index Column:", "Index"
 )
 
-output$obs_mass_cname <- mutually_exclusive_dropdown(
+output$obs_mass_cname_UI <- mutually_exclusive_dropdown(
   "obs_mass_cname", "Observed Mass Column:", "m/z"
 )
 
-output$calc_mass_cname <- mutually_exclusive_dropdown(
+output$calc_mass_cname_UI <- mutually_exclusive_dropdown(
   "calc_mass_cname", "Calculated Mass Column:", "Calculated m/z"
 )
 
-output$pheight_cname <- mutually_exclusive_dropdown(
+output$calib_mass_cname_UI <- mutually_exclusive_dropdown(
+  "calib_mass_cname", "Calibrated Mass Column:", "Calibrated m/z"
+)
+
+output$pheight_cname_UI <- mutually_exclusive_dropdown(
   "pheight_cname", "Peak Height Column:", "Peak Height"
 )
 
-output$error_cname <- mutually_exclusive_dropdown(
-  "error_cname", "Mass Error Column:", "Mass Error (ppm)"
+output$error_cname_UI <- mutually_exclusive_dropdown(
+  "error_cname", "Mass Error Column:", "m/z Error (ppm)"
 )
 
-output$conf_cname <- mutually_exclusive_dropdown(
+output$conf_cname_UI <- mutually_exclusive_dropdown(
   "conf_cname", "Confidence Score Column:", "Confidence Score"
 )
 
-output$file_cname <- mutually_exclusive_dropdown(
+output$heteroatom_cname_UI <- mutually_exclusive_dropdown(
+  "heteroatom_cname", "Heteroatom Column:", "Heteroatom Class"
+)
+
+output$iontype_cname_UI <- mutually_exclusive_dropdown(
+  "iontype_cname", "Ion Type Column:", "Ion Type"
+)
+
+output$file_cname_UI <- mutually_exclusive_dropdown(
   "file_cname", "Filename/Sample Column:", "Filename"
 )
 
-output$mono_index_cname <- mutually_exclusive_dropdown(
-  "mono_index_cname", "Mono Isotopic Index Column:", "Mono Isotopic Index"
+output$monoiso_index_cname_UI <- mutually_exclusive_dropdown(
+  "monoiso_index_cname", "Mono Isotopic Index Column:", "Mono Isotopic Index"
 )
 
-output$mf_cname <- mutually_exclusive_dropdown(
+output$mf_cname_UI <- mutually_exclusive_dropdown(
   "mf_cname", "Molecular Formula Column:", "Molecular Formula"
-)
-
-output$c13_cname <- mutually_exclusive_dropdown(
-  "c13_cname", "C13 Column:", "13C"
-)
-
-output$o18_cname <- mutually_exclusive_dropdown(
-  "o18_cname", "O18 Column:", "18O"
-)
-
-output$n15_cname <- mutually_exclusive_dropdown(
-  "n15_cname", "N15 Column:", "15N"
-)
-
-output$s34_cname <- mutually_exclusive_dropdown(
-  "s34_cname", "S34 Column:", "34S"
 )
 
 #' @details Preview table
