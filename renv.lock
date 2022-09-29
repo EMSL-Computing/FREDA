@@ -11,12 +11,13 @@
   "Packages": {
     "DT": {
       "Package": "DT",
-      "Version": "0.19",
+      "Version": "0.25",
       "Source": "Repository",
       "Repository": "CRAN",
-      "Hash": "6df7d86466f183ab0edcd8e6050b38e1",
+      "Hash": "d35337fd4278be35c50d7eeeec439f68",
       "Requirements": [
-        "htmlwidgets"
+        "htmlwidgets",
+        "jsonlite"
       ]
     },
     "KeggData": {
@@ -88,8 +89,8 @@
       "RemoteRepo": "ftmsRanalysis",
       "RemoteUsername": "EMSL-Computing",
       "RemoteRef": "CoreMS-compatibility-rb",
-      "RemoteSha": "2fc565c32ae8a48ac1cd4eb6390d8eb97034bd8d",
-      "Hash": "d5a0c80ae27e356f43d9de01f2958b66",
+      "RemoteSha": "ebc788a659a6a1445374b72025c1838d2c53e22e",
+      "Hash": "c52c1f930ebc524cbfc331f2ee677d09",
       "Requirements": [
         "RColorBrewer",
         "dplyr",
@@ -123,6 +124,16 @@
       "Source": "Repository",
       "Repository": "CRAN",
       "Hash": "76147821cd3fcd8c4b04e1ef0498e7fb",
+      "Requirements": [
+        "jsonlite"
+      ]
+    },
+    "jsonlite": {
+      "Package": "jsonlite",
+      "Version": "1.7.2",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "98138e0994d41508c7a6b84a0600cfcb",
       "Requirements": []
     },
     "kableExtra": {
@@ -194,6 +205,7 @@
         "dplyr",
         "ggplot2",
         "htmlwidgets",
+        "jsonlite",
         "purrr",
         "rlang",
         "scales",
@@ -257,6 +269,7 @@
       "Repository": "CRAN",
       "Hash": "b34a8bb69005168078d1d546a53912b2",
       "Requirements": [
+        "jsonlite",
         "withr"
       ]
     },
@@ -275,6 +288,7 @@
       "Repository": "CRAN",
       "Hash": "ac78f4d2e0289d4cba73b88af567b8b1",
       "Requirements": [
+        "jsonlite",
         "knitr",
         "stringr",
         "xfun"
@@ -297,6 +311,7 @@
       "Repository": "CRAN",
       "Hash": "6e3b6ae7fe02b5859e4bb277f218b8ae",
       "Requirements": [
+        "jsonlite",
         "rlang",
         "withr"
       ]
@@ -318,6 +333,7 @@
       "Repository": "CRAN",
       "Hash": "9bdabea3a78fd6a0768c2a319d36264e",
       "Requirements": [
+        "jsonlite",
         "shiny"
       ]
     },
@@ -338,6 +354,7 @@
       "Repository": "CRAN",
       "Hash": "9ddfc91d4280eaa34c2103951538976f",
       "Requirements": [
+        "jsonlite",
         "shiny"
       ]
     },
@@ -386,14 +403,16 @@
       "Source": "Repository",
       "Repository": "CRAN",
       "Hash": "e99d80ad34457a4853674e89d5e806de",
-      "Requirements": []
+      "Requirements": [
+        "jsonlite"
+      ]
     },
     "withr": {
       "Package": "withr",
-      "Version": "2.4.2",
+      "Version": "2.5.0",
       "Source": "Repository",
       "Repository": "CRAN",
-      "Hash": "ad03909b44677f930fa156d47d7a3aeb",
+      "Hash": "c0e49a9760983e81e55cdd9be92e7182",
       "Requirements": []
     },
     "xfun": {

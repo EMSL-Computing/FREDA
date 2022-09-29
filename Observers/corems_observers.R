@@ -94,3 +94,30 @@ observeEvent(cms_dat_unq_mf(), {
   showModal(corems_unq_mf_modal())
   show("corems_to_peakdata_toggle")
 })
+
+#' @details disable functionality and helper css for arguments required for corems
+observe({
+  req(input$top_page == "CoreMS-create")
+  fields_filled = TRUE
+  
+  for(arg in COREMSDATA_REQ_ARGS) {
+    is_selected = isTruthy(input[[arg]] != NULLSELECT__)
+    toggleCssClass(sprintf("%s_UI", arg), "attention", !is_selected)
+    if(!is_selected) {
+      fields_filled = FALSE
+    }
+  }
+  
+  toggleState("make_cmsdata", condition = fields_filled)
+  
+  if (!fields_filled) {
+    showNotification(
+      ui = "One or more required fields for making your coreMS data object are not specified",
+      type = "warning",
+      id = "as-corems-args-notification"
+    )
+  } else {
+    removeNotification("as-corems-args-notification")
+  }
+  
+})

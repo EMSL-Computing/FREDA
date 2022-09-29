@@ -56,7 +56,6 @@ info_text = list(
 # cloud/minio resources
 VALID_MINIO_HEADER_PARAMS = c("corems-prefix")
 
-
 #' @SECTION Variables for selectors/inputs ##
 
 # Use this global variable for 'nothing selected' options
@@ -67,9 +66,12 @@ COREMSDATA_ARGS = c(
   "index_cname",
   "obs_mass_cname",
   "calc_mass_cname",
+  "calib_mass_cname",
   "pheight_cname",
   "error_cname",
   "conf_cname",
+  "heteroatom_cname",
+  "iontype_cname",
   "file_cname",
   "monoiso_index_cname",
   "mf_cname",
@@ -78,3 +80,12 @@ COREMSDATA_ARGS = c(
   "n15cname",
   "s34_cname"
 )
+
+COREMSDATA_OPTIONAL_ARGS = c("c13_cname", "o18_cname", "n15cname", "s34_cname")
+COREMSDATA_REQ_ARGS = setdiff(COREMSDATA_ARGS, COREMSDATA_OPTIONAL_ARGS)
+
+# Isotopes as determined by CoreMS static files
+COREMS_ISOTOPES = jsonlite::read_json("isotopes.json")
+COREMSDATA_ISOTOPE_ARGS = list("c13_cname" = "13C", "o18_cname" = "18O", "n15cname" = "15N", "s34_cname" = "34S")
+
+FREDA_ISOTOPES_OF_INTEREST = c("34S", "18O", "13C", "15N")

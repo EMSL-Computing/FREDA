@@ -1,0 +1,483 @@
+{
+    "F": [
+        "Flourine"
+    ],
+    "Na": [
+        "Sodium"
+    ],
+    "Al": [
+        "Aluminum"
+    ],
+    "P": [
+        "Phosphorus"
+    ],
+    "Sc": [
+        "Scandium"
+    ],
+    "Co": [
+        "Cobalt"
+    ],
+    "He": [
+        "Helium"
+    ],
+    "Ar": [
+        "Argon"
+    ],
+    "H": [
+        "Hydrogen",
+        [
+            "D"
+        ]
+    ],
+    "Cl": [
+        "Chlorine",
+        [
+            "37Cl"
+        ]
+    ],
+    "Li": [
+        "Lithium",
+        [
+            "6Li"
+        ]
+    ],
+    "Be": [
+        "Beryllium"
+    ],
+    "B": [
+        "Boron",
+        [
+            "11B"
+        ]
+    ],
+    "C": [
+        "Carbon",
+        [
+            "13C"
+        ]
+    ],
+    "O": [
+        "Oxygen",
+        [
+            "18O",
+            "17O"
+        ]
+    ],
+    "S": [
+        "Sulfur",
+        [
+            "34S"
+        ]
+    ],
+    "N": [
+        "Nitrogen",
+        [
+            "15N"
+        ]
+    ],
+    "V": [
+        "Vanadium",
+        [
+            "50V"
+        ]
+    ],
+    "Ne": [
+        "Neon",
+        [
+            "20Ne",
+            "22Ne"
+        ]
+    ],
+    "Mg": [
+        "Magnesium",
+        [
+            "24Mg",
+            "26Mg",
+            "25Mg"
+        ]
+    ],
+    "Si": [
+        "Silicon",
+        [
+            "28Si",
+            "29Si",
+            "30Si"
+        ]
+    ],
+    "K": [
+        "Potassium",
+        [
+            "40K",
+            "41K"
+        ]
+    ],
+    "Ca": [
+        "Calcium",
+        [
+            "43Ca",
+            "44Ca"
+        ]
+    ],
+    "Ti": [
+        "Titanium",
+        [
+            "48Ti",
+            "46Ti",
+            "47Ti",
+            "49Ti",
+            "50Ti"
+        ]
+    ],
+    "Cr": [
+        "Chromium",
+        [
+            "53Cr",
+            "50Cr",
+            "54Cr"
+        ]
+    ],
+    "Fe": [
+        "Iron",
+        [
+            "54Fe",
+            "57Fe",
+            "58Fe"
+        ]
+    ],
+    "Mn": [
+        "Manganese"
+    ],
+    "Ni": [
+        "Nickel",
+        [
+            "60Ni",
+            "62Ni",
+            "61Ni"
+        ]
+    ],
+    "Cu": [
+        "Copper",
+        [
+            "65Cu"
+        ]
+    ],
+    "Zn": [
+        "Zinc",
+        [
+            "66Zn",
+            "68Zn",
+            "67Zn",
+            "70Zn"
+        ]
+    ],
+    "Ga": [
+        "Gallium",
+        [
+            "69Ga",
+            "71Ga"
+        ]
+    ],
+    "Ge": [
+        "Germanium",
+        [
+            "74Ge",
+            "72Ge",
+            "70Ge",
+            "73Ge",
+            "76Ge"
+        ]
+    ],
+    "As": [
+        "Arsenic"
+    ],
+    "Se": [
+        "Selenium",
+        [
+            "78Se",
+            "76Se",
+            "82Se",
+            "77Se"
+        ]
+    ],
+    "Br": [
+        "Bromine",
+        [
+            "81Br"
+        ]
+    ],
+    "Kr": [
+        "Krypton",
+        [
+            "84Kr",
+            "86Kr",
+            "82Kr",
+            "83Kr",
+            "80Kr"
+        ]
+    ],
+    "Rb": [
+        "Rubidium",
+        [
+            "85Rb",
+            "87Rb"
+        ]
+    ],
+    "Sr": [
+        "Strontium",
+        [
+            "88Sr",
+            "86Sr",
+            "87Sr"
+        ]
+    ],
+    "Y": [
+        "Yttrium"
+    ],
+    "Zr": [
+        "Zironium",
+        [
+            "90Zr",
+            "94Zr",
+            "92Zr",
+            "91Zr",
+            "96Zr"
+        ]
+    ],
+    "Nb": [
+        "Niobium"
+    ],
+    "Mo": [
+        "Molybdenum",
+        [
+            "96Mo",
+            "95Mo",
+            "92Mo",
+            "100Mo",
+            "97Mo",
+            "94Mo"
+        ]
+    ],
+    "Tc": [
+        "Technetium"
+    ],
+    "Ru": [
+        "Ruthenium",
+        [
+            "102Ru",
+            "104Ru",
+            "101Ru",
+            "99Ru",
+            "100Ru",
+            "96Ru",
+            "98Ru"
+        ]
+    ],
+    "Rh": [
+        "Rhodium"
+    ],
+    "Pd": [
+        "Palladium",
+        [
+            "106Pd",
+            "108Pd",
+            "105Pd",
+            "110Pd",
+            "104Pd",
+            "102Pd"
+        ]
+    ],
+    "Ag": [
+        "Silver",
+        [
+            "107Ag",
+            "109Ag"
+        ]
+    ],
+    "Cd": [
+        "Cadmium",
+        [
+            "114Cd",
+            "111Cd",
+            "110Cd",
+            "113Cd",
+            "116Cd",
+            "106Cd",
+            "108Cd"
+        ]
+    ],
+    "In": [
+        "Indium",
+        [
+            "113In"
+        ]
+    ],
+    "Sn": [
+        "Tin",
+        [
+            "120Sn",
+            "118Sn",
+            "116Sn",
+            "119Sn",
+            "117Sn",
+            "124Sn",
+            "122Sn",
+            "112Sn"
+        ]
+    ],
+    "Sb": [
+        "Antimony",
+        [
+            "121Sb",
+            "123Sb"
+        ]
+    ],
+    "Te": [
+        "Tellurium",
+        [
+            "130Te",
+            "128Te",
+            "126Te",
+            "125Te",
+            "124Te",
+            "122Te"
+        ]
+    ],
+    "I": [
+        "Iodine"
+    ],
+    "Xe": [
+        "Xenon",
+        [
+            "132Xe",
+            "129Xe",
+            "131Xe",
+            "134Xe",
+            "136Xe",
+            "130Xe",
+            "128Xe"
+        ]
+    ],
+    "Cs": [
+        "Cesium"
+    ],
+    "Ba": [
+        "Barium",
+        [
+            "138Ba",
+            "137Ba",
+            "136Ba",
+            "135Ba",
+            "134Ba"
+        ]
+    ],
+    "La": [
+        "Lanthanum"
+    ],
+    "Hf": [
+        "Hafnium",
+        [
+            "180Hf",
+            "178Hf",
+            "177Hf",
+            "179Hf",
+            "176Hf"
+        ]
+    ],
+    "Ta": [
+        "Tantalum"
+    ],
+    "W": [
+        "Tungsten",
+        [
+            "184W",
+            "186W",
+            "182W",
+            "183W"
+        ]
+    ],
+    "Re": [
+        "Rhenium",
+        [
+            "187Re",
+            "185Re"
+        ]
+    ],
+    "Os": [
+        "Osmium",
+        [
+            "192Os",
+            "190Os",
+            "189Os",
+            "188Os",
+            "187Os",
+            "186Os"
+        ]
+    ],
+    "Ir": [
+        "Iridium",
+        [
+            "193Ir",
+            "191Ir"
+        ]
+    ],
+    "Pt": [
+        "Platinum",
+        [
+            "195Pt",
+            "194Pt",
+            "196Pt",
+            "198Pt",
+            "192Pt"
+        ]
+    ],
+    "Au": [
+        "Gold"
+    ],
+    "Hg": [
+        "Mercury",
+        [
+            "202Hg",
+            "200Hg",
+            "199Hg",
+            "201Hg",
+            "198Hg",
+            "204Hg"
+        ]
+    ],
+    "Tl": [
+        "Thallium",
+        [
+            "205Tl",
+            "203Tl"
+        ]
+    ],
+    "Pb": [
+        "Lead",
+        [
+            "206Pb",
+            "207Pb",
+            "204Pb"
+        ]
+    ],
+    "Bi": [
+        "Bismuth"
+    ],
+    "Po": [
+        "Polonium"
+    ],
+    "At": [
+        "Aslatine"
+    ],
+    "Rn": [
+        "Radon"
+    ],
+    "Fr": [
+        "Francium"
+    ],
+    "Ra": [
+        "Radium"
+    ],
+    "Ac": [
+        "Actinium"
+    ]
+}
