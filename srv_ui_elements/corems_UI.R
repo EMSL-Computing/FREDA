@@ -144,21 +144,31 @@ output$cms_raw_data <- DT::renderDT(
 #' @app_location CoreMS Creation Tab
 output$cmsdat_plot <- renderPlotly({
   req(cms_data())
-  plot(cms_data())
+  p <- plot(cms_data())
+  p %>% 
+    layout(
+      xaxis = list(tickangle = -45),
+      margin = list(b = 160)
+    )
 })
 
 #' @details data table with kept/removed peaks
 #' @app_location Confidence Filtering Tab
 output$filt_peaks_dt <- DT::renderDT(
   ftmsRanalysis:::conf_filter_dt(cms_data(), input$min_conf),
-  options = list(dom = 't')
+  options = list(dom = 't', scrollX = T)
 )
 
 #' @details Plot of filtered corems data
 #' @app_location Confidence Filtering Tab
 output$cms_filt_plot <- renderPlotly({
   validate(need(cms_data_filtered(), "Create your filtered data to view filter plot"))
-  plot(cms_data_filtered())
+  p <- plot(cms_data_filtered())
+  p %>% 
+    layout(
+      xaxis = list(tickangle = -45),
+      margin = list(b = 160)
+    )
 })
 
 #' @details display mass error plot with min_conf slider values
@@ -171,14 +181,18 @@ output$me_plot <- renderPlotly({
 #' @app_location Unique molecular formula assignment tab
 output$mf_plot <- renderPlotly({
   validate(need(cms_dat_unq_mf(), "Please assign molecular formulae to your CoreMS data"))
-  plot(cms_dat_unq_mf())
+  p <- plot(cms_dat_unq_mf())
+  p %>% layout(
+    xaxis = list(tickangle = -45),
+    margin = list(b = 160)
+  )
 })
 
 #' @details data table with kept/removed peaks
 #' @app_location Confidence Filtering Tab
 output$filt_peaks_dt <- DT::renderDT(
   ftmsRanalysis:::conf_filter_dt(cms_data(), input$min_conf),
-  options = list(dom = 't')
+  options = list(dom = 't', scollX = T)
 )
 
 #' @details Isotopic peaks after formula assignment
@@ -187,7 +201,7 @@ output$assign_formula_iso <- DT::renderDT({
   req(cms_dat_unq_mf())
   cms_dat_unq_mf()$iso_data
 },
-options = list(dom = 't')
+options = list(dom = 't', scrollX = T)
 )
 
 #' @details Mono-isotopic peaks after formula assignment
@@ -196,7 +210,7 @@ output$assign_formula_monoiso <- DT::renderDT({
   req(cms_dat_unq_mf())
   cms_dat_unq_mf()$monoiso_data
 },
-options = list(dom = 't')
+options = list(dom = 't', scrollX = T)
 )
 
 #' @details Button to convert corems data to ftmsRanalysis peakData
