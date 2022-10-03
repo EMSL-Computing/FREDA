@@ -214,7 +214,8 @@ corems_tabs <- function() {
             ),
             bsCollapsePanel(
               title = "Plot Summary", value = "corems-upload-visualize",
-              withSpinner(plotlyOutput("cmsdat_plot"), color = "deepskyblue", type = 8)
+              inlineCSS("#cmsdat_plot {aspect-ratio:2/1;}"),
+              withSpinner(plotlyOutput("cmsdat_plot", height = "auto"), color = "deepskyblue", type = 8) 
             )
           )
         ) # end main column
@@ -269,12 +270,14 @@ corems_tabs <- function() {
                 tabPanel(
                   "Mass Error Plot",
                   value = "me_plot",
-                  plotlyOutput("me_plot")
+                  inlineCSS("#me_plot {aspect-ratio:4/3;}"),
+                  withSpinner(plotlyOutput("me_plot", height="auto"), color = "deepskyblue", type = 8)
                 ),
                 tabPanel(
                   "Filtered Data Plot",
                   value = "filt_summary_plot",
-                  plotlyOutput("cms_filt_plot")
+                  inlineCSS("#cms_filt_plot {aspect-ratio:2/1;}"),
+                  withSpinner(plotlyOutput("cms_filt_plot", height = "auto"), color = "deepskyblue", type = 8) 
                 )
               )
             )
@@ -331,7 +334,8 @@ corems_tabs <- function() {
             bsCollapsePanel(
               "Visualizations",
               value = "viz",
-              plotlyOutput("mf_plot")
+              inlineCSS("#mf_plot {aspect-ratio:2/1;}"),
+              withSpinner(plotlyOutput("mf_plot", height = "auto"), color = "deepskyblue", type = 8)
             )
           )
         ) # close main column
