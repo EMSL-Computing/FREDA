@@ -1,6 +1,6 @@
 list(
   # sample names selector based on the sample names of revals$uploaded_data
-  output$group_samples <- renderUI({
+  output$group_samples_UI <- renderUI({
     validate(need(sample_names(), message = "Upload data before defining groups"))
     req(!is.null(input$group_regex))
     # filter sample names

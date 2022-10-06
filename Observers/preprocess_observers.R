@@ -93,15 +93,11 @@ observeEvent(input$preprocess_click, {
       revals$warningmessage_preprocess$makeobject_error <<- sprintf("<p style = 'color:red'>%s</p>", msg)
     })
     
-    if(!exists('msg')) revals$uploaded_data <- temp
+    if(!exists('msg')) {
+      revals$uploaded_data <- temp
+      exportTestValues(uploaded_data_processed = revals$uploaded_data)
+    }
   })
-  
-  # post mortem test object
-  # test_uploaded_data <<- revals$peakData2 
-  
-  if (isTRUE(getOption("shiny.testmode"))) {
-    exportTestValues(peakData2 = revals$peakData2)
-  }
   
 }, priority = 10) # End action button event
 
