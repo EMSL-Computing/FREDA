@@ -5,6 +5,7 @@ observe({
   
   # establish minio connection if we are pulling cloud resources
   if(any(names(query) %in% VALID_MINIO_HEADER_PARAMS)) {
+    library(mapDataAccess)
     minio_con <<- mapDataAccess::map_data_connection("./cfg/minio_config.yml")
   }
   
