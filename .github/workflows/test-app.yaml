@@ -38,9 +38,10 @@ jobs:
           http-user-agent: ${{ matrix.config.http-user-agent }}
           use-public-rspm: true
 
-      - uses: r-lib/actions/setup-renv@v2
+      - uses: ./.github/actions/renv-plus
         with:
           cache-version: 2
+          restore-args: 'exclude = "mapDataAccess"'
           
       - name: Install extra dependencies
         run: |
