@@ -38,15 +38,15 @@ jobs:
           http-user-agent: ${{ matrix.config.http-user-agent }}
           use-public-rspm: true
 
-      - uses: r-lib/actions/setup-r-dependencies@v2
-        with:
-          extra-packages:
-            shinytest2
-      
       - uses: r-lib/actions/setup-renv@v2
         with:
           cache-version: 2
-      
+          
+      - name: Install extra dependencies
+        run: |
+          install.packages("shinytest2")
+        shell: Rscript {0}
+          
       - uses: rstudio/shinytest2/actions/test-app@v1
         with:
           path: "."
