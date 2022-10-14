@@ -37,7 +37,11 @@ jobs:
           r-version: ${{ matrix.config.r }}
           http-user-agent: ${{ matrix.config.http-user-agent }}
           use-public-rspm: true
-
+      
+      - name: Install system dependencies
+        run: |
+          sudo apt-get install libcurl4-openssl-dev libv8-dev
+      
       - uses: ./.github/actions/renv-plus
         with:
           cache-version: 2
