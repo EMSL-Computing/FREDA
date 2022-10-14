@@ -44,9 +44,6 @@ test_that("Basic Tests", {
                                       "EW0163_sample", "EW0165_sample", "EW0167_sample",
                                       "EW0169_sample"))
   
-  app$click("add_group")
-  app$expect_values(output = "group_table", screenshot_args = FALSE)
-  
   message("Testing preprocess tab...")
   ### Preprocessing
   app$click("goto_preprocess_main")
@@ -79,11 +76,7 @@ test_that("Basic Tests", {
   app$click("preprocess_dismiss")
   
   app$wait_for_value(output = "preprocess_hist")
-  app$expect_values(
-    output = c("preprocess_hist", "numeric_summary", "categorical_summary"),
-    screenshot_args = FALSE
-  )
-  
+
   uploaded_data <- app$get_value(export = "uploaded_data_processed")
   expected_cols = c('Mass', 'C', 'H', 'O', 'N', 'C13', 'S', 'P', 'Error', 
                     'NeutralMass', 'MolForm', 'OtoC_ratio', 'HtoC_ratio', 
