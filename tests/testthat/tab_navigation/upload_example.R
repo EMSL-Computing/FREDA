@@ -1,3 +1,5 @@
+#'Upload example data and fill in basic information on the uplaods tab
+#'
 upload_basic <- function(app) {
   app$set_inputs(filter_sidebar = c("samplefilt_collapse", "massfilt_collapse", "molfilt_collapse", 
                                     "formfilt_collapse"))
@@ -23,8 +25,6 @@ upload_basic <- function(app) {
   app$set_inputs(element_dropdown_state = FALSE)
   app$set_inputs(isotope_yn = "2")
   app$click("upload_click")
-  
-  # app$expect_values()
   
   btn_value = app$wait_for_value(input = "upload_dismiss")
   

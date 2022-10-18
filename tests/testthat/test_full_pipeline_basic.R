@@ -8,31 +8,8 @@ test_that("Basic Tests", {
 
   ### Make Groups
   message("Testing groups tab...")
-  app$click("goto_groups")
-  app$set_inputs(group_name = "G1")
-  app$set_inputs(group_samples = "EM0011_sample")
-  app$set_inputs(group_samples = c("EM0011_sample", "EM0013_sample"))
-  app$set_inputs(group_samples = c("EM0011_sample", "EM0013_sample", "EM0015_sample"))
-  app$set_inputs(group_samples = c("EM0011_sample", "EM0013_sample", "EM0015_sample", 
-                                   "EM0017_sample"))
-  app$set_inputs(group_samples = c("EM0011_sample", "EM0013_sample", "EM0015_sample", 
-                                   "EM0017_sample", "EM0019_sample"))
-  app$set_inputs(group_samples = c("EM0011_sample", "EM0013_sample", "EM0015_sample", 
-                                   "EM0017_sample", "EM0019_sample", "EM0061_sample"))
-  app$set_inputs(group_samples = c("EM0011_sample", "EM0013_sample", "EM0015_sample", 
-                                   "EM0017_sample", "EM0019_sample", "EM0061_sample", "EM0063_sample"))
-  app$set_inputs(group_samples = c("EM0011_sample", "EM0013_sample", "EM0015_sample", 
-                                   "EM0017_sample", "EM0019_sample", "EM0061_sample", "EM0063_sample", "EM0065_sample"))
-  app$set_inputs(group_samples = c("EM0011_sample", "EM0013_sample", "EM0015_sample", 
-                                   "EM0017_sample", "EM0019_sample", "EM0061_sample", "EM0063_sample", "EM0065_sample", 
-                                   "EM0067_sample"))
-  app$set_inputs(group_samples = c("EM0011_sample", "EM0013_sample", "EM0015_sample", 
-      "EM0017_sample", "EM0019_sample", "EM0061_sample", "EM0063_sample", "EM0065_sample", 
-      "EM0067_sample", "EM0069_sample"))
-  app$click("add_group")
   
-  app$set_inputs(group_name = "G2")
-  app$click("add_group")
+  app <- groups_basic(app)
   
   groups_list <- app$get_value(export = "groups_list")
   expect_setequal(groups_list$G1, c("EM0011_sample", "EM0013_sample", "EM0015_sample",
@@ -88,6 +65,12 @@ test_that("Basic Tests", {
                     'kdefect.H2O', 'kdefect.CHO')
   
   expect_setequal(colnames(uploaded_data$e_meta), expected_cols)
+  
+  numtable <- app$get_value(export = "numeric_table")
+  cattable <- app$get_value(export = "categorical_table")
+  
+  expect_equal(digest::digest(numtable), "1d8dc9e8fe23e5579e8fda9d60fb92ca")
+  expect_equal(digest::digest(cattable), "78029809dbe2eeafe986ec9d68efb3f5")
   
   message("Testing filter tab...")
   ### Filter
