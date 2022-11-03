@@ -32,7 +32,7 @@ ui <- tagList(useShinyjs(), navbarPage(
                                                       tags$h4("Define a Group"),
                                                       div(id = "js_group_name", textInput("group_name", "Name of this group:")),
                                                       fluidRow(
-                                                        column(6, uiOutput("group_samples")),
+                                                        column(6, uiOutput("group_samples_UI")),
                                                         column(6, textInput("group_regex", "Search sample names"))
                                                       ),
                                                       actionButton("add_group", "Add this group"),
@@ -247,7 +247,7 @@ ui <- tagList(useShinyjs(), navbarPage(
                                 br(),
                                 br(),
                                 
-                                div(id = "warnings_filter", style = "overflow-y:auto;max-height:150px", uiOutput("warnings_filter"))
+                                div(id = "warnings_filter", style = "overflow-y:auto;max-height:150px", uiOutput("warnings_filter_UI"))
                               
                               ), # End sidebar panel on Filter tab
                               
@@ -280,7 +280,7 @@ ui <- tagList(useShinyjs(), navbarPage(
                               
                               fluidRow(
                                 # Sidebar Panel
-                                div(id='viz_sidebar', column(4,
+                                div(id='viz_sidebar_column', column(4,
                                   
                                   # Begin collapsible section                           
                                   bsCollapse(id='viz_sidebar', open = c('peakplots', 'axlabs'), multiple=TRUE, 
@@ -383,7 +383,7 @@ ui <- tagList(useShinyjs(), navbarPage(
                                         br(),
                                         br(),
                                         
-                                        div(id = "warnings_visualize", style = "overflow-y:auto;max-height:150px", uiOutput("warnings_visualize"))
+                                        div(id = "warnings_visualize", style = "overflow-y:auto;max-height:150px", uiOutput("warnings_visualize_UI"))
                                   ),
                                 )# End main panel on Visualize tab #
                               )# end fluidrow
@@ -415,7 +415,7 @@ ui <- tagList(useShinyjs(), navbarPage(
                    tabPanel(div('Database Mapping', icon('th-list', lib = 'glyphicon')), value = 'Database Mapping',
                             fluidRow(style = "display:flex;flex-direction:row;align-items:stretch",
                                column(4,
-                                  bsCollapse(id='viz_sidebar', open = c('mappings'), multiple=TRUE, 
+                                  bsCollapse(id='db_mapping_sidebar', open = c('mappings'), multiple=TRUE, 
                                      bsCollapsePanel('Choose which mappings to calculate', value = 'mappings',
                                                      radioGroupButtons('database_select', label = "Choose a Database", choices = c('Kegg', 'MetaCyc')),
                                                      numericInput('max_records_database', 'Exclude formulae that map to more than this many records:', value = 5),

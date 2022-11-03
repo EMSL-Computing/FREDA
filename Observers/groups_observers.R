@@ -8,7 +8,8 @@ observeEvent(input$add_group, {
 
   updateTextInput(session, "group_name", value = "")
   updatePickerInput(session, "group_samples", selected = setdiff(sample_names(), c(unlist(revals$groups_list), input$group_samples)))
-
+  
+  exportTestValues(groups_list = revals$groups_list)
 })
 
 # shinyjs observer which disables input if selection is not valid

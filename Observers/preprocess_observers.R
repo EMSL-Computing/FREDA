@@ -53,7 +53,6 @@ observeEvent(input$preprocess_click, {
             for(i in 1:length(valence_list)){
               V <- valence_list[[i]]
               for(name in names(V)){
-                print(V[[name]])
                 valence_df[i,name] <- V[[name]]
               }
             }
@@ -93,50 +92,41 @@ observeEvent(input$preprocess_click, {
       revals$warningmessage_preprocess$makeobject_error <<- sprintf("<p style = 'color:red'>%s</p>", msg)
     })
     
-    if(!exists('msg')) revals$uploaded_data <- temp
+    if(!exists('msg')) {
+      revals$uploaded_data <- temp
+      exportTestValues(uploaded_data_processed = revals$uploaded_data)
+    }
   })
-  
-  # post mortem test object
-  # test_uploaded_data <<- revals$peakData2 
-  
-  if (isTRUE(getOption("shiny.testmode"))) {
-    exportTestValues(peakData2 = revals$peakData2)
-  }
   
 }, priority = 10) # End action button event
 
 # Creates two reactive variables for continuous and categorical variables which are used to display separate tables
 # Note: dependent on preprocess click and the user-specified calculations
 observeEvent(input$preprocess_click, {
-  # Error handling: revals$uploaded_data must have a non-NULL Kendrick Mass column name
-  #req(!is.null(attr(revals$uploaded_data, 'cnames')$kmass_cname))
   req(input$tests)
-  
-  # Get csv file of all possible calculation column names
-  possible_calc_cnames <- read_csv("calculation_variables.csv") %>% as.data.frame(stringsAsFactors = FALSE)
   
   # Get column names from revals$uploaded_data's e_meta
   actual_cnames <- colnames(revals$uploaded_data$e_meta)
   
   # Find all columns with names that match names for calculated columns
-  v_index <- which(possible_calc_cnames[,1] %in% actual_cnames)
+  v_index <- which(names(PREPROCESS_CALC_VARS) %in% actual_cnames)
   
   # Save calculation column names from above and their display names 
-  intersect <- possible_calc_cnames[v_index,]
+  present_vars <- PREPROCESS_CALC_VARS[v_index]
   
   # get numeric columns
   numeric_cols <- revals$uploaded_data$e_meta %>% 
-    dplyr::select(which(sapply(.[intersect[,1]], is.numeric))) %>% 
+    dplyr::select(which(sapply(.[,names(present_vars)], is.numeric))) %>% 
     names()
   
   # get categorical columns
   categorical_cols <- revals$uploaded_data$e_meta %>% 
-    dplyr::select(which(!sapply(.[intersect[,1]], is.numeric))) %>%
+    dplyr::select(which(!sapply(.[names(present_vars)], is.numeric))) %>%
     names() 
   
   #set reactive variables for observers
-  revals$numeric_cols <- intersect %>% filter(ColumnName %in% numeric_cols)
-  revals$categorical_cols <- intersect %>% filter(ColumnName %in% categorical_cols)
+  revals$numeric_cols <- present_vars[names(present_vars) %in% numeric_cols]
+  revals$categorical_cols <- present_vars[names(present_vars) %in% categorical_cols]
   
 }) 
 
@@ -164,18 +154,24 @@ observeEvent(input$preprocess_dismiss,{
   
   req(c(revals$numeric_cols, revals$categorical_cols))
   
-  if(isTRUE(nrow(revals$numeric_cols) > 0)){
-    columns <- summaryPreprocess(isolate(revals$uploaded_data), revals$numeric_cols) %>% colnames()
+  if(isTRUE(length(revals$numeric_cols) > 0)){
+    tmp_num_table <- summaryPreprocess(isolate(revals$uploaded_data), revals$numeric_cols)
     
-    revals$preprocess_tables$numeric <- summaryPreprocess(isolate(revals$uploaded_data), revals$numeric_cols) %>%
+    revals$preprocess_tables$numeric <- tmp_num_table %>%
                                           datatable(options = list(dom = "t", pageLength = nrow(.))) %>% 
-                                          formatRound(columns, digits = 2)
+                                          formatRound(colnames(tmp_num_table), digits = 2)
+    
+    # __SHINYTEST__
+    exportTestValues(numeric_table = tmp_num_table)
   }
 
-  if(isTRUE(nrow(revals$categorical_cols) > 0)){
+  if(isTRUE(length(revals$categorical_cols) > 0)){
     revals$preprocess_tables$categorical <- summaryPreprocess(revals$uploaded_data, revals$categorical_cols, categorical = TRUE)
+    
+    # __SHINYTEST__
+    exportTestValues(categorical_table = revals$preprocess_tables$categorical)
   }
-  
+
 })
 
 # For numeric columns:

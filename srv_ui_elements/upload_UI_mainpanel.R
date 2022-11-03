@@ -42,7 +42,7 @@ list(
   }), # End edata_text
   
   # display list of warnings pasted on separate lines
-  output$warnings_upload <- renderUI({
+  output$warnings_upload_UI <- renderUI({
     HTML(lapply(revals$warningmessage_upload, function(el){
       paste0("<p ", el, "</p>")
     }) %>%

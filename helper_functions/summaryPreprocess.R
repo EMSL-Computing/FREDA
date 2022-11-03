@@ -17,7 +17,7 @@ summaryPreprocess <- function(ftmsRobject, testsSelected, categorical = FALSE, s
   if(categorical){
     
     #Apply to each column name
-    lapply(testsSelected[,1], function(colname){
+    lapply(names(testsSelected), function(colname){
       
       # split any values in the column that have 2 categories
       split_col <- strsplit(ftmsRobject$e_meta[,colname], split_chars) %>% unlist()
@@ -34,7 +34,7 @@ summaryPreprocess <- function(ftmsRobject, testsSelected, categorical = FALSE, s
         {`colnames<-`(., cats)}
       
       df[1,] <- tab_na # store counts
-      rownames(df) <- testsSelected %>% filter(ColumnName == colname) %>% pluck(2) # set rowname for display purposes
+      rownames(df) <- testsSelected[[colname]] # set rowname for display purposes
     
       return(df)
     })
@@ -44,7 +44,7 @@ summaryPreprocess <- function(ftmsRobject, testsSelected, categorical = FALSE, s
   
   else{
   # Set up rownames for use in table
-    rowNames <- testsSelected[,2]
+    rowNames <- testsSelected
     rowNum <- length(rowNames)
     
     # Set up data frame (finally!)
@@ -56,7 +56,7 @@ summaryPreprocess <- function(ftmsRobject, testsSelected, categorical = FALSE, s
     row.names(summaryTable) <- rowNames
     
     # Call summary and extract info
-    allCols <- ftmsRobject$e_meta %>% dplyr::select(testsSelected[,1])
+    allCols <- ftmsRobject$e_meta %>% dplyr::select(names(testsSelected))
 
     # NOT YET WORKING: Sapply the summary
     # summaryTable <- t(sapply(allCols, function(x) unname(summary(x)[c('Min.', 'Mean', 'Median', 'Max.')])))

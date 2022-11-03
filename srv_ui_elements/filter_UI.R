@@ -178,7 +178,7 @@ list(
   #
   
   # filter warnings
-  output$warnings_filter <- renderUI({
+  output$warnings_filter_UI <- renderUI({
     HTML(lapply(revals$warningmessage_filter, function(el){paste0("<p ", el, "</p>")}) %>%
            paste(collapse = ""))
   })

@@ -1,4 +1,7 @@
 # FREDA
+<!-- badges: start -->
+[![tests](https://github.com/EMSL-computing/FREDA/actions/workflows/test-app.yaml/badge.svg)](https://github.com/EMSL-computing/FREDA/actions/workflows/test-app.yaml)
+<!-- badges: end -->
 
 ***
 

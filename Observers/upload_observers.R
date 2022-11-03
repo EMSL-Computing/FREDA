@@ -158,6 +158,8 @@ observeEvent(input$upload_click, {
     shinyjs::show('ok_idcols')
     
     revals$uploaded_data <- res
+    
+    exportTestValues(uploaded_data = res)
   }
   
 }) # End peakData creation
