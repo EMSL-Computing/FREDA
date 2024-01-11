@@ -18,13 +18,6 @@ The FT-MS R Exploratory Data Analysis (FREDA) tool is designed to allow users up
 
 ***
 
-#### **Recent Updates:**
-  v1.0.4
-  * *Linked plots sub-tab of the Visualize tab.  Interactively compare scatter or single sample histogram plots.*
-  * *Map peaks to values in the Kegg and Metacyc databases.*
-  
-***
-
 ### Running the app locally:
 
 #### 1.  Using R/Rstudio/Shiny
@@ -50,7 +43,7 @@ example, do the following:
 
 1.  Create a folder in the minio UI (call it test_folder, for example) and put a couple csv files in it.
 2.  Launch FREDA from Rstudio.  
-3.  Nagivate to wherever FREDA is being served at, adding /?corems-prefix=test_folder to the url.
+3.  Nagivate to wherever FREDA is being served at, adding `/?corems-prefix=test_folder` to the url.
 
 FREDA will attempt to read all the files in the minio folder `test_folder` and load them into the reactiveValue 
 corems_samples.
@@ -89,7 +82,7 @@ Now, replacing &lt;base tag&gt; with whatever version, run:
 
 **To build the 'top' container**:  
 Simply make sure Dockerfile refers to the correct base container if you have updated any dependencies (rebuilt the base container) and run:  
-`docker build -t docker.artifactory.pnnl.gov/mscviz/freda:<top tag> .`
+`docker build --build-arg base_tag=<base tag> -t docker.artifactory.pnnl.gov/mscviz/freda:<top tag> .`
 
 If all is well, push new containers to the registry:  
 `docker push docker.artifactory.pnnl.gov/mscviz/freda/base:<base tag>`  
