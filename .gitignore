@@ -37,7 +37,8 @@ script_dump.R
 packrat/lib*/
 Data/
 untracked_resources
-.renvignore
 cfg
 !cfg/minio_config_example.yml
+!cfg/minio_config_corems.yml
 renv
+!renv/settings.json
