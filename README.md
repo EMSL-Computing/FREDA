@@ -92,10 +92,8 @@ If all is well, push new containers to the registry:
 
 We use [renv](https://rstudio.github.io/renv/articles/renv.html) to track dependencies.  The renv.lock file contains a list of dependencies and various details about them.  We use renv to manage the details about dependencies.  When updating the lockfile, we will do the following:
 
-1.  Set renv to only install sub-dependencies in the "Depends" field of installed packages. `renv::settings$package.dependency.fields("Depends")`.  This should get recorded in ./renv/settings.dcf so you only have to do it once.
-2.  Snapshot only packages mentioned in the project, as well as any packages mentioned in their "Depends" field by calling `renv::snapshot(type="implicit")`
-
-Certain dependencies are forced to be recognized by renv without being explicitly loaded in the app by adding `library(somepackage)` to `renv_dependencies.R`
+1.  Set renv to only install sub-dependencies in the "Depends", "Imports", and "LinkingTo field of installed packages. `renv::settings$package.dependency.fields(c("Depends", "Imports", "LinkingTo))`.  This should get recorded in ./renv/settings.dcf so you only have to do it once.
+2.  Snapshot only packages mentioned in the DESCRIPTION, as well as any packages mentioned in their "Depends", "Imports", and "LinkingTo fields by calling `renv::snapshot(type="implicit")`.
 
 #### **Misc**
 
