@@ -82,6 +82,8 @@ observeEvent(input$makezipfile, {
       }
       #
 
+      scope <- kaleido()
+
       for (i in plots_marked_for_death) {
         plot_key = plots$plot_table[i, 1]
         filename = paste0(plot_key, '.', input$image_format)
@@ -90,7 +92,7 @@ observeEvent(input$makezipfile, {
 
         if (inherits(plots$plot_list[[plot_key]], 'plotly')) {
           # using withr until orca handles full paths
-          withr::with_dir(tempdir(), orca(plots$plot_list[[plot_key]], filename, width = width, height = height, scale = 2))
+          scope$transform(plots$plot_list[[plot_key]], path, width = width, height = height, scale = 2)
           # export(plots$plot_list[[plot_key]], file = path, zoom = 2) # deprecated for some ungodly reason
         }
         else if (inherits(plots$plot_list[[plot_key]], 'ggplot')) {

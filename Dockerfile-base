@@ -1,4 +1,4 @@
-FROM rocker/shiny:4.1.1
+FROM rocker/shiny:4.2.3
 
 RUN apt-get update -qq && apt-get install -y \
   git-core \
@@ -6,18 +6,21 @@ RUN apt-get update -qq && apt-get install -y \
   libcurl4-gnutls-dev \
   libmagick++-dev \
   libv8-dev \
-  vim python3-venv
+  vim python3-venv \
+  libgdal-dev
   
 WORKDIR /srv/shiny-server/
-COPY renv.lock .
 
 # pre-install renv
-RUN R -e "install.packages('renv', repos = 'https://cran.rstudio.com')"
+ENV RENV_VERSION 1.0.3
+RUN R -e "install.packages('remotes', repos = c(CRAN = 'https://cloud.r-project.org'))"
+RUN R -e "options('repos'=c(CRAN = 'https://cloud.r-project.org'));remotes::install_version('renv', version = '${RENV_VERSION}')"
 
 # install all packages listed in renv.lock
+COPY renv.lock .
 RUN --mount=type=secret,id=access_tokens set -a \
 && . /run/secrets/access_tokens && set +a \
-&& R -e 'renv::restore()'
+&& R -e 'options(renv.config.connect.timeout=300);options(timeout=300);renv::restore()'
 
 ## Setup Python venv ##
 USER root
@@ -25,28 +28,4 @@ COPY python_requirements.txt .
 RUN python3 -m venv /venv
 RUN /venv/bin/pip install --upgrade pip
 RUN /venv/bin/pip install -r python_requirements.txt
-
-# Install all plotly's dependencies
-RUN R -e "install.packages('plotly', dependencies = T)"
-
-# Download orca binary and make it executable under xvfb
-RUN apt-get update && \
-    apt-get install -y --no-install-recommends \
-        xvfb \
-        xauth \
-        libgtk2.0-0 \
-        libxtst6 \
-        libxss1 \
-        libgconf-2-4 \
-        libnss3 \
-        libasound2 && \
-    mkdir -p /opt/orca && \
-    cd /opt/orca && \
-    wget https://github.com/plotly/orca/releases/download/v1.2.1/orca-1.2.1-x86_64.AppImage && \
-    chmod +x orca-1.2.1-x86_64.AppImage && \
-    ./orca-1.2.1-x86_64.AppImage --appimage-extract && \
-    rm orca-1.2.1-x86_64.AppImage && \
-    printf '#!/bin/bash \nxvfb-run --auto-servernum --server-args "-screen 0 640x480x24" /opt/orca/squashfs-root/app/orca "$@"' > /usr/bin/orca && \
-    chmod +x /usr/bin/orca && \
-    apt-get remove -y libnode-dev
     

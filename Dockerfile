@@ -15,4 +15,4 @@ COPY . /srv/shiny-server/FREDA
 COPY shiny-server.conf /etc/shiny-server/shiny-server.conf
 
 # App is run as user shiny, need to change ownership
-RUN chown -R shiny:shiny /srv/shiny-server/FREDA /opt/orca/squashfs-root
+RUN chown -R shiny:shiny /srv/shiny-server/FREDA

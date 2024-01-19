@@ -13,7 +13,7 @@ observeEvent(
     revals$uploaded_data <- revals$peakData2 <- NULL
 
     res <- tryCatch({
-      ftmsRanalysis::CoreMSData_to_ftmsData(cms_dat_unq_mf())
+      ftmsRanalysis::coreMSDataToFtmsData(cms_dat_unq_mf())
     },
     error = function(e) {
       msg = paste0('Error converting your coreMS data to peakData: \n System error: ', e)
