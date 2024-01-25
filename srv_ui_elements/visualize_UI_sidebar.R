@@ -14,11 +14,11 @@ list(
     }
 
     # disallow vk plots if o:c or h:c ratios not calculated/present in emeta or only contain zeros/NA's
-    if (is.null(attr(revals$peakData2, "cnames")$o2c_cname) | is.null(attr(revals$peakData2, "cnames")$h2c_cname)) {
+    if (is.null(ftmsRanalysis::getRatioColName(revals$peakData2, "O:C")) | is.null(ftmsRanalysis::getRatioColName(revals$peakData2, "H:C"))) {
       choices <- choices[choices != "Van Krevelen Plot"]
     }
-    else if (any(all(revals$peakData2$e_meta[[attr(revals$peakData2, "cnames")$o2c_cname]] %in% c(0, NA)),
-      all(revals$peakData2$e_meta[[attr(revals$peakData2, "cnames")$h2c_cname]] %in% c(0, NA)))) {
+    else if (any(all(revals$peakData2$e_meta[[ftmsRanalysis::getRatioColName(revals$peakData2, "O:C")]] %in% c(0, NA)),
+      all(revals$peakData2$e_meta[[ftmsRanalysis::getRatioColName(revals$peakData2, "H:C")]] %in% c(0, NA)))) {
       choices <- choices[choices != "Van Krevelen Plot"]
     }
 
