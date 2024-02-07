@@ -105,15 +105,16 @@ observeEvent(input$upload_click, {
       if (input$isotope_yn == 2 | isTRUE(input$iso_info_filter == 2)) {
         # Create peakData object
         res <- as.peakData(e_data = Edata(), f_data = fdata(),
-          e_meta = Emeta(), edata_cname = input$edata_id_col,
-          fdata_cname = 'SampleId', mass_cname = input$edata_id_col,
-          c_cname = input$c_column, h_cname = input$h_column,
-          n_cname = if (input$n_column == 'Select a column') NULL else input$n_column,
-          o_cname = if (input$o_column == 'Select a column') NULL else input$o_column,
-          s_cname = if (input$s_column == 'Select a column') NULL else input$s_column,
-          p_cname = if (input$p_column == 'Select a column') NULL else input$p_column,
-          check_rows = TRUE, data_scale = input$data_scale)
-
+                           e_meta = Emeta(), edata_cname = input$edata_id_col, 
+                           fdata_cname = 'SampleId', mass_cname = input$edata_id_col,
+                           element_col_names = list("C"=input$c_column,
+                                                    "H"=input$h_column,
+                                                    "O"=input$o_column,
+                                                    "N"=input$n_column,
+                                                    "P"=input$p_column,
+                                                    "S"=input$s_column),
+                           check_rows = TRUE, data_scale = input$data_scale)
+        
       }
       if (input$isotope_yn == 1 & isTRUE(input$iso_info_filter == 1)) { # If there's C13 #
 
@@ -124,17 +125,18 @@ observeEvent(input$upload_click, {
         ) # End error handling
 
         res <- as.peakData(e_data = Edata(), f_data = fdata(),
-          e_meta = Emeta(), edata_cname = input$edata_id_col,
-          fdata_cname = 'SampleId', mass_cname = input$edata_id_col,
-          c_cname = input$c_column, h_cname = input$h_column,
-          n_cname = if (input$n_column == 'Select a column') NULL else input$n_column,
-          o_cname = if (input$o_column == 'Select a column') NULL else input$o_column,
-          s_cname = if (input$s_column == 'Select a column') NULL else input$s_column,
-          p_cname = if (input$p_column == 'Select a column') NULL else input$p_column,
-          isotopic_cname = input$iso_info_column,
-          isotopic_notation = as.character(input$iso_symbol),
-          check_rows = TRUE, data_scale = input$data_scale)
-
+                           e_meta = Emeta(), edata_cname = input$edata_id_col, 
+                           fdata_cname = 'SampleId', mass_cname = input$edata_id_col,
+                           element_col_names = list("C"=input$c_column,
+                                                    "H"=input$h_column,
+                                                    "O"=input$o_column,
+                                                    "N"=input$n_column,
+                                                    "P"=input$p_column,
+                                                    "S"=input$s_column),
+                           isotopic_cname = input$iso_info_column,
+                           isotopic_notation = as.character(input$iso_symbol),
+                           check_rows = TRUE, data_scale = input$data_scale)
+        
       } # End C13 / no C13 if statement
 
       if (input$NA_value != "NA") {
