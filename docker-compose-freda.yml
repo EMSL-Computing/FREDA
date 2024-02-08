@@ -1,0 +1,24 @@
+#
+
+version: "3" 
+services:
+    freda:
+        image: docker.artifactory.pnnl.gov/mscviz/freda:develop.corems
+        container_name: freda
+        ports:
+            - "3838:3838"
+        volumes:
+            - "./cfg/minio_config_corems_docker.yml:/srv/shiny-server/FREDA/cfg/minio_config.yml"
+        environment:
+            - RETICULATE_PYTHON=/venv/bin/python
+    minio:
+        image: minio/minio
+        container_name: minio-freda
+        ports:
+            - "9002:9000"
+            - "9003:9001"
+        command: server --console-address ":9001" /data
+
+networks:
+  default:
+    name: freda-net

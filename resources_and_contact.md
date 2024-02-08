@@ -16,8 +16,7 @@ A publication is forthcoming for FREDA.  In the meantime, we ask that you cite F
 
 ### **Using FREDA Locally**
 
-You can use FREDA locally via a Docker container. Instructions for deploying locally on a Mac can be found <span><a id = 'see_docker', href='https://github.com/EMSL-Computing/FREDA/blob/docker/Docker_instructions.md', target = '_blank'">here <span class = "glyphicon glyphicon-new-window"></span></a></span>
-***
+You can use FREDA locally via a Docker container. Instructions for building and running the container can be found in the "Using docker" section of the README.md 
 
 ### **Contact Information**
  

@@ -1,14 +1,22 @@
 # Object: Get e_data from file input
 Edata <- reactive({
+  # Handle scenario where we made edata from another source.
+  if (!is.null(revals$uploaded_data) & is.null(input$file_edata$datapath)) {
+    return(revals$uploaded_data$e_data %>%
+      dplyr::select(-dplyr::one_of(
+        ftmsRanalysis::getEDataColName(revals$uploaded_data)
+      )))
+  }
+
   # Error handling: Need file_edata path
   req(input$file_edata$datapath)
-  
+
   # Load file
   filename <- input$file_edata$datapath
-  
+
   exportTestValues(e_data = read_csv(filename) %>% as.data.frame(stringsAsFactors = FALSE))
   read_csv(filename) %>% as.data.frame(stringsAsFactors = FALSE)
-  
+
 }) # End Edata #
 
 # Object: Get list of column names of Edata
@@ -28,19 +36,17 @@ Emeta <- reactive({
   read_csv(filename) %>% as.data.frame(stringsAsFactors = FALSE)
 }) # End Emeta #
 
-# Object: Emeta column names 
-# Note: created when emeta is loaded/updated
-emeta_cnames <- reactive({names(Emeta())}) 
+# Object: Emeta column names
+emeta_cnames <- reactive({names(Emeta())})
 
 # Object: Sample names from e_data
-# Note: This object is created when e_data and edata_id are entered
 sample_names <- reactive({
   setdiff(edata_cnames(), input$edata_id_col)
-  
-}) # End sample_names #
+})
+
 # Create reactive fake f_data (used when action button creates peakData())
 fdata <- reactive({
   col2 <- rep(NA, length(sample_names()))
   data.frame('SampleId' = sample_names(), 'Var1' = col2)
-  
+
 }) # End fdata #
