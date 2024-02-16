@@ -41,23 +41,8 @@ observe({
             )
           })
 
-          names(fpaths) <- sapply(fpaths, function(x) basename(tools::file_path_sans_ext(x))) %>%
-            make.unique()
+          modalmessage <- store_corems(fpaths)
 
-          corems_revals[['combined_tables']] <- ftmsRanalysis::read_CoreMS_data(
-            unlist(fpaths),
-            sample_names = names(fpaths)
-          )
-
-          for (name in names(fpaths)) {
-            corems_revals[['tables']][[name]] <- read_csv(fpaths[[name]])
-            corems_revals[['fpaths']][[name]] <- fpaths[[name]]
-          }
-
-          modalmessage <- div(class = "column-scroll-sm",
-            HTML(info_text[["COREMS_UPLOAD_SUCCESS"]]),
-            HTML(paste(names(fpaths), collapse = "<br>"))
-          )
         }, error = function(e) {
           modalmessage <<- div(sprintf(info_text[["COREMS_UPLOAD_ERROR"]], e))
         })
@@ -66,14 +51,71 @@ observe({
       }
 
       # defined in srv_ui_elements/corems_UI.R
-      showModal(corems_upload_modal(modalmessage))
+      showModal(corems_upload_success_modal(modalmessage))
     }
 
-    insertTab(
-      "top_page",
-      target = "Welcome",
-      tab = upload_tab(length(corems_revals[['combined_tables']]) > 0),
-      position = "after"
-    )
+    # if we're not coming from minio, ask whether they have multiple CoreMS files to upload.
+    # if they don't automatically insert the Core
+    if (length(corems_revals[['combined_tables']]) == 0) {
+      showModal(upload_type_modal())
+    } else {
+      insertTab(
+        "top_page",
+        target = "Welcome",
+        tab = upload_tab(from_corems = TRUE),
+        position = "after"
+      )
+    }
   })
+})
+
+#' create the modal asking for what type of file input the user has.
+upload_type_modal <- function() {
+  modalDialog(
+    title = "What type of data are you uploading?",
+    tags$p("Users have the option of uploading a single aligned data file along with a molecular identification file as defined in the data requirements page, or multiple files representing unaligned samples from the output of CoreMS."),
+    footer = tagList(
+      actionButton("upload_type_modal_single", "Single aligned data file"),
+      actionButton("upload_type_modal_multiple", "Multiple unaligned files (CoreMS output)")
+    )
+  )
+}
+
+#' @details Insert the manual CoreMS upload tab
+observeEvent(input$upload_type_modal_multiple, {
+  insertTab(
+    "top_page",
+    target = "Welcome",
+    tab = upload_tab(from_corems = TRUE),
+    position = "after"
+  )
+  removeModal()
+
+  showModal(corems_manual_upload_modal())
+})
+
+#' @details load the corems files
+observeEvent(input$corems_files, {
+  fpaths <- input$corems_files$datapath
+  fnames <- input$corems_files$name
+
+  tryCatch({
+    modalmessage <- store_corems(fpaths, fnames)
+    removeModal()
+  }, error = function(e) {
+    modalmessage <<- div(sprintf(info_text[["COREMS_UPLOAD_ERROR"]], e))
+  })
+
+  showModal(corems_upload_success_modal(modalmessage))
+})
+
+#' @details Insert the original e_data/e_meta upload tab
+observeEvent(input$upload_type_modal_single, {
+  insertTab(
+    "top_page",
+    target = "Welcome",
+    tab = upload_tab(),
+    position = "after"
+  )
+  removeModal()
 })

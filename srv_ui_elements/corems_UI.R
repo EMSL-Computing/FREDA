@@ -1,5 +1,16 @@
+#' @details simple modal for uploading corems files
+corems_manual_upload_modal <- function() {
+  modalDialog(
+    title = "Core-MS Data Upload",
+    "Please upload your Core-MS data files",
+    footer = tagList(
+      fileInput("corems_files", "Browse/Drag-and-drop", multiple = TRUE)
+    )
+  )
+}
+
 #' @details Modal indicating corems data was successfully uploaded
-corems_upload_modal <- function(modal_message) {
+corems_upload_success_modal <- function(modal_message) {
   modalDialog(
     modal_message, title = "Core-MS Upload Success",
     footer = tagList(
