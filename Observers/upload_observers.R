@@ -76,7 +76,6 @@ observeEvent(input$upload_click, {
 
   # If elemental columns chosen
   if (input$select == 2) {
-
     ## Error handling: all drop down columns nonempty and of class 'numeric'
 
     # first check that H and C columns are specified and numeric...
@@ -94,25 +93,20 @@ observeEvent(input$upload_click, {
       'One or more elemental columns are non-numeric.')
     )
     # ...then check that -if- other columns are selected, they are numeric
-    for (col in c('n_column', 'o_column', 's_column', 'p_column')) {
-      if (input[[col]] != 'Select a column') {
-        validate(need(is.numeric(Emeta()[, input[[col]]]), 'One or more elemental columns are non-numeric.'))
-      }
+    for (col in as.character(isolate(extra_elements()))) {
+        validate(need(is.numeric(Emeta()[, col]), 'One or more elemental columns are non-numeric.'))
     } # End error handling #
     tryCatch({
       revals$warningmessage_upload$makeobject_error <- NULL
+      # Combine Hydrogen and Carbon names with extra element columns
+      all_element_cols <- c("C"=input$c_column, "H"=input$h_column, isolate(extra_elements()))
       # If no C13
       if (input$isotope_yn == 2 | isTRUE(input$iso_info_filter == 2)) {
         # Create peakData object
         res <- as.peakData(e_data = Edata(), f_data = fdata(),
                            e_meta = Emeta(), edata_cname = input$edata_id_col, 
                            fdata_cname = 'SampleId', mass_cname = input$edata_id_col,
-                           element_col_names = list("C"=input$c_column,
-                                                    "H"=input$h_column,
-                                                    "O"=input$o_column,
-                                                    "N"=input$n_column,
-                                                    "P"=input$p_column,
-                                                    "S"=input$s_column),
+                           element_col_names = all_element_cols,
                            check_rows = TRUE, data_scale = input$data_scale)
         
       }
@@ -127,12 +121,7 @@ observeEvent(input$upload_click, {
         res <- as.peakData(e_data = Edata(), f_data = fdata(),
                            e_meta = Emeta(), edata_cname = input$edata_id_col, 
                            fdata_cname = 'SampleId', mass_cname = input$edata_id_col,
-                           element_col_names = list("C"=input$c_column,
-                                                    "H"=input$h_column,
-                                                    "O"=input$o_column,
-                                                    "N"=input$n_column,
-                                                    "P"=input$p_column,
-                                                    "S"=input$s_column),
+                           element_col_names = all_element_cols,
                            isotopic_cname = input$iso_info_column,
                            isotopic_notation = as.character(input$iso_symbol),
                            check_rows = TRUE, data_scale = input$data_scale)
@@ -163,6 +152,27 @@ observeEvent(input$upload_click, {
   }
 
 }) # End peakData creation
+
+observeEvent(input$add_element_column_button,{
+  # Isolate current elements, add new row, then reassign the reactive variable
+  old_element_list <- isolate(extra_elements())
+  old_element_list[[input$extra_element_name]] <- c(old_element_list[[input$extra_element_name]], input$extra_element_col)
+  extra_elements(old_element_list)
+  
+  shinyjs::reset("extra_element_name")
+  shinyjs::reset("extra_element_col")
+})
+
+observeEvent(input$remove_element_row_button,{
+  # Remove selected rows if rows have been selected
+  if (!is.null(input$added_elements_rows_selected)) {
+    #values$dfWorking <- values$dfWorking[-as.numeric(input$added_elements_rows_selected),]
+    old_element_list <- isolate(extra_elements())
+    #selected_elements <- added_elements()[input$added_elements_rows_selected]
+    old_element_list <- old_element_list[- as.numeric(input$added_elements_rows_selected)]
+    extra_elements(old_element_list)
+  }
+})
 
 # if edata is big, warn the user and prevent plotting of filter barplot
 observeEvent(Edata(), {

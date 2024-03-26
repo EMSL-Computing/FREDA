@@ -100,22 +100,12 @@ list(
       req({
         (input$c_column != 'Select a column') &&
           (input$h_column != 'Select a column') &&
-          (input$n_column != 'Select a column') &&
-          (input$o_column != 'Select a column') &&
-          (input$s_column != 'Select a column') &&
-          (input$p_column != 'Select a column') &&
           all(is.numeric(Emeta()[, input$c_column])) &&
-          all(is.numeric(Emeta()[, input$h_column])) &&
-          all(is.numeric(Emeta()[, input$n_column])) &&
-          all(is.numeric(Emeta()[, input$o_column])) &&
-          all(is.numeric(Emeta()[, input$s_column])) &&
-          all(is.numeric(Emeta()[, input$p_column]))
+          all(is.numeric(Emeta()[, input$h_column]))
       }) # End error handling for elemental columns #
 
       # Set up list of column names
-      elem_cnames <- c(input$c_column, input$h_column,
-        input$n_column, input$o_column,
-        input$s_column, input$p_column)
+      elem_cnames <- c(input$c_column, input$h_column, as.character(extra_elements()))
 
       # Create data frame of all elemental columns to sum across
       elem_columns <- data.frame(Emeta()[, elem_cnames])
