@@ -173,7 +173,7 @@ output$filt_peaks_dt <- DT::renderDT(
 #' @details Plot of filtered corems data
 #' @app_location Confidence Filtering Tab
 output$cms_filt_plot <- renderPlotly({
-  validate(need(cms_data_filtered(), "Create your filtered data to view filter plot"))
+  validate(need(tryCatch(cms_data_filtered(), error=function(e) NULL), "Create your filtered data to view filter plot"))
   p <- plot(cms_data_filtered())
   p %>% 
     layout(
@@ -185,6 +185,9 @@ output$cms_filt_plot <- renderPlotly({
 #' @details display mass error plot with min_conf slider values
 #' @app_location Confidence Filtering Tab
 output$me_plot <- renderPlotly({
+  validate(
+    need(tryCatch(cms_data(), error=function(e) NULL), "No CoreMS object found.  Please create your coreMS data object in the 'Create CoreMS Object tab'.")
+  )
   mass_error_plot(cms_data(), min_conf = input$min_conf)
 })
 

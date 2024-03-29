@@ -503,8 +503,8 @@
       "RemoteHost": "api.github.com",
       "RemoteRepo": "ftmsRanalysis",
       "RemoteUsername": "EMSL-Computing",
-      "RemoteRef": "1.1.0",
-      "RemoteSha": "48167675088e41b0249ea4dd273274535a6a09ba",
+      "RemoteRef": "HEAD",
+      "RemoteSha": "28581f9adae22637fbbf87992138687b7cdeea5f",
       "Requirements": [
         "R",
         "RColorBrewer",
@@ -525,7 +525,7 @@
         "tidyr",
         "vegan"
       ],
-      "Hash": "d0a553102fe7ff130884c1dc7b97ca53"
+      "Hash": "1081c4c2bfadf864105ed38ac4f1c06f"
     },
     "generics": {
       "Package": "generics",
@@ -1281,7 +1281,7 @@
     },
     "rmarkdown": {
       "Package": "rmarkdown",
-      "Version": "2.25",
+      "Version": "2.26",
       "Source": "Repository",
       "Repository": "CRAN",
       "Requirements": [
@@ -1294,14 +1294,13 @@
         "jsonlite",
         "knitr",
         "methods",
-        "stringr",
         "tinytex",
         "tools",
         "utils",
         "xfun",
         "yaml"
       ],
-      "Hash": "d65e35823c817f09f4de424fcdfa812a"
+      "Hash": "9b148e7f95d33aac01f31282d49e4f44"
     },
     "rprojroot": {
       "Package": "rprojroot",
@@ -1389,7 +1388,7 @@
     },
     "shiny": {
       "Package": "shiny",
-      "Version": "1.8.0",
+      "Version": "1.8.1",
       "Source": "Repository",
       "Repository": "CRAN",
       "Requirements": [
@@ -1399,7 +1398,6 @@
         "cachem",
         "commonmark",
         "crayon",
-        "ellipsis",
         "fastmap",
         "fontawesome",
         "glue",
@@ -1419,7 +1417,7 @@
         "withr",
         "xtable"
       ],
-      "Hash": "3a1f41807d648a908e3c7f0334bf85e6"
+      "Hash": "a49e145ac3d0d1299e19ab215504f88e"
     },
     "shinyBS": {
       "Package": "shinyBS",
@@ -1449,6 +1447,19 @@
         "shiny"
       ],
       "Hash": "96bb249d21b7473dbeb0311702ef5288"
+    },
+    "shinybusy": {
+      "Package": "shinybusy",
+      "Version": "0.3.3",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Requirements": [
+        "htmltools",
+        "htmlwidgets",
+        "jsonlite",
+        "shiny"
+      ],
+      "Hash": "7dc8feb4207741ff581422a04fc8f3ea"
     },
     "shinycssloaders": {
       "Package": "shinycssloaders",
@@ -1563,18 +1574,6 @@
         "cpp11"
       ],
       "Hash": "15b594369e70b975ba9f064295983499"
-    },
-    "terra": {
-      "Package": "terra",
-      "Version": "1.7-65",
-      "Source": "Repository",
-      "Repository": "CRAN",
-      "Requirements": [
-        "R",
-        "Rcpp",
-        "methods"
-      ],
-      "Hash": "8e245fd4eab07bf55ddb2e6ea353c0e1"
     },
     "tibble": {
       "Package": "tibble",
@@ -1780,14 +1779,15 @@
     },
     "xfun": {
       "Package": "xfun",
-      "Version": "0.41",
+      "Version": "0.43",
       "Source": "Repository",
       "Repository": "CRAN",
       "Requirements": [
+        "grDevices",
         "stats",
         "tools"
       ],
-      "Hash": "460a5e0fe46a80ef87424ad216028014"
+      "Hash": "ab6371d8653ce5f2f9290f4ec7b42a8e"
     },
     "xml2": {
       "Package": "xml2",

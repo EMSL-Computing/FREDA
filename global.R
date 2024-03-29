@@ -19,6 +19,7 @@ library(plotly)
 library(DT)
 library(shinycssloaders)
 library(mapDataAccess)
+library(shinybusy)
 
 # uncomment either library() or load_all() if you need to load kegg
 library(KeggData)

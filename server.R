@@ -109,7 +109,7 @@ shinyServer(function(session, input, output) {
   #' @name data csv's resulting from read_csv() on the downloaded files from minio
   #' @name fpaths The temp filepaths of the files downloaded from minio
   corems_revals <- reactiveValues(tables = list(),
-    fpaths = list(), manual_corems = FALSE)
+    fpaths = list())
 
   # Reload objects for debugging if they exist
   observeEvent(input$debug_reload, {
