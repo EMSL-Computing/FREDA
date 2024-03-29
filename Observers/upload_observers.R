@@ -176,8 +176,8 @@ observeEvent(input$add_element_column_button,{
     # Isolate current elements, add new row, then reassign the reactive variable
     old_element_list <- isolate(extra_elements())
     # Check that input element or column name have not already been added to table
-    validate(need(! input$extra_element_name %in% names(old_element_list), "Element has already been added. Remove row to re-add element with a different column name."))
-    validate(need(! input$extra_element_col %in% as.character(old_element_list), "Column name has already been added. Remove row to re-add column with a different element."))
+    validate(need(! input$extra_element_name %in% c("C","H",names(old_element_list)), "Element has already been added. Remove row to re-add element with a different column name."))
+    validate(need(! input$extra_element_col %in% c(input$c_column, input$h_column, as.character(old_element_list)), "Column name has already been added. Remove row to re-add column with a different element."))
     # Add to list
     old_element_list[[input$extra_element_name]] <- c(old_element_list[[input$extra_element_name]], input$extra_element_col)
     extra_elements(old_element_list)
