@@ -35,7 +35,6 @@ list(
   }),
   
   output$h_column <- renderUI({
-
     selectInput("h_column", "Hydrogen: ",
       choices = c('Select a column', emeta_cnames()),
       selected = ifelse(grepl("^h$", tolower(emeta_cnames())),
@@ -44,11 +43,14 @@ list(
 
   }),
   
-
+  output$add_ONSP <- renderUI({
+    checkboxInput("add_ONSP", label="Add standard elements O, N, S, P if detected in data?",
+                  value = FALSE)
+  }),
   
   output$extra_element_name <- renderUI({
     selectInput("extra_element_name", "Possible Elements:",
-                choices = c('Select a column', element_names),
+                choices = c('Select an element', element_names),
                 selected = NULL )
   }),
   
@@ -66,7 +68,7 @@ list(
     if (length(extra_elements()) != 0){
       data.frame("Element"=names(extra_elements()), 
                  "Column Name"=unlist(extra_elements()), 
-                 row.names=NULL)
+                 row.names=NULL, check.names = FALSE)
     }
   }, options=list(searching=FALSE, paging=FALSE)),
  
@@ -74,7 +76,7 @@ list(
     actionButton("remove_element_row_button", "Remove Selected Elements")
   }),
 
-  ### END of CHNOSP DROP DOWN LISTS ###
+  ### END of Element Addition
 
   # C13 #
   output$iso_info_filter_out <- renderUI({

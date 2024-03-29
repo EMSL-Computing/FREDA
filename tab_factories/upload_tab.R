@@ -78,10 +78,13 @@ upload_tab <- function(from_corems = FALSE) {
             
             conditionalPanel(
               condition = "input.select == 2",
-              div(label = "Carbon", uiOutput("c_column")),
-              div(label = "Hydrogen", uiOutput("h_column")),
+              fluidRow(
+                column(width=6, uiOutput("c_column")),
+                column(width=6, uiOutput("h_column"))
+              ),
               wellPanel(
-                h4(strong("Add Additional Elements"), "(Not H or C)"),
+                h4(strong("Add Additional Elements"), "(Not C or H)"),
+                uiOutput("add_ONSP"),
                 fluidRow(
                   column(width=6, uiOutput("extra_element_name")),
                   column(width=6, uiOutput("extra_element_col"))

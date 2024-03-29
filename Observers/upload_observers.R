@@ -153,14 +153,37 @@ observeEvent(input$upload_click, {
 
 }) # End peakData creation
 
+observeEvent(input$add_ONSP, {
+  if(input$add_ONSP == TRUE){
+    # Add column if found
+    for (el in c("O","N","S","P")){
+      if( any(grepl(paste0("^",tolower(el), "$"), tolower(emeta_cnames()))) ){
+        el_col_name <- emeta_cnames()[grepl(paste0("^",tolower(el), "$"), tolower(emeta_cnames()))][1]
+        # Add to extra elements after checking it's not in there already
+        old_element_list <- isolate(extra_elements())
+        # Add to list if element hasn't been added yet to extra_elements
+        if((! el %in% names(old_element_list)) && (! el_col_name %in% as.character(old_element_list))){
+          old_element_list[[el]] <- c(old_element_list[[el]], el_col_name)
+          extra_elements(old_element_list)
+        }
+      }
+    }
+  }
+})
+
 observeEvent(input$add_element_column_button,{
-  # Isolate current elements, add new row, then reassign the reactive variable
-  old_element_list <- isolate(extra_elements())
-  old_element_list[[input$extra_element_name]] <- c(old_element_list[[input$extra_element_name]], input$extra_element_col)
-  extra_elements(old_element_list)
-  
-  shinyjs::reset("extra_element_name")
-  shinyjs::reset("extra_element_col")
+    validate(need(input$extra_element_name != 'Select an element' && input$extra_element_col != 'Select a column', "Please select an element and a column name before adding."))
+    # Isolate current elements, add new row, then reassign the reactive variable
+    old_element_list <- isolate(extra_elements())
+    # Check that input element or column name have not already been added to table
+    validate(need(! input$extra_element_name %in% names(old_element_list), "Element has already been added. Remove row to re-add element with a different column name."))
+    validate(need(! input$extra_element_col %in% as.character(old_element_list), "Column name has already been added. Remove row to re-add column with a different element."))
+    # Add to list
+    old_element_list[[input$extra_element_name]] <- c(old_element_list[[input$extra_element_name]], input$extra_element_col)
+    extra_elements(old_element_list)
+    # Reset select inputs after addition
+    shinyjs::reset("extra_element_name")
+    shinyjs::reset("extra_element_col")
 })
 
 observeEvent(input$remove_element_row_button,{
@@ -311,13 +334,11 @@ observeEvent(c(input$iso_info_column, input$iso_symbol, input$isotope_yn, input$
 })
 
 # Non-numeric or non-selected elemental columns
-observeEvent(c(input$c_column, input$h_column, input$n_column,
-  input$o_column, input$s_column, input$p_column,
-  input$select, input$isotope_yn), {
+observeEvent(c(input$c_column, input$h_column, input$select, input$isotope_yn), {
 
   req(Edata(), Emeta(), input$edata_id_col != "Select one")
 
-  elcols <- c(input$c_column, input$h_column)
+  elcols <- c(input$c_column, input$h_column, as.character(isolate(extra_elements())) )
   conditions <- isTRUE(any(elcols == 'Select a column') | any(is.null(elcols)))
 
   if (conditions[1]) {

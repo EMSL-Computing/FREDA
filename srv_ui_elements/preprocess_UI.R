@@ -15,7 +15,8 @@ list(
       # create a list of html objects which are extra options for certain functions, these will appear below the checkbox.
       options = lapply(choices, function(x){
         if(x == 'calc_element_ratios' & 'calc_element_ratios' %in% input$tests){
-          standard_ratios <- if(is.null(input$element_ratios)) 'O:C, H:C, N:C, P:C, N:P' else input$element_ratios
+          available_standard_ratios <- if(all( c("O", "P", "N") %in% names(isolate(extra_elements())) )) 'O:C, H:C, N:C, P:C, N:P' else 'H:C'
+          standard_ratios <- if(is.null(input$element_ratios)) available_standard_ratios else input$element_ratios
           div(style='padding-left:20px;',
               tipify(icon("question-sign", lib = "glyphicon"), element_ratios_info, placement = "top", trigger = 'hover'),
               div(style = 'display:inline-block', textInput('element_ratios', 'List desired ratios:', value = standard_ratios))
