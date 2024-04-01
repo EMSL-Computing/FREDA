@@ -15,12 +15,3 @@ The FT-MS R Exploratory Data Analysis (FREDA) tool is designed to allow users up
   * comparison of two samples
   * comparisons of two groups of samples
 * Download a preprocessing summary report, .csv data summaries, and plots in .pdf .jpeg and .png formats
-
-***
-
-#### **Recent Updates:**
-
-  * *Linked plots sub-tab of the Visualize tab.  Interactively compare scatter or single sample histogram plots.*
-  * *Map peaks to values in the Kegg and Metacyc databases.*
-  
-***
