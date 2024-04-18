@@ -60,8 +60,7 @@ upload_tab <- function(from_corems = FALSE) {
 
             # Get whether formulas or elemental columns are included #
             div(id = "js_select", radioGroupButtons('select',
-              label = 'Does this file have formulas
-                                                                        or elemental columns?',
+              label = 'Does this file have formulas or elemental columns?',
               choices = list('Formulas' = 1,
                 'Elemental Columns' = 2),
               selected = 'Select an option', justified = TRUE)
@@ -76,26 +75,27 @@ upload_tab <- function(from_corems = FALSE) {
 
             # (Conditional on the above selectInput) Elemental columns:
             ##  which columns contain the elements?
-
-            inlineCSS('#element_select button {width:100%}'),
-            hidden(div(id = "element_select", style = 'width:92.5%;margin-left:2.5%;border-radius:4px',
-              dropdownButton(inputId = "element_dropdown", circle = FALSE, label = "Specify Elemental Count Columns", width = '100%',
+            
+            conditionalPanel(
+              condition = "input.select == 2",
+              fluidRow(
+                column(width=6, uiOutput("c_column")),
+                column(width=6, uiOutput("h_column"))
+              ),
+              wellPanel(
+                h4(strong("Add Additional Elements"), "(Not C or H)"),
+                uiOutput("add_ONSP"),
                 fluidRow(
-                  column(width = 4,
-                    uiOutput("c_column"),
-                    uiOutput("h_column")
-                  ),
-                  column(width = 4,
-                    uiOutput("n_column"),
-                    uiOutput("o_column")
-                  ),
-                  column(width = 4,
-                    uiOutput("s_column"),
-                    uiOutput("p_column")
-                  )
-                )
+                  column(width=6, uiOutput("extra_element_name")),
+                  column(width=6, uiOutput("extra_element_col"))
+                ),
+                uiOutput("add_element_column_button"),
+                hr(),
+                renderText("Additional Elements Added:"),
+                div(dataTableOutput("added_elements"), style = "overflow-y: scroll"),
+                uiOutput("remove_element_row_button")
               )
-            )), # hidden div
+            ),
 
             tags$hr(style = "margin:20px 0px 20px 0px"),
 

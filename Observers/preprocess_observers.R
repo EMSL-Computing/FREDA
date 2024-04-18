@@ -20,10 +20,23 @@ observeEvent(input$preprocess_click, {
     arguments <- list()
     choices <- calc_opts$Function
 
-    tryCatch({
-      for (x in choices) {
-        if (x == 'calc_kendrick') {
-          if (!is.null(input$base_unit)) {
+    tryCatch({ 
+      for(x in choices) {
+        if(x == 'calc_element_ratios'){
+          if(!is.null(input$element_ratios)){
+            # Split string and send to 2xN matrix after checking elements are present in data.
+            raw_ratios <- strsplit(input$element_ratios, ",")
+            # Send raw string "O:C, H:C,N:C" --> [['O','C'],['H','C'],['N','C']]
+            ratio_element_list <- lapply(raw_ratios, function(ratio){
+              elements <- strsplit(ratio, ":")
+              lapply(elements, gsub, pattern="\\s", replacement="") #remove white space
+            })
+            # Send[['O','C'],['H','C'],['N','C']] --> ['O','C','H','C','N','C'] --> 3x2 matrix(['O','C','H','C','N','C']) as argument
+            arguments[[x]] <- list(ratios = matrix(data = unlist(ratio_element_list, recursive = TRUE), nrow = 2) )
+          }
+        }
+        else if(x == 'calc_kendrick'){
+          if(!is.null(input$base_unit)){
             arguments[[x]] <- list(base_compounds = input$base_unit)
           }
         }

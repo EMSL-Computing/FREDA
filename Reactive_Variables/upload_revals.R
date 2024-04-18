@@ -50,3 +50,5 @@ fdata <- reactive({
   data.frame('SampleId' = sample_names(), 'Var1' = col2)
 
 }) # End fdata #
+
+extra_elements <- reactiveVal(value = list(), label = "extra_elements")

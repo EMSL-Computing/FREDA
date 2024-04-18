@@ -19,6 +19,7 @@ library(plotly)
 library(DT)
 library(shinycssloaders)
 library(mapDataAccess)
+library(shinybusy)
 
 # uncomment either library() or load_all() if you need to load kegg
 library(KeggData)
@@ -30,6 +31,7 @@ library(MetaCycData)
 dt_checkmark <- '<span class="glyphicon glyphicon-ok" style="color:deepskyblue"></span>'
 dt_minus <- '<span class="glyphicon glyphicon-minus"></span>'
 
+element_ratios_info <- 'Comma-seperated list of ratios of any present pair of elements. Examples: "O:C, N:P,"H:C".'
 dbe_opts_info <- 'Semicolon separated strings of elements and their valences, i.e. to calculate the dbe for two sets of valences, input C4H1N3O2S2P3;C3H3N2O2S4P4'
 kendrick_opts_info <- 'The base compound(s) used to calculate the Kendrick Mass.  See <a href = ""https://www.ncbi.nlm.nih.gov/pmc/articles/PMC5447562/"">[Foquet and Sato, 2017]</a> for details.'
 

@@ -1,7 +1,12 @@
 
 # Define UI and wrap everything in a taglist that first calls useShinyjs()
 ui <- tagList(useShinyjs(),
-
+  add_busy_spinner(
+      spin = "fading-circle", 
+      position="bottom-left", 
+      color = "deepskyblue",
+      margins = c(35,35)
+  ),
   # loading message
   div(
     id = "loading-gray-overlay",
@@ -10,7 +15,7 @@ ui <- tagList(useShinyjs(),
   ),
 
   navbarPage(
-    title = tags$div("FREDA", tags$span(style = "font-size:small", "v1.0.7")),
+    title = tags$div("FREDA", tags$span(style = "font-size:small", "v1.1.1")),
     windowTitle = 'FREDA',
     id = "top_page",
     theme = "yeti.css",
@@ -22,9 +27,9 @@ ui <- tagList(useShinyjs(),
         tags$p('A publication is forthcoming for FREDA.  In the meantime, we ask that you cite FREDA by url', tags$b('(https://msc-viz.emsl.pnnl.gov/FREDA/)'), 'for any figures or analysis included in a publication or report.'),
         hr(),
         br(),
-        bsButton('all_tutorials', 'See a playlist of video tutorials',
+        actionButton('all_tutorials', 'See a playlist of video tutorials',
           onclick = "window.open('https://www.youtube.com/watch?v=uU5Q7r_pEGM&list=PLvozcBqO8i7wsMWo5PnOREX0sHSk3mAjE', '_blank')",
-          style = 'info', icon = icon('facetime-video', lib = 'glyphicon'))
+          class="btn btn-info", icon = icon('facetime-video', lib = 'glyphicon'))
       ),
       tabPanel(title = "Data Requirements", class = "background_FTICR", value = 'data_requirements',
         includeMarkdown("./DataRequirements.md"),

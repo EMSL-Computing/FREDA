@@ -24,64 +24,59 @@ list(
   # Drop-down lists: Select which column represents C / H / N / O / etc
   # First try to locate the column name with a grepl
   # Note: All require emeta_cnames()
+
   output$c_column <- renderUI({
-    selectInput("c_column", "Carbon:",
-      choices = c('Select a column', emeta_cnames()),
-      selected = ifelse(grepl("^c$", tolower(emeta_cnames())),
-        yes = emeta_cnames()[grepl("^c$", tolower(emeta_cnames()))][1],
-        no = 'Select a column'))
-
+    selectInput("c_column", "Carbon: ",
+                choices = c('Select a column', emeta_cnames()),
+                selected = ifelse(grepl("^c$", tolower(emeta_cnames())),
+                                  yes = emeta_cnames()[grepl("^c$", tolower(emeta_cnames()))][1],
+                                  no = 'Select a column'))
+    
   }),
-
+  
   output$h_column <- renderUI({
-
-    selectInput("h_column", "Hydrogen:",
+    selectInput("h_column", "Hydrogen: ",
       choices = c('Select a column', emeta_cnames()),
       selected = ifelse(grepl("^h$", tolower(emeta_cnames())),
         yes = emeta_cnames()[grepl("^h$", tolower(emeta_cnames()))][1],
         no = 'Select a column'))
 
   }),
-
-  output$n_column <- renderUI({
-
-    selectInput("n_column", "Nitrogen:",
-      choices = c('Select a column', emeta_cnames()),
-      selected = ifelse(grepl("^n$", tolower(emeta_cnames())),
-        yes = emeta_cnames()[grepl("^n$", tolower(emeta_cnames()))][1],
-        no = 'Select a column'))
-
+  
+  output$add_ONSP <- renderUI({
+    checkboxInput("add_ONSP", label="Add standard elements O, N, S, P if detected in data?",
+                  value = FALSE)
+  }),
+  
+  output$extra_element_name <- renderUI({
+    selectInput("extra_element_name", "Possible Elements:",
+                choices = c('Select an element', element_names),
+                selected = NULL )
+  }),
+  
+  output$extra_element_col <- renderUI({
+    selectInput("extra_element_col", "Element Column Name",
+                choices = c('Select a column', emeta_cnames()),
+                selected = NULL )
+  }),
+  
+  output$add_element_column_button <- renderUI({
+    actionButton("add_element_column_button","Add Element")
+ }),
+ 
+  output$added_elements <- renderDataTable({
+    if (length(extra_elements()) != 0){
+      data.frame("Element"=names(extra_elements()), 
+                 "Column Name"=unlist(extra_elements()), 
+                 row.names=NULL, check.names = FALSE)
+    }
+  }, options=list(searching=FALSE, paging=FALSE)),
+ 
+  output$remove_element_row_button <- renderUI({
+    actionButton("remove_element_row_button", "Remove Selected Elements")
   }),
 
-  output$o_column <- renderUI({
-
-    selectInput("o_column", "Oxygen:",
-      choices = c('Select a column', emeta_cnames()),
-      selected = ifelse(grepl("^o$", tolower(emeta_cnames())),
-        yes = emeta_cnames()[grepl("^o$", tolower(emeta_cnames()))][1],
-        no = 'Select a column'))
-
-  }),
-
-  output$s_column <- renderUI({
-
-    selectInput("s_column", "Sulfur:",
-      choices = c('Select a column', emeta_cnames()),
-      selected = ifelse(grepl("^s$", tolower(emeta_cnames())),
-        yes = emeta_cnames()[grepl("^s$", tolower(emeta_cnames()))][1],
-        no = 'Select a column'))
-
-  }),
-
-  output$p_column <- renderUI({
-
-    selectInput("p_column", "Phosphorus:",
-      choices = c('Select a column', emeta_cnames()),
-      selected = ifelse(grepl("^p$", tolower(emeta_cnames())),
-        yes = emeta_cnames()[grepl("^p$", tolower(emeta_cnames()))][1],
-        no = 'Select a column'))
-  }),
-  ### END of CHNOSP DROP DOWN LISTS ###
+  ### END of Element Addition
 
   # C13 #
   output$iso_info_filter_out <- renderUI({

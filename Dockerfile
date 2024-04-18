@@ -4,9 +4,9 @@
 # Change this when we bump versions, or if you have some test version of the
 # base container you can specify --build-arg base_tag=<yourtag> in docker 
 # build.
-ARG base_tag=1.0.4
+ARG base_tag=docker.artifactory.pnnl.gov/mscviz/freda/base:latest
 
-FROM docker.artifactory.pnnl.gov/mscviz/freda/base:$base_tag
+FROM $base_tag
 
 # All app source/resources
 COPY . /srv/shiny-server/FREDA
