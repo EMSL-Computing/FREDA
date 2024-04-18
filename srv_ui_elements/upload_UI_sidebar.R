@@ -11,7 +11,7 @@ list(
 
     n_zeros = sum(Edata() == 0)
     prop_zeros = n_zeros / (prod(dim(Edata())) - nrow(Edata()))
-    value = if (prop_zeros > 0.1) "0" else "NA"
+    value = if (isTRUE(prop_zeros > 0.1)) "0" else "NA"
     textInput("NA_value", "What value specifies missing data?", value = value)
   }),
 

@@ -7311,4 +7311,13 @@ Button Animations
   width:100%;
 }
 
+/* Progress bar */
+
+.progress-visible {
+  visibility:visible !important;
+}
+
+.progress-visible .progress-bar {
+  width:100% !important;
+}
 

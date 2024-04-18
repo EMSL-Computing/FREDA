@@ -52,6 +52,12 @@ observe({
 
       # defined in srv_ui_elements/corems_UI.R
       showModal(corems_upload_success_modal(modalmessage))
+    } else if ('map-object' %in% names(query)) {
+      html(selector = "#loading-gray-overlay > div", html = "Loading data from MAP...")
+      ftms_obj <- mapDataAccess::get_data(minio_con, header_params[['map-object']])
+      
+      # store in some reactive variable that e_data and e_meta....essentially check exists and use if so.
+      revals$map_project <- ftms_obj
     }
 
     # if we're not coming from minio, ask whether they have multiple CoreMS files to upload.

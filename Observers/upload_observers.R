@@ -1,3 +1,14 @@
+# MAP Upload.  Disable the two file upload widgets if we've loaded data from MAP.
+observeEvent(input$top_page, {
+  req(input$top_page == "Upload")
+  
+  if (!is.null(revals$map_project)) {
+    mimic_fileinput_upload(id = "file_edata", content="Uploaded from MAP")
+    mimic_fileinput_upload(id = "file_emeta", content="Uploaded from MAP")
+  }
+  
+})
+
 # Main:  Create peakData when upload button or preprocess button clicked
 observeEvent(input$upload_click, {
   # prevent multiple clicks
@@ -208,12 +219,12 @@ observeEvent(Edata(), {
 })
 
 # Files Selected?
-observeEvent(c(input$top_page, input$file_edata, input$file_emeta), {
+observeEvent(c(input$top_page, input$file_edata, input$file_emeta, revals$map_project), {
   req(input$top_page == "Upload")
-  toggleCssClass("js_file_edata", "suggest-upload", is.null(input$file_edata))
-  toggleCssClass("js_file_emeta", "suggest-upload", is.null(input$file_emeta))
+  toggleCssClass("js_file_edata", "suggest-upload", is.null(input$file_edata) && is.null(revals$map_project))
+  toggleCssClass("js_file_emeta", "suggest-upload", is.null(input$file_emeta) && is.null(revals$map_project))
 
-  if (!is.null(input$file_edata) & !is.null(input$file_emeta)) {
+  if ((!is.null(input$file_edata) & !is.null(input$file_emeta)) || !is.null(revals$map_project)) {
     revals$warningmessage_upload$upload <- NULL
   }
 
