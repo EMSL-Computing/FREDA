@@ -30,15 +30,14 @@ vignettes/*.pdf
 tests/screenshots/*
 !tests/screenshots/info.txt
 tests/test_*/
-#packrat
-/packrat/*
-#random
-script_dump.R
-packrat/lib*/
-Data/
-untracked_resources
-cfg
+# config and renv
+cfg/*
 !cfg/minio_config_example.yml
 !cfg/minio_config_corems.yml
+!cfg/minio_config_map.yml
 renv
 !renv/settings.json
+#random
+script_dump.R
+Data/
+untracked_resources

@@ -3,20 +3,23 @@
 version: "3" 
 services:
     freda:
+        profiles: ['']
         image: "docker.artifactory.pnnl.gov/mscviz/freda:${TOP_VERSION:-latest}"
         container_name: freda
         ports:
             - "${PORT:-3838}:3838"
         volumes:
-            - "./cfg/minio_config_corems_docker.yml:/srv/shiny-server/FREDA/cfg/minio_config.yml"
+            - "${COREMS_MINIO_CONFIG_PATH-./cfg/minio_config_corems.yml}:/srv/shiny-server/FREDA/cfg/minio_config_corems.yml"
+            - "${MAP_MINIO_CONFIG_PATH-./cfg/minio_config_map.yml}:/srv/shiny-server/FREDA/cfg/minio_config_map.yml"
         environment:
             - RETICULATE_PYTHON=/venv/bin/python
     minio:
+        profiles: ['', 'minio']
         image: minio/minio
         container_name: minio-freda
         ports:
-            - "9002:9000"
-            - "9003:9001"
+            - "9000:9000"
+            - "9001:9001"
         command: server --console-address ":9001" /data
 
 networks:

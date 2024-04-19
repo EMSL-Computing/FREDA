@@ -5,8 +5,93 @@ observe({
 
   # establish minio connection if we are pulling cloud resources
   if (any(names(query) %in% VALID_MINIO_HEADER_PARAMS)) {
-    cfg_location = if (Sys.getenv("MINIO_CONFIG_PATH") == "") "./cfg/minio_config.yml" else Sys.getenv("MINIO_CONFIG_PATH")
-    minio_con <<- mapDataAccess::map_data_connection(cfg_location)
+    isolate({
+      # store header params in a reactive variable
+      for (key in names(query)) {
+        header_params[[key]] <- query[[key]]
+        message(sprintf("INFO: stored parameter %s: %s", key, query[[key]]))
+      }
+      
+      if ('corems-prefix' %in% names(query)) {
+        # get the appropriate minio config for retrieving CoreMS files
+        cfg_location = if (Sys.getenv("COREMS_MINIO_CONFIG_PATH") == "") "./cfg/minio_config_corems.yml" else Sys.getenv("COREMS_MINIO_CONFIG_PATH")
+        cms_minio_con <<- mapDataAccess::map_data_connection(cfg_location)
+        
+        html(selector = "#loading-gray-overlay > div", html = "Loading Core-MS data...")
+        
+        uris <- reticulate::iterate(
+          cms_minio_con$client$list_objects(
+            cms_minio_con$bucket,
+            prefix = header_params[['corems-prefix']],
+            recursive = TRUE),
+          function(x) x$object_name
+        )
+        
+        if (length(uris) > 0) {
+          corems_upload_success <- tryCatch({
+            fpaths <- lapply(uris, function(uri) {
+              mapDataAccess::get_file(
+                cms_minio_con, id = uri, filename = file.path(tempfile(), basename(uri)),
+                use_dir = FALSE
+              )
+            })
+            
+            modalmessage <- store_corems(fpaths)
+            TRUE
+            
+          }, error = function(e) {
+            modalmessage <<- div(sprintf(info_text[["COREMS_UPLOAD_ERROR"]], e))
+            FALSE
+          })
+        } else {
+          corems_upload_success <- FALSE
+          modalmessage <- div(info_text[["COREMS_UPLOAD_NOSAMPS"]])
+        }
+        
+        if (corems_upload_success) {
+          # defined in srv_ui_elements/corems_UI.R
+          showModal(corems_upload_success_modal(modalmessage)) 
+        } else {
+          showNotification(
+            modalmessage,
+            duration = NULL,
+            type = "error"
+          )
+        }
+      } else if ('map-object' %in% names(query)) {
+        # get the appropriate minio config for retrieving CoreMS files
+        cfg_location = if (Sys.getenv("MAP_MINIO_CONFIG_PATH") == "") "./cfg/minio_config_map.yml" else Sys.getenv("MAP_MINIO_CONFIG_PATH")
+        map_minio_con <<- mapDataAccess::map_data_connection(cfg_location)
+        
+        html(selector = "#loading-gray-overlay > div", html = "Loading data from MAP...")
+        
+        ftms_obj <- tryCatch({
+          mapDataAccess::get_data(map_minio_con, header_params[['map-object']])
+        }, error = function(e) {
+          NULL
+        })
+        
+        valid_obj_types = c("project omic")
+        
+        if (!inherits(ftms_obj, valid_obj_types)) {
+          showNotification(
+            HTML(sprintf("Something went wrong retrieving your data from MAP.  Your MAP object was not of the appropriate type.  Please confirm that the object is of types:  [%s]", valid_obj_types)),
+            duration = NULL,
+            type = "error"
+          )
+        } else {
+          # store in some reactive variable that e_data and e_meta....essentially check exists and use if so.
+          revals$map_project <- ftms_obj 
+        }
+      }
+    })
+    
+  } else {
+    showNotification(
+      sprintf("No valid header parameters found in query string.  Found parameters: %s.  Valid header parameters: %s", names(query), VALID_MINIO_HEADER_PARAMS),
+      duration = NULL,
+      type = 'error'
+    )
   }
 
   on.exit({
@@ -15,77 +100,6 @@ observe({
   })
 
   isolate({
-    # store header params in a reactive variable
-    for (key in names(query)) {
-      header_params[[key]] <- query[[key]]
-      message(sprintf("INFO: stored parameter %s: %s", key, query[[key]]))
-    }
-
-    if ('corems-prefix' %in% names(query)) {
-      html(selector = "#loading-gray-overlay > div", html = "Loading Core-MS data...")
-
-      uris <- reticulate::iterate(
-        minio_con$client$list_objects(
-          minio_con$bucket,
-          prefix = header_params[['corems-prefix']],
-          recursive = TRUE),
-        function(x) x$object_name
-      )
-      
-      if (length(uris) > 0) {
-        corems_upload_success <- tryCatch({
-          fpaths <- lapply(uris, function(uri) {
-            mapDataAccess::get_file(
-              minio_con, id = uri, filename = file.path(tempfile(), basename(uri)),
-              use_dir = FALSE
-            )
-          })
-
-          modalmessage <- store_corems(fpaths)
-          TRUE
-
-        }, error = function(e) {
-          modalmessage <<- div(sprintf(info_text[["COREMS_UPLOAD_ERROR"]], e))
-          FALSE
-        })
-      } else {
-        corems_upload_success <- FALSE
-        modalmessage <- div(info_text[["COREMS_UPLOAD_NOSAMPS"]])
-      }
-      
-      if (corems_upload_success) {
-        # defined in srv_ui_elements/corems_UI.R
-        showModal(corems_upload_success_modal(modalmessage)) 
-      } else {
-        showNotification(
-          modalmessage,
-          duration = NULL,
-          type = "error"
-        )
-      }
-    } else if ('map-object' %in% names(query)) {
-      html(selector = "#loading-gray-overlay > div", html = "Loading data from MAP...")
-      
-      ftms_obj <- tryCatch({
-        mapDataAccess::get_data(minio_con, header_params[['map-object']])
-      }, error = function(e) {
-        NULL
-      })
-      
-      valid_obj_types = c("project omic")
-      
-      if (!inherits(ftms_obj, valid_obj_types)) {
-        showNotification(
-          HTML(sprintf("Something went wrong retrieving your data from MAP.  Your MAP object was not of the appropriate type.  Please confirm that the object is of types:  [%s]", valid_obj_types)),
-          duration = NULL,
-          type = "error"
-        )
-      } else {
-        # store in some reactive variable that e_data and e_meta....essentially check exists and use if so.
-        revals$map_project <- ftms_obj 
-      }
-    }
-
     # if we're not coming from minio (CoreMS files or MAP project object), ask whether they have multiple CoreMS files to upload or a single unified file.
     if ((length(corems_revals[['combined_tables']]) == 0) && is.null(revals$map_project)) {
       showModal(upload_type_modal())
