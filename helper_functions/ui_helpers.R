@@ -18,13 +18,30 @@
 #' 
 #' @return Nothing, simply edits the widget.
 #'  
-mimic_fileinput_upload <- function(id, content, disable_id=NULL) {
+mimic_fileinput_upload <- function(id, progress_content, placeholder_content = NULL, disable_id=NULL, placeholder_id=NULL) {
   progress_bar_id = sprintf("%s_progress", id)
   removeCssClass(progress_bar_id, "active")
   addCssClass(progress_bar_id, class = 'progress-visible')
   
-  progress_js = sprintf("$('#%s .progress-bar')[0].innerHTML = '%s'",progress_bar_id, content)
+  progress_js = sprintf("$('#%s .progress-bar')[0].innerHTML = '%s'",progress_bar_id, progress_content)
   shinyjs::runjs(progress_js)
+  
+  if(isTRUE(placeholder_id == FALSE)) {
+    invisible()
+  } else {
+    if (is.null(placeholder_id)) {
+      placeholder_id = paste0("js_", id)
+    }
+    
+    if (is.null(placeholder_content)) {
+      placeholder_content = "File Uploaded"
+    }
+    
+    placeholder_js =  sprintf("$('#%s input[type=\x22text\x22]')[0].placeholder = '%s'", placeholder_id, placeholder_content)
+    
+    shinyjs::runjs(placeholder_js)
+  }
+  
   
   if (isTRUE(disable_id == FALSE)) {
     return()

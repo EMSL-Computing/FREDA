@@ -3,8 +3,11 @@ observeEvent(input$top_page, {
   req(input$top_page == "Upload")
   
   if (!is.null(revals$map_project)) {
-    mimic_fileinput_upload(id = "file_edata", content="Uploaded from MAP")
-    mimic_fileinput_upload(id = "file_emeta", content="Uploaded from MAP")
+    edata_placeholder_content = revals$map_project$Data$e_data_filename
+    emeta_placeholder_content = revals$map_project$Data$e_meta_filename
+    
+    mimic_fileinput_upload(id = "file_edata", progress_content="Uploaded from MAP", placeholder_content = edata_placeholder_content)
+    mimic_fileinput_upload(id = "file_emeta", progress_content="Uploaded from MAP", placeholder_content = emeta_placeholder_content)
   }
   
 })

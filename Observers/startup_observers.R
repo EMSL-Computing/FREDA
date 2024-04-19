@@ -86,12 +86,12 @@ observe({
       }
     })
     
-  } else {
+  } else if (length(names(query)) > 0) {
     showNotification(
-      sprintf("No valid header parameters found in query string.  Found parameters: %s.  Valid header parameters: %s", names(query), VALID_MINIO_HEADER_PARAMS),
+      sprintf("No valid header parameters found in query string.  Found parameters: (%s).  Valid header parameters: (%s).  Presenting manual upload dialog.", paste(names(query), collapse = ", "), paste(VALID_MINIO_HEADER_PARAMS, collapse = ", ")),
       duration = NULL,
       type = 'error'
-    )
+    ) 
   }
 
   on.exit({
