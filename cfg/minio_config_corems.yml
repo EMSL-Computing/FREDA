@@ -1,0 +1,8 @@
+type: minio
+endpoint: minio-freda:9000
+access_key: minioadmin
+secret_key: minioadmin
+bucket: corems-freda
+secure: False
+python_venv: /venv
+verbose: true

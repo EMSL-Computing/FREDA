@@ -2,12 +2,14 @@
 Edata <- reactive({
   # Handle scenario where we made edata from another source.
   if (!is.null(revals$uploaded_data) & is.null(input$file_edata$datapath)) {
-    return(revals$uploaded_data$e_data %>%
-      dplyr::select(-dplyr::one_of(
-        ftmsRanalysis::getEDataColName(revals$uploaded_data)
-      )))
+    return(revals$uploaded_data$e_data)
   }
 
+  # If we uploaded from a MAP file
+  if (!is.null(revals$map_project)) {
+    return(revals$map_project$Data$e_data)
+  }
+  
   # Error handling: Need file_edata path
   req(input$file_edata$datapath)
 
@@ -28,6 +30,10 @@ edata_cnames <- reactive({
 
 # Object: Get e_meta from file input
 Emeta <- reactive({
+  # If we uploaded from a MAP file
+  if (!is.null(revals$map_project)) {
+    return(revals$map_project$Data$e_meta)
+  }
   # Error handling: Need file_emeta to be valid
   req(input$file_emeta$datapath)
   # Load file

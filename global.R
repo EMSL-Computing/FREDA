@@ -56,7 +56,7 @@ info_text = list(
 )
 
 # cloud/minio resources
-VALID_MINIO_HEADER_PARAMS = c("corems-prefix")
+VALID_MINIO_HEADER_PARAMS = c("corems-prefix", "map-object")
 
 #' @SECTION Variables for selectors/inputs ##
 
