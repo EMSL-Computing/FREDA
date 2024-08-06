@@ -28,7 +28,7 @@ ui <- tagList(useShinyjs(),
         hr(),
         br(),
         actionButton('all_tutorials', 'See a playlist of video tutorials',
-          onclick = "window.open('https://www.youtube.com/watch?v=uU5Q7r_pEGM&list=PLvozcBqO8i7wsMWo5PnOREX0sHSk3mAjE', '_blank')",
+          onclick = "window.open('https://www.youtube.com/watch?v=k5HLE2kNSBY&list=PLS2sDsRQvdiJEWgnkW8s0CU_ZpubK7z_c&index=1', '_blank')",
           class="btn btn-info", icon = icon('facetime-video', lib = 'glyphicon'))
       ),
       tabPanel(title = "Data Requirements", class = "background_FTICR", value = 'data_requirements',
