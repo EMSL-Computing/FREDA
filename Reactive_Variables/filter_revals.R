@@ -61,8 +61,8 @@ massfilter_ids <- eventReactive(c(input$massfilter, input$min_mass, input$max_ma
   if (input$massfilter) {
     req(length(input$max_mass) > 0, length(input$min_mass) > 0)
     mass_filter(revals$uploaded_data) %>%
-      dplyr::filter(!!sym(getMassColName(revals$peakData2)) <= input$max_mass, !!sym(getMassColName(revals$peakData2)) >= input$min_mass) %>%
-      pluck(getMassColName(revals$peakData2))
+      dplyr::filter(`ID__` <= input$max_mass, `ID__` >= input$min_mass) %>%
+      purrr::pluck('ID__')
   }
   else NULL
 })
