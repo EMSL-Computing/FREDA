@@ -206,6 +206,11 @@ observeEvent(input$preprocess_dismiss, {
 
   if (length(revals$preprocess_tables$categorical) > 0) {
     lapply(1:length(revals$preprocess_tables$categorical), function(i) {
+      na_cols <- which(is.na(colnames(revals$preprocess_tables$categorical[[i]])))
+      if (length(na_cols) > 0) {
+        colnames(revals$preprocess_tables$categorical[[i]])[na_cols] <- 'NA'
+      }
+      
       output[[paste0('Table_', i)]] <- DT::renderDataTable({revals$preprocess_tables$categorical[[i]]}, options = list(scrollX = TRUE, dom = "t"))
       Sys.sleep(0.5)
     })
