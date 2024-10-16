@@ -503,8 +503,8 @@
       "RemoteHost": "api.github.com",
       "RemoteRepo": "ftmsRanalysis",
       "RemoteUsername": "EMSL-Computing",
-      "RemoteRef": "HEAD",
-      "RemoteSha": "28581f9adae22637fbbf87992138687b7cdeea5f",
+      "RemoteRef": "master",
+      "RemoteSha": "d4c2b9a4ffba2c07126e6732efa62792bc114796",
       "Requirements": [
         "R",
         "RColorBrewer",
@@ -525,7 +525,7 @@
         "tidyr",
         "vegan"
       ],
-      "Hash": "1081c4c2bfadf864105ed38ac4f1c06f"
+      "Hash": "87885633ec68f669a1fca2b32293c18a"
     },
     "generics": {
       "Package": "generics",
