@@ -81,6 +81,15 @@ observe({
           )
         } else {
           # store in some reactive variable that e_data and e_meta....essentially check exists and use if so.
+          # convert the data in ftms_obj into data.frame if it is in data.table format.
+          if (inherits(ftms_obj$Data$e_data, "data.table")) {
+            ftms_obj$Data$e_data <- as.data.frame(ftms_obj$Data$e_data)
+          }
+          
+          if (inherits(ftms_obj$Data$e_meta, "data.table")) {
+            ftms_obj$Data$e_meta <- as.data.frame(ftms_obj$Data$e_meta)
+          }
+          
           revals$map_project <- ftms_obj 
         }
       }
