@@ -47,7 +47,11 @@ emeta_cnames <- reactive({names(Emeta())})
 
 # Object: Sample names from e_data
 sample_names <- reactive({
-  setdiff(edata_cnames(), input$edata_id_col)
+  if (!is.null(revals$uploaded_data) & is.null(input$file_edata$datapath)) {
+    setdiff(edata_cnames(), attr(revals$uploaded_data, "cnames")$edata_cname)
+  } else {
+    setdiff(edata_cnames(), input$edata_id_col) 
+  }
 })
 
 # Create reactive fake f_data (used when action button creates peakData())
