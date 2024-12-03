@@ -15,7 +15,7 @@ ui <- tagList(useShinyjs(),
   ),
 
   navbarPage(
-    title = tags$div("FREDA", tags$span(style = "font-size:small", "v1.2.3")),
+    title = tags$div("FREDA", tags$span(style = "font-size:small", "v1.2.4")),
     windowTitle = 'FREDA',
     id = "top_page",
     theme = "yeti.css",
