@@ -52,7 +52,7 @@ observeEvent(input$upload_click, {
       'Formula column is not a character vector. Please select another.')
 
     ) # End error handling #
-    tryCatch({
+    ftms_obj <- tryCatch({
       revals$warningmessage_upload$makeobject_error <- NULL
       if (input$isotope_yn == 1 & isTRUE(input$iso_info_filter == 1)) { # If there's C13 #
 
@@ -81,10 +81,13 @@ observeEvent(input$upload_click, {
           mf_cname = input$f_column,
           check_rows = TRUE, data_scale = input$data_scale)
       }
+      
+      res
     },
     error = function(e) {
       msg = paste0('Error making your peakData: \n System error: ', e)
       revals$warningmessage_upload$makeobject_error <<- sprintf("<p style = 'color:red'>%s</p>", msg)
+      return(NULL)
     })
   }
 
@@ -110,7 +113,7 @@ observeEvent(input$upload_click, {
     for (col in as.character(isolate(extra_elements()))) {
         validate(need(is.numeric(Emeta()[, col]), 'One or more elemental columns are non-numeric.'))
     } # End error handling #
-    tryCatch({
+    ftms_obj <- tryCatch({
       revals$warningmessage_upload$makeobject_error <- NULL
       # Combine Hydrogen and Carbon names with extra element columns
       all_element_cols <- c("C"=input$c_column, "H"=input$h_column, isolate(extra_elements()))
@@ -145,15 +148,18 @@ observeEvent(input$upload_click, {
       if (input$NA_value != "NA") {
         res <- edata_replace(res, input$NA_value, NA)
       }
+      
+      res
     },
     error = function(e) {
       msg = paste0('Error making your peakData: \n System error: ', e)
       revals$warningmessage_upload$makeobject_error <<- sprintf("<p style = 'color:red'>%s</p>", msg)
+      return(NULL)
     })
 
   } # End elemental column if statement
 
-  if (exists('res')) {
+  if (!is.null(ftms_obj)) {
     shinyjs::show('upload_success')
 
     # reset 'removed samples' reval
@@ -162,7 +168,7 @@ observeEvent(input$upload_click, {
     updateCollapse(session, 'upload_collapse', close = c('file_upload', 'column_info'))
     shinyjs::show('ok_idcols')
 
-    revals$uploaded_data <- res
+    revals$uploaded_data <- ftms_obj
   }
 
 }) # End peakData creation
