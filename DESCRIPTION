@@ -22,8 +22,7 @@ Imports:
     markdown, 
     pander, 
     plotly, 
-    purrr, 
-    raster, 
+    purrr,
     RColorBrewer, 
     readr, 
     reshape2, 
@@ -47,6 +46,5 @@ Imports:
     xfun,
     MetaCycData, 
     mapDataAccess,
-    ftmsRanalysis,
-    datadr
+    ftmsRanalysis
 

@@ -149,7 +149,7 @@ plot_data <- eventReactive(input$plot_submit, {
     validate(need(input$summary_fxn %in% ftmsRanalysis:::getGroupComparisonSummaryFunctionNames(), "Please select a summary function"))
 
     # get the value of the single pairwise comparison
-    grpComparisonsObj <- divideByGroupComparisons(temp_data, comparisons = "all")[[1]]$value
+    grpComparisonsObj <- divideByGroupComparisons(temp_data, comparisons = "all")[[1]]
 
     # paramaters specific to uniqueness_gtest()
     if (input$summary_fxn == "uniqueness_gtest") {
