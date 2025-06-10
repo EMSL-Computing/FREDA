@@ -281,16 +281,6 @@
       ],
       "Hash": "5edbbabab6ce0bf7900a74fd4358628e"
     },
-    "codetools": {
-      "Package": "codetools",
-      "Version": "0.2-19",
-      "Source": "Repository",
-      "Repository": "CRAN",
-      "Requirements": [
-        "R"
-      ],
-      "Hash": "c089a619a7fae175d149d89164f8c7d8"
-    },
     "colorspace": {
       "Package": "colorspace",
       "Version": "2.1-1",
@@ -367,28 +357,6 @@
         "methods"
       ],
       "Hash": "38bbf05fc2503143db4c734a7e5cab66"
-    },
-    "datadr": {
-      "Package": "datadr",
-      "Version": "0.8.6",
-      "Source": "GitHub",
-      "RemoteType": "github",
-      "RemoteHost": "api.github.com",
-      "RemoteRepo": "datadr",
-      "RemoteUsername": "delta-rho",
-      "RemoteRef": "HEAD",
-      "RemoteSha": "f3ffebd8e1c43a5d11cd3543bbe672c88f8c52f3",
-      "Requirements": [
-        "codetools",
-        "data.table",
-        "digest",
-        "dplyr",
-        "hexbin",
-        "magrittr",
-        "methods",
-        "parallel"
-      ],
-      "Hash": "4ddf60dd3cd5d3baf559f44d872fc74e"
     },
     "digest": {
       "Package": "digest",
@@ -487,13 +455,13 @@
       "Package": "ftmsRanalysis",
       "Version": "1.1.0",
       "Source": "GitHub",
-      "Remotes": "github::delta-rho/datadr, github::EMSL-Computing/MetaCycData",
+      "Remotes": "github::EMSL-Computing/MetaCycData",
       "RemoteType": "github",
       "RemoteHost": "api.github.com",
       "RemoteRepo": "ftmsRanalysis",
-      "RemoteUsername": "EMSL-Computing",
-      "RemoteRef": "8753cb08900045e0763e9be7aa293e98de62a490",
-      "RemoteSha": "8753cb08900045e0763e9be7aa293e98de62a490",
+      "RemoteUsername": "EMSL-computing",
+      "RemoteRef": "8590e0dea16084238c82364706db9855c00801de",
+      "RemoteSha": "8590e0dea16084238c82364706db9855c00801de",
       "Requirements": [
         "R",
         "RColorBrewer",
@@ -514,7 +482,7 @@
         "tidyr",
         "vegan"
       ],
-      "Hash": "0f4f9535c3cf1fcda1ad376ca0bcf0b4"
+      "Hash": "b973a46e6fe6ee30e4b8f03067dca5e2"
     },
     "generics": {
       "Package": "generics",
@@ -602,23 +570,6 @@
         "rprojroot"
       ],
       "Hash": "24b224366f9c2e7534d2344d10d59211"
-    },
-    "hexbin": {
-      "Package": "hexbin",
-      "Version": "1.28.3",
-      "Source": "Repository",
-      "Repository": "CRAN",
-      "Requirements": [
-        "R",
-        "grDevices",
-        "graphics",
-        "grid",
-        "lattice",
-        "methods",
-        "stats",
-        "utils"
-      ],
-      "Hash": "124e384c01d8746f1c12f9dc1b80a161"
     },
     "highr": {
       "Package": "highr",
@@ -1175,20 +1126,6 @@
         "R"
       ],
       "Hash": "5e3c5dc0b071b21fa128676560dbe94d"
-    },
-    "raster": {
-      "Package": "raster",
-      "Version": "3.6-26",
-      "Source": "Repository",
-      "Repository": "CRAN",
-      "Requirements": [
-        "R",
-        "Rcpp",
-        "methods",
-        "sp",
-        "terra"
-      ],
-      "Hash": "7d6eda494f34a644420ac1bfd2a8023a"
     },
     "readr": {
       "Package": "readr",

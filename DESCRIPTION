@@ -1,6 +1,6 @@
 Package: FREDA
 Title: An app for the processing and visualization of Fourier-transform mass spectrometry data.
-Version: 1.2.4
+Version: 1.3.0
 Authors@R: c(person("Lisa", "Bramer", "lisa.bramer@pnnl.gov", role = "aut", "cre"),
     person("Daniel", "Claborne", "daniel.claborne@pnnl.gov", role = c("aut")))
 Description: A frontend application which exposes functionality of the ftmsRanalysis R package.  See 
@@ -22,8 +22,7 @@ Imports:
     markdown, 
     pander, 
     plotly, 
-    purrr, 
-    raster, 
+    purrr,
     RColorBrewer, 
     readr, 
     reshape2, 
@@ -47,6 +46,5 @@ Imports:
     xfun,
     MetaCycData, 
     mapDataAccess,
-    ftmsRanalysis,
-    datadr
+    ftmsRanalysis
 

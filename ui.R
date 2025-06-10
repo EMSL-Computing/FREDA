@@ -15,7 +15,7 @@ ui <- tagList(useShinyjs(),
   ),
 
   navbarPage(
-    title = tags$div("FREDA", tags$span(style = "font-size:small", "v1.2.5")),
+    title = tags$div("FREDA", tags$span(style = "font-size:small", "v1.3.0")),
     windowTitle = 'FREDA',
     id = "top_page",
     theme = "yeti.css",
@@ -479,7 +479,7 @@ ui <- tagList(useShinyjs(),
             checkboxGroupInput("download_selection", label = "Check Download Selection",
               choices = c('Data File as one .csv and Molecular Identification File as another .csv' = "separate",
                 'Merged Data File and Molecular Identification File as a single .csv' = "merged",
-                'Data summaries for grouped plots' = "group_data"),
+                'Data summaries and comparison results for grouped plots' = "group_data"),
               width = "80%")
           )
         ),
